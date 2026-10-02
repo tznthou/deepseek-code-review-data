@@ -1,0 +1,288 @@
+collect / collect	UNKNOWN STEP	﻿2026-09-26T11:43:08.2514184Z Current runner version: '2.337.0'
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2541587Z ##[group]Runner Image Provisioner
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2542488Z Hosted Compute Agent
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2543083Z Version: 20260828.587
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2543857Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2544607Z Build Date: 2026-08-28T16:44:25Z
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2545335Z Worker ID: {350ede10-b4e7-4c60-8d53-046b6955172b}
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2546078Z Azure Region: westus
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2546650Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2548824Z ##[group]Operating System
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2549552Z Ubuntu
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2550214Z 24.04.5
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2550814Z LTS
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2551343Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2552013Z ##[group]Runner Image
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2552626Z Image: ubuntu-24.04
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2553181Z Version: 20260920.314.1
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2554599Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260920.314/images/ubuntu/Ubuntu2404-Readme.md
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2556293Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260920.314
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2557282Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2558846Z ##[group]GITHUB_TOKEN Permissions
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2560770Z Contents: read
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2561458Z Metadata: read
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2562150Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2564343Z Secret source: Actions
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2565402Z Cache mode: write
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2566119Z Prepare workflow directory
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2919307Z Prepare all required actions
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.2971123Z Getting action download info
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.6513927Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.7573098Z Download action repository 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.9325176Z Uses: tznthou/deepseek-code-review/.github/workflows/reusable-ai-review-collect.yml@refs/tags/v1 (96c5bf9822857caf775cca0072511042d6fd3de1)
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.9330412Z ##[group] Inputs
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.9331526Z   max-diff-bytes: 400000
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.9332471Z   skip-draft: true
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.9333066Z   artifact-name: ai-review-input
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.9333638Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:08.9334097Z Complete job name: collect / collect
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0105530Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0106769Z with:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0107334Z   fetch-depth: 0
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0108242Z   persist-credentials: false
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0108940Z   repository: tznthou/deepseek-review-probe
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0113127Z   token: ***
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0113693Z   ssh-strict: true
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0114247Z   ssh-user: git
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0114793Z   clean: true
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0115364Z   sparse-checkout-cone-mode: true
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0116015Z   fetch-tags: false
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0116616Z   show-progress: true
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0117183Z   lfs: false
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0117871Z   submodules: false
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0118452Z   set-safe-directory: true
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0119092Z   allow-unsafe-pr-checkout: false
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.0120041Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1149093Z Syncing repository: tznthou/deepseek-review-probe
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1152045Z ##[group]Getting Git version info
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1153622Z Working directory is '/home/runner/work/deepseek-review-probe/deepseek-review-probe'
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1154914Z [command]/usr/bin/git version
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1279575Z git version 2.55.0
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1314589Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1322866Z Temporarily overriding HOME='/home/runner/work/_temp/1b7141d7-e097-4781-a3b8-150004d3c088' before making global git config changes
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1325038Z Adding repository directory to the temporary git global config as a safe directory
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1328523Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/deepseek-review-probe/deepseek-review-probe
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1382167Z Deleting the contents of '/home/runner/work/deepseek-review-probe/deepseek-review-probe'
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1386023Z ##[group]Determining repository object format
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1388019Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1388807Z ##[group]Initializing the repository
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1394786Z [command]/usr/bin/git init /home/runner/work/deepseek-review-probe/deepseek-review-probe
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1520407Z hint: Using 'master' as the name for the initial branch. This default branch name
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1523252Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1525862Z hint: to use in all of your new repositories, which will suppress this warning,
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1529469Z hint: call:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1530609Z hint:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1531846Z hint: 	git config --global init.defaultBranch <name>
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1533015Z hint:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1533993Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1535510Z hint: 'development'. The just-created branch can be renamed via this command:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1536805Z hint:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1537523Z hint: 	git branch -m <name>
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1538654Z hint:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1539691Z hint: Disable this message with "git config set advice.defaultBranchName false"
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1541595Z Initialized empty Git repository in /home/runner/work/deepseek-review-probe/deepseek-review-probe/.git/
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1545191Z [command]/usr/bin/git remote add origin https://github.com/tznthou/deepseek-review-probe
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1599956Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1601372Z ##[group]Disabling automatic garbage collection
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1603374Z [command]/usr/bin/git config --local gc.auto 0
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1645624Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1647206Z ##[group]Setting up auth
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1648451Z Removing SSH command configuration
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1651814Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.1688326Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2082261Z Removing HTTP extra header
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2088884Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2124708Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2374112Z Removing includeIf entries pointing to credentials config files
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2379470Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2417436Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2649622Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2691532Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.git.path /home/runner/work/_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2725909Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2765173Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2803209Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2835543Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2836310Z ##[group]Fetching the repository
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.2843892Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +3bbb913b5127e4783803d0beb823968ceebe1a9c:refs/remotes/pull/1/merge
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8859212Z From https://github.com/tznthou/deepseek-review-probe
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8860900Z  * [new branch]      main                                     -> origin/main
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8862463Z  * [new branch]      trigger                                  -> origin/trigger
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8864272Z  * [new ref]         3bbb913b5127e4783803d0beb823968ceebe1a9c -> pull/1/merge
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8867950Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8869542Z ##[group]Determining the checkout info
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8871428Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8872566Z [command]/usr/bin/git sparse-checkout disable
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8952256Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8990485Z ##[group]Checking out the ref
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.8995417Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/1/merge
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9046969Z Note: switching to 'refs/remotes/pull/1/merge'.
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9048468Z 
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9049364Z You are in 'detached HEAD' state. You can look around, make experimental
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9051266Z changes and commit them, and you can discard any commits you make in this
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9053251Z state without impacting any branches by switching back to a branch.
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9054468Z 
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9055628Z If you want to create a new branch to retain commits you create, you may
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9057191Z do so (now or later) by using -c with the switch command. Example:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9058341Z 
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9058781Z   git switch -c <new-branch-name>
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9059532Z 
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9059997Z Or undo this operation with:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9060682Z 
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9061036Z   git switch -
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9061520Z 
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9062443Z Turn off this advice by setting config variable advice.detachedHead to false
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9063159Z 
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9064138Z HEAD is now at 3bbb913 Merge 71c75aadb1c1eda9760da20214fefe2ec0a9d0bd into b0ad2963a92e88785066c8e8c137022f07fc5e80
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9066670Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9106781Z [command]/usr/bin/git log -1 --format=%H
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9136156Z 3bbb913b5127e4783803d0beb823968ceebe1a9c
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9148104Z ##[group]Removing auth
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9148810Z Removing SSH command configuration
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9151959Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9190268Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9424013Z Removing HTTP extra header
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9426787Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9467430Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9707476Z Removing includeIf entries pointing to credentials config files
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9710869Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9745949Z includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.git.path
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9748695Z includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.git/worktrees/*.path
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9751169Z includeif.gitdir:/github/workspace/.git.path
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9752481Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9757153Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.git.path
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9788064Z /home/runner/work/_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9800406Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-47560739\-f8dc\-4508\-8a39\-72935b7a2ef4\.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9839434Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.git/worktrees/*.path
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9895764Z /home/runner/work/_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9904069Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-47560739\-f8dc\-4508\-8a39\-72935b7a2ef4\.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9942912Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9972084Z /github/runner_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:09.9981488Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-47560739\-f8dc\-4508\-8a39\-72935b7a2ef4\.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0025750Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0055135Z /github/runner_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0092183Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-47560739\-f8dc\-4508\-8a39\-72935b7a2ef4\.config
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0169704Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0417077Z Removing credentials config '/home/runner/work/_temp/git-credentials-47560739-f8dc-4508-8a39-72935b7a2ef4.config'
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0427478Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0698978Z ##[group]Run mkdir -p out
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0699940Z ^[[36;1mmkdir -p out^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0700925Z ^[[36;1mBASE='b7fa7a426807e48c2d4a2ed2e4d154a1f583335b'^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0702084Z ^[[36;1m^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0702754Z ^[[36;1m# ⚠️ 這支只在「呼叫方由 pull_request 事件觸發」時才有意義。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0704372Z ^[[36;1m# 若 caller 是 workflow_dispatch / push 之類，`github.event.pull_request` 是 null，^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0706250Z ^[[36;1m# BASE 會是空字串，而 `git diff ...HEAD` 是合法語法（等同 HEAD...HEAD）→ **空 diff**。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0780836Z ^[[36;1m# 舊版這裡還配了 `|| true`，等於把這個情況變成「安靜地產出空 review」。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0782233Z ^[[36;1m# 寧可在這裡 fail fast，也不要讓下游拿著空 diff 去燒 API token。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0783326Z ^[[36;1mif [ -z "$BASE" ]; then^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0785085Z ^[[36;1m  echo "::error::取不到 PR 的 base SHA。這支 reusable workflow 必須由 pull_request 事件觸發的 caller 呼叫；目前的事件是 'pull_request'。"^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0786912Z ^[[36;1m  exit 1^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0787880Z ^[[36;1mfi^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0788624Z ^[[36;1m# 注意：不要寫成 "$BASE^{commit}" —— 那個 }^{ 序列會被 Actions 的^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0789877Z ^[[36;1m# expression 解析器誤判，actionlint 會報 unexpected token^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0791131Z ^[[36;1mif ! git cat-file -e "$BASE" 2>/dev/null; then^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0792723Z ^[[36;1m  echo "::error::base SHA ${BASE} 不在這個 repo 的歷史裡。checkout 需要 fetch-depth: 0。"^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0794125Z ^[[36;1m  exit 1^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0794752Z ^[[36;1mfi^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0795639Z ^[[36;1m^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0796266Z ^[[36;1m# 前面兩道已經把「取不到 base」擋掉了，這裡不再用 `|| true` 吞錯誤^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0797440Z ^[[36;1mgit diff --unified=3 "$BASE"...HEAD > out/pr.diff^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0798682Z ^[[36;1m^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0799267Z ^[[36;1mif [ ! -s out/pr.diff ]; then^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0800517Z ^[[36;1m  echo "::warning::diff 是空的（base 與 head 之間沒有差異）。後續的 AI review 不會有東西可看。"^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0801793Z ^[[36;1mfi^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0802344Z ^[[36;1m^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0803063Z ^[[36;1m# 成本護欄。⚠️ 不要用 `head -c`：那是**位元組**截斷，2026-09-20 實測兩種損壞：^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0804079Z ^[[36;1m#   * 最後一個 hunk 必然被切成半截^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0804938Z ^[[36;1m#   * UTF-8 字元有 2/3 機率被切斷（3-byte 中文，三種對齊裡兩種壞）^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0806186Z ^[[36;1m# 這裡在 `diff --git` 邊界切，保留整數個檔案區塊。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0807488Z ^[[36;1mpython3 - <<'TRUNC'^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0808992Z ^[[36;1mimport os, pathlib^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0810181Z ^[[36;1mLIMIT = int(os.environ['LIMIT'])^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0811600Z ^[[36;1mp = pathlib.Path('out/pr.diff')^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0813469Z ^[[36;1mraw = p.read_bytes()^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0814707Z ^[[36;1mif len(raw) > LIMIT:^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0816251Z ^[[36;1m    cut = raw.rfind(b'\ndiff --git ', 0, LIMIT)^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0818541Z ^[[36;1m    kept = raw[:cut + 1] if cut > 0 else raw[:LIMIT]^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0821221Z ^[[36;1m    p.write_bytes(kept + b'\n[truncated] diff exceeded %d bytes\n' % LIMIT)^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0823421Z ^[[36;1m    print(f'[warn] diff {len(raw)} bytes -> {len(kept)} bytes (在檔案邊界截斷)')^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0824733Z ^[[36;1mTRUNC^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0825310Z ^[[36;1m^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0825873Z ^[[36;1m# ⚠️ PR 標題與分支名是**攻擊者可控**的字串。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0826849Z ^[[36;1m# 舊版用不帶引號的 heredoc（`<<EOF`）直接內插 toJSON() 的展開結果——^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0828373Z ^[[36;1m# toJSON 只做 JSON 跳脫，**擋不住 shell 的命令替換**：標題若是 `$(whoami)`，^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0829480Z ^[[36;1m#^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0830178Z ^[[36;1m# 另注意：這段註解裡不要寫出完整的 Actions expression 語法（雙大括號那個），^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0831473Z ^[[36;1m# run block 裡的 `#` 只是 shell 註解，expression 仍然會被解析——寫了會 parse error。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0832730Z ^[[36;1m# 展開後那段會在 heredoc 裡被執行。任何人開一個 PR 就能觸發。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0833770Z ^[[36;1m# 這裡改成「值走環境變數、JSON 由 Python 產生」，`<<'PY'` 帶引號所以完全不展開。^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0834786Z ^[[36;1mpython3 - <<'PY'^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0835505Z ^[[36;1mimport json, os^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0836186Z ^[[36;1mmeta = {^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0837201Z ^[[36;1m    "number": int(os.environ["PR_NUMBER"]),^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0838591Z ^[[36;1m    "head_sha": os.environ["PR_HEAD_SHA"],^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0839666Z ^[[36;1m    "base_ref": os.environ["PR_BASE_REF"],^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0840747Z ^[[36;1m    "head_repo": os.environ["PR_HEAD_REPO"],^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0841801Z ^[[36;1m    "title": os.environ["PR_TITLE"],^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0842983Z ^[[36;1m    "changed_files": int(os.environ["PR_CHANGED_FILES"]),^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0844336Z ^[[36;1m    "additions": int(os.environ["PR_ADDITIONS"]),^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0845578Z ^[[36;1m    "deletions": int(os.environ["PR_DELETIONS"]),^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0846592Z ^[[36;1m}^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0847429Z ^[[36;1mwith open("out/meta.json", "w", encoding="utf-8") as fh:^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0849368Z ^[[36;1m    json.dump(meta, fh, ensure_ascii=False, indent=2)^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0850427Z ^[[36;1mPY^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0850959Z ^[[36;1m^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0851639Z ^[[36;1mecho "diff bytes: $(wc -c < out/pr.diff)"^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.0852726Z ^[[36;1mecho "changed files: $PR_CHANGED_FILES"^[[0m
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1182037Z shell: /usr/bin/bash -e {0}
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1182904Z env:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1183441Z   LIMIT: 400000
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1184033Z   PR_NUMBER: 1
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1184805Z   PR_HEAD_SHA: 71c75aadb1c1eda9760da20214fefe2ec0a9d0bd
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1185857Z   PR_BASE_REF: main
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1186599Z   PR_HEAD_REPO: tznthou/deepseek-review-probe
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1188219Z   PR_TITLE: ci: 觸發探針
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1188863Z   PR_CHANGED_FILES: 2
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1189493Z   PR_ADDITIONS: 23
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1190085Z   PR_DELETIONS: 0
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1190661Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1872334Z diff bytes: 2471
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.1873714Z changed files: 2
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2010010Z ##[group]Run actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2011382Z with:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2011907Z   name: ai-review-input
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2012543Z   path: out/
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2013090Z   retention-days: 1
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2013705Z   if-no-files-found: warn
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2014390Z   compression-level: 6
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2015019Z   overwrite: false
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2015633Z   include-hidden-files: false
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2016352Z   archive: true
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.2016889Z ##[endgroup]
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.3490008Z With the provided path, there will be 2 files uploaded
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.3509632Z Artifact name is valid!
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.3518593Z Root directory input is valid!
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.7326210Z Uploading artifact: ai-review-input.zip
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:10.7373637Z Beginning upload of artifact content to blob storage
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.0251057Z Uploaded bytes 1808
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.0950441Z Finished uploading artifact content to blob storage!
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.0954256Z SHA256 digest of uploaded artifact is f9d1cdd4f0d5131c96d51e7cd9800d8db8fb1b624952071345a940abf7796af3
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.0956616Z Finalizing artifact upload
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.5025248Z Artifact ai-review-input successfully finalized. Artifact ID 10905072811
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.5030074Z Artifact ai-review-input has been successfully uploaded! Final size is 1808 bytes. Artifact ID is 10905072811
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.5035892Z Artifact download URL: https://github.com/tznthou/deepseek-review-probe/actions/runs/36239690452/artifacts/10905072811
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.5344262Z Post job cleanup.
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6253212Z [command]/usr/bin/git version
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6303368Z git version 2.55.0
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6348367Z Temporarily overriding HOME='/home/runner/work/_temp/400a01bb-9f23-42ea-8150-a1a3334f3913' before making global git config changes
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6350927Z Adding repository directory to the temporary git global config as a safe directory
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6354542Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/deepseek-review-probe/deepseek-review-probe
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6393260Z Removing SSH command configuration
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6401295Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6447548Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6695848Z Removing HTTP extra header
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6701986Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.6741804Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.7005111Z Removing includeIf entries pointing to credentials config files
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.7011597Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.7050085Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+collect / collect	UNKNOWN STEP	2026-09-26T11:43:11.7561023Z Cleaning up orphan processes

@@ -1,0 +1,4 @@
+驗 v1.4.1（Phase F）：caller 改回 @v1
+
+v1 移到 v1.4.1 之後，@v1 這條路的回歸：解析到的是 v1.4.1 的 tag object、
+kit checkout 到發版的 merge commit。

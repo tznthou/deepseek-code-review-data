@@ -1,0 +1,287 @@
+post / review	UNKNOWN STEP	﻿2026-09-26T11:37:56.5512684Z Current runner version: '2.337.0'
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5533460Z ##[group]Runner Image Provisioner
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5534710Z Hosted Compute Agent
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5535245Z Version: 20260828.587
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5535824Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5536425Z Build Date: 2026-08-28T16:44:25Z
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5536985Z Worker ID: {b7bf6775-dc7d-47ac-a39a-4957731b1ec8}
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5537706Z Azure Region: westcentralus
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5538212Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5539427Z ##[group]Operating System
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5539943Z Ubuntu
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5540368Z 24.04.5
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5540878Z LTS
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5541309Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5541806Z ##[group]Runner Image
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5542371Z Image: ubuntu-24.04
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5542835Z Version: 20260920.314.1
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5543954Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260920.314/images/ubuntu/Ubuntu2404-Readme.md
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5545386Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260920.314
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5546153Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5547289Z ##[group]GITHUB_TOKEN Permissions
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5549125Z Actions: read
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5549608Z Contents: read
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5550203Z Metadata: read
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5550666Z PullRequests: write
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5551211Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5552940Z Secret source: Actions
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5553781Z Cache mode: read
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5554356Z Prepare workflow directory
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5816756Z Prepare all required actions
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.5868108Z Getting action download info
+post / review	UNKNOWN STEP	2026-09-26T11:37:56.8822371Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.1868482Z Download action repository 'actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c' (SHA:3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c)
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.7385781Z Download action repository 'actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a' (SHA:043fb46d1a93c77aae656e7c1c64a875d1fc6a0a)
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9193503Z Uses: tznthou/deepseek-code-review/.github/workflows/reusable-ai-review-post.yml@refs/tags/v1.4.1 (96c5bf9822857caf775cca0072511042d6fd3de1)
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9197676Z ##[group] Inputs
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9198151Z   kit-ref: v1.4.1
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9198576Z   rubric-path: 
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9198989Z   model: deepseek-v4-pro
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9199443Z   min-severity: minor
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9200273Z   min-confidence: 0.7
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9200747Z   max-inline: 8
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9201166Z   artifact-name: ai-review-input
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9201850Z   typed-rules: true
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9202280Z   filter-findings: true
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9202709Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9203114Z Complete job name: post / review
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9759158Z ##[group]Run echo "::warning::filter-findings 自 v1.2.0 起沒有作用（700 則人工標註實測：誤刪 15 筆正確的、只刪對 4 筆，見 README §8），將於 v2 移除。可以直接從 caller 拿掉這個參數。"
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9760492Z ^[[36;1mecho "::warning::filter-findings 自 v1.2.0 起沒有作用（700 則人工標註實測：誤刪 15 筆正確的、只刪對 4 筆，見 README §8），將於 v2 移除。可以直接從 caller 拿掉這個參數。"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9988306Z shell: /usr/bin/bash -e {0}
+post / review	UNKNOWN STEP	2026-09-26T11:37:57.9989012Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0138399Z ##[warning]filter-findings 自 v1.2.0 起沒有作用（700 則人工標註實測：誤刪 15 筆正確的、只刪對 4 筆，見 README §8），將於 v2 移除。可以直接從 caller 拿掉這個參數。
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0318519Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0319186Z with:
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0319596Z   repository: tznthou/deepseek-code-review
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0320092Z   ref: v1.4.1
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0320457Z   path: .kit
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0320840Z   persist-credentials: false
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0324277Z   token: ***
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0324808Z   ssh-strict: true
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0325201Z   ssh-user: git
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0325891Z   clean: true
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0326306Z   sparse-checkout-cone-mode: true
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0326766Z   fetch-depth: 1
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0327136Z   fetch-tags: false
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0327525Z   show-progress: true
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0327920Z   lfs: false
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0328374Z   submodules: false
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0328770Z   set-safe-directory: true
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0329211Z   allow-unsafe-pr-checkout: false
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.0329671Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1139219Z Syncing repository: tznthou/deepseek-code-review
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1141050Z ##[group]Getting Git version info
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1142050Z Working directory is '/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit'
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1143190Z [command]/usr/bin/git version
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1149848Z git version 2.55.0
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1173478Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1184920Z Temporarily overriding HOME='/home/runner/work/_temp/c06f202a-133d-4928-9ff4-e2e75317e9b8' before making global git config changes
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1190624Z Adding repository directory to the temporary git global config as a safe directory
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1192561Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.1231981Z ##[group]Determining repository object format
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4559163Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4560863Z ##[group]Initializing the repository
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4565719Z [command]/usr/bin/git init /home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4660391Z hint: Using 'master' as the name for the initial branch. This default branch name
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4662275Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4665986Z hint: to use in all of your new repositories, which will suppress this warning,
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4667165Z hint: call:
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4667836Z hint:
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4668665Z hint: 	git config --global init.defaultBranch <name>
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4669568Z hint:
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4670616Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4672633Z hint: 'development'. The just-created branch can be renamed via this command:
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4673861Z hint:
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4674815Z hint: 	git branch -m <name>
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4676063Z hint:
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4677351Z hint: Disable this message with "git config set advice.defaultBranchName false"
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4679186Z Initialized empty Git repository in /home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git/
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4682627Z [command]/usr/bin/git remote add origin https://github.com/tznthou/deepseek-code-review
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4737048Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4739145Z ##[group]Disabling automatic garbage collection
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4741084Z [command]/usr/bin/git config --local gc.auto 0
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4781782Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4783287Z ##[group]Setting up auth
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4784689Z Removing SSH command configuration
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4786976Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.4823383Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.5161580Z Removing HTTP extra header
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.5166996Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.5200466Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.5427803Z Removing includeIf entries pointing to credentials config files
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.5431611Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.5464117Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.5659265Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.5695252Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git.path /home/runner/work/_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.6099406Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.6745055Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.kit/.git.path /github/runner_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.7384367Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.kit/.git/worktrees/*.path /github/runner_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.8027744Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.8029650Z ##[group]Fetching the repository
+post / review	UNKNOWN STEP	2026-09-26T11:37:58.8036191Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +refs/heads/v1.4.1*:refs/remotes/origin/v1.4.1* +refs/tags/v1.4.1*:refs/tags/v1.4.1*
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3895603Z From https://github.com/tznthou/deepseek-code-review
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3898149Z  * [new tag]         v1.4.1     -> v1.4.1
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3905420Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3907152Z ##[group]Determining the checkout info
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3908663Z [command]/usr/bin/git branch --list --remote origin/v1.4.1
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3941013Z [command]/usr/bin/git tag --list v1.4.1
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3971155Z v1.4.1
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3975364Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.3977013Z [command]/usr/bin/git sparse-checkout disable
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4027758Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4060457Z ##[group]Checking out the ref
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4062389Z [command]/usr/bin/git checkout --progress --force refs/tags/v1.4.1
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4139043Z Note: switching to 'refs/tags/v1.4.1'.
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4139980Z 
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4141131Z You are in 'detached HEAD' state. You can look around, make experimental
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4142945Z changes and commit them, and you can discard any commits you make in this
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4144844Z state without impacting any branches by switching back to a branch.
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4145933Z 
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4146904Z If you want to create a new branch to retain commits you create, you may
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4149103Z do so (now or later) by using -c with the switch command. Example:
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4150212Z 
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4150729Z   git switch -c <new-branch-name>
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4151344Z 
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4151798Z Or undo this operation with:
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4152349Z 
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4152765Z   git switch -
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4153196Z 
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4153995Z Turn off this advice by setting config variable advice.detachedHead to false
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4155217Z 
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4156419Z HEAD is now at 2570d55 chore: 發布 v1.4.1 (#41)
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4159022Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4189086Z [command]/usr/bin/git log -1 --format=%H
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4216121Z 2570d556d8865563d21ed24a3c16462c2df32532
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4224066Z ##[group]Removing auth
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4225768Z Removing SSH command configuration
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4227613Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4259799Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4451108Z Removing HTTP extra header
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4453355Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4485739Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4672927Z Removing includeIf entries pointing to credentials config files
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4675080Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4705666Z includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git.path
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4708066Z includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git/worktrees/*.path
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4709959Z includeif.gitdir:/github/workspace/.kit/.git.path
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4711364Z includeif.gitdir:/github/workspace/.kit/.git/worktrees/*.path
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4714810Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git.path
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4736508Z /home/runner/work/_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4746356Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-2a91b677\-6ad8\-4f32\-854c\-0300dfa58913\.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4779663Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git/worktrees/*.path
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4809041Z /home/runner/work/_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4831170Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-2a91b677\-6ad8\-4f32\-854c\-0300dfa58913\.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4857876Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.kit/.git.path
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4882166Z /github/runner_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4889860Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.kit/.git.path \/github\/runner_temp\/git\-credentials\-2a91b677\-6ad8\-4f32\-854c\-0300dfa58913\.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4922815Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.kit/.git/worktrees/*.path
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4946120Z /github/runner_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4953790Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.kit/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-2a91b677\-6ad8\-4f32\-854c\-0300dfa58913\.config
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.4987946Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5174929Z Removing credentials config '/home/runner/work/_temp/git-credentials-2a91b677-6ad8-4f32-854c-0300dfa58913.config'
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5184977Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5355277Z ##[group]Run if [ -n "$CUSTOM" ] && [ -f ".caller/$CUSTOM" ]; then
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5356630Z ^[[36;1mif [ -n "$CUSTOM" ] && [ -f ".caller/$CUSTOM" ]; then^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5357842Z ^[[36;1m  echo "path=.caller/$CUSTOM" >> "$GITHUB_OUTPUT"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5358952Z ^[[36;1m  echo "使用呼叫方的自訂 rubric：$CUSTOM"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5359860Z ^[[36;1melse^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5360578Z ^[[36;1m  if [ -n "$CUSTOM" ]; then^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5361878Z ^[[36;1m    echo "::warning::指定了 rubric-path=$CUSTOM 但檔案不存在，退回 kit 內建版本"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5363011Z ^[[36;1m  fi^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5363993Z ^[[36;1m  echo "path=.kit/prompts/review-rubric.md" >> "$GITHUB_OUTPUT"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5365405Z ^[[36;1m  echo "使用 kit 內建 rubric"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5366257Z ^[[36;1mfi^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5427265Z shell: /usr/bin/bash -e {0}
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5428092Z env:
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5428737Z   CUSTOM: 
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5429387Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5511368Z 使用 kit 內建 rubric
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5642781Z ##[group]Run actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5644021Z with:
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5644890Z   name: ai-review-input
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5645643Z   run-id: 36239415325
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5652917Z   github-token: ***
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5653641Z   path: in
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5654351Z   merge-multiple: false
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5655325Z   repository: tznthou/deepseek-review-probe
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5656304Z   skip-decompress: false
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5657077Z   digest-mismatch: error
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.5657833Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.6747656Z Downloading single artifact
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.9437104Z Preparing to download the following artifacts:
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.9440953Z - ai-review-input (ID: 10904917797, Size: 2074, Expected Digest: sha256:5e507c463a170aa387d803a7c14d3d000822e2305f8a6d5b8ea36f386b46c928)
+post / review	UNKNOWN STEP	2026-09-26T11:37:59.9447126Z Downloading artifact '10904917797' from 'tznthou/deepseek-review-probe'
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.2118301Z Redirecting to blob download url: https://productionresultssa4.blob.core.windows.net/actions-results/f106cc3e-76b7-4807-872c-d03a50cd68bf/workflow-job-run-555a0fb9-5aea-5313-b2e9-596b65c4b767/artifacts/00b839b423ce11a391eaa2af3c2377433d7113cffd9796a8b428c1c3c024d465.zip
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.2120208Z Starting download of artifact to: /home/runner/work/deepseek-review-probe/deepseek-review-probe/in
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.3895739Z (node:2186) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.3897238Z (Use `node --trace-deprecation ...` to show where the warning was created)
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.3940059Z SHA256 digest of downloaded artifact is 5e507c463a170aa387d803a7c14d3d000822e2305f8a6d5b8ea36f386b46c928
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.3941317Z Artifact download completed successfully.
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.3941804Z Total of 1 artifact(s) downloaded
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.3945098Z Download artifact has finished successfully
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4090038Z ##[group]Run PR=$(gh api "repos/tznthou/deepseek-review-probe/commits/d7ace96e6a18ba10b01ae100b19d08e3c19bbe86/pulls" \
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4090789Z ^[[36;1mPR=$(gh api "repos/tznthou/deepseek-review-probe/commits/d7ace96e6a18ba10b01ae100b19d08e3c19bbe86/pulls" \^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4091286Z ^[[36;1m      --jq '.[0].number // empty')^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4091586Z ^[[36;1mif [ -z "$PR" ]; then^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4091972Z ^[[36;1m  echo "找不到對應 PR，結束"; echo "number=" >> "$GITHUB_OUTPUT"; exit 0^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4092307Z ^[[36;1mfi^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4092539Z ^[[36;1mecho "number=$PR" >> "$GITHUB_OUTPUT"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4092814Z ^[[36;1mecho "PR #$PR"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4154973Z shell: /usr/bin/bash -e {0}
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4155237Z env:
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4157466Z   GH_TOKEN: ***
+post / review	UNKNOWN STEP	2026-09-26T11:38:00.4157698Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0733390Z PR #1
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0773057Z ##[group]Run # 值一律走 env 再由 shell 展開，不要把 expression 直接內插進 run block
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0773490Z ^[[36;1m# 值一律走 env 再由 shell 展開，不要把 expression 直接內插進 run block^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0773867Z ^[[36;1mARGS=(--diff in/pr.diff --meta in/meta.json --rubric "$RUBRIC_PATH"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0774241Z ^[[36;1m      --out review.md --findings-out findings.json)^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0774727Z ^[[36;1mif [ "$TYPED_RULES" = "true" ]; then^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0775001Z ^[[36;1m  ARGS+=(--rules-dir .kit/prompts/rules)^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0775423Z ^[[36;1mfi^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0775669Z ^[[36;1mpython3 .kit/.github/scripts/deepseek_review.py "${ARGS[@]}"^[[0m
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0831800Z shell: /usr/bin/bash -e {0}
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0832065Z env:
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0832396Z   DEEPSEEK_API_KEY: ***
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0832612Z   DEEPSEEK_MODEL: deepseek-v4-pro
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0832849Z   RUBRIC_PATH: .kit/prompts/review-rubric.md
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0833082Z   TYPED_RULES: true
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0833307Z   REVIEW_BLOCKED_TERMS: 
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.0833497Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.1341558Z [info] 套用補充規則：github-workflows.md, python.md
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.1342613Z [info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 3521 字元、thinking=disabled、max_tokens=8192）
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7349392Z [error] HTTP 401: {"error":{"message":"Authentication Fails, Your api key: ****[遮蔽] is invalid (request_id: e1196c09-2211-4ebe-8006-05ee83ed66f9)","type":"authentication_error","param":null,"code":"invalid_request_error"}}
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7463176Z ##[error]Process completed with exit code 1.
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7528862Z ##[group]Run actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7529186Z with:
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7529361Z   name: ai-review-output
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7529572Z   path: review.md
+post / review	UNKNOWN STEP	findings.json
+post / review	UNKNOWN STEP	
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7529779Z   retention-days: 7
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7529960Z   if-no-files-found: warn
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7530153Z   compression-level: 6
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7530342Z   overwrite: false
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7530520Z   include-hidden-files: false
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7530721Z   archive: true
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.7530891Z ##[endgroup]
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.8611003Z Multiple search paths detected. Calculating the least common ancestor of all paths
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.8612707Z The least common ancestor is /home/runner/work/deepseek-review-probe/deepseek-review-probe. This will be the root directory of the artifact
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.8614942Z ##[warning]No files were found with the provided path: review.md
+post / review	UNKNOWN STEP	findings.json. No artifacts will be uploaded.
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.8790759Z Post job cleanup.
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9484974Z [command]/usr/bin/git version
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9521276Z git version 2.55.0
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9557259Z Temporarily overriding HOME='/home/runner/work/_temp/da22d4ec-37a3-414b-a511-0276957dca9a' before making global git config changes
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9558025Z Adding repository directory to the temporary git global config as a safe directory
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9561233Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/deepseek-review-probe/deepseek-review-probe/.kit
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9589504Z Removing SSH command configuration
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9594745Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9623062Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9821422Z Removing HTTP extra header
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9826418Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+post / review	UNKNOWN STEP	2026-09-26T11:38:01.9855148Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+post / review	UNKNOWN STEP	2026-09-26T11:38:02.0060674Z Removing includeIf entries pointing to credentials config files
+post / review	UNKNOWN STEP	2026-09-26T11:38:02.0067682Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+post / review	UNKNOWN STEP	2026-09-26T11:38:02.0098224Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+post / review	UNKNOWN STEP	2026-09-26T11:38:02.0422387Z Cleaning up orphan processes

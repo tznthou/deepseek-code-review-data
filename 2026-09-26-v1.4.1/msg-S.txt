@@ -1,0 +1,4 @@
+驗 v1.4.1（Phase S）：caller 暫時釘 @v1.4.1
+
+kit 內部的 action 改釘 commit SHA 之後的回歸：collect／code-review success、
+post 停在 401、log 裡下載的 action 全部是 SHA、reviewdog 的 LINT_NAME 走 env。

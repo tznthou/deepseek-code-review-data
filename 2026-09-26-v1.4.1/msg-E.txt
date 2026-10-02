@@ -1,0 +1,4 @@
+驗 v1.4.1（Phase E）：強制釘 SHA 之下重跑 E3
+
+sha_pinning_required=true。09-24 這組設定下 collect／code-review 在 Set up 就失敗、
+post skipped；v1.4.1 起 kit 內部全部是 SHA，預期三支都跑得到最後（post 停在 401）。
