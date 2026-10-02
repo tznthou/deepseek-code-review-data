@@ -1,0 +1,48 @@
+
+######## v02 + v05 ########
+[N=全部 LOO, strict] 成立 140 / 不成立 35
+   AUC confidence      0.876
+   AUC 一致性          0.891
+   AUC conf×一致性     0.913
+   AUC 一致性→conf     0.898
+[N=全部 LOO, lenient] 成立 156 / 不成立 19
+   AUC confidence      0.873
+   AUC 一致性          0.859
+   AUC conf×一致性     0.888
+   AUC 一致性→conf     0.871
+[N=3 抽樣, strict]（每標的 400 組，finding 會重複計入）
+   AUC confidence      0.876
+   AUC 一致性(0-2)     0.801
+   AUC 一致性→conf     0.904
+[N=3 抽樣, lenient]（每標的 400 組，finding 會重複計入）
+   AUC confidence      0.870
+   AUC 一致性(0-2)     0.782
+   AUC 一致性→conf     0.877
+[組成] 不成立（strict）的 finding，依所屬 item 的出現頻率分：
+   python  不成立 15 筆：持續性(≥50%跑)  8／零星  7  ｜ 成立 49 筆：持續性 49／零星  0
+   shell   不成立  8 筆：持續性(≥50%跑)  0／零星  8  ｜ 成立 61 筆：持續性 57／零星  4
+   probe   不成立 12 筆：持續性(≥50%跑)  8／零星  4  ｜ 成立 30 筆：持續性 27／零星  3
+
+######## v00 + v04 ########
+[N=全部 LOO, strict] 成立 132 / 不成立 23
+   AUC confidence      0.825
+   AUC 一致性          0.922
+   AUC conf×一致性     0.927
+   AUC 一致性→conf     0.922
+[N=全部 LOO, lenient] 成立 148 / 不成立 7
+   AUC confidence      0.833
+   AUC 一致性          0.928
+   AUC conf×一致性     0.930
+   AUC 一致性→conf     0.931
+[N=3 抽樣, strict]（每標的 400 組，finding 會重複計入）
+   AUC confidence      0.829
+   AUC 一致性(0-2)     0.876
+   AUC 一致性→conf     0.910
+[N=3 抽樣, lenient]（每標的 400 組，finding 會重複計入）
+   AUC confidence      0.840
+   AUC 一致性(0-2)     0.901
+   AUC 一致性→conf     0.915
+[組成] 不成立（strict）的 finding，依所屬 item 的出現頻率分：
+   python  不成立  9 筆：持續性(≥50%跑)  5／零星  4  ｜ 成立 54 筆：持續性 50／零星  4
+   shell   不成立  7 筆：持續性(≥50%跑)  0／零星  7  ｜ 成立 58 筆：持續性 55／零星  3
+   probe   不成立  7 筆：持續性(≥50%跑)  2／零星  5  ｜ 成立 20 筆：持續性 14／零星  6

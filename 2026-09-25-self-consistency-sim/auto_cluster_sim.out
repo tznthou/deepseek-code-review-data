@@ -1,0 +1,36 @@
+
+######## v02 + v05（strict）########
+現況（單次跑）:
+  python single_inline:  6.3筆 P=0.762 R=0.588 ｜ single_all:  6.4筆 P=0.766 R=0.600
+  shell  single_inline:  5.9筆 P=0.932 R=0.629 ｜ single_all:  6.9筆 P=0.884 R=0.700
+  probe  single_inline:  3.6筆 P=0.833 R=0.267 ｜ single_all:  4.2筆 P=0.714 R=0.267
+分群=oracle: cluster 混到不同 item 0/2761 (0.0%)，混到對錯兩種 0/2761 (0.0%)
+  python vote2:  6.1筆 P=0.807 R=0.617 ｜ tier_inline:  6.1筆 P=0.807 R=0.617 ｜ tier_all:  7.8筆 P=0.638 R=0.625
+  shell  vote2:  6.2筆 P=0.960 R=0.705 ｜ tier_inline:  6.1筆 P=0.959 R=0.696 ｜ tier_all:  9.1筆 P=0.766 R=0.857
+  probe  vote2:  3.8筆 P=0.755 R=0.272 ｜ tier_inline:  3.8筆 P=0.767 R=0.272 ｜ tier_all:  6.0筆 P=0.635 R=0.431
+分群=loc: cluster 混到不同 item 233/2879 (8.1%)，混到對錯兩種 110/2879 (3.8%)
+  python vote2:  6.3筆 P=0.803 R=0.617 ｜ tier_inline:  6.3筆 P=0.803 R=0.617 ｜ tier_all:  8.0筆 P=0.667 R=0.625
+  shell  vote2:  6.4筆 P=0.922 R=0.751 ｜ tier_inline:  6.3筆 P=0.928 R=0.743 ｜ tier_all:  8.4筆 P=0.828 R=0.857
+  probe  vote2:  3.2筆 P=0.807 R=0.294 ｜ tier_inline:  3.2筆 P=0.818 R=0.294 ｜ tier_all:  7.6筆 P=0.667 R=0.431
+分群=snippet: cluster 混到不同 item 101/3026 (3.3%)，混到對錯兩種 36/3026 (1.2%)
+  python vote2:  5.2筆 P=0.759 R=0.492 ｜ tier_inline:  5.2筆 P=0.759 R=0.492 ｜ tier_all:  9.8筆 P=0.716 R=0.625
+  shell  vote2:  6.3筆 P=0.947 R=0.708 ｜ tier_inline:  6.2筆 P=0.954 R=0.700 ｜ tier_all:  9.0筆 P=0.775 R=0.857
+  probe  vote2:  3.5筆 P=0.828 R=0.272 ｜ tier_inline:  3.4筆 P=0.838 R=0.272 ｜ tier_all:  6.4筆 P=0.597 R=0.431
+
+######## v00 + v04（strict）########
+現況（單次跑）:
+  python single_inline:  6.1筆 P=0.869 R=0.625 ｜ single_all:  6.3筆 P=0.857 R=0.625
+  shell  single_inline:  6.1筆 P=0.918 R=0.657 ｜ single_all:  6.5筆 P=0.892 R=0.686
+  probe  single_inline:  2.8筆 P=0.760 R=0.148 ｜ single_all:  3.0筆 P=0.741 R=0.185
+分群=oracle: cluster 混到不同 item 0/2424 (0.0%)，混到對錯兩種 45/2424 (1.9%)
+  python vote2:  5.8筆 P=0.881 R=0.625 ｜ tier_inline:  5.8筆 P=0.881 R=0.625 ｜ tier_all:  8.1筆 P=0.761 R=0.625
+  shell  vote2:  6.2筆 P=0.941 R=0.688 ｜ tier_inline:  6.2筆 P=0.941 R=0.688 ｜ tier_all:  8.6筆 P=0.801 R=0.799
+  probe  vote2:  2.5筆 P=0.794 R=0.135 ｜ tier_inline:  2.5筆 P=0.794 R=0.135 ｜ tier_all:  5.0筆 P=0.630 R=0.405
+分群=loc: cluster 混到不同 item 157/2389 (6.6%)，混到對錯兩種 145/2389 (6.1%)
+  python vote2:  5.9筆 P=0.859 R=0.625 ｜ tier_inline:  5.9筆 P=0.859 R=0.625 ｜ tier_all:  7.9筆 P=0.756 R=0.625
+  shell  vote2:  6.0筆 P=0.969 R=0.727 ｜ tier_inline:  6.0筆 P=0.969 R=0.727 ｜ tier_all:  8.0筆 P=0.890 R=0.799
+  probe  vote2:  2.1筆 P=0.801 R=0.135 ｜ tier_inline:  2.1筆 P=0.801 R=0.135 ｜ tier_all:  5.8筆 P=0.652 R=0.405
+分群=snippet: cluster 混到不同 item 88/2576 (3.4%)，混到對錯兩種 133/2576 (5.2%)
+  python vote2:  4.9筆 P=0.855 R=0.500 ｜ tier_inline:  4.9筆 P=0.860 R=0.500 ｜ tier_all:  9.7筆 P=0.818 R=0.625
+  shell  vote2:  6.2筆 P=0.941 R=0.688 ｜ tier_inline:  6.2筆 P=0.941 R=0.688 ｜ tier_all:  8.3筆 P=0.829 R=0.799
+  probe  vote2:  2.6筆 P=0.778 R=0.135 ｜ tier_inline:  2.6筆 P=0.778 R=0.135 ｜ tier_all:  4.9筆 P=0.633 R=0.405

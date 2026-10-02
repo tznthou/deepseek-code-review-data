@@ -1,0 +1,140 @@
+
+######## 資料：v02 + v05 ########
+
+=== python：10 次跑，A 類 8 項 ===
+item 出現頻率（次/總跑數）與標記：
+   A PY-A1                  10/10  valid
+   A PY-A2                  10/10  valid
+   A PY-A6                  10/10  valid
+   A PY-A7                  10/10  valid
+   A PY-A5                   8/10  valid
+     PY-K-classify           8/10  disputed
+     PY-B1                   3/10  disputed,invalid
+     PY-B2                   2/10  disputed
+     PY-K-token              1/10  disputed
+     PY-new-tokenleak        1/10  invalid
+兩兩 run 的 item 集合 Jaccard：平均 0.76（中位數 0.75，n=45）
+設定                    每次輸出cluster數   precision嚴格   precision寬鬆   A類recall   API呼叫
+單次跑（現況）                     6.30         0.762         0.968      0.600       1
+單次跑、只看≥0.7                  6.20         0.758         0.968      0.588       1
+3次聯集                        7.84         0.638         0.932      0.625       3
+3次取2                        6.12         0.807         0.990      0.617       3
+3次全中                        4.94         0.904         1.000      0.558       3
+5次取3                        6.08         0.822         1.000      0.625       5
+5次聯集                        8.69         0.575         0.911      0.625       5
+
+=== shell：10 次跑，A 類 7 項 ===
+item 出現頻率（次/總跑數）與標記：
+     SH-K-gitfail           10/10  valid
+   A SH-S1                  10/10  valid
+   A SH-S2                  10/10  valid
+   A SH-S5                  10/10  valid
+   A SH-S7                   8/10  valid
+   A SH-S3                   7/10  valid
+     SH-B2                   3/10  invalid
+   A SH-S6                   3/10  valid
+     SH-new-perf             2/10  invalid
+     SH-K-local              1/10  disputed
+   A SH-S4                   1/10  valid
+     SH-new-gitdir           1/10  disputed
+     SH-new-trim             1/10  invalid
+兩兩 run 的 item 集合 Jaccard：平均 0.65（中位數 0.67，n=45）
+設定                    每次輸出cluster數   precision嚴格   precision寬鬆   A類recall   API呼叫
+單次跑（現況）                     6.70         0.881         0.910      0.700       1
+單次跑、只看≥0.7                  5.80         0.931         0.931      0.629       1
+3次聯集                        9.14         0.766         0.831      0.857       3
+3次取2                        6.18         0.960         0.960      0.705       3
+3次全中                        4.78         0.998         0.998      0.538       3
+5次取3                        6.08         0.986         0.986      0.714       5
+5次聯集                       10.61         0.699         0.793      0.917       5
+
+=== probe：10 次跑，A 類 3 項 ===
+item 出現頻率（次/總跑數）與標記：
+     PR-X1                  10/10  valid
+     PR-X2                  10/10  valid
+     PR-B11                  8/10  invalid
+   A PR-A1                   7/10  valid
+     PR-X3                   2/10  valid
+   A PR-A2                   1/10  valid
+     PR-B5                   1/10  invalid
+     PR-X5                   1/10  disputed
+     PR-new-subject          1/10  invalid
+     PR-new-subprocess       1/10  invalid
+兩兩 run 的 item 集合 Jaccard：平均 0.63（中位數 0.60，n=45）
+設定                    每次輸出cluster數   precision嚴格   precision寬鬆   A類recall   API呼叫
+單次跑（現況）                     4.20         0.714         0.738      0.267       1
+單次跑、只看≥0.7                  3.60         0.833         0.833      0.267       1
+3次聯集                        6.03         0.635         0.685      0.431       3
+3次取2                        3.82         0.755         0.755      0.272       3
+3次全中                        2.76         0.831         0.831      0.097       3
+5次取3                        3.92         0.745         0.745      0.306       5
+5次聯集                        7.28         0.588         0.656      0.500       5
+
+######## 資料：v00 + v04 ########
+
+=== python：10 次跑，A 類 8 項 ===
+item 出現頻率（次/總跑數）與標記：
+   A PY-A1                  10/10  valid
+   A PY-A2                  10/10  valid
+   A PY-A5                  10/10  valid
+   A PY-A6                  10/10  valid
+   A PY-A7                  10/10  valid
+     PY-K-classify           5/10  disputed
+     PY-B1                   3/10  disputed
+     PY-new-fixprefix        2/10  valid
+     PY-K-argv               1/10  valid
+     PY-new-isoformat        1/10  disputed
+     PY-new-timeline         1/10  valid
+兩兩 run 的 item 集合 Jaccard：平均 0.75（中位數 0.71，n=45）
+設定                    每次輸出cluster數   precision嚴格   precision寬鬆   A類recall   API呼叫
+單次跑（現況）                     6.30         0.857         1.000      0.625       1
+單次跑、只看≥0.7                  6.10         0.869         1.000      0.625       1
+3次聯集                        8.06         0.761         1.000      0.625       3
+3次取2                        5.75         0.881         1.000      0.625       3
+3次全中                        5.09         0.982         1.000      0.625       3
+5次取3                        5.58         0.896         1.000      0.625       5
+5次聯集                        9.19         0.737         1.000      0.625       5
+
+=== shell：10 次跑，A 類 7 項 ===
+item 出現頻率（次/總跑數）與標記：
+   A SH-S1                  10/10  valid
+   A SH-S2                  10/10  valid
+   A SH-S7                  10/10  valid
+     SH-K-gitfail            9/10  valid
+   A SH-S5                   9/10  valid
+   A SH-S3                   7/10  valid
+     SH-B2                   3/10  invalid
+     SH-K-local              3/10  disputed
+     SH-B1                   1/10  invalid
+     SH-K-pipefail           1/10  valid
+   A SH-S4                   1/10  valid
+   A SH-S6                   1/10  valid
+兩兩 run 的 item 集合 Jaccard：平均 0.67（中位數 0.67，n=45）
+設定                    每次輸出cluster數   precision嚴格   precision寬鬆   A類recall   API呼叫
+單次跑（現況）                     6.50         0.892         0.938      0.686       1
+單次跑、只看≥0.7                  6.10         0.918         0.951      0.657       1
+3次聯集                        8.61         0.801         0.883      0.799       3
+3次取2                        6.18         0.941         0.970      0.688       3
+3次全中                        4.71         0.996         0.998      0.570       3
+5次取3                        6.08         0.973         0.986      0.702       5
+5次聯集                        9.83         0.763         0.856      0.857       5
+
+=== probe：9 次跑，A 類 3 項 ===
+item 出現頻率（次/總跑數）與標記：
+     PR-X2                   9/9  valid
+     PR-X1                   7/9  disputed,valid
+   A PR-A1                   4/9  valid
+     PR-B7                   2/9  invalid
+     PR-X5                   2/9  disputed
+   A PR-A2                   1/9  valid
+     PR-B11                  1/9  invalid
+     PR-new-oserror          1/9  valid
+兩兩 run 的 item 集合 Jaccard：平均 0.45（中位數 0.50，n=36）
+設定                    每次輸出cluster數   precision嚴格   precision寬鬆   A類recall   API呼叫
+單次跑（現況）                     3.00         0.741         0.889      0.185       1
+單次跑、只看≥0.7                  2.78         0.760         0.880      0.148       1
+3次聯集                        5.05         0.630         0.818      0.405       3
+3次取2                        2.49         0.794         0.967      0.135       3
+3次全中                        1.46         0.894         1.000      0.016       3
+5次取3                        2.36         0.865         1.000      0.119       5
+5次聯集                        6.33         0.598         0.780      0.516       5
