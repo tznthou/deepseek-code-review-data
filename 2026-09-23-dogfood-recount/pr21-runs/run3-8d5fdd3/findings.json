@@ -1,0 +1,35 @@
+[
+  {
+    "path": ".github/workflows/reusable-ai-review-post.yml",
+    "line": 188,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "secret 傳遞方式可能導致值未正確遮蔽",
+    "body": "在 `env:` 區塊中直接使用 `${{ secrets.REVIEW_BLOCKED_TERMS }}` 將 secret 傳入環境變數。GitHub Actions 會自動遮蔽 secret 的值，但若 secret 包含換行符，可能導致遮蔽失效或產生非預期行為。建議改用 `fromJSON` 或將 secret 寫入檔案後讀取，或確認 secret 格式符合預期。",
+    "existing_code": "REVIEW_BLOCKED_TERMS: ${{ secrets.REVIEW_BLOCKED_TERMS }}",
+    "evidence": "diff 中新增的 env 設定，直接將 secret 傳入環境變數。"
+  },
+  {
+    "path": ".github/scripts/deepseek_review.py",
+    "line": 211,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "blocked_terms_hits 效能問題：對每個詞重複掃描整個文字",
+    "body": "`blocked_terms_hits` 對每個詞都執行一次 `term in lowered`，若詞的數量多或文字很長，可能造成不必要的效能負擔。建議改用 Aho-Corasick 或正規表示式一次掃描，或至少先將文字轉為小寫一次。",
+    "existing_code": "for index, term in enumerate(terms, start=1):\n            if term in lowered:",
+    "evidence": "函式內對每個 term 執行子字串搜尋，時間複雜度為 O(n*m)。"
+  },
+  {
+    "path": ".github/scripts/deepseek_review.py",
+    "line": 190,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "load_blocked_terms 未處理可能的編碼問題",
+    "body": "從環境變數讀取的字串可能包含非 UTF-8 字元，但程式碼未處理解碼錯誤。若 secret 包含非預期編碼，可能導致例外。建議明確指定編碼或處理例外。",
+    "existing_code": "for line_no, line in enumerate((raw or \"\").splitlines(), start=1):",
+    "evidence": "直接使用 splitlines() 處理原始字串，未考慮編碼問題。"
+  }
+]

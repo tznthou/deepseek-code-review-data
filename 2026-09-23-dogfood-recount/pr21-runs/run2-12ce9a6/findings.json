@@ -1,0 +1,35 @@
+[
+  {
+    "path": ".github/workflows/reusable-ai-review-post.yml",
+    "line": 188,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "REVIEW_BLOCKED_TERMS 可能未正確傳遞至 Python 腳本",
+    "body": "在 `reusable-ai-review-post.yml` 中，`REVIEW_BLOCKED_TERMS` 被設定為環境變數，但後續的 `run` 區塊中，腳本執行時可能未正確引用該變數。請確認 `deepseek_review.py` 是透過 `env` 區塊取得該變數，且 shell 展開時有正確引用。若未正確傳遞，掃描功能將靜默失效。",
+    "existing_code": "REVIEW_BLOCKED_TERMS: ${{ secrets.REVIEW_BLOCKED_TERMS }}",
+    "evidence": "diff 中新增了 `REVIEW_BLOCKED_TERMS: ${{ secrets.REVIEW_BLOCKED_TERMS }}`，但未顯示後續 `run` 區塊如何使用該變數。"
+  },
+  {
+    "path": ".github/scripts/deepseek_review.py",
+    "line": 190,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "load_blocked_terms 對輸入型別假設過強",
+    "body": "`load_blocked_terms` 的參數型別標註為 `str | None`，但實際傳入的 `os.environ.get(...)` 可能回傳 `None` 或字串。函式內使用 `(raw or \"\").splitlines()` 處理，但若 `raw` 為非字串型別（例如意外傳入 bytes），會拋出例外。建議在函式開頭明確檢查型別或直接使用 `str(raw or \"\")`。",
+    "existing_code": "for line_no, line in enumerate((raw or \"\").splitlines(), start=1):",
+    "evidence": "函式參數型別標註為 `str | None`，但未防禦其他型別。"
+  },
+  {
+    "path": ".github/scripts/deepseek_review.py",
+    "line": 210,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "blocked_terms_hits 對 sections 的值未處理 None",
+    "body": "`blocked_terms_hits` 中對 `text` 使用 `(text or \"\").lower()`，但若 `text` 為非字串型別（例如 None 以外的 falsy 值），可能導致非預期行為。建議明確檢查 `isinstance(text, str)` 或直接使用 `str(text or \"\")`。",
+    "existing_code": "lowered = (text or \"\").lower()",
+    "evidence": "函式參數 `sections` 的型別為 `dict[str, str]`，但實際傳入的 `system_prompt` 與 `user_prompt` 可能為 None。"
+  }
+]
