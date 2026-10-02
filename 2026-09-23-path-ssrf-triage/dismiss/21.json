@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "輸出路徑來自環境變數 EVAL_SET_OUT，預設 tools/eval/eval_set.json。eval-filter.yml 沒設它、走預設值，本機是操作者自己。資料集的欄位不進檔案路徑。"}

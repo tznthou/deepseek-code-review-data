@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "load_text 的路徑來自 --diff／--meta／--rubric／--rules-dir：04 裡前兩個是寫死的 in/pr.diff、in/meta.json，--rubric 是 caller 的 rubric-path input 或 kit 內建檔；本機是操作者自己。artifact 內容只被讀、不組路徑。⚠️ 共用 helper：日後把不受信任的資料當路徑傳進來要重新評估。"}

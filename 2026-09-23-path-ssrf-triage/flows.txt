@@ -1,0 +1,174 @@
+#39 py/full-ssrf tools/eval/eval_filter.py:56
+  msg: The full URL of this request depends on a [user-provided value](1).
+  source[1]: tools/eval/eval_filter.py:45
+  source[None]: tools/eval/eval_filter.py:45
+  source[None]: tools/eval/eval_filter.py:57
+  flow0: eval_filter.py:45(ControlFlowNode for Attribute) → eval_filter.py:45(ControlFlowNode for Attribute()) → eval_filter.py:45(ControlFlowNode for BASE_URL) → eval_filter.py:57(ControlFlowNode for BASE_URL) → eval_filter.py:57(ControlFlowNode for BinaryExpr)
+
+#40 py/full-ssrf .github/scripts/deepseek_review.py:225
+  msg: The full URL of this request depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:226
+  flow0: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:614(ControlFlowNode for Attribute) → deepseek_review.py:218(ControlFlowNode for base_url) → deepseek_review.py:220(ControlFlowNode for url) → deepseek_review.py:226(ControlFlowNode for url)
+
+#14 py/path-injection tools/eval/build_eval_set.py:51
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/eval/build_eval_set.py:100
+  source[None]: tools/eval/build_eval_set.py:100
+  flow0: build_eval_set.py:100(ControlFlowNode for Attribute) → build_eval_set.py:100(ControlFlowNode for Attribute()) → build_eval_set.py:100(ControlFlowNode for cache) → build_eval_set.py:103(ControlFlowNode for cache) → build_eval_set.py:50(ControlFlowNode for cache_path) → build_eval_set.py:51(ControlFlowNode for cache_path)
+
+#15 py/path-injection tools/eval/build_eval_set.py:53
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/eval/build_eval_set.py:100
+  source[None]: tools/eval/build_eval_set.py:100
+  flow0: build_eval_set.py:100(ControlFlowNode for Attribute) → build_eval_set.py:100(ControlFlowNode for Attribute()) → build_eval_set.py:100(ControlFlowNode for cache) → build_eval_set.py:103(ControlFlowNode for cache) → build_eval_set.py:50(ControlFlowNode for cache_path) → build_eval_set.py:53(ControlFlowNode for cache_path)
+
+#16 py/path-injection tools/eval/build_eval_set.py:58
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/eval/build_eval_set.py:100
+  source[None]: tools/eval/build_eval_set.py:100
+  flow0: build_eval_set.py:100(ControlFlowNode for Attribute) → build_eval_set.py:100(ControlFlowNode for Attribute()) → build_eval_set.py:100(ControlFlowNode for cache) → build_eval_set.py:103(ControlFlowNode for cache) → build_eval_set.py:50(ControlFlowNode for cache_path) → build_eval_set.py:58(ControlFlowNode for cache_path)
+
+#21 py/path-injection tools/eval/build_eval_set.py:148
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/eval/build_eval_set.py:99
+  source[None]: tools/eval/build_eval_set.py:99
+  flow0: build_eval_set.py:99(ControlFlowNode for Attribute) → build_eval_set.py:99(ControlFlowNode for Attribute()) → build_eval_set.py:99(ControlFlowNode for out_path) → build_eval_set.py:148(ControlFlowNode for out_path)
+
+#17 py/path-injection tools/check-dsh-version.py:36
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/check-dsh-version.py:100
+  source[None]: tools/check-dsh-version.py:100
+  flow0: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:106(ControlFlowNode for Attribute) → check-dsh-version.py:33(ControlFlowNode for app) → check-dsh-version.py:34(ControlFlowNode for plist) → check-dsh-version.py:36(ControlFlowNode for plist)
+  flow1: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:106(ControlFlowNode for Attribute) → check-dsh-version.py:33(ControlFlowNode for app) → check-dsh-version.py:34(ControlFlowNode for app) → check-dsh-version.py:34(ControlFlowNode for Attribute()) → check-dsh-version.py:34(ControlFlowNode for plist) → check-dsh-version.py:36(ControlFlowNode for plist)
+
+#18 py/path-injection tools/check-dsh-version.py:47
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/check-dsh-version.py:100
+  source[None]: tools/check-dsh-version.py:100
+  flow0: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:108(ControlFlowNode for Attribute) → check-dsh-version.py:42(ControlFlowNode for app) → check-dsh-version.py:44(ControlFlowNode for asar) → check-dsh-version.py:47(ControlFlowNode for asar)
+  flow1: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:108(ControlFlowNode for Attribute) → check-dsh-version.py:42(ControlFlowNode for app) → check-dsh-version.py:44(ControlFlowNode for app) → check-dsh-version.py:44(ControlFlowNode for Attribute()) → check-dsh-version.py:44(ControlFlowNode for asar) → check-dsh-version.py:47(ControlFlowNode for asar)
+
+#19 py/path-injection tools/check-dsh-version.py:73
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/check-dsh-version.py:100
+  source[None]: tools/check-dsh-version.py:100
+  flow0: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:108(ControlFlowNode for Attribute) → check-dsh-version.py:42(ControlFlowNode for app) → check-dsh-version.py:45(ControlFlowNode for unpacked) → check-dsh-version.py:73(ControlFlowNode for Attribute())
+  flow1: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:108(ControlFlowNode for Attribute) → check-dsh-version.py:42(ControlFlowNode for app) → check-dsh-version.py:45(ControlFlowNode for app) → check-dsh-version.py:45(ControlFlowNode for Attribute()) → check-dsh-version.py:45(ControlFlowNode for unpacked) → check-dsh-version.py:73(ControlFlowNode for unpacked) → check-dsh-version.py:73(ControlFlowNode for Attribute())
+
+#20 py/path-injection tools/check-dsh-version.py:76
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/check-dsh-version.py:100
+  source[None]: tools/check-dsh-version.py:100
+  flow0: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:108(ControlFlowNode for Attribute) → check-dsh-version.py:42(ControlFlowNode for app) → check-dsh-version.py:44(ControlFlowNode for asar) → check-dsh-version.py:76(ControlFlowNode for asar)
+  flow1: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:108(ControlFlowNode for Attribute) → check-dsh-version.py:42(ControlFlowNode for app) → check-dsh-version.py:44(ControlFlowNode for app) → check-dsh-version.py:44(ControlFlowNode for Attribute()) → check-dsh-version.py:44(ControlFlowNode for asar) → check-dsh-version.py:76(ControlFlowNode for asar)
+
+#22 py/path-injection tools/check-dsh-version.py:102
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/check-dsh-version.py:100
+  source[None]: tools/check-dsh-version.py:100
+  flow0: check-dsh-version.py:100(ControlFlowNode for Attribute()) → check-dsh-version.py:100(ControlFlowNode for args) → check-dsh-version.py:102(ControlFlowNode for Attribute)
+
+#23 py/path-injection tools/eval/eval_filter.py:158
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/eval/eval_filter.py:151
+  source[None]: tools/eval/eval_filter.py:151
+  flow0: eval_filter.py:151(ControlFlowNode for Attribute()) → eval_filter.py:151(ControlFlowNode for args) → eval_filter.py:158(ControlFlowNode for Attribute)
+
+#24 py/path-injection tools/eval/eval_filter.py:160
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/eval/eval_filter.py:151
+  source[None]: tools/eval/eval_filter.py:151
+  flow0: eval_filter.py:151(ControlFlowNode for Attribute()) → eval_filter.py:151(ControlFlowNode for args) → eval_filter.py:160(ControlFlowNode for Attribute)
+
+#25 py/path-injection tools/eval/eval_filter.py:230
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/eval/eval_filter.py:228
+  source[None]: tools/eval/eval_filter.py:228
+  flow0: eval_filter.py:228(ControlFlowNode for Attribute) → eval_filter.py:228(ControlFlowNode for Attribute()) → eval_filter.py:228(ControlFlowNode for summary) → eval_filter.py:230(ControlFlowNode for summary)
+
+#26 py/path-injection tools/eval/eval_filter.py:233
+  msg: This path depends on a [user-provided value](1).
+  source[1]: tools/eval/eval_filter.py:151
+  source[None]: tools/eval/eval_filter.py:151
+  flow0: eval_filter.py:151(ControlFlowNode for Attribute()) → eval_filter.py:151(ControlFlowNode for args) → eval_filter.py:233(ControlFlowNode for Attribute)
+
+#27 py/path-injection .github/scripts/deepseek_review.py:142
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:119
+  flow0: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:554(ControlFlowNode for Attribute) → deepseek_review.py:135(ControlFlowNode for rules_dir) → deepseek_review.py:142(ControlFlowNode for rules_dir)
+
+#28 py/path-injection .github/scripts/deepseek_review.py:162
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:119
+  flow0: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:521(ControlFlowNode for Attribute) → deepseek_review.py:161(ControlFlowNode for path) → deepseek_review.py:162(ControlFlowNode for path)
+  flow1: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:533(ControlFlowNode for Attribute) → deepseek_review.py:161(ControlFlowNode for path) → deepseek_review.py:162(ControlFlowNode for path)
+  flow2: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:542(ControlFlowNode for Attribute) → deepseek_review.py:161(ControlFlowNode for path) → deepseek_review.py:162(ControlFlowNode for path)
+  flow3: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:554(ControlFlowNode for Attribute) → deepseek_review.py:135(ControlFlowNode for rules_dir) → deepseek_review.py:154(ControlFlowNode for Attribute()) → deepseek_review.py:161(ControlFlowNode for path) → deepseek_review.py:162(ControlFlowNode for path)
+
+#29 py/path-injection .github/scripts/deepseek_review.py:164
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:119
+  flow0: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:521(ControlFlowNode for Attribute) → deepseek_review.py:161(ControlFlowNode for path) → deepseek_review.py:164(ControlFlowNode for path)
+  flow1: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:533(ControlFlowNode for Attribute) → deepseek_review.py:161(ControlFlowNode for path) → deepseek_review.py:164(ControlFlowNode for path)
+  flow2: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:542(ControlFlowNode for Attribute) → deepseek_review.py:161(ControlFlowNode for path) → deepseek_review.py:164(ControlFlowNode for path)
+  flow3: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:554(ControlFlowNode for Attribute) → deepseek_review.py:135(ControlFlowNode for rules_dir) → deepseek_review.py:154(ControlFlowNode for Attribute()) → deepseek_review.py:161(ControlFlowNode for path) → deepseek_review.py:164(ControlFlowNode for path)
+
+#30 py/path-injection .github/scripts/deepseek_review.py:524
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:119
+  flow0: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:524(ControlFlowNode for Attribute)
+
+#31 py/path-injection .github/scripts/deepseek_review.py:526
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:119
+  flow0: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:526(ControlFlowNode for Attribute)
+
+#32 py/path-injection .github/scripts/deepseek_review.py:665
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:119
+  flow0: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:665(ControlFlowNode for Attribute)
+
+#33 py/path-injection .github/scripts/deepseek_review.py:667
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:119
+  source[None]: .github/scripts/deepseek_review.py:119
+  flow0: deepseek_review.py:119(ControlFlowNode for Attribute()) → deepseek_review.py:514(ControlFlowNode for parse_args()) → deepseek_review.py:514(ControlFlowNode for args) → deepseek_review.py:667(ControlFlowNode for Attribute)
+
+#34 py/path-injection .github/scripts/deepseek_review.py:673
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/deepseek_review.py:671
+  source[None]: .github/scripts/deepseek_review.py:671
+  flow0: deepseek_review.py:671(ControlFlowNode for Attribute) → deepseek_review.py:671(ControlFlowNode for Attribute()) → deepseek_review.py:671(ControlFlowNode for summary_path) → deepseek_review.py:673(ControlFlowNode for summary_path)
+
+#35 py/path-injection .github/scripts/post_review.py:186
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/post_review.py:176
+  source[None]: .github/scripts/post_review.py:176
+  flow0: post_review.py:176(ControlFlowNode for Attribute()) → post_review.py:180(ControlFlowNode for parse_args()) → post_review.py:180(ControlFlowNode for args) → post_review.py:186(ControlFlowNode for Attribute)
+
+#36 py/path-injection .github/scripts/post_review.py:189
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/post_review.py:176
+  source[None]: .github/scripts/post_review.py:176
+  flow0: post_review.py:176(ControlFlowNode for Attribute()) → post_review.py:180(ControlFlowNode for parse_args()) → post_review.py:180(ControlFlowNode for args) → post_review.py:189(ControlFlowNode for Attribute)
+
+#37 py/path-injection .github/scripts/post_review.py:196
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/post_review.py:176
+  source[None]: .github/scripts/post_review.py:176
+  flow0: post_review.py:176(ControlFlowNode for Attribute()) → post_review.py:180(ControlFlowNode for parse_args()) → post_review.py:180(ControlFlowNode for args) → post_review.py:196(ControlFlowNode for Attribute)
+
+#38 py/path-injection .github/scripts/post_review.py:197
+  msg: This path depends on a [user-provided value](1).
+  source[1]: .github/scripts/post_review.py:176
+  source[None]: .github/scripts/post_review.py:176
+  flow0: post_review.py:176(ControlFlowNode for Attribute()) → post_review.py:180(ControlFlowNode for parse_args()) → post_review.py:180(ControlFlowNode for args) → post_review.py:197(ControlFlowNode for Attribute)
+

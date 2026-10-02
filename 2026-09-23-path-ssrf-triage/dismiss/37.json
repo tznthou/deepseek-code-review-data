@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "路徑來自 --review／--findings／--diff：04 裡是 workflow 寫死的 review.md、findings.json、in/pr.diff。findings.json 的內容（模型輸出）只被解析，其中的 path 只當 API 參數貼留言，不拿來開檔。設值的人本來就有同等權限。"}

@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "URL 來自 --base-url／DEEPSEEK_BASE_URL，預設寫死 api.deepseek.com。04 兩者都沒設（reusable 不繼承 caller 的 env），固定走預設值；本機是操作者自己。能改這個值的人本來就拿得到 key。"}

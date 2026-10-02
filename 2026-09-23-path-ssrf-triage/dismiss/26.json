@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "--eval-set／--out 在 eval-filter.yml 沒有傳，走 tools/eval/ 下的預設路徑；本機是操作者自己。設值的人本來就有同等權限，不構成威脅。"}

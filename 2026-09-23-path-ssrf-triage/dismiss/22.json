@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "本機專用工具，沒有任何 workflow 呼叫它。--app 是操作者自己指定的 app 路徑（預設 /Applications/Cherry Studio.app），自己對自己做 path injection 不構成威脅。"}

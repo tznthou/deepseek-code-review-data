@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "rules_dir 來自 --rules-dir：04 裡是 workflow 寫死的 .kit/prompts/rules，本機是 review-local.sh 的 $SCRIPT_DIR/prompts/rules。diff 只決定從 RULE_MAP 挑哪個常數檔名，不進路徑字串。設值的人本來就有同等權限，不構成威脅。"}

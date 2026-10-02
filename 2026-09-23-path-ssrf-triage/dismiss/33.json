@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "輸出路徑來自 --out／--findings-out：04 裡是 workflow 寫死的 review.md、findings.json，本機是 review-local.sh 的 $TMPDIR 路徑。設值的人本來就有同等權限，不構成威脅。"}

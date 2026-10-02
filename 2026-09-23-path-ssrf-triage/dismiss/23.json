@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "--filter-prompt 在 eval-filter.yml 來自 workflow_dispatch input：能觸發 dispatch 的人要有 write 權限，本來就能直接改 workflow；本機是操作者自己。不構成權限提升。"}

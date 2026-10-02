@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "won't fix", "dismissed_comment": "BASE_URL 來自環境變數 DEEPSEEK_BASE_URL，預設寫死 api.deepseek.com；eval-filter.yml 沒設它，本機是操作者自己。能改這個值的人本來就拿得到 key。"}
