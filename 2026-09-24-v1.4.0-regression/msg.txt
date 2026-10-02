@@ -1,0 +1,10 @@
+ci: 觸發 v1.4.0 的回歸驗證
+
+v1 已經移到 v1.4.0（tag object 23023b4 → fa37001）。這次要驗：
+
+- collect、post 都解析到 @refs/tags/v1 (23023b4…)
+- kit checkout 到 fa37001（chore: 發布 v1.4.0 (#36)），也就是新的內建 rubric
+- collect、code-review success；post 停在 HTTP 401（假 key）
+- filter-findings no-op 的 warning 還在；沒有設 REVIEW_BLOCKED_TERMS 就不掃
+
+改動只有 app.py 結尾的一行註解。
