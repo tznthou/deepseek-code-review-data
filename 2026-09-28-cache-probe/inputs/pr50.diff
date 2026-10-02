@@ -1,0 +1,226 @@
+diff --git a/.github/scripts/deepseek_review.py b/.github/scripts/deepseek_review.py
+index dbc447e..47aaeb9 100755
+--- a/.github/scripts/deepseek_review.py
++++ b/.github/scripts/deepseek_review.py
+@@ -712,7 +712,7 @@ def main() -> int:
+     )
+ 
+     # repo 規範接在 diff 後面、補充規則前面（同實驗 v01 的順序）。到 diff 為止跟一般那次
+-    # 呼叫逐字相同，吃得到 context caching。
++    # 呼叫逐字相同（命中 context caching 的前提；2026-09-28 實測兩次只隔幾秒時幾乎沒有命中）。
+     rule_ids: dict[str, str] = {}
+     if args.repo_rules:
+         if not os.path.exists(args.repo_rules):
+diff --git a/.github/workflows/04-ai-review-post.yml b/.github/workflows/04-ai-review-post.yml
+index 054ba27..c0be787 100644
+--- a/.github/workflows/04-ai-review-post.yml
++++ b/.github/workflows/04-ai-review-post.yml
+@@ -39,12 +39,10 @@ permissions:
+ 
+ jobs:
+   post:
+-    # ⚠️ 暫釘 v1.5.0（kit-ref 一起）：v1 移動之前，先用真 API 驗一次 repo 規範那次呼叫
+-    #    （兩段式發版）。驗完改回 @v1，repo-rules-path 留著——本 repo 長期 dogfood 這個功能。
+-    uses: tznthou/deepseek-code-review/.github/workflows/reusable-ai-review-post.yml@v1.5.0
++    uses: tznthou/deepseek-code-review/.github/workflows/reusable-ai-review-post.yml@v1
+     with:
+-      kit-ref: v1.5.0
+-      # 本 repo 自己的規範檔：每個 PR 多一次呼叫，只留標了規範編號的 finding
++      # 本 repo 自己的規範檔（v1.5.0 起的 opt-in）：每個 PR 多一次呼叫，只留標了規範編號的
++      # finding。本 repo 長期 dogfood 這個功能。
+       repo-rules-path: .github/review-rules.md
+     secrets:
+       DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+diff --git a/.github/workflows/reusable-ai-review-post.yml b/.github/workflows/reusable-ai-review-post.yml
+index 1f3d220..a5ce5f9 100644
+--- a/.github/workflows/reusable-ai-review-post.yml
++++ b/.github/workflows/reusable-ai-review-post.yml
+@@ -223,7 +223,8 @@ jobs:
+ 
+       # repo 規範那次呼叫（caller 設了 repo-rules-path 才跑）。跟一般那次分開：同一次呼叫附整份
+       # 規範，功能缺陷的 recall 會掉（experiments/2026-09-26-rules-loop.md）。排在一般那次之後，
+-      # 到 diff 為止的前綴相同，吃得到 context caching。
++      # 到 diff 為止的前綴逐字相同（命中 context caching 的前提）；但 2026-09-28 實測兩次只隔幾秒，
++      # 規範那次幾乎沒有命中快取，原因沒查。
+       # 失敗要隔離：continue-on-error 讓一般 review 照貼；--timeout／--retries 和 timeout-minutes
+       # 把最壞耗時壓在幾分鐘內——預設參數最壞要 20 分鐘，會把 job 的額度吃光，連一般 review 都貼不出來。
+       # env 要跟一般那步一樣：secret 得逐步傳，漏了 REVIEW_BLOCKED_TERMS 規範那次就會安靜地不掃。
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 987d44b..28d71dc 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -11,6 +11,25 @@
+ 
+ ## [Unreleased]
+ 
++### Docs
++
++- `repo-rules-path` 的說明等 `v1` 移到 `v1.5.0` 之後才補：USAGE「客製」加一節（格式、送出什麼、
++  失敗隔離、合併、冪等的已知語意、`AGENTS.md` 為什麼不建議直接指過去），參數表加一列；README §2 步驟 5
++  與 §5「第三個方向」補上這個選項；rules-loop 實驗頁的「因此改了什麼」從「kit 目前沒改」改成
++  `v1.5.0` 起的做法。提早寫的話，`@v1` 還停在 `v1.4.1` 的期間照做的 caller 會 startup_failure。
++- README §7 疑難排解「caller 新傳一個 secret」那列擴成「secret 或 input」，並更正最後一句：原本寫
++  「或把 caller 的 `kit-ref` 釘到含該 secret 的版本」，但 `kit-ref` 只決定執行時 checkout 哪一版腳本，
++  認不認得這個 secret 或 input 看的是 `uses:` 那一版，要釘的是 `uses:`（`kit-ref` 一起）。
++- 本 repo 的 `04` 開了 `repo-rules-path`（`.github/review-rules.md`，本 repo 自己的規範 11 條），
++  長期 dogfood 這個功能；README §1 檔案總覽補上這個檔。
++- 更正 `v1.5.0` 程式註解裡「規範那次吃得到 context caching」的說法：到 diff 為止的前綴確實跟一般那次
++  逐字相同，但 2026-09-28 本 repo 真跑兩次，規範那次都只有 1,536 個 prompt token 命中快取（分別是
++  7,583 與 9,362 個裡；兩次呼叫只隔幾秒，原因沒查）。第一次的 API 費用：一般那次約 $0.012、
++  規範那次約 $0.010（尖峰價）。改的是
++  workflow 與 `deepseek_review.py` 的註解，行為沒變。
++- README §7 那列「`kit-ref` 一起」與「光改 `kit-ref` 救不了」寫清楚各自的角色：釘 `uses:` 才是解法，
++  `kit-ref` 是照慣例一起設（這個 PR 的 AI review 把兩句讀成互相矛盾）。
++
+ ## [1.5.0] - 2026-09-28
+ 
+ > **minor**：新增一個 opt-in 的 input（`repo-rules-path`），介面只加不減。沒設的 caller 不用改任何東西，
+diff --git a/README.md b/README.md
+index d10df35..edef50d 100644
+--- a/README.md
++++ b/README.md
+@@ -61,6 +61,7 @@ deepseek-code-review/                        # repo 根目錄——kit 就跑在
+ ├── .github/
+ │   ├── codeql/codeql-config.yml            # CodeQL 查詢設定（security-and-quality + local threat model）
+ │   ├── dependabot.yml                      # 每週檢查 action 更新（workflow 裡的 action 全部釘 commit SHA）
++│   ├── review-rules.md                     # 本 repo 自己的規範檔（04 的 repo-rules-path，dogfood）
+ │   ├── scripts/
+ │   │   ├── deepseek_review.py              # diff → DeepSeek → review.md + findings.json（純標準庫）
+ │   │   ├── locate.py                       # 行號由片段文字比對算出，不信模型自報的（見 §8）
+@@ -221,6 +222,8 @@ export DEEPSEEK_API_KEY=sk-xxxx
+ ⚠️ 禁區挑會被違反的幾條就好，別把整份規範檔貼進來。2026-09-26 在 Qodo PR-Review-Bench 的 31 個 PR 上量過：
+ 整份規範放進同一次呼叫，違反規則的抓到的比例從 7.8% 升到 18.7%，功能缺陷卻從 46.9% 降到 43.2%（盲標）。
+ 只挑幾條的代價沒量過。細節見[實測紀錄](experiments/2026-09-26-rules-loop.md)。
++要給整份規範檔，用 `repo-rules-path`（`v1.5.0` 起）：另外用一次呼叫，只留標了規範編號的 finding，
++功能缺陷不受影響。設定方式與規範檔的格式見 USAGE「客製」一節。
+ 
+ ### 步驟 6：設為 required status check
+ 
+@@ -673,7 +676,8 @@ fork PR ──▶ 03 collect（GITHUB_TOKEN 唯讀、零 secret、只產生 arti
+ 上面那張表問的是「外面的人能對我們做什麼」，下一節問的是「上游能對我們做什麼」。
+ 還有一個方向兩者都不包含——**我們主動送出去了什麼**。
+ 
+-這套工具每次跑都會把 **diff、PR 標題、rubric** 送到 DeepSeek 的 API。
++這套工具每次跑都會把 **diff、PR 標題、rubric** 送到 DeepSeek 的 API；設了 `repo-rules-path` 的話，
++規範檔的條目也會送出（`v1.5.0` 起的 opt-in，同樣在下面的禁用詞掃描範圍內）。
+ DeepSeek 的隱私政策明寫會用使用者輸入來訓練模型。對 public repo 來說那些內容本來就公開，
+ 但兩種東西即使在 public repo 裡也不該送出去：
+ 
+@@ -767,7 +771,7 @@ DeepSeek Harness 的 headless 模式在 CI 中沒有互動審批通道（會 fai
+ | **每個 step 都 success、`review.md` 完整，但 PR 上一則留言都沒有** | `gh pr` 子命令靠當前目錄的 git remote 推斷 repo，走 reusable 時工作目錄根沒有 git repo。`v1.0.2` 補上 `--repo` 修掉，並改成失敗時印 `::warning::`。若你複製的是舊版腳本，檢查 `gh pr review` 有沒有帶 `--repo` |
+ | log 出現 `重新定位 A → B` | 正常。行號由程式用程式碼片段比對算出，模型報的當備援——實測它報的行號 16 筆只有 1 筆真的指對。見 §8 |
+ | **改了 kit 自己的 code，PR 跑完全綠卻看不到效果** | 本 repo 的 `03`／`04` 引用 `@v1`，`.kit` checkout 的是**已發布版本**，PR 裡的改動一行都不會執行。而且 `04` 由 `workflow_run` 觸發、跑的是 default branch 的 workflow，所以連「在 branch 上改 `kit-ref`」都無效。要驗只能走發布流程：合併 → 打 tag → 移動 `v1` → 下一個 PR |
+-| **caller 新傳一個 secret，merge 進 default branch 之後 `04` 變成 `startup_failure`** | 你的 caller 引用 `@v1`，而那個 secret 是**還沒發版**的 reusable 才認識的。PR 上驗不到——`04` 由 `workflow_run` 觸發、跑的是 **default branch** 的 caller，merge 前那還是舊的。所以它只在「merge 後、發版前」這段窗口炸。**2026-09-22 本 repo 自己踩過**：`v1.3.0` 發版前的兩分鐘內，main 上的 `04` 是壞的。順序要反過來：**先發版，再讓 caller 傳新 secret**；或把 caller 的 `kit-ref` 釘到含該 secret 的版本 |
++| **caller 新傳一個 secret 或 input，merge 進 default branch 之後 `04` 變成 `startup_failure`** | 你的 caller 引用 `@v1`，而那個 secret 或 input 是**還沒發版**（或 `v1` 還沒移過去）的 reusable 才認識的。PR 上驗不到——`04` 由 `workflow_run` 觸發、跑的是 **default branch** 的 caller，merge 前那還是舊的。所以它只在「merge 後、發版前」這段窗口炸。**2026-09-22 本 repo 自己踩過**：`v1.3.0` 發版前的兩分鐘內，main 上的 `04` 是壞的。順序要反過來：**先等 `v1` 移到含它的版本，再讓 caller 傳**；或把 `uses:` 的 `@` 釘到含它的版本——這一步才是解法；照釘版本的慣例，`kit-ref` 也設成同一版（§5）。光改 `kit-ref` 救不了：它只決定執行時 checkout 哪一版腳本，認不認得這個 secret 或 input 看的是 `uses:` 那一版 |
+ | **run 是 `startup_failure`，`gh run view` 只說 "workflow file issue"** | CLI 看不到原因，`--log-failed` 也是空的。**到網頁上那個 run 頁面看 Annotations**。實際遇過的有三種：caller 漏了 `permissions:`（USAGE「四個最容易踩的坑」第 4 點）、caller 傳了 reusable 不認識的 input 或 secret（上一列）、repo 的 Actions 政策只允許自己帳號的 action（USAGE「第 2 步」最後一節，2026-09-24 實測）。是哪一種以 Annotations 為準；權限不足跟政策這兩種可以先用一個對照分：權限不足時只要讀權限的 collect 照樣跑得起來，政策擋下的連 collect 也起不來 |
+ | **job 在 Set up 就失敗，log 寫著 `… must be pinned to a full-length commit SHA`** | repo 或組織開了「強制 action 釘 SHA」，而你引用的是 `v1.4.0` 以前的版本：那時這套內部的 action 還是 tag 引用，caller 把 `@v1` 換成 SHA 也沒用（2026-09-24 實測）。**改用 `@v1`，或釘在 `v1.4.1` 以後（`kit-ref` 一起）**：`v1.4.1` 起內部全部釘 SHA（2026-09-26 實測）。見 USAGE「第 2 步」最後一節 |
+ | 05 卡在 approval / 工具被拒 | headless 無互動審批通道，屬預期行為。檢查是否誤讓 agent 需要寫入權限 |
+diff --git a/USAGE.md b/USAGE.md
+index cc708e5..e5ce2c2 100644
+--- a/USAGE.md
++++ b/USAGE.md
+@@ -391,6 +391,65 @@ The nested job 'review' is requesting 'actions: read, pull-requests: write', but
+ 照著 `prompts/review-rubric.md` 改。⚠️ **那份檔案整份就是 system prompt**——
+ 不要在裡面寫給人看的註解或元評論，它會進 prompt 並影響行為（實測過）。
+ 
++### （選用）整份規範檔：另外用一次呼叫（`v1.5.0` 起）
++
++rubric 適合放幾條「會被違反的禁區」。要讓它對照一整份規範檔，用 `repo-rules-path`：
++
++```yaml
++  post:
++    uses: tznthou/deepseek-code-review/.github/workflows/reusable-ai-review-post.yml@v1
++    with:
++      repo-rules-path: .github/review-rules.md
++    secrets:
++      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
++      REVIEW_BLOCKED_TERMS: ${{ secrets.REVIEW_BLOCKED_TERMS }}
++```
++
++設了之後每個 PR 多一次 API 呼叫：一般 review 完全不動，另外一次把規範接在 diff 後面，只留下標了
++規範編號（`[R03]`）的 finding，跟一般 review 合併貼出。沒標編號的丟掉，那些多半是一般 review 已經在報的
++程式問題。
++
++為什麼不直接塞進 rubric：2026-09-26 在 Qodo PR-Review-Bench 上量過，整份規範放進同一次呼叫，功能缺陷的
++recall 會掉；分開呼叫、只留標了編號的，違反規則的抓得多、功能缺陷不變
++（[實測紀錄](experiments/2026-09-26-rules-loop.md)）。那組違規是刻意注入的，真實 repo 裡的違規少很多，
++那個準度帶不走。
++
++規範檔的格式刻意簡單，不去理解自由文字：
++
++- 第 0 欄的 `- `（或 `* `）各算一條；後面縮排的行是它的續行
++- 條目在某個 `## ` 節裡的話，節標題會當分組標籤一起送
++- 沒有任何條目的 `## ` 節，整節算一條
++- 其他都不送：`# ` 大標、節外的散文、有條目的節裡不是條目的散文
++- 要 1–99 條；0 條或超過 99 條就整個跳過，印一行 warning
++
++```markdown
++## Python
++- 不要用 print，用 logger
++- 例外要帶 context
++## API 回應
++回應欄位一律用 camelCase，既有的 snake_case 欄位不要改。
++```
++
++這份會切成三條：「（Python）不要用 print，用 logger」、「（Python）例外要帶 context」、「API 回應」（整節）。
++`AGENTS.md` 這類寫給 agent 的檔案通常混著安裝步驟、指令說明，直接指過去會切出一堆不是規則的「規則」，
++建議另外整理一份。本 repo 自己的在 `.github/review-rules.md`。
++
++⚠️ **規範檔的條目會送給 DeepSeek**，跟 diff 一樣在禁用詞掃描的範圍內。檔案取自 default branch
++（跟自訂 rubric 一樣），不是 PR 的 head，所以 PR 改不了它。
++
++其他要知道的：
++
++- 規範那次失敗（API 錯、逾時、解析失敗、規範檔格式不對）不會擋一般 review，摘要會註明。它的最壞耗時
++  壓在約 4 分鐘內
++- 規範那次的 finding 落在一般 finding 的同檔 ±3 行內，兩則會併成一則留言；只有過得了行內門檻
++  （信心、嚴重度）的才會貼或併，其餘列在摘要的「違反 repo 規範」那一段
++- 冪等照舊只看 `(path, line)`：第二次 push 時，規範 finding 若落在上一輪已經留過言的那一行，
++  只會出現在摘要
++- 本機的 `review-local.sh` 只跑一般那次
++- 費用：每個 PR 多一次呼叫。到 diff 為止的前綴跟一般那次逐字相同，但 2026-09-28 本 repo 真跑兩次，
++  規範那次都只有 1,536 個 prompt token 命中快取（分別是 7,583 與 9,362 個裡；兩次呼叫只隔幾秒，
++  原因沒查）。第一次的 API 費用：一般那次約 $0.012、規範那次約 $0.010（尖峰價）
++
+ ---
+ 
+ ## 其他可調的地方
+@@ -422,6 +481,7 @@ The nested job 'review' is requesting 'actions: read, pull-requests: write', but
+ | `min-confidence` | `0.7` | 低於此信心的 finding 不貼 inline。內建 rubric 會直接告訴模型「0.7 以上貼成行內留言」，改了這個值，rubric 那句不會跟著變 |
+ | `max-inline` | `8` | 其餘降級進摘要 |
+ | `typed-rules` | `true` | 依 diff 涵蓋的檔案型態附加補充規則（目前有 GitHub workflow、Python 兩份）。**不增加 API 呼叫次數** |
++| `repo-rules-path` | `''` | 規範檔路徑（`v1.5.0` 起）。設了才開：每個 PR 多一次 API 呼叫，規範的條目會送給 DeepSeek。見上面「客製」一節 |
+ 
+ ### 曾經有一層「自動過濾誤報」，實測後移除了
+ 
+diff --git a/experiments/2026-09-26-rules-loop.md b/experiments/2026-09-26-rules-loop.md
+index 268e8bd..fec69ec 100644
+--- a/experiments/2026-09-26-rules-loop.md
++++ b/experiments/2026-09-26-rules-loop.md
+@@ -67,9 +67,11 @@
+ 
+ ## 因此改了什麼
+ 
+-kit 目前沒改。README §2 步驟 5 建議把專案禁區寫進 rubric，那也是放在同一次呼叫；這裡量的是整份規範檔，只挑幾條的代價沒量過，步驟 5 已經補上這一點。
++`v1.5.0` 起，「另外用一次呼叫、程式只留標了編號的」做成 opt-in 的 `repo-rules-path`（設定方式見 USAGE「客製」一節）。規範區塊的呈現逐字沿用這裡保留的那一版：Qodo 8 個 repo 的規範寫成 kit 的規範檔格式之後，送出去的區塊跟實驗逐字相同。
+ 
+-要把規範送進 prompt，等於多送一份 diff 以外的內容給 DeepSeek，採用前要先處理外送的問題（見 [README §5「第三個方向」](../README.md#第三個方向你自己送出去的東西)）。
++外送的問題用 opt-in 處理：預設關閉，caller 設了才送，文件寫明會送出（見 [README §5「第三個方向」](../README.md#第三個方向你自己送出去的東西)）。
++
++README §2 步驟 5 建議把專案禁區寫進 rubric，那是放在同一次呼叫；這裡量的是整份規範檔，只挑幾條的代價沒量過，步驟 5 已經補上這一點。
+ 
+ ## 沒公開的部分
+ 
+diff --git a/tools/selftest.py b/tools/selftest.py
+index 9d11330..7105922 100644
+--- a/tools/selftest.py
++++ b/tools/selftest.py
+@@ -861,7 +861,7 @@ def fake_completion(base_url, api_key, payload, timeout, retries):
+                 pos_typed = rules_user.find("## 這次改動涉及的檔案型態")
+                 check("順序：diff → repo 規範 → 補充規則（同 v01）", 0 < pos_diff < pos_rules < pos_typed, (pos_diff, pos_rules, pos_typed))
+                 common = os.path.commonprefix([normal_user, rules_user])
+-                # meta 與 diff 各一對 ``` ：到 diff 收尾為止兩次逐字相同，才吃得到 context caching
++                # meta 與 diff 各一對 ``` ：到 diff 收尾為止兩次逐字相同（命中快取的前提，不保證命中）
+                 check("到 diff 收尾為止兩次呼叫逐字相同", common.count("```") >= 4 and "value = compute()" in common, common[-80:])
+             kept = json.loads((tdp / "r.json").read_text(encoding="utf-8"))
+             check(

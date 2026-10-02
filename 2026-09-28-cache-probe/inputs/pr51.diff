@@ -1,0 +1,29 @@
+diff --git a/.github/review-rules.md b/.github/review-rules.md
+index 628ed3f..171eb5c 100644
+--- a/.github/review-rules.md
++++ b/.github/review-rules.md
+@@ -4,7 +4,7 @@
+ 每個 `- ` 條目算一條，`## ` 標題當分組；這段說明本身不會送出。
+ 
+ ## GitHub Actions workflow
+-- 外部 action 一律釘 40 字元的 commit SHA，行尾註解寫完整版本號（例如 `# v7.0.1`）。只寫 `# v7`、或版本號後面還接著別的字，Dependabot 換 SHA 時不會跟著更新註解
++- 第三方 action（`uses:` 指到別的 repo）一律釘 40 字元的 commit SHA，行尾註解寫完整版本號（例如 `# v7.0.1`）。只寫 `# v7`、或版本號後面還接著別的字，Dependabot 換 SHA 時不會跟著更新註解。本 repo 自己的 reusable workflow 用 tag 引用是刻意的，不在此限
+ - `run:` 區塊不直接內插 `${{ inputs.* }}`、PR 標題這類值；一律走 `env:`，在 shell 裡引用環境變數
+ - `run:` 區塊的註解裡不寫完整的 `${{ }}` expression：expression 在 shell 之前展開，`#` 註解擋不住
+ - secret 要在每個用到它的 step 的 `env:` 明確傳；漏傳不會報錯，只會變成空字串，功能安靜地失效
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 28d71dc..809790c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -29,6 +29,11 @@
+   workflow 與 `deepseek_review.py` 的註解，行為沒變。
+ - README §7 那列「`kit-ref` 一起」與「光改 `kit-ref` 救不了」寫清楚各自的角色：釘 `uses:` 才是解法，
+   `kit-ref` 是照慣例一起設（這個 PR 的 AI review 把兩句讀成互相矛盾）。
++- 本 repo 規範檔的 R01（外部 action 釘 SHA）收窄成「第三方 action（`uses:` 指到別的 repo）」，並寫明
++  本 repo 自己的 reusable workflow 用 tag 引用是刻意的、不在此限。#49 的 AI review 把原本的寫法套到
++  `uses: …/reusable-ai-review-post.yml@v1.5.0`（那個 PR 的 diff 正好帶著新加的規範檔）；發版驗證期間
++  `04` 暫釘 `@v1.x.y`、再改回 `@v1` 的 PR 都會帶到這行（v1.5.0 的 #49／#50）。範圍現在跟 selftest [18]
++  一致（它本來就只檢查 action），其他 10 條不變。
+ 
+ ## [1.5.0] - 2026-09-28
+ 
