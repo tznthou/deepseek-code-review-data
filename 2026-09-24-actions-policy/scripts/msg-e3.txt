@@ -1,0 +1,9 @@
+ci: 實測 E3——強制 action 釘到完整 commit SHA
+
+GitHub 文件寫：開了 sha_pinning_required 之後，所有 action 都要釘完整 SHA，
+但 reusable workflow 仍然可以用 tag 引用。
+
+這次要看的是：caller 用 @v1 引用 kit 沒問題，那 kit 裡面用 tag 引用的
+actions/checkout@v7 等，會不會照 caller 的政策被擋下。
+
+改動只有 app.py 結尾的一行註解。實測完 probe 的政策會還原成 all。
