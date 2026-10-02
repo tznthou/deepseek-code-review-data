@@ -1,0 +1,13 @@
+collect: (36368908309, 'success', '2026-09-28T02:12:17Z')
+code-review: (36368908498, 'success', '2026-09-28T02:12:17Z')
+post: (36368923468, 'failure', '2026-09-28T02:12:31Z')
+PASS F1
+PASS F2
+PASS F3
+PASS F4
+PASS F5
+PASS F6
+PASS F7
+PASS F8
+8/8
+post steps: {'Set up job': 'success', '提醒已停用的 input': 'success', '取得 kit（腳本與內建 rubric）': 'success', '取得呼叫方的自訂 rubric 與規範檔': 'skipped', '決定要用哪份 rubric': 'success', '決定規範檔': 'skipped', '下載不受信任 run 產生的 artifact': 'success', '用受信任的 API 反查 PR 編號（不直接相信 artifact 內容）': 'success', 'DeepSeek review（唯一跨越信任邊界的是「資料」）': 'failure', 'DeepSeek review（repo 規範）': 'skipped', '貼回 PR（摘要 + inline comments）': 'skipped', '上傳 review 產出（失敗時也能看，不含任何 secret）': 'success', 'Post 取得 kit（腳本與內建 rubric）': 'success', 'Complete job': 'success'}

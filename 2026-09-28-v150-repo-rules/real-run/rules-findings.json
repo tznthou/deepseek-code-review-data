@@ -1,0 +1,15 @@
+[
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 414,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R07] 直接存取 process.env.ENABLE_WEBHOOKS",
+    "body": "在 handleCancelBooking.ts 中直接讀取 `process.env.ENABLE_WEBHOOKS` 來決定是否發送 webhook，違反 R07（環境變數不得在非設定程式碼中直接存取）。這會導致：\n1. 測試困難，因為無法注入不同的環境變數值。\n2. 若環境變數未設定，`process.env.ENABLE_WEBHOOKS !== \"false\"` 會是 true，因此 webhook 仍會發送，但若未來有人設定為 \"0\" 或 \"off\" 等常見值，將無法停用。\n建議：將此設定透過依賴注入或集中式設定模組傳入，例如在建構子或參數中接收 `webhooksEnabled` 布林值。",
+    "existing_code": "const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";",
+    "evidence": "diff 中新增的這一行直接使用了 process.env，且位於業務邏輯函式 handler 內。",
+    "rule": "R07",
+    "rule_text": "**Environment Variables Must Not Be Accessed Directly in Non-Configuration Code** — 目的：Prevent runtime errors and improv"
+  }
+]

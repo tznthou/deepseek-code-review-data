@@ -1,0 +1,131 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 旨在讓 BOOKING_CANCELLED webhook 在一般取消與要求重新排程流程中具有一致的 payload，新增 requestReschedule 欄位，並補上 eventTypeId、length、iCalSequence、eventTitle 等資訊。主要風險在於 requestReschedule 的預設值不一致（v2021-10-20 builder 預設 true，而 BookingWebhookFactory 預設 false），可能導致下游系統誤判。此外，新增的 ENABLE_WEBHOOKS 環境變數若未設定，會改變現有行為（原本一律發送，現在可能不發送），需確認部署環境已正確設定。整體變更範圍明確，但需修正上述問題後再合併。
+
+### Findings（5 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| ⚠️ | Major | `packages/features/webhooks/lib/factory/versioned/v2021-10-20/BookingPayloadBuilder.ts:48` | requestReschedule 預設值不一致 | 0.90 |
+| ⚠️ | Major | `packages/features/bookings/lib/handleCancelBooking.ts:414` | 新增 ENABLE_WEBHOOKS 環境變數可能意外停用 webhook | 0.85 |
+| 🔸 | Minor | `packages/features/bookings/lib/handleCancelBooking.ts:423` | requestReschedule 硬編碼為 false | 0.70 |
+| 🔸 | Minor | `packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts:167` | requestReschedule 硬編碼為 true | 0.70 |
+| 🔸 | Minor | `packages/features/bookings/repositories/BookingRepository.ts:1662` | 新增 title 和 length 欄位可能影響效能 | 0.60 |
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/features/webhooks/lib/factory/versioned/v2021-10-20/BookingPayloadBuilder.ts:48</code> requestReschedule 預設值不一致</summary>
+
+在 v2021-10-20 的 builder 中，`requestReschedule` 使用 `dto.requestReschedule ?? true`，若 DTO 未提供此欄位，預設為 `true`。但在 `BookingWebhookFactory` 中，`requestReschedule` 預設為 `false`。這會導致同一事件在不同 webhook 版本中收到不同的預設值，可能造成下游系統誤判。建議統一預設值，或明確在 DTO 中必填此欄位。
+
+**判斷依據**：diff 中新增行：`requestReschedule: dto.requestReschedule ?? true,`，而 `BookingWebhookFactory.ts` 中新增行：`requestReschedule: params.requestReschedule ?? false,`
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/features/bookings/lib/handleCancelBooking.ts:414</code> 新增 ENABLE_WEBHOOKS 環境變數可能意外停用 webhook</summary>
+
+此處新增 `const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== "false";`，若環境變數未設定，則 `webhooksEnabled` 為 `true`，行為不變。但若部署環境中已存在 `ENABLE_WEBHOOKS=false`（例如用於其他目的），則會意外停用所有取消 booking 的 webhook，可能導致下游系統收不到通知。建議確認此環境變數名稱是否專用，或改用更明確的名稱，並在文件中說明。
+
+**判斷依據**：diff 中新增行：`const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== "false";`，且後續 `webhooks.map` 改為條件式。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>packages/features/bookings/lib/handleCancelBooking.ts:423</code> requestReschedule 硬編碼為 false</summary>
+
+在一般取消流程中，`requestReschedule` 被硬編碼為 `false`，這符合預期，但若未來有其他取消情境（例如由系統自動取消），可能需要動態判斷。目前無立即問題，但建議考慮將此值作為參數傳入，以增加彈性。
+
+**判斷依據**：diff 中新增行：`requestReschedule: false,`
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts:167</code> requestReschedule 硬編碼為 true</summary>
+
+在取消座位（cancelAttendeeSeat）流程中，`requestReschedule` 被硬編碼為 `true`。這可能不正確，因為取消座位不一定代表要求重新排程。建議確認此處的業務邏輯，若取消座位僅是取消單一與會者，應設為 `false`。
+
+**判斷依據**：diff 中新增行：`requestReschedule: true,`
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>packages/features/bookings/repositories/BookingRepository.ts:1662</code> 新增 title 和 length 欄位可能影響效能</summary>
+
+在 `bookingsSelect` 中新增 `title: true` 和 `length: true`，這會增加查詢的資料量。若此查詢用於大量 booking 的列表，可能造成不必要的 overhead。建議確認這些欄位是否真的必要，或考慮使用更精確的 select。
+
+**判斷依據**：diff 中新增行：`title: true,` 和 `length: true,`
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 6558 (cache hit 1536) ｜ completion tokens 1281 ｜ PR #11</sub>
+
+### 違反 repo 規範（1 筆）
+
+| 位置 | 規範 | 問題 | 信心 |
+|---|---|---|---|
+| `packages/features/bookings/lib/handleCancelBooking.ts:414` | R07 | [R07] 直接存取 process.env.ENABLE_WEBHOOKS | 0.90 |
+
+
+### 未張貼為 inline 的 finding
+
+- `packages/features/bookings/repositories/BookingRepository.ts:1662` **minor** — 新增 title 和 length 欄位可能影響效能（信心 0.60 < 0.7）
+
+[
+  {
+    "path": "packages/features/webhooks/lib/factory/versioned/v2021-10-20/BookingPayloadBuilder.ts",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "requestReschedule 預設值不一致",
+    "body": "在 v2021-10-20 的 builder 中，`requestReschedule` 使用 `dto.requestReschedule ?? true`，若 DTO 未提供此欄位，預設為 `true`。但在 `BookingWebhookFactory` 中，`requestReschedule` 預設為 `false`。這會導致同一事件在不同 webhook 版本中收到不同的預設值，可能造成下游系統誤判。建議統一預設值，或明確在 DTO 中必填此欄位。",
+    "existing_code": "requestReschedule: dto.requestReschedule ?? true,",
+    "evidence": "diff 中新增行：`requestReschedule: dto.requestReschedule ?? true,`，而 `BookingWebhookFactory.ts` 中新增行：`requestReschedule: params.requestReschedule ?? false,`"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 414,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "新增 ENABLE_WEBHOOKS 環境變數可能意外停用 webhook",
+    "body": "此處新增 `const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";`，若環境變數未設定，則 `webhooksEnabled` 為 `true`，行為不變。但若部署環境中已存在 `ENABLE_WEBHOOKS=false`（例如用於其他目的），則會意外停用所有取消 booking 的 webhook，可能導致下游系統收不到通知。建議確認此環境變數名稱是否專用，或改用更明確的名稱，並在文件中說明。",
+    "existing_code": "const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";",
+    "evidence": "diff 中新增行：`const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";`，且後續 `webhooks.map` 改為條件式。",
+    "merged_rules": [
+      {
+        "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+        "line": 414,
+        "side": "RIGHT",
+        "severity": "major",
+        "confidence": 0.9,
+        "title": "[R07] 直接存取 process.env.ENABLE_WEBHOOKS",
+        "body": "在 handleCancelBooking.ts 中直接讀取 `process.env.ENABLE_WEBHOOKS` 來決定是否發送 webhook，違反 R07（環境變數不得在非設定程式碼中直接存取）。這會導致：\n1. 測試困難，因為無法注入不同的環境變數值。\n2. 若環境變數未設定，`process.env.ENABLE_WEBHOOKS !== \"false\"` 會是 true，因此 webhook 仍會發送，但若未來有人設定為 \"0\" 或 \"off\" 等常見值，將無法停用。\n建議：將此設定透過依賴注入或集中式設定模組傳入，例如在建構子或參數中接收 `webhooksEnabled` 布林值。",
+        "existing_code": "const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";",
+        "evidence": "diff 中新增的這一行直接使用了 process.env，且位於業務邏輯函式 handler 內。",
+        "rule": "R07",
+        "rule_text": "**Environment Variables Must Not Be Accessed Directly in Non-Configuration Code** — 目的：Prevent runtime errors and improv"
+      }
+    ]
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "requestReschedule 硬編碼為 false",
+    "body": "在一般取消流程中，`requestReschedule` 被硬編碼為 `false`，這符合預期，但若未來有其他取消情境（例如由系統自動取消），可能需要動態判斷。目前無立即問題，但建議考慮將此值作為參數傳入，以增加彈性。",
+    "existing_code": "requestReschedule: false,",
+    "evidence": "diff 中新增行：`requestReschedule: false,`"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "requestReschedule 硬編碼為 true",
+    "body": "在取消座位（cancelAttendeeSeat）流程中，`requestReschedule` 被硬編碼為 `true`。這可能不正確，因為取消座位不一定代表要求重新排程。建議確認此處的業務邏輯，若取消座位僅是取消單一與會者，應設為 `false`。",
+    "existing_code": "requestReschedule: true,",
+    "evidence": "diff 中新增行：`requestReschedule: true,`"
+  }
+]

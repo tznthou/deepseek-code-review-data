@@ -1,0 +1,4 @@
+regression: v1.5.0 Phase F（移 v1 之後）
+
+caller 是原本的 @v1（= v1.5.0，沒設 repo-rules-path）。預期：collect、code-review success；
+post 停在 401；決定規範檔與規範那步 skipped；filter-findings no-op warning 1 行。
