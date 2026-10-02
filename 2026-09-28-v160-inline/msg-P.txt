@@ -1,0 +1,6 @@
+regression: v1.6.0 兩段式發版 Phase P
+
+caller 暫釘 @v1.6.0（kit-ref 一起），post 傳新 input inline-comments: true。
+預期：三支都不 startup_failure；collect、code-review success；post 的 kit checkout 是 v1.6.0，
+一般那步停在 401，撈 caller／決定規範檔／規範那步／貼回那步都 skipped；filter-findings no-op warning 1 行；
+action 全部 @SHA。

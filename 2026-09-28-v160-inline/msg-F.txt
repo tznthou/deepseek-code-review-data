@@ -1,0 +1,5 @@
+regression: v1.6.0 移 v1 之後 Phase F
+
+移 v1 之後，probe 原本的 caller（@v1、沒傳 inline-comments）自動跑到 v1.6.0。
+預期：三支都不 startup_failure；collect、code-review success；post 的 kit checkout 是 v1.6.0，
+一般那步停在 401；沒設 repo-rules-path 的三步都 skipped；filter-findings no-op warning 1 行。
