@@ -1,0 +1,72 @@
+=== ph-A1（arm A）開始 2026-10-01 07:56:04 UTC
+probe  run1 exit=0 findings=3 8.6s
+probe  run2 exit=0 findings=4 9.5s
+probe  run3 exit=0 findings=7 14.0s
+probe  run4 exit=0 findings=5 18.4s
+probe  run5 exit=0 findings=4 14.5s
+python run1 exit=0 findings=7 21.9s
+python run2 exit=0 findings=6 12.5s
+python run3 exit=0 findings=6 14.4s
+python run4 exit=0 findings=6 14.3s
+python run5 exit=0 findings=7 14.1s
+shell  run1 exit=0 findings=6 14.5s
+shell  run2 exit=0 findings=7 19.1s
+shell  run3 exit=0 findings=7 14.6s
+shell  run4 exit=0 findings=7 15.8s
+shell  run5 exit=0 findings=6 20.1s
+成功 15/15｜prompt 48160（cache hit 47360）｜completion 26762
+=== ph-A1 結束 2026-10-01 07:56:55 UTC
+=== ph-B1（arm B）開始 2026-10-01 07:56:55 UTC
+probe  run1 exit=0 findings=3 8.6s
+probe  run2 exit=0 findings=4 12.0s
+probe  run3 exit=0 findings=3 8.9s
+probe  run4 exit=0 findings=4 11.1s
+probe  run5 exit=0 findings=5 13.3s
+python run1 exit=0 findings=6 16.4s
+python run2 exit=0 findings=7 14.4s
+python run3 exit=0 findings=6 15.1s
+python run4 exit=0 findings=6 13.2s
+python run5 exit=0 findings=8 20.8s
+shell  run1 exit=0 findings=7 14.2s
+shell  run2 exit=0 findings=7 13.3s
+shell  run3 exit=0 findings=7 14.1s
+shell  run4 exit=0 findings=7 12.3s
+shell  run5 exit=0 findings=6 13.1s
+成功 15/15｜prompt 45920（cache hit 22784）｜completion 23595
+=== ph-B1 結束 2026-10-01 07:57:43 UTC
+=== ph-A2（arm A）開始 2026-10-01 07:57:43 UTC
+probe  run1 exit=0 findings=3 8.8s
+probe  run2 exit=0 findings=3 12.9s
+probe  run3 exit=0 findings=4 9.8s
+probe  run4 exit=0 findings=2 6.2s
+probe  run5 exit=0 findings=3 9.1s
+python run1 exit=0 findings=8 16.4s
+python run2 exit=0 findings=6 13.4s
+python run3 exit=0 findings=7 15.2s
+python run4 exit=0 findings=9 23.0s
+python run5 exit=0 findings=7 20.3s
+shell  run1 exit=0 findings=8 16.0s
+shell  run2 exit=0 findings=6 17.5s
+shell  run3 exit=0 findings=8 18.0s
+shell  run4 exit=0 findings=8 16.7s
+shell  run5 exit=0 findings=7 13.5s
+成功 15/15｜prompt 48160（cache hit 47360）｜completion 25825
+=== ph-A2 結束 2026-10-01 07:58:29 UTC
+=== ph-B2（arm B）開始 2026-10-01 07:58:29 UTC
+probe  run1 exit=0 findings=5 12.4s
+probe  run2 exit=0 findings=3 8.3s
+probe  run3 exit=0 findings=5 11.3s
+probe  run4 exit=0 findings=4 10.6s
+probe  run5 exit=0 findings=4 11.7s
+python run1 exit=0 findings=7 12.6s
+python run2 exit=0 findings=7 16.7s
+python run3 exit=0 findings=8 15.7s
+python run4 exit=0 findings=7 13.3s
+python run5 exit=0 findings=7 12.5s
+shell  run1 exit=0 findings=7 13.7s
+shell  run2 exit=0 findings=6 15.0s
+shell  run3 exit=0 findings=7 15.4s
+shell  run4 exit=0 findings=8 19.0s
+shell  run5 exit=0 findings=7 19.2s
+成功 15/15｜prompt 45920（cache hit 44800）｜completion 24567
+=== ph-B2 結束 2026-10-01 07:59:17 UTC

@@ -1,0 +1,21 @@
+code,item,label,reason
+R004,PR-X1,disputed,殘差推翻：說負數或零都會得到空列表；0 對，負數 -1 只丟一筆（同 M042）
+R006,PR-X2,disputed,殘差推翻：說 main 的 commits[0][0] 會 IndexError 崩潰；第 120 行先回 0
+R007,PR-X2,disputed,殘差推翻：同 R006，說 commits[0] 會 IndexError
+R009,PR-X2,disputed,殘差推翻：同 R006
+R011,PR-X2,disputed,殘差推翻：同 R006
+R014,NONE,invalid,殘差推翻：講 tags.index 的 ValueError，第 115 行已擋、它自己也推到這一步；沒講第一個 tag 的問題（同 M006）
+R018,PR-A1,disputed,殘差推翻：機制對（第一個 tag 取到 tags[-1]）；後果寫錯：說會包含所有 commit，實際範圍為空（同 M051）
+R024,PR-X2,disputed,殘差推翻：同 R006，說會 IndexError crash
+R027,PR-X1,disputed,殘差推翻：說負數會回傳空 list、再讓 commits[0][0] 出錯，兩個後果都錯
+R030,PR-X2,disputed,殘差推翻：同 R006
+R031,PR-X1,disputed,殘差推翻：說負數會得到全部 commit；實際是少 n 筆（同 M058）
+R040,PR-X2,disputed,殘差推翻：兩個後果（commits[0] IndexError、不完整的 release notes）都錯；失敗時第 120 行先回 0
+R045,PR-X2,disputed,殘差推翻：同 R006
+R048,PR-X1,disputed,殘差推翻：失敗情境說 -1 會納入所有 commit；實際少最舊一筆（同 M058）
+R051,PR-X2,disputed,殘差推翻：同 R006
+R054,PR-X2,disputed,殘差推翻：同 R006
+R056,PR-X2,disputed,殘差推翻：同 R006
+R058,PR-X2,disputed,殘差推翻：同 R006
+R059,PR-X1,disputed,殘差推翻：0 只剩標題對；但說負數也會變空 list 是錯的（同 R004）
+R060,NONE,invalid,殘差推翻：同 R014，講 ValueError、沒講第一個 tag

@@ -1,0 +1,104 @@
+code,item,label,reason
+M001,SH-S1,valid,$name 內插進 SQL；順帶說 branch 也能注入是錯的（regex 排除單引號），不影響主張
+M002,PY-A2,valid,seen=[] 跨呼叫共用、第 32 行真的 append
+M003,PR-X5,disputed,設定檔是合法 JSON 但不是物件時 AttributeError；設定檔由操作者維護（照前例）
+M004,PY-B1,disputed,承認空列表已處理；改報 created_at 缺欄位與時間格式
+M005,SH-S1,valid,$name 內插進 SQL；有注意到 branch 已驗證
+M006,PY-A2,valid,seen=[] 跨呼叫累積
+M007,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+M008,SH-S1,valid,$name 內插進 SQL；順帶說 branch 也能注入是錯的，不影響主張
+M009,PY-new-timeline,valid,PR 端點沒有 timeline 欄位，延遲永遠為 0
+M010,PR-A1,valid,標題說 IndexError 錯，body 主軸正確：最早的 tag 取到 tags[-1]、範圍錯誤或空列表
+M011,PR-new-oserror,valid,PermissionError、IsADirectoryError 沒接、直接 crash（照 v04 前例）
+M012,PY-A3,valid,"_fetch 失敗回 None，第 32 行直接 pr[""user""]"
+M013,PY-B1,invalid,主張 events 為 None 會 TypeError：not None 為真、第 39 行直接 return 0（PY-B1 規則）；順序那點是附帶
+M014,PR-A1,valid,標題說 IndexError 錯，body 主軸正確：第一個 tag 取到 tags[-1]、不是預期的前一版
+M015,PY-B1,disputed,承認空列表已檢查；改報 created_at 缺欄位
+M016,PR-X1,valid,負數時 commits[:-1] 排除最後一個，後果寫對
+M017,SH-S2,valid,eval 的 $repo 來自目錄名
+M018,PR-new-maxcap,invalid,切片超過長度只回傳整個 list，不會建立巨大 list
+M019,SH-B1,invalid,承認驗證不允許空格，卻說 branch 可能含 *；第 16 行 regex 正好排除 glob（照 v04 前例）
+M020,PR-X1,disputed,主張沒檢查範圍屬實；主句的對應寫反（-1→空列表、0→全部），括號裡的解釋才對（照 v00 前例）
+M021,SH-S1,valid,$name 內插進 SQL；順帶說 branch 也能注入是錯的，不影響主張
+M022,PY-B2,disputed,一半是陷阱（承認 default 沒被修改還是報、建議改 None），一半是真的 A5（照 v05 前例）
+M023,PR-A1,valid,第一個 tag 時 prev 是自己、範圍為空、印「沒有新 commit」回 0；後果寫對
+M024,PR-X1,disputed,負數排除最後 n 筆屬實；但說 NOTES_MAX=0 時 main 取 commits[0] 會崩潰是錯的，commits[0] 取自沒切片的 list
+M025,PY-A2,valid,seen=[] 跨呼叫累積
+M026,PY-new-archivecheck,valid,subprocess.run 沒檢查回傳值，tar 失敗照樣回報成功（同第一批 M044）
+M027,PY-A2,valid,seen=[] 跨呼叫累積
+M028,PR-X1,valid,負數沒檢查屬實；「可能回傳空列表」在負數絕對值大於 commit 數時成立，沒寫錯
+M029,PR-X5,disputed,設定檔不是物件時 AttributeError；設定檔由操作者維護（照前例）
+M030,SH-S3,valid,ahead 為空時 -gt 失敗（沒說中止）、SQL 型別不符
+M031,SH-S3,valid,ahead 為空時 -gt 失敗、SQL 插入錯誤；沒說中止
+M032,PY-B1,disputed,沒報空列表的問題，改報事件順序不保證（照前例 S04：改報缺欄位或順序 → disputed）
+M033,PR-X1,disputed,負數少最後一筆屬實；但說 0 時 latest = commits[0][0] 會 IndexError 是錯的，commits[0] 取自沒切片的 list
+M034,PY-A1,valid,裸 except 吞例外、下游 TypeError
+M035,PY-A2,valid,seen=[] 跨呼叫累積
+M036,SH-S3,invalid,說 -gt 會「終止腳本」；實際報錯、分支不執行、腳本繼續（09-21 預登記：說中止算錯）
+M037,PY-B2,disputed,一半是陷阱（承認 default 沒被修改還是報），一半是真的 A5（照 v05 前例）
+M038,PY-A2,valid,seen=[] 跨呼叫累積
+M039,PR-new-respbody,disputed,沒檢查回應內容的形狀存在；但它舉的 Slack 情境走不到：incoming webhook 失敗會回非 2xx，不是 200 帶錯誤
+M040,SH-new-globals,invalid,依賴全域變數是可測試性的風格意見，不是缺陷
+M041,PR-X1,valid,0 時公告沒有內容屬實；「或拋出例外」是多加的可能性，不影響主張（同第一批 M108）
+M042,PR-X1,disputed,主張沒檢查範圍屬實；後果寫錯：說負數會回傳空 list，實際 -1 只丟最後一筆
+M043,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+M044,PY-B1,disputed,承認空列表已處理；改報事件順序
+M045,PY-A2,valid,seen=[] 跨呼叫累積
+M046,PY-A1,valid,裸 except 吞例外、下游 TypeError
+M047,SH-S7,valid,for d in $(ls)
+M048,PY-A1,valid,裸 except 吞例外、下游 TypeError
+M049,PY-B1,disputed,主軸是改報 created_at 缺欄位（承認空列表回 0）；附帶說 None 會走到 events[0] 是錯的（not None 為真、直接回 0）
+M050,PY-B1,disputed,沒報空列表的問題，改報事件缺 created_at（照前例 S04）
+M051,PY-A2,valid,seen=[] 跨呼叫累積
+M052,PY-new-csv,disputed,沒用 csv 模組的形狀存在；author 是 GitHub login、latency 是整數、kind 是固定字串，格式破壞與 CSV 注入都走不到（照 v03 前例）
+M053,PR-A1,valid,第一個 tag 取到 tags[-1]「而不是拋出錯誤」、範圍錯誤；「可能讓 git log 失敗」是多加的推測，不影響主張
+M054,PR-new-oserror,valid,PermissionError、UnicodeDecodeError 沒接、直接 crash（照 v04 前例）
+M055,SH-new-summary0,invalid,log 為空時印「共 0 筆」是正確資訊，不是誤導
+M056,SH-S1,valid,$name 內插進 SQL；有注意到 branch 已驗證
+M057,PY-A2,valid,seen=[] 跨呼叫累積
+M058,PR-X1,disputed,主張沒檢查範圍屬實；後果寫錯：說負數會得到全部元素，實際是少掉 n 筆
+M059,SH-S1,valid,$name 內插進 SQL；順帶說 branch 也能注入是錯的，不影響主張
+M060,PY-new-timeline,valid,PR 端點沒有 timeline 欄位，延遲永遠為 0；順帶說將來可能 KeyError 是錯的，不影響主張
+M061,PR-A1,disputed,條件找對（第一個 tag）、修法也對；後果寫錯：說 tags[0-1] 會 IndexError 崩潰，實際取到最後一個 tag、靜默回 0
+M062,PR-A1,valid,標題說 IndexError 錯，body 主軸正確：最早的 tag 取到 tags[-1]、比較範圍錯誤
+M063,PY-A1,valid,裸 except 吞例外、下游 TypeError
+M064,PR-A1,disputed,條件找對（第一個 tag）、修法也對；後果寫錯：說 tags[0-1] 會 IndexError crash，實際取到最後一個 tag、靜默回 0
+M065,PY-A1,valid,裸 except 吞例外、下游崩潰
+M066,PY-K-token,disputed,沒設 GITHUB_TOKEN 會 KeyError 屬實；但說會被 except pass 吞掉是錯的（第 21 行在 try 外），token 外洩的情境也只是假設（照 v02 前例）
+M067,PY-B2,disputed,一半是陷阱（承認 default 沒被修改還是報），一半是真的 A5（照 v05 前例）
+M068,PY-A2,valid,seen=[] 跨呼叫累積
+M069,PY-B1,disputed,承認空列表回 0；改報 created_at 缺欄位與單一事件
+M070,PY-A1,valid,裸 except 吞例外、下游 TypeError
+M071,PY-B1,disputed,承認空列表回 0；改報 created_at 缺欄位
+M072,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+M073,PY-new-fixprefix,valid,"startswith(""fix"") 沒有字界、fixed／fixing 會被算成 fix，屬實；例子用大寫 Fixed 其實對不到，不影響主張（照 v00 前例）"
+M074,SH-S7,valid,for d in $(ls)
+M075,PY-A1,valid,裸 except 吞例外、下游崩潰
+M076,PY-new-fixprefix,valid,"startswith(""fix"") 會把 fixation 算成 fix；陳述屬實、影響小（照 v00 前例）"
+M077,PR-B7,invalid,自己承認 HTTPError 會被接住、行為正確；只建議分開捕捉以改善訊息，不是缺陷
+M078,PY-A1,valid,裸 except 吞例外（含 KeyboardInterrupt）、下游 TypeError
+M079,PR-B7,invalid,自己推論 4xx/5xx 會被接住；「自訂 handler 不丟例外」是這份 code 沒有的情境
+M080,PY-A1,valid,裸 except 吞例外、下游 TypeError
+M081,PR-new-maxcap,invalid,NOTES_MAX 設很大是操作者自己的設定；切片不會造成記憶體壓力
+M082,PY-A1,valid,裸 except 吞例外、下游 TypeError
+M083,PY-B1,disputed,主軸是改報 created_at 缺欄位（承認空列表回 0）；附帶說 None 會走到 events[0] 是錯的
+M084,PY-A2,valid,seen=[] 跨呼叫累積
+M085,PR-A1,valid,標題說 IndexError 錯，body 主軸正確：取到最後一個 tag「而不是拋出錯誤」、範圍錯誤
+M086,SH-S1,valid,$name 內插進 SQL；順帶說 branch 也能注入是錯的，不影響主張
+M087,PY-A2,valid,seen=[] 跨呼叫累積
+M088,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+M089,PR-B7,invalid,說 HTTPError 被接住、回 False 會讓呼叫端「誤以為失敗」；非 2xx 本來就是失敗，主張不成立
+M090,PR-A1,valid,第一個 tag 取到最後一個 tag「而不是報錯」、範圍錯誤
+M091,PY-A1,valid,裸 except 吞例外、下游 TypeError
+M092,PY-A2,valid,seen=[] 跨呼叫累積
+M093,SH-S3,valid,ahead 為空時 -gt 失敗（沒說中止）、SQL 語法錯誤
+M094,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+M095,SH-S7,valid,for d in $(ls)
+M096,PR-X4,valid,只接 URLError、逾時等其他例外會直接 crash 屬實（X4）；它對 TimeoutError 與 URLError 關係的解釋寫錯，不影響主張
+M097,PR-A1,disputed,標題的條件（清單為空）錯、body 開頭也沒提第 115 行已擋；後半講到第一個 tag 取到 tags[-1] 正確（照 v03 前例）
+M098,PY-A2,valid,seen=[] 跨呼叫累積
+S006,NONE,invalid,抽查推翻自動標記：講的是 tags.index 的 ValueError，第 115 行已擋、它自己也推到這一步；沒講到第一個 tag 取到 -1（同第一批 M006）
+S007,PR-X1,disputed,抽查推翻自動標記：負數排除最後一筆屬實；但說 0 時 latest = commits[0][0] 會 IndexError 是錯的（同 M033）
+S011,PR-X2,disputed,抽查推翻自動標記：returncode 沒檢查屬實；但說 main 取 commits[0][0] 會 IndexError 是錯的，第 120 行先回 0
+S026,SH-new-trimcount,disputed,抽查推翻自動標記：不是 B2；截斷後訊息的筆數跟 log 內容對不上，屬實但影響小
+S027,PR-X2,disputed,抽查推翻自動標記：returncode 沒檢查屬實；但說會發布錯誤的公告是錯的，空列表在第 120 行就回 0、不會貼文

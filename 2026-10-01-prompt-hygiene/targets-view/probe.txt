@@ -1,0 +1,135 @@
+   1  """release notes 產生器：整理兩個 tag 之間的 commit，貼到團隊頻道的 webhook。
+   2  
+   3  用法：
+   4      export NOTES_WEBHOOK=https://hooks.example.com/services/T000/B000/XXXX
+   5      python3 sandbox/release_notes.py <repo 路徑> <tag>
+   6  """
+   7  
+   8  from __future__ import annotations
+   9  
+  10  import json
+  11  import os
+  12  import re
+  13  import subprocess
+  14  import sys
+  15  import urllib.error
+  16  import urllib.request
+  17  
+  18  TAG_RE = re.compile(r"^v\d+\.\d+\.\d+$")
+  19  DEFAULT_MAX = 50
+  20  LABELS = {"feat": "新功能", "fix": "修正", "other": "其他"}
+  21  
+  22  
+  23  def log(msg: str) -> None:
+  24      print(msg, file=sys.stderr, flush=True)
+  25  
+  26  
+  27  def load_config(path: str) -> dict:
+  28      # 設定檔是選配的：沒有就全部用預設值
+  29      try:
+  30          with open(path, encoding="utf-8") as fh:
+  31              return json.load(fh)
+  32      except FileNotFoundError:
+  33          return {}
+  34      except json.JSONDecodeError as e:
+  35          raise SystemExit(f"設定檔 {path} 不是合法的 JSON：{e}")
+  36  
+  37  
+  38  def max_items() -> int:
+  39      raw = os.environ.get("NOTES_MAX", "")
+  40      if not raw:
+  41          return DEFAULT_MAX
+  42      try:
+  43          return int(raw)
+  44      except ValueError:
+  45          log(f"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}")
+  46          return DEFAULT_MAX
+  47  
+  48  
+  49  def list_tags(repo: str) -> list[str]:
+  50      out = subprocess.run(
+  51          ["git", "tag", "--list", "v*", "--sort=v:refname"],
+  52          cwd=repo, capture_output=True, text=True, check=True,
+  53      ).stdout
+  54      return [t for t in out.splitlines() if TAG_RE.match(t)]
+  55  
+  56  
+  57  def commits_between(repo: str, prev: str, tag: str) -> list[tuple[str, str]]:
+  58      proc = subprocess.run(
+  59          ["git", "log", "--format=%h %s", f"{prev}..{tag}"],
+  60          cwd=repo, capture_output=True, text=True,
+  61      )
+  62      commits = []
+  63      for line in proc.stdout.splitlines():
+  64          if " " not in line:
+  65              continue
+  66          sha, subject = line.split(" ", 1)
+  67          commits.append((sha, subject))
+  68      return commits
+  69  
+  70  
+  71  def group(commits: list[tuple[str, str]]) -> list[tuple[str, list[str]]]:
+  72      groups: dict[str, list[str]] = {kind: [] for kind in LABELS}
+  73      for sha, subject in commits:
+  74          prefix = subject.split(":", 1)[0]
+  75          kind = prefix if prefix in groups else "other"
+  76          groups[kind].append(f"{subject} ({sha})")
+  77      return [(LABELS[k], items) for k, items in groups.items() if items]
+  78  
+  79  
+  80  def render(title: str, sections, footer=[]) -> str:
+  81      lines = [title]
+  82      for label, items in sections:
+  83          lines.append(f"\n{label}")
+  84          lines += [f"• {item}" for item in items]
+  85      lines += footer
+  86      return "\n".join(lines)
+  87  
+  88  
+  89  def post(url: str, text: str) -> bool:
+  90      body = json.dumps({"text": text}).encode()
+  91      req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+  92      # 不重試：webhook 端沒有冪等鍵，重送一次頻道裡就會出現兩則一樣的公告
+  93      try:
+  94          with urllib.request.urlopen(req, timeout=10) as resp:
+  95              return 200 <= resp.status < 300
+  96      except urllib.error.URLError as e:
+  97          log(f"[error] 貼到 {url} 失敗：{e}")
+  98          return False
+  99  
+ 100  
+ 101  def main() -> int:
+ 102      if len(sys.argv) != 3:
+ 103          log("用法：release_notes.py <repo 路徑> <tag>")
+ 104          return 2
+ 105      repo, tag = sys.argv[1], sys.argv[2]
+ 106      if not TAG_RE.match(tag):
+ 107          log(f"tag 格式要像 v1.2.3：{tag}")
+ 108          return 2
+ 109      url = os.environ.get("NOTES_WEBHOOK")
+ 110      if not url:
+ 111          log("請先設定 NOTES_WEBHOOK")
+ 112          return 2
+ 113  
+ 114      tags = list_tags(repo)
+ 115      if tag not in tags:
+ 116          log(f"找不到 tag {tag}")
+ 117          return 2
+ 118      prev = tags[tags.index(tag) - 1]
+ 119      commits = commits_between(repo, prev, tag)
+ 120      if not commits:
+ 121          log(f"{prev}..{tag} 之間沒有新 commit")
+ 122          return 0
+ 123  
+ 124      cfg = load_config(os.path.join(repo, ".release-notes.json"))
+ 125      latest = commits[0][0]
+ 126      title = f"*{cfg.get('title', '發版公告')}* {tag}（最新 {latest}）"
+ 127      text = render(title, group(commits[: max_items()]))
+ 128      if not post(url, text):
+ 129          return 1
+ 130      print(text)
+ 131      return 0
+ 132  
+ 133  
+ 134  if __name__ == "__main__":
+ 135      sys.exit(main())
