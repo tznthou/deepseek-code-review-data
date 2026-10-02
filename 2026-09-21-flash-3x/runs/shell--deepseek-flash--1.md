@@ -1,0 +1,85 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 新增 sandbox/repo_sync.sh，用於批次同步多個 git repo 並將結果寫入 sqlite 供維運報表使用。整體腳本在輸入驗證與錯誤處理上有多處缺陷：branch 名稱雖有白名單驗證但未防止以 `-` 開頭的選項注入，repo 名稱與 branch 直接字串插值進 SQL 造成注入風險，`run_hook` 使用 `eval` 執行未受信任路徑，且 `cd` 後未回到原目錄、`ls` 解析與 `local` 在函式外使用等問題。最該優先修的是 SQL 注入與 `eval` 執行外部 hook 這兩個安全性問題，以及 `cd` 造成的目錄狀態污染。
+
+### Findings（8 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `sandbox/repo_sync.sh:47` | repo 名稱與 branch 直接插值進 SQL 造成注入 | 0.90 |
+| 🛑 | Blocker | `sandbox/repo_sync.sh:56` | run_hook 使用 eval 執行未受信任的 hook 路徑 | 0.85 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:33` | sync_one 內 cd 後未返回，污染後續迴圈的工作目錄 | 0.80 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:87` | 以 ls 解析目錄名稱，遇空白或特殊字元會出錯 | 0.75 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:41` | 在函式外使用 local 會產生錯誤 | 0.70 |
+| 🔸 | Minor | `sandbox/repo_sync.sh:62` | cleanup_cache 的 glob 在無匹配時會刪錯目標 | 0.70 |
+| 🔸 | Minor | `sandbox/repo_sync.sh:43` | ahead 為空字串時數值比較會失敗 | 0.65 |
+| 🔸 | Minor | `sandbox/repo_sync.sh:68` | summarize 的 grep -c 在檔案不存在時行為不一致 | 0.60 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/repo_sync.sh:47</code> repo 名稱與 branch 直接插值進 SQL 造成注入</summary>
+
+`name` 來自 `basename "$dir"`，而 `$dir` 來自 `ls "$ROOT"`，完全未經驗證；`$BRANCH` 雖有白名單但仍含 `'` 以外的字元組合風險較低，然而 `name` 可包含單引號。若某個 repo 目錄名為 `a'); DROP TABLE runs;--`，產生的 SQL 會變成 `INSERT INTO runs VALUES('a'); DROP TABLE runs;--', ...`，導致資料表被刪除或任意 SQL 執行。建議改用參數化查詢（sqlite3 的 `.param set` 或改用支援綁定的介面），或至少對 `name`/`BRANCH` 做嚴格的單引號跳脫（將 `'` 置換為 `''`）。
+
+**判斷依據**：diff 第 47 行直接以字串拼接方式將 `$name`、`$BRANCH` 放入 SQL；`name` 由第 30 行 `basename "$dir"` 取得，未做任何跳脫。
+
+</details>
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/repo_sync.sh:56</code> run_hook 使用 eval 執行未受信任的 hook 路徑</summary>
+
+`eval "$hook $repo"` 會對 `$hook` 與 `$repo` 做二次展開與指令替換。`$repo` 來自 `ls "$ROOT"` 的目錄名稱，若目錄名包含 `;`、`$()`、反引號等字元（例如 `foo; rm -rf ~`），即會執行任意指令。即使 hook 本身可執行，也不應以 `eval` 呼叫。建議改為 `"$hook" "$repo"` 直接執行，避免 shell 重新解析。
+
+**判斷依據**：diff 第 57 行使用 `eval` 並將 `$repo` 併入命令字串；`$repo` 於第 84 行由 `run_hook "$d"` 傳入，`$d` 來自 `ls "$ROOT"`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:33</code> sync_one 內 cd 後未返回，污染後續迴圈的工作目錄</summary>
+
+`sync_one` 在函式內執行 `cd "$dir"` 但從未 `cd` 回原目錄。由於 shell 函式的 `cd` 會影響整個行程，第一次呼叫後 `main` 迴圈中的相對路徑（例如 `$ROOT` 若為相對路徑、以及後續 `run_hook` 內對 `$ROOT/.hooks/post-sync` 的解析）都會以錯誤的基準目錄計算，導致後續 repo 找不到或 hook 路徑錯誤。建議在 subshell 中執行（`( cd "$dir" && ... )`）或改用 `git -C "$dir"` 系列指令。
+
+**判斷依據**：diff 第 36 行 `cd "$dir"` 位於 `sync_one` 函式內，函式結束前無任何 `cd` 回原目錄的動作；`main` 於第 84 行在同一行程中迴圈呼叫。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:87</code> 以 ls 解析目錄名稱，遇空白或特殊字元會出錯</summary>
+
+`for d in $(ls "$ROOT")` 依 IFS 進行單字分割，目錄名稱含空白、換行或 glob 字元時會被拆成多個項目或展開，導致 `$target` 指向不存在的路徑而被 `continue` 跳過，或誤判為 repo。建議改用 `for d in "$ROOT"/*; do` 並搭配 `[ -d "$d" ]` 判斷。
+
+**判斷依據**：diff 第 83 行使用 `$(ls "$ROOT")` 做為 for 迴圈來源，未使用 nullglob 或引號保護。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:41</code> 在函式外使用 local 會產生錯誤</summary>
+
+`local target="$ROOT/$d"` 位於 `main` 函式內，這行本身合法；但若此腳本被 `source` 或在某些 shell 下執行，`local` 於函式外會報錯。更關鍵的是 `main` 內使用 `local` 需確保 `main` 確實是函式——此處是，故風險較低。真正問題在於 `sync_one` 內 `local ahead` 之後若 `git rev-list` 失敗，`ahead` 可能為空字串，第 44 行 `[ "$ahead" -gt 0 ]` 會因空字串而報 `integer expression expected` 錯誤。建議為 `ahead` 設預設值 `ahead=${ahead:-0}`。
+
+**判斷依據**：diff 第 42 行 `ahead=$(...)` 在 `git rev-list` 失敗時輸出為空；第 44 行 `[ "$ahead" -gt 0 ]` 與第 47 行 SQL 皆直接使用該值。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/repo_sync.sh:62</code> cleanup_cache 的 glob 在無匹配時會刪錯目標</summary>
+
+`rm -rf "$ROOT"/.cache/*` 在 `.cache` 目錄不存在或為空時，`*` 不會展開，`rm -rf` 會收到字面路徑 `$ROOT/.cache/*`（無害），但若 `$ROOT` 為空字串（未傳參數時 `ROOT="$1"` 為空），會變成 `rm -rf /.cache/*`，有誤刪系統目錄的風險。建議在 `main` 開頭檢查 `$ROOT` 非空且為目錄，並改用 `find "$ROOT/.cache" -mindepth 1 -delete`。
+
+**判斷依據**：diff 第 66 行使用未加引號保護的 glob；`ROOT` 於第 11 行 `ROOT="$1"` 取得，`main` 僅檢查 `$BRANCH` 是否為空，未檢查 `$ROOT`。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/repo_sync.sh:43</code> ahead 為空字串時數值比較會失敗</summary>
+
+當 `git rev-list --count` 因 `origin/$BRANCH` 不存在或 fetch 失敗而無輸出時，`ahead` 為空字串，`[ "$ahead" -gt 0 ]` 會拋出 `integer expression expected` 並使該次同步中斷。建議在賦值後加上 `ahead=${ahead:-0}` 或改用 `[[ "${ahead:-0}" -gt 0 ]]`。
+
+**判斷依據**：diff 第 44 行對可能為空的 `$ahead` 做 `-gt` 數值比較，而第 42 行的來源指令帶有 `2>/dev/null` 會吞掉錯誤、可能無輸出。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/repo_sync.sh:68</code> summarize 的 grep -c 在檔案不存在時行為不一致</summary>
+
+`total=$(grep -c . "$LOG" 2>/dev/null || echo 0)`：當 `$LOG` 不存在時 `grep` 回傳非零，`|| echo 0` 會再輸出一個 0，但 `grep -c` 本身在檔案不存在時不會輸出任何數字，因此結果為 `0`，尚可；然而若 `$LOG` 存在但為空，`grep -c` 輸出 `0` 且回傳非零，`|| echo 0` 會再追加一個 `0`，使 `total` 變成 `0\n0`，後續 `[ "$total" -gt 100 ]` 會報錯。建議改為 `total=$(grep -c . "$LOG" 2>/dev/null); total=${total:-0}`。
+
+**判斷依據**：diff 第 73 行以 `|| echo 0` 補值，但 `grep -c` 在空檔案時仍會輸出 `0` 並回傳 1，造成兩個值串接。
+
+</details>
+
+---
+
+<sub>model `deepseek-flash` ｜ prompt tokens 2520 (cache hit 1408) ｜ completion tokens 2409</sub>

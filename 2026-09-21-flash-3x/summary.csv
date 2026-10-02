@@ -1,0 +1,13 @@
+target,model,run,exit,seconds,findings
+python,deepseek-v4-pro,1,0,22,8
+python,deepseek-v4-pro,2,0,21,7
+python,deepseek-v4-pro,3,0,19,6
+python,deepseek-flash,1,2,10,ERR
+python,deepseek-flash,2,0,10,7
+python,deepseek-flash,3,0,8,6
+shell,deepseek-v4-pro,1,0,19,7
+shell,deepseek-v4-pro,2,0,26,6
+shell,deepseek-v4-pro,3,0,21,7
+shell,deepseek-flash,1,0,12,8
+shell,deepseek-flash,2,2,8,ERR
+shell,deepseek-flash,3,2,8,ERR
