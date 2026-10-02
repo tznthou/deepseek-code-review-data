@@ -1,0 +1,95 @@
+pair,label,note
+P0565,same,
+P0566,same,
+P0567,no,同一類別但問題無關：未使用 vs 缺 final
+P0568,same,
+P0569,same,同一行同一改動；改回 Description 即同時修掉
+P0570,same,
+P0571,no,不同函式：重疊範圍未合併 vs 合併前先比數量
+P0572,no,講天數計算 Math.ceil 而非 Math.floor 取整
+P0573,no,同函式但效能 vs 缺 static 互相獨立
+P0574,no,講 scheduling.init 參數而非 emailAddressService 初始化順序
+P0575,same,
+P0576,same,
+P0577,no,assert 冗餘與三元式可讀性無關
+P0578,no,講回傳 Infinity 而非 Math.ceil 天數偏移
+P0579,no,配置效能 vs 迴圈越界 互相獨立
+P0580,no,分號風格 vs require 路徑錯誤
+P0581,same,
+P0582,partial,同為選取後 handleClose/關閉邏輯但講 multiselect 分支的另一個問題
+P0583,same,
+P0584,same,指出欄位順序依賴並建議改用 model_validator
+P0585,same,
+P0586,no,呼叫順序 vs print 陳述式
+P0587,no,
+P0588,no,同段 Redis 寫入但故障時仍寫入 vs 迭代錯的 dict 互相獨立
+P0589,no,全域初始化旗標 vs 比較運算子反轉
+P0590,no,同一行但開關可能停用 webhook vs 直接讀 process.env 互相獨立
+P0591,same,
+P0592,partial,同一處重繪條件但結論相反（渲染太少 vs 太多）
+P0593,no,空值處理 vs True 識別字
+P0594,same,
+P0595,same,
+P0596,no,大小寫比對 vs 空陣列 length 判斷
+P0597,same,
+P0598,same,
+P0599,no,
+P0600,no,
+P0601,same,
+P0602,same,標題講 null 但內文點出 expertise 取代 name 並建議改回
+P0603,no,
+P0604,no,
+P0605,no,同一端點但缺 await vs 權限等級
+P0606,same,
+P0607,no,
+P0608,partial,指對 trigger.after 那行但機制講成缺預設值與驗證
+P0609,partial,同為 semaphore 涵蓋不足但講其他事件類型而非 API 呼叫在 context 外
+P0610,same,
+P0611,no,
+P0612,no,同一行但尾端分隔符 vs 大小寫比對 互相獨立
+P0613,no,達上限後自動停用 vs 重試次數差一
+P0614,same,同為 local_hostname 空字串 vs None；推理混亂但修法一致
+P0615,same,
+P0616,same,
+P0617,no,
+P0618,partial,指對 gte 那行但講門檻選擇而非 update 與 fetch 門檻不一致
+P0619,no,
+P0620,no,可見 Badge 的 onClick 支援 vs 隱藏項目遺失 onClick
+P0621,no,
+P0622,no,
+P0623,same,
+P0624,no,
+P0625,same,指出同一條件反轉；只要求確認但修法相同
+P0626,no,
+P0627,same,嚴重度講輕（說 flush 為空實作）但修法相同
+P0628,no,
+P0629,no,同為新增 Flatpak 但 Display 大小寫 vs schema 未重生
+P0630,no,
+P0631,same,
+P0632,partial,同樣 oldStatus 取得時機錯誤但在非 recurring 分支
+P0633,partial,同函式且都視為非正式程式碼但講未使用而非缺 REDIS_TEST 包裝
+P0634,no,
+P0635,same,
+P0636,same,
+P0637,no,fallback 元件 vs console.error
+P0638,partial,同一閉包的 actor 隔離相關但講 Task 包裝而非缺 @MainActor
+P0639,no,
+P0640,same,
+P0641,no,
+P0642,same,
+P0643,no,
+P0644,same,
+P0645,same,
+P0646,partial,同一驗證條件都指向驗證原始值但講型別檢查而非未用 normalized 值
+P0647,same,
+P0648,partial,同一欄位負數問題但機制講成沒驗證而非移除 min
+P0649,no,mark_edge_skipped 順序 vs start_execution 順序
+P0650,no,
+P0651,no,
+P0652,no,未使用 vs 缺 @MainActor
+P0653,no,HSETEX 版本相容 vs 本地缺 KEEP_TTL
+P0654,same,機制不同（書籤相容 vs 參數衝突）但改回 category 同時修掉
+P0655,same,
+P0656,same,
+P0657,no,
+P0658,no,

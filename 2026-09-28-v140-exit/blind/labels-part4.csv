@@ -1,0 +1,95 @@
+pair,label,note
+P0283,same,
+P0284,same,
+P0285,no,finding 講 useEffect 依賴陣列；GT 是分號規則
+P0286,same,兩者都指自動遞增未檢查 2100000000 上限；finding 另提版本碼倒退
+P0287,partial,同一行 malloc；改用 zmalloc 會順帶處理 OOM 但 finding 講的是缺 NULL 檢查而非規則
+P0288,no,finding 講 targetFrame 可能為 nil；GT 是缺 final
+P0289,same,
+P0290,no,finding 講 XSS；GT 是分號規則
+P0291,same,改用 Number 並處理 NaN 可同時修掉
+P0292,no,finding 講 field_validator 跨欄位驗證；GT 講子字串比對前綴
+P0293,no,finding 講自動遞增舊值為 0；GT 講 semver 路徑驗證與 dev clamp 的順序
+P0294,no,同一行兩個獨立缺陷：行寬規則 vs 每次建新容器
+P0295,no,finding 講 QuarantinedTest；GT 是 AAA 註解規則
+P0296,same,
+P0297,no,finding 講 expect panic；GT 講 is_empty 條件反轉
+P0298,no,同一行獨立缺陷：finding 質疑回傳 Infinity；GT 講 > 應為 >=
+P0299,same,finding 指出 asmCron 移到 clusterCron 之前的狀態相依；修法相同
+P0300,same,
+P0301,same,
+P0302,partial,同一行把權重併入 label；finding 講可讀性而非權重停用時的尾端空白
+P0303,same,
+P0304,no,finding 講其他價格欄位的 Decimal 值；GT 講 total_price 用 int
+P0305,no,finding 講 argv[2] 記憶體洩漏；GT 講 argv[5] 越界
+P0306,no,finding 講 @Sendable 資料競爭；GT 是缺 final
+P0307,same,finding 抓到 stored-key 與 lookup key 混用；GT 另提 keyDup 後位址不同
+P0308,no,finding 講 oldStatus 準確性；GT 講 audit 事件早於 DB 更新
+P0309,no,finding 講天數計算時區與 Math.ceil；GT 是分號規則
+P0310,same,
+P0311,no,finding 講空值設為 undefined；GT 講未正規化 JSON 就儲存
+P0312,same,兩者都指 expect 應改為回傳錯誤
+P0313,no,finding 講 NQL filter；GT 講 Math.ceil 應為 floor
+P0314,partial,同一函式；finding 講驗證不足建議用 zod；GT 講驗證邏輯放錯檔案
+P0315,partial,同一段前綴計算；finding 講遺失 port 並建議 url.origin（仍含協定）；GT 講前綴不該含協定
+P0316,same,
+P0317,no,finding 講自動遞增上限；GT 是缺 target_os 守衛
+P0318,no,finding 講多選分支 handleClose 時機；GT 講單選分支缺 handleClose
+P0319,same,
+P0320,no,finding 講 Task.Yield 時序；GT 講移除 HistoryEntryState null 檢查
+P0321,no,finding 講條件反轉；GT 是行寬規則
+P0322,no,finding 講 expectation fulfill 位置；GT 是 force unwrap 規則
+P0323,no,finding 講 autoCloseOnSelect；GT 是 var 規則
+P0324,no,finding 講 resetClusterStats 重複初始化；GT 是 malloc 規則
+P0325,no,finding 講 on_new_window 只在桌面註冊；GT 講視窗 label 命名變更
+P0326,no,同一行兩個獨立缺陷：未使用變數 vs 棄用 API
+P0327,same,
+P0328,no,finding 講 created_at 為 null；GT 是分號規則
+P0329,no,finding 講多餘 assert；GT 講 EHLO 參數錯誤
+P0330,same,
+P0331,no,finding 講 XCTWaiter 結果未檢查；GT 是存取控制規則
+P0332,partial,同一 popover 的隱藏項目點不了；finding 歸因於 hover 關閉而非 onClick 被移除
+P0333,same,
+P0334,no,finding 講 XCTWaiter 結果未檢查；GT 是缺 final
+P0335,no,finding 講路徑比對；GT 是大括號風格規則
+P0336,no,finding 講 code_executor 未注入；GT 講 try 區塊內的長度檢查
+P0337,no,同一行但 finding 講移除 disable_logging；GT 講參數名錯誤
+P0338,same,
+P0339,same,
+P0340,same,finding 點名 Plist 缺 source
+P0341,same,
+P0342,no,同一段兩個獨立缺陷：expect panic vs 多餘 to_string
+P0343,same,finding 指出未加 await 呼叫 @MainActor async 方法；加 await 可同時修掉
+P0344,same,兩者都指 Pydantic v1 Config 應改用 ConfigDict 並 forbid
+P0345,no,finding 講 &'static Path 懸垂；GT 是缺 rustdoc
+P0346,same,機制描述不同（字串型別 vs None）但修法同為改回 deployment.id
+P0347,no,finding 講分號；GT 講 require 路徑錯誤
+P0348,same,移除 console.log 可同時修掉
+P0349,no,相鄰行兩個獨立缺陷：迴圈越界 vs malloc 規則
+P0350,no,finding 講外部網路依賴；GT 是未使用常數
+P0351,no,同一段但 finding 講舊 manager 未處理；GT 講參數未更新
+P0352,no,finding 講 malloc 未檢查 NULL；GT 講迴圈 off-by-one
+P0353,partial,同一高流量分支且都指上限偏低；finding 講 min 公式而非 >= 邊界
+P0354,same,
+P0355,same,
+P0356,no,finding 講回傳 Infinity；GT 是分號規則
+P0357,same,finding 泛指其他變體未提供 source；涵蓋 FailedToEncodeDER
+P0358,same,
+P0359,no,同一 semaphore 但 finding 只建議補註解；沒抓到初始化順序競態
+P0360,same,
+P0361,same,
+P0362,same,
+P0363,no,finding 講子字串比對；GT 講 field_validator
+P0364,same,
+P0365,no,finding 講 useEffect 依賴陣列；GT 是分號規則
+P0366,no,finding 講 SQLite 分支無鎖；GT 講 PostgreSQL 鎖鍵用 hash() 不穩定
+P0367,partial,同一函式；finding 講驗證不足；GT 講驗證邏輯放錯檔案
+P0368,no,finding 講 on_new_window 只在桌面註冊；GT 講視窗 label 命名變更
+P0369,no,finding 講 created_at 為 null；GT 講 > 應為 >=
+P0370,no,同一行兩個獨立缺陷：行寬規則 vs 型別不符
+P0371,no,finding 講非最後檔案的 BROKEN_RECOVERED；GT 講 size_t 相減回繞
+P0372,same,標題寫過度授權但內文描述唯讀 key 得 403；修法相同
+P0373,no,同一段但 finding 講 flush 在迴圈內；GT 講 update 例外被吞
+P0374,same,
+P0375,no,finding 講 Date.now 未注入；GT 是分號規則
+P0376,no,finding 講 hover 關閉；GT 是未使用參數 index

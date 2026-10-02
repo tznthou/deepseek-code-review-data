@@ -1,0 +1,87 @@
+pair,label,note
+P0753,partial,同為 recurring 分支 fireBookingAcceptedEvent 的狀態正確性；finding 講 oldStatus 來源 而 GT 講呼叫早於 DB 更新
+P0754,no,不同處不同問題（waiter 結果未檢查 vs targetFrame 抓錯）
+P0755,same,
+P0756,no,
+P0757,same,
+P0758,same,理由不同（資訊洩漏 vs 規則禁用 console）但修法同為移除 console.error
+P0759,no,finding 講的是 tool_inputs 誤用 與 broad except 無關
+P0760,same,
+P0761,no,同函式但 versionCode 競態與缺 cfg 保護無關
+P0762,partial,同函式的多 renderer 情境；finding 歸因全域 flag 而非被反轉的判斷式
+P0763,no,同一行兩個獨立問題（存取修飾詞 vs 執行緒安全）
+P0764,partial,同一 Suspense 包裝；finding 講缺 error boundary 而非缺 loading fallback
+P0765,partial,同一個 onClose?.() 呼叫；finding 講繞過 maxSelections 而非 popover 關不掉
+P0766,no,不同函式（verify 改 decode vs 移除 noTimestamp）
+P0767,partial,同一段輪詢且都說次數可能超出預期；但 finding 歸因重疊請求與 effect 重置 不是 off-by-one
+P0768,no,hover 間隙 vs 隱藏項目缺 onClick；位置與機制都不同
+P0769,partial,同一函式；finding 講未使用或除錯遺留 而 GT 講缺 REDIS_TEST 包覆
+P0770,no,onError 訊息 vs onSuccess 呼叫順序
+P0771,same,
+P0772,same,finding 推理有點混亂 但同指開關值應回復 false
+P0773,same,後果描述不同（跳過驗證 vs TypeError）但修法同為檢查 max_length
+P0774,no,finding 講 scheduling.init 參數 不是 slack.listen 被移除
+P0775,same,
+P0776,no,同一段過濾式上兩個獨立問題（endsWith 誤排除 vs 空陣列 length 判斷）
+P0777,no,類別未使用 vs 字串常數引用錯誤
+P0778,no,
+P0779,same,
+P0780,same,
+P0781,no,
+P0782,no,同一 stream 分支但 numele 倍數與 samples 遮蔽無關
+P0783,same,finding 主講時序 但建議 Task { @MainActor in } 或回復直接呼叫 修法相同
+P0784,same,
+P0785,same,
+P0786,same,
+P0787,no,
+P0788,no,
+P0789,same,同指 __REDIS_H 改成 _REDIS_H；理由是保留名稱而非規則 但回復原名可同時修掉
+P0790,no,
+P0791,same,
+P0792,same,
+P0793,no,
+P0794,no,泛稱缺單元測試 沒點到 returnObjects
+P0795,same,
+P0796,partial,同為 local_host 空字串與 None 的處理；finding 反而建議 ehlo 也加 or None 方向與 GT 相反
+P0797,same,
+P0798,same,
+P0799,same,理由是與其他變體不一致而非與 Deserialize 不符 修法相同
+P0800,same,finding 只講整欄清空的情況 但 filter 修法涵蓋空行
+P0801,no,
+P0802,no,類別未使用 vs 字串常數引用錯誤
+P0803,same,
+P0804,no,
+P0805,same,
+P0806,no,
+P0807,same,
+P0808,same,
+P0809,same,時區理由不成立 但有點到 Math.ceil 把未滿一天算成一天
+P0810,no,
+P0811,same,
+P0812,partial,同類問題（MainActor 方法缺 await）但指的是 tearDown 的另一個呼叫 不是 setUp 的 bootstrapDependencies
+P0813,no,key 重複 vs index 參數未使用；改用 index 當 key 會順帶消掉 lint 屬巧合
+P0814,no,
+P0815,same,
+P0816,same,
+P0817,same,
+P0818,same,
+P0819,partial,症狀對上（400k 得 475k 而非 800k）但歸因於計算式而非 >= 邊界 建議修法無效
+P0820,no,
+P0821,no,
+P0822,same,
+P0823,no,
+P0824,partial,都涉及 filteredData；finding 講伺服器與客戶端重複過濾 不是 selectedBlockDocument 該改用 data
+P0825,no,
+P0826,no,finding 講另一段 catch 沒有記錄並建議加 console.error 方向與 GT 相反
+P0827,same,
+P0828,same,
+P0829,same,
+P0830,no,同函式重新啟用路徑 但參數未更新與判斷式反轉無關
+P0831,no,finding 講 createTFunction 的 returnObjects 不是 useTranslation 的 defaultNs
+P0832,no,
+P0833,no,同一段 argv 上兩個獨立問題（陣列大小 vs argv[2] 未釋放）
+P0834,no,
+P0835,same,
+P0836,same,
+P0837,no,updateMany 回傳值未檢查 vs 日期門檻不一致
+P0838,same,

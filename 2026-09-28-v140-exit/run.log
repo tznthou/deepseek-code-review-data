@@ -1,0 +1,6 @@
+[18:47:03 UTC] v131-1：共 100，要跑 99
+[18:50:17 UTC] 成功 100/100｜findings 331｜prompt 945487（hit 140800）｜completion 101574｜離峰估價 $0.735（尖峰 ×2）
+[18:50:17 UTC] v131-2：共 100，要跑 100
+[18:53:46 UTC] 成功 99/100｜findings 322｜prompt 939259（hit 933120）｜completion 100089｜離峰估價 $0.223（尖峰 ×2）
+  ✗ Ghost-3 exit=2（看 Ghost-3.log）
+EXIT=0

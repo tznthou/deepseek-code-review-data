@@ -1,0 +1,31 @@
+pair,label,note
+P0016,same,改回 <= 0 同時修掉
+P0027,no,GT 是下載網址用錯 arch；finding 是 gtk 存在判斷反轉，兩個獨立缺陷
+P0070,no,GT 是漏 await；finding 是 client 注入方式
+P0107,same,同一個漏掉的 {newsletterName}
+P0217,same,同一個 argv[2] 未 decrRefCount
+P0241,no,GT 是三元選 SMTP 類別的可讀性；finding 是多餘 assert
+P0306,no,GT 是缺 final；finding 是 @Sendable 移除
+P0382,same,還原 if (history) 判斷同時修掉；null 與 undefined 同一機制
+P0390,no,GT 是 clippy to_string；finding 是 ext.is_empty 條件反轉
+P0434,no,GT 是未使用的 index；finding 是鍵盤無障礙
+P0463,no,同一段但兩個獨立缺陷：GT 是拿掉 !dev；finding 是 saturating_add 上限
+P0500,same,補 await 同時修掉；finding 把後果說成編譯錯誤，修法相同
+P0574,no,GT 是 emailAddressService 併入 Promise.all；finding 是 scheduling.init 參數
+P0595,same,同一條 leadingAnchor 約束
+P0609,partial,都談 semaphore 的涵蓋範圍，但 GT 是 API 呼叫在 async with 外；finding 是只有某分支用 semaphore
+P0628,no,GT 是拿掉 HistoryEntryState 的 null 判斷；finding 是 Task.Yield
+P0659,same,同一個拿掉的 strict=True
+P0679,same,改回存字串同時修掉；finding 沒點名 _isJWTExpired 但指的是同一個型別變更
+P0690,no,GT 在 handleEnable 拿掉 try-catch；finding 在 confirmHandle 的輪詢
+P0694,partial,同一行的 malloc：GT 是該用 zmalloc；finding 是配置是否必要
+P0697,no,GT 是方法名缺 Async 後綴；finding 是斷言的泛型型別
+P0699,no,GT 是缺 tenant_id；finding 是 Session 未關閉
+P0714,partial,同一處 Task 包裝；GT 要的是閉包加 @MainActor 標註，拿掉 Task 修不到
+P0718,no,同一段兩個獨立缺陷：GT 是沒正規化 JSON；finding 是 return True
+P0749,same,把 lastExecutionTime 更新移回 guard 之後同時修掉；finding 機制講得較弱
+P0752,same,同一個沒用 bookingUrl
+P0783,same,拿掉 Task 包裝同時修掉；finding 也建議 Task { @MainActor in }
+P0784,same,同一個失去 test 前綴
+P0791,same,同一個 tool_inputs 誤用
+P0807,same,類別加 @MainActor 同時修掉

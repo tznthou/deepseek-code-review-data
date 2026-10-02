@@ -1,0 +1,95 @@
+pair,label,note
+P0001,no,
+P0002,no,
+P0003,no,同位置但只說缺單元測試；與查找順序無關
+P0004,no,同一行兩個獨立缺陷
+P0005,same,
+P0006,no,
+P0007,no,
+P0008,same,
+P0009,same,
+P0010,no,
+P0011,no,
+P0012,same,修法相同（改回 file-scoped）；finding 講的風險不同
+P0013,no,同一行兩個獨立缺陷
+P0014,no,
+P0015,no,
+P0016,same,
+P0017,partial,同一處欄位切換邏輯；finding 講切換時殘值而非 after 欄位本身錯
+P0018,same,finding 建議改回 elecount 即同時消除未使用變數；後果描述不同
+P0019,no,
+P0020,same,
+P0021,no,
+P0022,no,
+P0023,same,
+P0024,same,修法相同（恢復 cfg 條件編譯）
+P0025,partial,同函式同屬靜默遺失；finding 講 pool 找不到變數而非 update 例外被吞
+P0026,same,修法相同（恢復 cfg 條件編譯）
+P0027,no,
+P0028,no,
+P0029,no,同位置但 print 與執行順序是獨立缺陷
+P0030,same,
+P0031,same,
+P0032,same,
+P0033,no,
+P0034,no,
+P0035,no,
+P0036,no,
+P0037,no,
+P0038,no,
+P0039,same,
+P0040,partial,同一測試同一改動；finding 講主執行緒阻塞而非未等待回呼
+P0041,no,
+P0042,same,
+P0043,partial,指對 fetch 的 startTime 條件但機制講成時區
+P0044,same,
+P0045,no,同一段獨立缺陷
+P0046,same,
+P0047,same,
+P0048,no,
+P0049,same,
+P0050,no,同函式但 returnObjects 與查找順序是獨立缺陷
+P0051,same,
+P0052,same,
+P0053,no,
+P0054,same,
+P0055,same,
+P0056,partial,同函式的 lookup/stored-key 混淆；finding 指 keyDup 輸入而非 dictFindLink 查找
+P0057,same,
+P0058,same,
+P0059,same,finding 建議比較集合而非長度即 GT 修法；舉的失敗情境不同
+P0060,no,
+P0061,no,同一 semaphore 但初始化檢查與保護範圍是獨立問題
+P0062,no,
+P0063,same,
+P0064,no,
+P0065,same,修法相同（保留 await）；後果講成阻塞 event loop 不對
+P0066,no,
+P0067,no,
+P0068,partial,同檔同類版本不一致；欄位與對照版本不同
+P0069,same,
+P0070,no,
+P0071,no,同位置但只說缺測試
+P0072,no,
+P0073,same,finding 建議檢查 waiter 結果即讓變數被使用
+P0074,partial,列出對調的值但講成 Decimal 型別變化；未指出對調
+P0075,no,同一行兩個獨立缺陷
+P0076,same,
+P0077,partial,同一行相關；finding 修法是 NULL 檢查而非改用 zmalloc
+P0078,same,抓到一半（其他 patch 版本被放行）；同一條件
+P0079,partial,同一段字串拼接；未指出 weight 為空時多出空白
+P0080,partial,同一 validator；機制講成欄位順序而非 proactive 無 triggering_event
+P0081,no,
+P0082,no,
+P0083,partial,同一行 TCS 重設時機；finding 講取消而非零位元組提前重設
+P0084,same,
+P0085,no,同一行兩個獨立缺陷
+P0086,no,
+P0087,no,
+P0088,same,
+P0089,no,
+P0090,same,修法相同（迴圈後只 flush 一次）；後果講成原子性而非效能
+P0091,same,
+P0092,no,
+P0093,no,
+P0094,no,同一段 argv 但溢位與洩漏是獨立缺陷

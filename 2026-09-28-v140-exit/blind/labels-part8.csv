@@ -1,0 +1,95 @@
+pair,label,note
+P0659,same,
+P0660,no,"finding 講 moveItem 參數順序，GT 是 prefix items 被放進 SortableContext，互相獨立"
+P0661,same,
+P0662,no,"finding 講並行建置競態，GT 是缺 versionCode 上限驗證"
+P0663,no,"finding 講 orgId 為 null 的處理，GT 是子團隊缺 parentId 條件"
+P0664,same,
+P0665,partial,"同樣是暖機天數 off-by-one，但 finding 指日期計算（Math.ceil／時區），GT 是比較運算子 > 應為 >=，修法不同"
+P0666,no,"finding 講 gitignore 使 CI 版本碼重置，GT 是 dev 模式也會遞增"
+P0667,same,"同一 input 可輸入負數；finding 誇大成會送出並多提非整數，但在 input 端擋負數（加回 min 或 onChange 阻擋）可同修"
+P0668,same,
+P0669,no,
+P0670,no,"同一行，缺文件註解 vs 回傳 nil 的語意，互相獨立"
+P0671,no,"finding 講迴圈 <= 越界，GT 是應改用 zmalloc"
+P0672,same,
+P0673,no,"同一段，finding 講回傳 Infinity，GT 是比較運算子 off-by-one，互相獨立"
+P0674,same,"後果描述不同，但修法同為調換呼叫順序"
+P0675,no,
+P0676,same,
+P0677,same,
+P0678,same,
+P0679,same,"finding 指出 _serverToken 改存物件這個根因，改回存字串即同修"
+P0680,no,
+P0681,no,
+P0682,same,
+P0683,no,"同一行，finding 講環境變數名稱可能衝突，GT 是直接讀 process.env 應改注入設定，互相獨立"
+P0684,same,"finding 語氣保留，但已指出 source／destination 顛倒"
+P0685,same,"嚴重度講過頭，修法同為統一佔位符"
+P0686,no,
+P0687,no,"同一個 Promise.all 區塊，但 finding 講 scheduling.init 參數，GT 是 slack.listen 被移除"
+P0688,same,
+P0689,no,
+P0690,no,"不同函式：finding 講 confirmHandle，GT 是 handleEnable 少了 try-catch"
+P0691,no,"同一段，finding 講 hostname 漏埠號，GT 是前綴多了 protocol，互相獨立"
+P0692,same,
+P0693,no,
+P0694,partial,"同一行 malloc，finding 講多餘配置的效能而非 zmalloc 規則；照其建議拿掉 buffer 才會連帶消除 GT"
+P0695,partial,"同一個 validator 條件，finding 講依賴欄位順序，GT 是誤拒 proactive trigger，機制不同"
+P0696,no,
+P0697,no,
+P0698,same,
+P0699,no,
+P0700,partial,"同檔同一段的版本號不一致，但 finding 比的是 cli.js 對 tauri-cli（應為 2.8.1），GT 是 tauri 應為 2.8.3"
+P0701,no,
+P0702,no,
+P0703,same,
+P0704,same,
+P0705,same,
+P0706,no,
+P0707,same,
+P0708,no,
+P0709,partial,"同一個三元式，finding 講 SMTP_SSL 參數相容性而非可讀性；其建議改成條件式分別建立會連帶修掉 GT"
+P0710,no,
+P0711,same,
+P0712,no,
+P0713,same,
+P0714,partial,"同一個 onActionTap 閉包，finding 主講改成 Task 的時序問題，只順帶提到 MainActor 與調整閉包標註"
+P0715,same,
+P0716,same,"把還原改成 orig_active_defrag 可同時修掉未使用變數與未還原"
+P0717,same,
+P0718,no,"同一段，finding 講回傳 Python 的 True，GT 是沒存正規化後的 JSON"
+P0719,no,
+P0720,partial,"同一行都缺驗證，但 finding 講舊值為 0（下限），GT 是上限 2100000000"
+P0721,no,
+P0722,no,
+P0723,no,
+P0724,same,
+P0725,same,
+P0726,no,
+P0727,no,
+P0728,same,
+P0729,same,
+P0730,no,"finding 講 malloc 沒檢查 NULL，GT 是迴圈 <= 越界"
+P0731,no,
+P0732,same,
+P0733,same,
+P0734,no,
+P0735,no,
+P0736,partial,"同一函式的型別不符，但 finding 講容器型別標註，GT 是 Sequence 沒轉 tuple 導致 in 恆為 False"
+P0737,no,
+P0738,same,
+P0739,same,
+P0740,same,"同一個 @MainActor 呼叫缺隔離；加 await 或把類別標 @MainActor 都能同修"
+P0741,no,
+P0742,no,
+P0743,same,"根因同為 or 空字串；finding 只抓到 ehlo 那一半"
+P0744,no,
+P0745,same,
+P0746,no,"finding 講 hasInitializedJsComponents 全域旗標跳過初始化，GT 是重新啟用時沒更新參數"
+P0747,same,
+P0748,same,
+P0749,same,"後果描述不同，但修法同為把更新移回 guard 之後"
+P0750,no,"finding 講 auto-increment 路徑缺上限，GT 是 semver 路徑驗證與 dev clamp 順序顛倒"
+P0751,no,
+P0752,same,

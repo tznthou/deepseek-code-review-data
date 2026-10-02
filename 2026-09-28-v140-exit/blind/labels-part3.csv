@@ -1,0 +1,95 @@
+pair,label,note
+P0189,partial,同在 re-enable 路徑且都是重新呼叫後全域狀態沒更新；但 finding 講初始化旗標而非參數未重新指派
+P0190,no,
+P0191,same,
+P0192,same,
+P0193,same,只抓到 v1 語法那一半且建議仍用 allow；改成 ConfigDict(extra='forbid') 可同時修掉
+P0194,no,
+P0195,same,
+P0196,no,
+P0197,no,
+P0198,same,
+P0199,same,
+P0200,no,
+P0201,no,
+P0202,same,
+P0203,same,
+P0204,same,
+P0205,same,
+P0206,no,不同段落的 SQL；finding 講 orgId 型別轉換 GT 講子團隊缺 parentId 條件
+P0207,no,同一運算式上的兩個獨立缺陷（to_string 冗餘 vs expect 會 panic）
+P0208,no,
+P0209,no,
+P0210,same,
+P0211,no,同一個 Promise.all 但講的是 emailAddressService 時序 與 slack.listen 被移除無關
+P0212,no,
+P0213,no,同一行的兩個獨立缺陷（縮排 vs 譯文漏變數）
+P0214,no,
+P0215,partial,同一個 await Task.Yield() 陳述式；finding 講時序與競態 GT 講缺 ConfigureAwait 的規則
+P0216,same,只抓到多餘空格那一半且誤稱會編譯失敗；修法相同
+P0217,same,
+P0218,same,
+P0219,partial,同一個路徑比對；finding 講符號連結與相對路徑 GT 講不分大小寫比對
+P0220,no,同函式但 finding 講 returnObjects 未處理 GT 講查找順序
+P0221,no,
+P0222,partial,finding 看到 400000 邊界的症狀但歸因到高量級公式 機制講錯
+P0223,no,
+P0224,same,
+P0225,partial,同一個 @Roles 授權；finding 講跨團隊成員資格 GT 講角色層級應限 admin
+P0226,partial,同一個鎖機制與同一個競態；finding 講 SQLite 沒鎖 GT 講 hash() 跨程序不一致
+P0227,no,
+P0228,same,
+P0229,no,
+P0230,same,後果講錯（說權限被覆寫）但指的是同一個順序顛倒 修法相同
+P0231,no,
+P0232,no,
+P0233,no,
+P0234,same,嚴重度講輕了 修法相同（調整 guard 順序）
+P0235,same,
+P0236,no,finding 講外部網路依賴 GT 講沒檢查 waiter 結果
+P0237,no,
+P0238,same,
+P0239,same,抓到空字串那一半；改用 self.server 可同時修掉
+P0240,no,
+P0241,no,
+P0242,same,
+P0243,same,
+P0244,no,
+P0245,no,
+P0246,same,情境描述有誤但指的是同一個 !wait 改 wait 修法相同
+P0247,no,
+P0248,same,
+P0249,no,
+P0250,no,同一個快取但不同方法且問題相反（沒清快取 vs 根本沒用快取）
+P0251,same,
+P0252,partial,同樣關心 local_host 為空 但指的是建構子參數而非 ehlo 呼叫
+P0253,no,同一段 argv 的兩個獨立缺陷（argv[2] 洩漏 vs 越界寫入）
+P0254,no,
+P0255,same,
+P0256,no,
+P0257,no,同函式但 finding 講 namespace 處理 GT 講 returnObjects
+P0258,no,
+P0259,same,
+P0260,partial,同一個條件區塊；finding 講提前 return 跳過清理 GT 講 || 應為 &&
+P0261,no,
+P0262,no,
+P0263,no,
+P0264,same,
+P0265,same,
+P0266,no,
+P0267,same,
+P0268,same,
+P0269,no,同函式但只談參數命名可讀性且認定邏輯與原本相同 沒碰到條件反轉
+P0270,same,
+P0271,partial,同一段 fullKey 建構且都關於 namespace 解析；但 finding 講預設 namespace GT 講查找順序
+P0272,no,同一段 code 的兩個獨立缺陷（行寬 vs this 綁定）
+P0273,same,
+P0274,no,同一個 struct 的兩個獨立缺陷（缺 rustdoc vs 生命週期設計）
+P0275,no,
+P0276,no,
+P0277,same,
+P0278,no,
+P0279,no,
+P0280,same,finding 主述時序但建議的 Task { @MainActor in } 能修掉 GT
+P0281,no,
+P0282,same,

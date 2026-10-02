@@ -1,0 +1,95 @@
+pair,label,note
+P0377,no,同一行兩個獨立缺陷：GT 是 expect() 會 panic；finding 講 ditto 參數順序
+P0378,same,同一規則同一問題（require 缺分號）；finding 舉例的是同檔其他 require 行
+P0379,no,
+P0380,same,finding 標題講 ::bigint 轉型；但內文第二點指出應檢查 child.parentId = orgId 與 GT 相同
+P0381,same,兩者都指 portal.json 的 名称 翻譯不當；建議值不同（名字/姓名）但改同一處即可同時解決
+P0382,same,
+P0383,same,finding 的修法（還原為 orig_active_defrag）同時讓變數被使用；根因相同
+P0384,no,
+P0385,no,
+P0386,same,
+P0387,same,
+P0388,no,未被使用 vs 缺存取修飾詞；互相獨立（刪掉類別雖可兩者皆消失但不算同一問題）
+P0389,same,
+P0390,no,
+P0391,no,同一行但獨立：GT 缺 ConfigureAwait(false)；finding 質疑 Task.Yield 本身造成延遲/競態
+P0392,no,finding 講 slack.listen() 被移除；與 scheduling.init() 缺 apiUrl 無關
+P0393,no,
+P0394,partial,同在 handleDragEnd 傳給 moveItem 的索引；finding 歸因於 prefixItems 位移而非參數順序對調
+P0395,same,都指 var 改 var_os 後與 'true' 的比較出問題；修法相同（改回 var 或 to_str）；finding 只講非 UTF-8 情境
+P0396,no,
+P0397,same,
+P0398,no,
+P0399,no,
+P0400,no,
+P0401,same,修法相同（sortableKeys 排除 prefix items）；後果描述不同
+P0402,partial,同一行 certDirFullPath；finding 歸因於符號連結/相對路徑；沒指出應用 certDir 而非 prettyCertDir
+P0403,same,
+P0404,no,
+P0405,no,logger 建立方式 vs 訊息格式；獨立缺陷
+P0406,partial,同一個運算式；finding 講 statusBarOrientation 已棄用而 GT 講直接用 UIApplication.shared；finding 的 windowScene 改法會順帶拿掉 UIApplication.shared
+P0407,no,finding 講 sortableKeys 含 prefix items；GT 是 moveItem 參數順序對調
+P0408,same,
+P0409,no,
+P0410,no,finding 講 None/KeyError；GT 是 state-specific actions 用錯 event id；獨立缺陷
+P0411,no,finding 講 config 值未驗證；GT 是 hasScheduled 條件反轉
+P0412,partial,指對 lastExecutionTime 與 guard 的順序；但 finding 把變更方向讀反、機制講錯
+P0413,partial,同一個 AND 條件；finding 講 AND/OR 組合（且自承通常正確）；沒指出 length 檢查讓空陣列略過過濾
+P0414,partial,finding 描述不同 renderer 會直接覆寫 manager（條件反轉的另一面）；但歸因成舊 manager 未處理；沒指出條件反轉與 circuit restart 失敗
+P0415,same,
+P0416,same,
+P0417,same,都指 Done 與 goto 順序對調；失敗機制描述不同但修法相同（改回原順序）
+P0418,same,
+P0419,same,
+P0420,no,
+P0421,no,
+P0422,partial,都跟 filteredData 讓項目消失有關；finding 針對選項清單的前後端雙重過濾而非 selectedBlockDocument 查找；其改用 data 的建議會順帶修掉 GT
+P0423,no,finding 講參數間多餘空白；GT 是 size/position 套用順序
+P0424,same,
+P0425,same,
+P0426,same,
+P0427,same,
+P0428,same,
+P0429,same,
+P0430,same,同一個 map_or 反轉；finding 低估後果（只講訊息沒印出）但修法相同
+P0431,no,
+P0432,no,
+P0433,no,
+P0434,no,
+P0435,no,同一行但 finding 講 disable_logging fixture 被移除；GT 是參數名錯誤
+P0436,no,finding 只建議補單元測試；沒指出 defaultNs 未傳遞
+P0437,no,
+P0438,no,
+P0439,same,同一個變更（null 指派移到開頭）；修法相同（移回迴圈後）；finding 低估嚴重度
+P0440,no,
+P0441,no,
+P0442,no,finding 講驗證不足；GT 是丟 generic Error；獨立缺陷
+P0443,no,finding 講依賴真實網路；GT 是忽略 XCTWaiter 結果
+P0444,no,
+P0445,no,finding 講 targetFrame 可能為 nil；GT 是忽略 XCTWaiter 結果
+P0446,same,
+P0447,no,同一段程式碼；GT 是縮排規則而 finding 講過濾邏輯
+P0448,same,
+P0449,no,
+P0450,same,
+P0451,same,finding 抓到 targetFrame 可能為 nil 的一半；改用 sourceFrame 可同時解決
+P0452,no,
+P0453,same,
+P0454,same,
+P0455,partial,同一個 tearDown 條件分支；finding 講提前 return 略過 terminate/super.tearDown；沒指出 || 應為 &&
+P0456,same,
+P0457,partial,同一個 map callback；finding 講 label 當 key 可能重複；其改用 index 的建議會順帶用到未使用參數
+P0458,same,
+P0459,no,
+P0460,no,
+P0461,no,
+P0462,same,
+P0463,no,
+P0464,same,
+P0465,no,
+P0466,no,
+P0467,no,
+P0468,same,
+P0469,no,
+P0470,no,

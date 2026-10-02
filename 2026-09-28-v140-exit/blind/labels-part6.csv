@@ -1,0 +1,95 @@
+pair,label,note
+P0471,same,"修法同為 || 改 ??"
+P0472,same,
+P0473,same,
+P0474,no,
+P0475,no,"同一個 semaphore 但 finding 講 None 檢查拋錯；GT 是 async with 範圍沒包到 API 呼叫；互相獨立"
+P0476,same,
+P0477,same,"只說型別不符沒講後果；修法同為不要再包一層"
+P0478,same,"同指非主執行緒時回傳 nil；GT 從函式契約講、finding 從呼叫端講"
+P0479,no,
+P0480,no,"同元件；finding 講缺 error boundary，GT 是 Suspense 缺 fallback；互相獨立"
+P0481,partial,"同一段 require、同類機制（路徑大小寫導致找不到模組）；但指向 services 那幾行並歸因部署流程，沒點出 magic-link 檔名沒改"
+P0482,no,"同段 code；finding 講 return True，GT 是沒存正規化後的 JSON；互相獨立"
+P0483,same,
+P0484,no,
+P0485,same,
+P0486,same,"標題點到 NaN；內文把空字串說成 Number('') 得 0 有誤；修法同為在 onChange 驗證"
+P0487,same,
+P0488,no,
+P0489,same,
+P0490,no,
+P0491,no,
+P0492,no,
+P0493,no,
+P0494,no,
+P0495,no,
+P0496,same,
+P0497,no,"同段自動遞增；finding 講上限與倒退，GT 是 dev 模式也遞增；互相獨立"
+P0498,same,"根因與修法相同（fulfill 移回 decisionHandler）；內文把 fulfill 位置說成 wait 之前，標題的永遠等待與 GT 一致"
+P0499,no,"同一宣告；finding 講未使用，GT 講缺存取修飾"
+P0500,same,"後果講成編譯錯誤而非競態；修法同為補 await"
+P0501,no,
+P0502,partial,"同處同症狀（semaphore 為 None 拋 RuntimeError）；但機制講成初始化沒跑或失敗與設定值，不是 client 先啟動的順序競態"
+P0503,same,"finding 以為只多出 LogAlways 等級事件，GT 說是全部事件；同為非 verbose 用錯等級"
+P0504,same,
+P0505,same,
+P0506,same,
+P0507,no,
+P0508,no,"同函式；finding 講驗證欄位不足，GT 是丟 generic Error"
+P0509,no,"同一宣告；finding 講未使用，GT 講缺 final"
+P0510,same,"理由是與 PR 主旨無關而非風格規則；修法同為改回 primary constructor"
+P0511,same,
+P0512,same,
+P0513,no,"同一行；finding 講 Date.now 讓測試不穩，GT 是 Math.ceil 差一天"
+P0514,no,"都談 versionCode 上限；但 finding 講自動遞增路徑，GT 是 semver 驗證早於 dev clamp"
+P0515,no,
+P0516,no,
+P0517,same,"函式名講成 LongPress 版本；但行與改動（.readerMode 改成 .readerModeLongPressAction）與 GT 一致"
+P0518,no,"同函式；finding 講參數空白格式，GT 是 size 與 position 順序"
+P0519,no,
+P0520,no,
+P0521,no,"同段 require；finding 講路徑大小寫，GT 是缺分號"
+P0522,no,"同段；finding 講沒檢查 isDirty，GT 是 trim 改掉使用者輸入"
+P0523,same,
+P0524,same,
+P0525,same,
+P0526,same,
+P0527,no,"同一行；finding 講 SMTP_SSL 是否支援 local_hostname，GT 是 or None 的轉換"
+P0528,no,"同元件 popover；finding 講鍵盤可及性，GT 是隱藏項目的 onClick 被拿掉"
+P0529,no,
+P0530,same,
+P0531,no,
+P0532,same,
+P0533,no,"同一宣告；finding 講未使用，GT 講缺 final"
+P0534,no,
+P0535,same,"同一行 import；finding 理由是未使用而非分層違規；刪掉該 import 兩者皆修"
+P0536,no,"同一查詢；finding 講 orgId 為 undefined 的轉型，GT 是子團隊缺 parentId 條件"
+P0537,same,
+P0538,no,
+P0539,same,
+P0540,same,"語氣保留但點出兩個呼叫順序對調且可能有相依"
+P0541,no,"同段 argv；finding 講 argv[2] 記憶體洩漏，GT 是 argv[5] 越界"
+P0542,no,
+P0543,no,
+P0544,same,
+P0545,partial,"同一段 userIds 權限檢查且標題提到可能過於寬鬆；但內文講的是組織層使用者被誤擋，不是 isCurrentUser 改 includes 造成繞過"
+P0546,same,
+P0547,no,
+P0548,same,
+P0549,same,"沒提是從 1.5 秒調降；修法同為拉長 timeout"
+P0550,no,
+P0551,no,"同一宣告；finding 講回傳 nil，GT 是缺文件註解"
+P0552,no,"同一宣告；finding 講未使用，GT 講缺存取修飾"
+P0553,same,
+P0554,no,
+P0555,same,
+P0556,same,
+P0557,no,
+P0558,same,
+P0559,no,
+P0560,same,
+P0561,no,
+P0562,same,"機制敘述混亂但點出同一個條件反轉"
+P0563,no,
+P0564,same,

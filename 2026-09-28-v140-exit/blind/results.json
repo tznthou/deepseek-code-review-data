@@ -1,0 +1,78 @@
+{
+ "n_func": 309,
+ "main": {
+  "S": {
+   "base-1": 122,
+   "v131-1": 130
+  },
+  "L": {
+   "base-1": 151,
+   "base-2": 149,
+   "v131-1": 160,
+   "v131-2": 149
+  },
+  "d1": 8,
+  "c1": false,
+  "c2": false,
+  "verdict": "保留"
+ },
+ "notes": {
+  "S_ge06": {
+   "base-1": 137,
+   "v131-1": 137
+  },
+  "L_ge06": {
+   "base-1": 172,
+   "base-2": 173,
+   "v131-1": 168,
+   "v131-2": 157
+  },
+  "S_inline_like": {
+   "base-1": 117,
+   "v131-1": 124
+  },
+  "L_inline_like": {
+   "base-1": 151,
+   "base-2": 149,
+   "v131-1": 160,
+   "v131-2": 149
+  },
+  "v140_below06_extra": 5,
+  "rounds": {
+   "base-1": {
+    "findings": 347,
+    "ge07": 270,
+    "hi_unmatched": 91,
+    "prs": 100
+   },
+   "base-2": {
+    "findings": 362,
+    "ge07": 278,
+    "hi_unmatched": 90,
+    "prs": 99
+   },
+   "v131-1": {
+    "findings": 331,
+    "ge07": 294,
+    "hi_unmatched": 93,
+    "prs": 99
+   },
+   "v131-2": {
+    "findings": 325,
+    "ge07": 288,
+    "hi_unmatched": 100,
+    "prs": 98
+   }
+  }
+ },
+ "spot": {
+  "n": 30,
+  "exact": 30,
+  "same_agree": 30
+ },
+ "drift": {
+  "n": 413,
+  "exact": 387,
+  "same_agree": 407
+ }
+}

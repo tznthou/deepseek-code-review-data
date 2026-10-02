@@ -1,0 +1,95 @@
+pair,label,note
+P0095,no,
+P0096,partial,同一段更新判斷；finding 擔心不更新（方向相反）GT 是多餘 re-render
+P0097,no,
+P0098,no,同一行但獨立缺陷（local_hostname vs 三元選 class 可讀性）
+P0099,same,
+P0100,no,
+P0101,partial,同一組 update/flush 的失敗處理；機制不同（多次 flush 無回滾 vs 例外被引擎吞掉）
+P0102,no,同一函式但獨立缺陷（遷出邏輯 vs 未宣告 static）
+P0103,no,不同行且是另一個變更（memberName fallback 被移除）
+P0104,no,
+P0105,same,指出應用 deployment.id 而非 deployment_id；機制講成字串而非 None
+P0106,no,同一行但獨立缺陷（HSETEX 相容性 vs 參數數量錯）
+P0107,same,
+P0108,same,
+P0109,no,
+P0110,no,同一段但獨立缺陷（print vs 執行順序）
+P0111,same,
+P0112,no,相鄰行但獨立缺陷（訊息內容 vs logger 建立方式）
+P0113,no,
+P0114,no,
+P0115,no,
+P0116,same,
+P0117,no,
+P0118,no,
+P0119,no,
+P0120,no,同一類別但獨立缺陷（未使用 vs 缺 final）
+P0121,partial,指對 expertise 條件但機制講成 member 為 null；主建議修法不等價
+P0122,partial,同一處 autoClose；finding 擔心會關閉 GT 是關不掉
+P0123,no,不同處；fallback 到 key 的症狀相近但沒指出 defaultNs 未傳入
+P0124,no,
+P0125,no,
+P0126,no,
+P0127,same,
+P0128,no,同一區塊但獨立缺陷（fallback 出現 undefined vs 前綴含協定）
+P0129,no,
+P0130,no,
+P0131,no,
+P0132,same,
+P0133,no,
+P0134,same,
+P0135,partial,同一行 ToInt64；理由是執行期型別脆弱而非 Int32/Int64 不符
+P0136,no,同一處但獨立缺陷（設定順序 vs 逗號空白）
+P0137,no,同一行但獨立缺陷（格式參數 vs 行長）
+P0138,no,同一行但獨立缺陷（created_at 為 null vs ceil/floor）
+P0139,no,
+P0140,same,位置指向有分號的兩行但問題是 require 缺分號；補分號同時修掉
+P0141,no,
+P0142,no,同樣是比對誤判的症狀但原因獨立（尾端分隔符）且不同行；接近 partial
+P0143,no,
+P0144,no,
+P0145,partial,同一個 elecount 改 samples 的變更；finding 說分母錯 GT 說變數未使用
+P0146,same,
+P0147,no,
+P0148,same,
+P0149,same,
+P0150,same,嚴重度講輕（403 vs 全部 401）但修法同為把 ApiAuthGuard 移前
+P0151,partial,同一個 or None；結論相反
+P0152,same,同樣指出 waiter 結果沒被使用；框架是測試品質而非 lint
+P0153,no,同一行但獨立缺陷（config 值驗證 vs || 應為 &&）
+P0154,same,抓到條件反轉的一半（不同 renderer 不拋例外）；沒提 restart 症狀
+P0155,no,
+P0156,same,
+P0157,no,同一類別但獨立缺陷（未使用 vs 缺 @MainActor）
+P0158,same,
+P0159,no,
+P0160,no,
+P0161,same,
+P0162,same,移除 console.log 同時修掉兩者；理由換成資料外洩
+P0163,same,
+P0164,same,只抓到 position 那半
+P0165,partial,同為手動實作 Error；finding 講 source 不完整 GT 講應改用 thiserror
+P0166,same,
+P0167,no,
+P0168,no,同一處但獨立缺陷（移除 unicode_escape vs 先截斷再跳脫）
+P0169,same,
+P0170,same,
+P0171,same,
+P0172,same,
+P0173,same,
+P0174,no,
+P0175,no,
+P0176,same,
+P0177,no,
+P0178,no,finding 講條件判斷 與參數未更新無關
+P0179,no,
+P0180,no,
+P0181,same,
+P0182,no,
+P0183,no,
+P0184,no,
+P0185,same,
+P0186,no,
+P0187,same,
+P0188,no,
