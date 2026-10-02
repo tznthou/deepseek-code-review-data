@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "git log 失敗時未檢查回傳碼，可能導致後續處理錯誤資料",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時未設定 `check=True`，也未檢查 `proc.returncode`。若 `git log` 因 repo 損毀、權限不足或 tag 不存在而失敗，`proc.stdout` 可能為空或包含錯誤訊息，函式仍會回傳空清單或解析出錯誤的 commit 資料。建議加上 `check=True` 或明確檢查 `proc.returncode`，並在失敗時拋出例外或回傳錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式未檢查 `proc.returncode`，且未設定 `check=True`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "load_config 未處理 JSON 以外的檔案讀取錯誤",
+    "body": "`load_config` 只捕捉 `FileNotFoundError` 和 `json.JSONDecodeError`，但若檔案存在但無法讀取（例如權限不足、I/O 錯誤），會拋出未處理的 `OSError` 導致程式崩潰。建議捕捉 `OSError` 並記錄警告後回傳空 dict，或讓錯誤向上傳播並在 main 中處理。",
+    "existing_code": "except json.JSONDecodeError as e:\n        raise SystemExit(f\"設定檔 {path} 不是合法的 JSON：{e}\")",
+    "evidence": "diff 中 `load_config` 的 except 子句僅涵蓋 `FileNotFoundError` 和 `json.JSONDecodeError`，未涵蓋其他可能的 `OSError`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "post 未處理 HTTP 錯誤狀態碼，可能誤報成功",
+    "body": "`post` 僅在 `urllib.error.URLError` 時回傳 False，但若伺服器回傳 4xx/5xx 狀態碼，`urlopen` 會拋出 `urllib.error.HTTPError`（為 `URLError` 子類別），因此會被捕捉並回傳 False。然而，若伺服器回傳 3xx 重定向，`urlopen` 預設會自動跟隨，最終可能得到 2xx 或拋出例外。但若伺服器回傳 204 No Content，`resp.status` 為 204，符合 `200 <= resp.status < 300`，回傳 True，但實際上可能未成功處理。建議明確檢查 `resp.status` 是否為 2xx，並考慮處理非 2xx 的 HTTP 狀態碼。",
+    "existing_code": "with urllib.request.urlopen(req, timeout=10) as resp:\n            return 200 <= resp.status < 300",
+    "evidence": "diff 中 `post` 函式僅依賴 `urlopen` 的例外處理，未明確處理 HTTP 狀態碼。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "max_items 未限制 NOTES_MAX 的下限，可能導致切片行為異常",
+    "body": "`max_items` 將環境變數 `NOTES_MAX` 轉為整數，但未檢查是否為正數。若設定為 0 或負數，`commits[: max_items()]` 會回傳空清單或錯誤切片，導致公告內容不完整或程式錯誤。建議加上下限檢查，例如 `max(1, int(raw))` 或明確拒絕非正整數。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 僅處理 ValueError，未檢查轉換後的數值是否為正整數。"
+  }
+]

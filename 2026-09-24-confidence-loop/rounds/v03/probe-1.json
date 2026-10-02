@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "git log 失敗時未檢查回傳碼，可能貼出空白公告",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 路徑不存在、git 未安裝或權限不足而失敗，`proc.stdout` 會是空字串，函式會回傳空 list。後續 `main` 會因為 `commits` 為空而直接回傳 0，不會貼出公告，但若 `commits` 非空（例如 git 輸出部分內容後失敗），程式仍會繼續執行並可能貼出不完整的公告。建議加上 `check=True` 或明確檢查 `proc.returncode != 0` 並記錄錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式沒有 `check=True`，且回傳值未檢查。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "NOTES_MAX 為負數或非整數時行為不一致",
+    "body": "`max_items` 只處理了 `ValueError`，但 `int(raw)` 也可能拋出 `TypeError`（不太可能，因為 raw 是字串）。另外，如果 `NOTES_MAX` 是負數，`commits[: max_items()]` 會回傳除了最後幾個元素以外的所有 commit，這可能不是預期行為。建議加上範圍檢查，例如 `max(0, value)` 或明確拒絕負數。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式沒有處理負數或非整數輸入。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "webhook URL 未驗證 scheme，可能被用於 SSRF",
+    "body": "`post` 函式直接使用 `NOTES_WEBHOOK` 環境變數作為 URL，沒有驗證 scheme 是否為 http/https。如果攻擊者能控制環境變數（例如在 CI 中注入），可能導致請求發送到內部服務。但這需要攻擊者已有環境變數控制權，風險較低。建議加上 scheme 檢查。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 函式未對 URL 進行驗證。"
+  }
+]

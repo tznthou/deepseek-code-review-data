@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`commits_between` 未檢查 `git log` 的失敗",
+    "body": "`subprocess.run` 沒有設定 `check=True`，且回傳的 `proc.returncode` 未被檢查。如果 `git log` 因為 repo 損壞、權限不足或 tag 不存在而失敗，`proc.stdout` 會是空字串，函式會回傳空 list，導致後續流程誤以為沒有 commit 而正常結束（回傳 0）。建議加上 `check=True` 或檢查 `proc.returncode`，並在失敗時拋出例外或回傳錯誤碼。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 74,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`group` 函式對 commit subject 的解析可能誤分類",
+    "body": "`group` 函式以 `subject.split(\":\", 1)[0]` 作為分類依據，但若 commit subject 不含冒號，`prefix` 會是整個 subject，可能不屬於任何已知分類而被歸為 `other`。這可能導致分類不準確，但影響有限。建議先檢查是否包含冒號，或使用更嚴謹的解析方式。",
+    "existing_code": "prefix = subject.split(\":\", 1)[0]\n        kind = prefix if prefix in groups else \"other\"",
+    "evidence": "diff 中 `group` 函式的解析邏輯未處理無冒號的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`max_items` 未限制負數或過大值",
+    "body": "`max_items` 直接將環境變數轉為整數，未檢查是否為負數或過大。若 `NOTES_MAX` 設為負數，`commits[: max_items()]` 會變成 `commits[:-n]`，導致輸出錯誤；若設為極大值，可能造成記憶體問題。建議加上範圍檢查（例如 1 到某個上限）。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:",
+    "evidence": "diff 中 `max_items` 函式只處理 ValueError，未檢查數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "webhook URL 未驗證 scheme，可能造成 SSRF",
+    "body": "`post` 函式直接使用環境變數 `NOTES_WEBHOOK` 作為 URL，未驗證其 scheme 是否為 http/https。若攻擊者能控制該環境變數（例如在 CI 環境中），可能誘使腳本向內部服務發送請求。建議檢查 URL 的 scheme 並限制為 http/https。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 函式未對 URL 進行任何驗證。"
+  }
+]

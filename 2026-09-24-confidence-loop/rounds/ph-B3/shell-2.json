@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入漏洞：repo 名稱與 branch 未經跳脫直接插入 SQL 語句",
+    "body": "`sync_one` 函式中，`$name` 與 `$BRANCH` 直接以單引號包覆插入 SQL 語句，但未對單引號進行跳脫。若 repo 目錄名稱或 branch 名稱包含單引號（例如 `test'repo`），將導致 SQL 語法錯誤或 SQL 注入。攻擊者可透過建立惡意名稱的 repo 目錄或傳入特製 branch 參數，執行任意 SQL 指令，例如刪除資料表或竄改資料。\n\n建議改用參數化查詢，例如：\n```bash\nsqlite3 \"$DB\" \"INSERT INTO runs VALUES(?, ?, ?, datetime('now'))\" \"$name\" \"$BRANCH\" \"$ahead\"\n```\n或至少使用 `sqlite3` 的 `-cmd` 與 `printf` 進行跳脫。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 43 行：`sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"`，其中 `$name` 與 `$BRANCH` 未經跳脫。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入漏洞：run_hook 使用 eval 執行未受信任的 hook 路徑",
+    "body": "`run_hook` 函式使用 `eval \"$hook $repo\"` 執行 hook 腳本。`$hook` 路徑由 `$ROOT` 與固定檔名組成，但 `$ROOT` 來自使用者輸入，若 `$ROOT` 包含惡意內容（例如 `$(malicious)` 或 `; rm -rf /`），將導致任意命令執行。即使 `$ROOT` 看似受控，攻擊者若能控制 repo 根目錄路徑，即可注入命令。\n\n建議避免使用 `eval`，改為直接執行：\n```bash\n\"$hook\" \"$repo\"\n```\n並確保 `$hook` 路徑不含特殊字元。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 57 行：`eval \"$hook $repo\"`，其中 `$hook` 包含 `$ROOT`，而 `$ROOT` 來自使用者輸入。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "錯誤處理不足：git 指令失敗仍繼續執行",
+    "body": "`sync_one` 函式中，`git fetch`、`git checkout`、`git merge` 的輸出被重導至日誌，但未檢查其退出狀態。若 fetch 失敗（例如網路問題）或 checkout 失敗（例如 branch 不存在），腳本仍會繼續執行後續指令，可能導致 `git merge` 在錯誤狀態下執行，或將錯誤的資料寫入資料庫。\n\n建議在每個 git 指令後檢查 `$?`，失敗時記錄錯誤並跳過該 repo 或中止。",
+    "existing_code": "git fetch origin --prune 2>>\"$LOG\"\n\ngit checkout $BRANCH 2>>\"$LOG\"\n\ngit merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "diff 第 31-33 行：連續執行 git 指令，未檢查退出狀態。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑處理不當：cleanup_cache 使用 rm -rf 可能誤刪檔案",
+    "body": "`cleanup_cache` 函式執行 `rm -rf \"$ROOT\"/.cache/*`。若 `$ROOT` 為空字串或未設定，將變成 `rm -rf /.cache/*`，可能刪除系統檔案。此外，若 `.cache` 目錄不存在，`rm -rf` 不會報錯，但若 `$ROOT` 包含符號連結或特殊路徑，可能造成非預期刪除。\n\n建議先檢查 `$ROOT` 是否為空，並確認 `.cache` 目錄存在且為預期路徑，或使用更安全的刪除方式。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "diff 第 62 行：`rm -rf \"$ROOT\"/.cache/*`，未檢查 `$ROOT` 是否為空。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "變數未初始化：ahead 可能為空導致數值比較錯誤",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若 `git rev-list` 失敗（例如 branch 不存在），`ahead` 將為空字串。後續 `if [ \"$ahead\" -gt 0 ]` 會因空字串而報錯，且 `sqlite3` 插入空值可能導致資料型別錯誤。\n\n建議在取得 `ahead` 後檢查是否為數字，或設定預設值 0。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)\n\nif [ \"$ahead\" -gt 0 ]; then",
+    "evidence": "diff 第 35-37 行：未處理 `ahead` 為空的情況。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "for 迴圈使用 ls 輸出，檔名含空白或換行會出錯",
+    "body": "`for d in $(ls \"$ROOT\")` 使用 `ls` 的輸出進行迭代，若 repo 目錄名稱包含空白、換行或特殊字元，將被錯誤分割。此外，`ls` 的輸出可能包含非目錄項目，需額外檢查。\n\n建議改用 `find` 或 glob：\n```bash\nfor d in \"$ROOT\"/*/; do\n  d=${d%/}\n  ...\ndone\n```",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "diff 第 72 行：`for d in $(ls \"$ROOT\")` 未正確處理檔名。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "local 關鍵字在函式外使用",
+    "body": "`main` 函式中使用 `local target=\"$ROOT/$d\"`，但 `local` 僅能在函式內使用。雖然在 bash 中可能不會報錯，但這是不良實踐，可能導致變數作用域混淆。\n\n建議移除 `local` 或將該段程式碼放入函式中。",
+    "existing_code": "local target=\"$ROOT/$d\"",
+    "evidence": "diff 第 82 行：在 `main` 函式內使用 `local`，但 `main` 本身是函式，此處 `local` 是多餘的。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "summarize 函式在日誌為空時仍輸出訊息",
+    "body": "`summarize` 函式中，若 `$LOG` 檔案不存在或為空，`total` 為 0，但仍會輸出「本次同步共 0 筆紀錄，詳見 $LOG」。這可能造成誤導。\n\n建議在 `total` 為 0 時輸出不同訊息或省略。",
+    "existing_code": "echo \"本次同步共 $total 筆紀錄，詳見 $LOG\"",
+    "evidence": "diff 第 68 行：未處理 `total` 為 0 的情況。"
+  }
+]

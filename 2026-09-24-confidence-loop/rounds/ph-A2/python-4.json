@@ -1,0 +1,101 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except: pass` 會吞掉所有例外（包含網路錯誤、HTTP 錯誤、JSON 解析錯誤），且不回報任何錯誤。呼叫端（`collect_authors` 和 `main`）直接使用回傳值，若 `_fetch` 回傳 `None`，後續 `pr[\"user\"][\"login\"]` 會拋出 `TypeError`，但真正的錯誤原因已被隱藏。\n\n失敗情境：網路中斷或 GitHub API 回傳 500 時，`_fetch` 回傳 `None`，`collect_authors` 或 `main` 中的 `pr[\"user\"]` 會拋出 `TypeError: 'NoneType' object is not subscriptable`，使用者只看到這個錯誤，無法得知是 API 失敗。\n\n建議：讓例外向上傳播，或至少記錄錯誤並回傳明確的失敗值（例如拋出例外或回傳 None 並在呼叫端檢查）。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24-25 行：`except:` 後只有 `pass`，且 `_fetch` 的回傳值在 `collect_authors`（第 29 行）和 `main`（第 72 行）被直接使用。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "archive 使用 shell=True 且指令包含外部輸入，存在命令注入風險",
+    "body": "`archive` 使用 `subprocess.run` 搭配 `shell=True`，且指令字串中包含 `repo` 和 `path` 參數。這些參數來自命令列輸入（`repo` 是 `sys.argv[1]`），攻擊者可以注入額外的 shell 命令。\n\n失敗情境：使用者執行 `python3 pr_stats.py 'repo; rm -rf /' 1`，`repo` 的值為 `repo; rm -rf /`，指令變成 `tar czf /tmp/pr-stats-repo; rm -rf /.tgz /tmp/pr-stats-repo; rm -rf / && gh repo view repo; rm -rf /`，導致任意命令執行。\n\n建議：避免使用 `shell=True`，改用參數列表傳遞，或使用 `shlex.quote` 正確轉義。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 63 行：`shell=True` 且 f-string 包含 `repo` 和 `path`，這些值來自使用者輸入。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設值，跨呼叫累積結果",
+    "body": "`collect_authors` 的參數 `seen=[]` 是可變預設值，在函式定義時建立一次，之後每次呼叫都會共用同一個 list。這會導致多次呼叫時結果累積，且呼叫者無法預期初始狀態。\n\n失敗情境：第一次呼叫 `collect_authors(repo, [1,2])` 回傳 `['alice', 'bob']`，第二次呼叫 `collect_authors(repo, [3])` 會回傳 `['alice', 'bob', 'carol']`，而不是 `['carol']`。\n\n建議：改用 `seen=None`，在函式內初始化為空 list。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：參數預設值為 `[]`，且函式內對 `seen` 進行 `append` 操作。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "export_csv 未使用 with 開啟檔案，可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 開啟檔案，但未使用 `with` 或 `try/finally` 確保檔案關閉。若寫入過程中發生例外，檔案控制代碼不會被關閉，可能導致資源洩漏或檔案內容不完整。\n\n失敗情境：磁碟滿或寫入錯誤時，`f.write` 拋出例外，函式提前退出，檔案未關閉，可能造成資料遺失或鎖定。\n\n建議：使用 `with open(path, \"w\") as f:` 確保檔案正確關閉。",
+    "existing_code": "f = open(path, \"w\")",
+    "evidence": "diff 第 58 行：直接使用 `open` 而沒有 `with`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "review_latency 假設 pr 有 timeline 欄位，但 API 回應可能沒有",
+    "body": "`review_latency` 使用 `pr.get(\"timeline\", [])`，但 GitHub Pull Request API 的回應中並不一定包含 `timeline` 欄位（除非特別要求）。若 `timeline` 不存在，`events` 會是空 list，函式回傳 0，但這可能不是真正的延遲。\n\n失敗情境：呼叫 `_fetch` 取得 PR 資料時，若未要求 timeline，`pr` 中沒有 `timeline` 鍵，`review_latency` 回傳 0，導致 CSV 中的 latency 欄位全部為 0，失去統計意義。\n\n建議：確認 API 回應結構，或明確處理缺少 timeline 的情況（例如回傳 None 或拋出例外）。",
+    "existing_code": "events = pr.get(\"timeline\", [])",
+    "evidence": "diff 第 34 行：使用 `get` 提供預設值，但未檢查 `timeline` 是否為有效資料。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "classify 假設 pr 有 additions 和 changed_files 欄位，可能 KeyError",
+    "body": "`classify` 直接存取 `pr[\"additions\"]` 和 `pr[\"changed_files\"]`，但 GitHub API 的回應中這些欄位可能存在也可能不存在（取決於 API 版本或請求參數）。若欄位缺失，會拋出 `KeyError`。\n\n失敗情境：若 `_fetch` 回傳的 PR 物件沒有 `additions` 欄位（例如使用舊版 API），`classify` 會拋出 `KeyError: 'additions'`，導致程式崩潰。\n\n建議：使用 `pr.get(\"additions\", 0)` 和 `pr.get(\"changed_files\", 0)` 提供預設值，或明確處理缺失情況。",
+    "existing_code": "if pr[\"additions\"] > 500:",
+    "evidence": "diff 第 48 行：直接使用 `pr[\"additions\"]`，未檢查鍵是否存在。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 72,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "main 中重複呼叫 _fetch，且未檢查回傳值",
+    "body": "`main` 在迴圈中對每個 PR 呼叫 `_fetch`，但 `_fetch` 可能回傳 `None`（因為錯誤被吞掉），導致後續 `pr[\"user\"]` 拋出 `TypeError`。此外，`collect_authors` 已經呼叫過 `_fetch`，這裡又重複呼叫，造成不必要的 API 請求。\n\n失敗情境：若某個 PR 的 API 請求失敗，`_fetch` 回傳 `None`，`pr[\"user\"]` 拋出 `TypeError`，程式崩潰。\n\n建議：在 `_fetch` 中讓錯誤向上傳播，或在 `main` 中檢查回傳值。另外，可以考慮重用 `collect_authors` 的結果，避免重複請求。",
+    "existing_code": "pr = _fetch(f\"/repos/{repo}/pulls/{n}\")",
+    "evidence": "diff 第 72 行：直接使用 `_fetch` 的回傳值，未檢查是否為 `None`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "archive 中的 gh repo view 可能將 token 暴露在命令列",
+    "body": "`archive` 執行 `gh repo view {repo}`，而 `gh` 命令可能使用環境變數中的 `GITHUB_TOKEN` 進行認證。在某些系統上，命令列參數可能被其他使用者透過 `ps` 看到，導致 token 外洩。\n\n失敗情境：在多使用者系統上，其他使用者可以透過 `ps aux` 看到 `gh repo view` 的參數，若 `gh` 將 token 作為參數傳遞（而非從環境變數讀取），token 會暴露。\n\n建議：確認 `gh` 如何處理認證，避免在命令列中傳遞敏感資訊。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 63 行：指令中包含 `gh repo view {repo}`，可能涉及認證。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "輸出檔案路徑可能包含特殊字元，導致命令注入或路徑問題",
+    "body": "`out` 的檔名由 `repo` 替換 `/` 為 `-` 而來，但 `repo` 可能包含其他特殊字元（如 `;`、`&`、空格），在 `archive` 的 shell 指令中可能造成問題。\n\n失敗情境：`repo` 為 `a; rm -rf /`，`out` 變成 `/tmp/pr-stats-a; rm -rf /.csv`，在 `archive` 的 shell 指令中可能被解釋為多個命令。\n\n建議：對 `repo` 進行更嚴格的驗證或轉義，或避免在 shell 指令中使用未清理的輸入。",
+    "existing_code": "out = f\"/tmp/pr-stats-{repo.replace('/', '-')}.csv\"",
+    "evidence": "diff 第 78 行：`repo` 未經過完整清理，僅替換 `/`。"
+  }
+]

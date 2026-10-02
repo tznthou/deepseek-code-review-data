@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "未檢查 `git log` 子程序的回傳碼",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 損毀、權限不足或 tag 不存在而失敗，`proc.stdout` 會是空字串，函式會回傳空列表，導致後續流程誤判為「沒有新 commit」而正常結束，或產生不完整的 release notes。建議加上 `check=True` 或明確檢查 `returncode`，並在失敗時拋出例外或記錄錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式內呼叫 `subprocess.run` 未設定 `check=True`，且後續直接使用 `proc.stdout` 而未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "第一個 tag 時 `prev` 會拋出 IndexError",
+    "body": "在 `main` 中，`prev = tags[tags.index(tag) - 1]` 假設 `tag` 之前一定還有其他 tag。如果使用者指定的 `tag` 是 repo 中第一個符合 `v*` 的 tag（例如 `v0.1.0`），`tags.index(tag)` 會是 0，`tags[-1]` 會取到最後一個 tag，而不是正確的前一個版本，導致 release notes 範圍錯誤。建議檢查 `tags.index(tag) == 0` 的情況，並提示使用者或改用其他方式取得前一個版本。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式內直接使用 `tags.index(tag) - 1` 作為索引，未處理索引為 0 的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`load_config` 可能因權限問題拋出未處理的例外",
+    "body": "`load_config` 只捕捉 `FileNotFoundError` 和 `json.JSONDecodeError`，但 `open` 可能因為權限不足或其他 I/O 錯誤拋出 `PermissionError` 或 `OSError`，導致程式直接崩潰。建議捕捉更廣泛的 `OSError` 並記錄警告，或讓呼叫端處理。",
+    "existing_code": "except FileNotFoundError:\n        return {}\n    except json.JSONDecodeError as e:\n        raise SystemExit(f\"設定檔 {path} 不是合法的 JSON：{e}\")",
+    "evidence": "diff 中 `load_config` 函式的例外處理僅涵蓋 `FileNotFoundError` 和 `json.JSONDecodeError`，未涵蓋其他可能的 `OSError`。"
+  }
+]

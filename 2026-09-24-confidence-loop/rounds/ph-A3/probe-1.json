@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "git log 失敗時未檢查回傳碼，可能導致誤判為無 commit",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 路徑錯誤、tag 不存在或其他原因失敗，`proc.stdout` 會是空字串，函式會回傳空 list，而 `main` 會印出「之間沒有新 commit」並回傳 0，讓使用者誤以為成功。建議加上 `check=True` 或檢查 `proc.returncode`，失敗時拋出例外或回傳錯誤碼。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式沒有檢查 `proc.returncode`，且 `subprocess.run` 未設 `check=True`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "當 tag 是第一個 tag 時，prev 取得會拋出 IndexError",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，索引會變成 -1，取到最後一個 tag，而不是報錯。這可能導致錯誤的 commit 範圍。建議檢查 `tags.index(tag) == 0` 的情況，並給出明確的錯誤訊息。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中該行直接使用 `tags.index(tag) - 1`，沒有處理 index 為 0 的邊界。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "max_items() 未處理負數或零，可能造成切片行為異常",
+    "body": "`max_items()` 將環境變數 `NOTES_MAX` 轉成整數，但沒有檢查是否為正數。如果設定為負數或零，`commits[: max_items()]` 會得到空 list 或意外的結果。建議加上檢查，若小於 1 則使用預設值或報錯。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items()` 只處理了 ValueError，沒有檢查數值範圍。"
+  }
+]

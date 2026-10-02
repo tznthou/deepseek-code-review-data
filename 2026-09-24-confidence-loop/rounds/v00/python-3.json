@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except:` 捕捉所有例外後僅 `pass`，沒有記錄或重新拋出。當網路錯誤、API 回傳非 2xx、或 JSON 解析失敗時，函式會回傳 `None`。呼叫端（`collect_authors` 和 `main`）直接對回傳值做 `pr[\"user\"][\"login\"]` 或 `pr.get(...)`，若 `pr` 為 `None` 會拋出 `TypeError` 或 `AttributeError`，導致程式崩潰。建議至少記錄錯誤並重新拋出，或讓呼叫端檢查 `None`。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24-25 行：`except:` 後僅 `pass`，且呼叫端未檢查回傳值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path`，其中 `repo` 來自命令列參數（外部輸入）。攻擊者可注入額外指令，例如 `repo` 設為 `x; rm -rf /`。建議改用參數列表形式並移除 `shell=True`，或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 62 行：`shell=True` 且 f-string 包含外部輸入 `repo`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設值 seen=[]，跨呼叫累積狀態",
+    "body": "`collect_authors` 的參數 `seen=[]` 在函式定義時建立一次，之後每次呼叫都會共用同一個 list。若多次呼叫此函式，作者名單會不斷累積，導致結果不正確。建議改為 `seen=None`，在函式內初始化為空 list。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 29 行：`seen=[]` 為可變預設值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "export_csv 未使用 with 開啟檔案，例外時可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，若寫入過程中發生例外（例如磁碟滿、權限不足），檔案不會被關閉，造成資源洩漏。建議改用 `with open(path, \"w\") as f:` 確保檔案正確關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 56-60 行：手動 open/close，無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 的 int(raw) 未處理轉換失敗",
+    "body": "`threshold_from_env` 將環境變數 `PR_STALE_DAYS` 直接轉為 `int`，若該值不是合法整數（例如 \"abc\"），會拋出 `ValueError` 導致程式崩潰。建議捕捉例外並提供預設值或明確錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 38 行：`int(raw)` 未處理例外。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "classify 使用 startswith(\"fix\") 可能誤判標題",
+    "body": "`classify` 以 `pr[\"title\"].startswith(\"fix\")` 判斷是否為 fix PR，但標題可能以 \"fix\" 開頭但非修復（例如 \"fixed typo in docs\"），或大小寫不同（\"Fix\"）。建議使用更精確的判斷，例如正規表示式或檢查標籤。",
+    "existing_code": "elif pr[\"title\"].startswith(\"fix\"):",
+    "evidence": "diff 第 44 行：`startswith(\"fix\")` 過於寬鬆。"
+  }
+]

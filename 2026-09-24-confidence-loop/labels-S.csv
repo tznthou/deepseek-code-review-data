@@ -1,0 +1,51 @@
+id,label,class,reason
+S01,valid,A1+A3,裸 except 吞掉所有例外、回 None，下游 pr["user"] TypeError（第 25、32 行）
+S02,valid,A7,shell=True 拼接 argv 來的 repo（第 77 行）
+S03,valid,A2,seen=[] 跨呼叫共用，第 32 行真的 append
+S04,disputed,bonus@B1,明說空容器已處理；改報 created_at 缺欄位或順序錯。timeline 事件內容是外部資料，這份 code 看不出會不會發生
+S05,valid,A5,int(raw) 轉環境變數沒處理 ValueError（第 54 行）
+S06,valid,A6,open 沒用 with（第 69–73 行）
+S07,disputed,bonus,pr 來自單一 PR 端點，additions/changed_files 一定在；真正會出事的是 pr=None（A3），它沒提
+S08,valid,A4,collect_authors 與 main 迴圈各 fetch 一次同一批 PR（第 31、88 行），迴圈內重複 I/O
+S09,valid,bonus(A7 延伸),out 由 repo 組成、replace 只換掉 /，再進 archive 的 shell=True
+S10,valid,A1+A3,同 S01
+S11,valid,A7,同 S02
+S12,valid,A2,同 S03
+S13,invalid,報已經做了的事,body 說「直接存取 pr["timeline"]」，實際是第 37 行的 pr.get；建議的修法正是既有 code
+S14,valid,A6,同 S06
+S15,disputed,bonus,同 S07
+S16,valid,A5,同 S05
+S17,valid,bonus,sys.argv[1] 沒參數時 IndexError（第 81 行），陳述屬實、影響小
+S18,valid,A1+A3,主張成立；次要主張「404 時 json.loads 會解析錯誤頁」不對（urlopen 先拋 HTTPError）
+S19,valid,A7,同 S02
+S20,valid,A2,同 S03
+S21,valid,A6,同 S06
+S22,valid,A5,同 S05
+S23,disputed,bonus,同 S07
+S24,invalid,機制錯,timeline 為 None 時 not events 為真、第 39 行就 return 0，不會走到 events[0]
+S25,valid,A1+A3,同 S01（位置被定在第 22 行，內容是第 25 行的 except）
+S26,valid,A7,同 S02
+S27,valid,A2,同 S03
+S28,valid,A6,同 S06
+S29,valid,A5,同 S05
+S30,invalid,報已經做了的事,自相矛盾：說空列表仍會觸發，但它自己引用的第 38 行守衛就擋掉空列表
+S31,valid,S1,$name 內插進 SQL（第 47 行）；順帶說 $BRANCH 也能注入是錯的（第 16 行 regex 擋掉引號）
+S32,valid,S2,eval 的 $repo 來自目錄名（第 56 行）
+S33,valid,bonus,git checkout/merge 失敗照樣往下寫資料庫（第 37–38 行）；不是 B1 的引號問題
+S34,valid,S7,for d in $(ls) 遇空白拆開（第 87 行）
+S35,valid,S3,ahead 為空時比較出錯、下游 SQL 拿到空值；沒宣稱腳本中止
+S36,valid,S5,$ROOT 為空時 rm -rf /.cache/*（第 62 行）
+S37,invalid,B2,說 grep 失敗會得到空字串，錯：|| echo 0 保底。另外預期表的 B2 前提本身有洞，log 存在但沒有非空白行時 total 是兩行 0（實測）
+S38,valid,S1,同 S31；建議的 sqlite3 參數寫法不存在
+S39,valid,S2,$repo 那條管道成立；$ROOT 那條是操作者自己給的值
+S40,valid,S5,$ROOT 未驗證就 rm -rf
+S41,valid,bonus,git fetch/checkout/merge 失敗未檢查（第 34–38 行）
+S42,valid,S7,同 S34
+S43,disputed,bonus(預期表列為附帶),標題說 local 用在函式外，錯；內文自己承認 main 是函式、合法。預期表把「位置可議」列為附帶
+S44,valid,S1,同 S31
+S45,valid,S2,同 S32
+S46,valid,bonus,同 S33
+S47,valid,S5,同 S36
+S48,valid,S3,同 S35；SQL 那段說型別錯誤，實際是語法錯誤（次要）
+S49,valid,S7,同 S34
+S50,invalid,機制錯,說 $ROOT 不存在時迴圈會嘗試進入不存在的目錄；實際 ls 沒輸出、迴圈一次都不跑。真正的問題（靜默什麼都沒做）它沒講

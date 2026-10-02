@@ -1,0 +1,29 @@
+id,item,label,reason
+ph-A1:probe:4:2,PR-X1,valid,NOTES_MAX 沒檢查範圍；-1 丟最舊一筆、0 只剩標題，後果寫對
+ph-A1:python:1:1,PY-A1,valid,裸 except 吞例外、下游 TypeError；順帶說 GITHUB_TOKEN 的 KeyError 會被吞是錯的（第 21 行在 try 外），不影響主張
+ph-A1:probe:4:5,NONE,invalid,主張 tags.index 的 ValueError 沒接住；第 115 行 tag not in tags 先擋，body 自己也推到這一步；沒講到第一個 tag 取到 -1
+ph-A1:probe:3:7,PR-new-oserror,valid,權限不足等 OSError 沒接、直接 traceback（跟 X3 同型、影響小；照 v04 前例）
+ph-A1:shell:4:6,SH-S7,valid,同 M005
+ph-A1:probe:3:5,PR-A1,disputed,主要主張（tags 為空會 IndexError）錯，第 115 行先擋；後半講到第一個 tag 取到 tags[-1] 正確（照 v03 前例）
+ph-A1:python:1:4,PY-new-timeline,valid,單一 PR 端點沒有 timeline 欄位，延遲永遠是 0（照前例）
+ph-A1:python:4:3,PY-A2,valid,同 M027
+ph-A1:python:3:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-A1:shell:1:5,SH-S3,valid,ahead 為空時 -gt 報錯（沒說會中止或當成 0），另加 SQL 插入空值會語法錯誤，也屬實
+ph-A1:python:2:5,PY-new-timeline,valid,單一 PR 端點沒有 timeline 欄位，延遲永遠是 0
+ph-A1:shell:4:4,SH-S3,valid,"ahead 為空時 SQL 變成 , , 語法錯誤；同一個缺陷的另一個後果，屬實"
+ph-A1:python:3:4,PY-new-timeline,valid,空事件回 0 會把資料缺失混成零延遲；這份 code 的 timeline 永遠是空的（照 v04 前例）
+ph-A1:python:1:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-A1:probe:1:2,PR-A1,disputed,機制對（第一個 tag 取到 tags[-1]）；後果寫反：說會涵蓋所有 commit，實際範圍是空的
+ph-A1:python:5:7,PY-B1,disputed,承認 events 非空才走到這裡；改報 created_at 缺欄位
+ph-A1:shell:3:4,SH-S3,valid,ahead 為空時 -gt 出錯（沒說中止）、SQL 插入語法錯誤
+ph-A1:python:3:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-A1:python:1:5,PY-B2,disputed,一半是陷阱（承認 default 沒被修改還是報、建議改 None），一半是真的 A5（照 v05 前例）
+ph-A1:probe:5:2,PR-A1,valid,標題說 IndexError 錯，body 正確：只有一個 tag 時 prev 是自己、範圍為空、印「沒有新 commit」回 0
+ph-A1:probe:5:3,PR-new-maxcap,invalid,NOTES_MAX 設很大是操作者自己的設定，預設 50；說會有記憶體壓力不成立（切片超過長度只回傳整個 list）
+ph-A1:probe:4:3,PR-X5,disputed,設定檔是合法 JSON 但不是物件時 AttributeError；設定檔由操作者維護（照前例）
+ph-A1:python:1:7,PY-A1,valid,標題說非 2xx 被當成功是錯的，但 body 主軸正確：HTTPError 被 except 吞掉、回 None、下游崩潰（K-status 規則：只是 A1 的一部分照 A1）
+ph-A1:shell:5:5,SH-S7,valid,for d in $(ls)
+ph-A1:python:4:1,PY-A1,valid,同 M095
+ph-A1:probe:4:4,PR-B7,invalid,自己承認功能上能正確反映失敗；說沒記錄狀態碼不對，第 97 行記下的例外本來就帶狀態碼（照前例）
+ph-A1:probe:2:3,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+ph-A1:shell:4:5,SH-K-local,disputed,說 local 用在函式外是錯的（main 是函式，它的 evidence 也承認）；照規則 SH-K-local 給 disputed

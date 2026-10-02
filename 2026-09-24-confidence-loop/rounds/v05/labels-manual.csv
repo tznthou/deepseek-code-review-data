@@ -1,0 +1,24 @@
+id,item,label,reason
+v05:python:1:3,PY-A2,valid,seen=[] 跨呼叫累積
+v05:python:1:4,PY-B1,disputed,明說空列表已處理；改報 created_at 缺欄位
+v05:python:1:5,PY-A5,valid,明說可變 dict 沒被修改所以不報；主張是 int 沒接 ValueError
+v05:python:2:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+v05:python:3:1,PY-A1,valid,同上
+v05:python:3:3,PY-A2,valid,同上
+v05:python:4:4,PY-B2,disputed,一半是陷阱（承認 default 沒被修改還是報）、一半是真的 A5
+v05:python:5:1,PY-A1,valid,同上
+v05:python:5:3,PY-A2,valid,同上
+v05:shell:1:8,SH-new-perf,invalid,說 grep -c 會讀整個檔、改用 wc -l；wc -l 一樣讀整個檔，而且會連空行一起算、語意也變了
+v05:shell:2:5,SH-S3,valid,ahead 為空時 SQL 語法錯誤
+v05:shell:3:4,SH-S3,valid,ahead 為空時 [ 報錯；「若 set -e 啟用才會中斷」是條件句，沒有說錯
+v05:shell:3:7,SH-S7,valid,$(ls) 遇空白拆開
+v05:shell:5:6,SH-new-perf,invalid,逐一 fetch 是這支腳本的本業，建議平行化是功能需求不是缺陷
+v05:probe:1:3,PR-X1,valid,NOTES_MAX=-5 會排除最後 5 筆，講對
+v05:probe:2:2,PR-A1,valid,標題寫 IndexError 不對；內文正確：只有一個 tag 時 prev 取到自己、範圍為空
+v05:probe:2:3,PR-X1,valid,0 只剩標題、-1 排除最後一個，兩個都對
+v05:probe:2:4,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+v05:probe:3:5,PR-new-subprocess,invalid,subprocess.run 內部自己管 Popen 的清理，不會洩漏
+v05:probe:4:2,PR-X1,valid,0 會變空講對；負數說成全部元素不對
+v05:probe:4:4,PR-X5,disputed,設定檔不是物件時 AttributeError；設定檔由操作者維護
+v05:probe:5:2,PR-A1,valid,同 probe:2:2
+v05:probe:5:3,PR-X1,valid,0 會產生空公告卻回報成功，講對

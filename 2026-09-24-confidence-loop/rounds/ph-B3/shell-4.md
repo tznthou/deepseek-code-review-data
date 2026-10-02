@@ -1,0 +1,67 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 新增一個批次同步多個 Git repo 的 bash 腳本，並將結果寫入 SQLite。主要風險在於 SQL 注入（repo 名稱與 branch 未經跳脫）、命令注入（eval 執行 hook）、以及錯誤處理不足（git 指令失敗仍繼續執行）。此外，使用 `ls` 解析目錄、`local` 在函數外使用等問題可能導致非預期行為。建議優先修正 SQL 注入與 eval 的使用，並強化錯誤處理。
+
+### Findings（6 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `sandbox/repo_sync.sh:47` | SQL 注入風險：repo 名稱與 branch 未跳脫 | 0.95 |
+| 🛑 | Blocker | `sandbox/repo_sync.sh:56` | 命令注入風險：eval 執行 hook | 0.90 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:34` | git 指令失敗未中止，可能導致錯誤結果 | 0.85 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:41` | ahead 計算可能失敗，導致 SQL 寫入空值 | 0.80 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:87` | 使用 ls 解析目錄，可能因特殊字元或空白而失敗 | 0.75 |
+| 🔸 | Minor | `sandbox/repo_sync.sh:88` | local 在函數外使用，可能導致非預期行為 | 0.70 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/repo_sync.sh:47</code> SQL 注入風險：repo 名稱與 branch 未跳脫</summary>
+
+`sync_one` 中直接將 `$name` 與 `$BRANCH` 插入 SQL 字串，若 repo 目錄名稱或 branch 包含單引號，將可注入任意 SQL 指令。例如 repo 名稱為 `x'); DROP TABLE runs;--` 時，會執行惡意 SQL。建議改用參數化查詢（sqlite3 支援 `?` 佔位符）或使用 `sqlite3` 的 `-cmd` 與 `:var` 綁定。
+
+**判斷依據**：第 42 行直接將變數嵌入 SQL 字串，且 `$name` 來自 `basename "$dir"`，`$dir` 來自 `ls "$ROOT"` 的輸出，皆為使用者可控。
+
+</details>
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/repo_sync.sh:56</code> 命令注入風險：eval 執行 hook</summary>
+
+`run_hook` 使用 `eval "$hook $repo"`，若 `$hook` 或 `$repo` 包含惡意內容（例如 repo 名稱為 `; rm -rf ~`），將導致任意命令執行。建議避免使用 eval，改為直接執行 `"$hook" "$repo"`，並確保 hook 路徑與參數安全。
+
+**判斷依據**：第 50 行使用 eval，且 `$repo` 來自 `$d`（`ls` 輸出），`$hook` 為固定路徑但可能被竄改。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:34</code> git 指令失敗未中止，可能導致錯誤結果</summary>
+
+`git fetch`、`git checkout`、`git merge` 的錯誤僅被重導向至 log，但腳本仍繼續執行。若 fetch 失敗（如網路問題），後續 merge 可能基於過時的遠端分支，導致錯誤的 ahead 計算或合併失敗。建議在每個 git 指令後檢查退出碼，失敗時記錄錯誤並跳過該 repo。
+
+**判斷依據**：第 31-34 行未檢查 git 指令的退出狀態，且後續仍執行 `git rev-list` 與 SQL 寫入。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:41</code> ahead 計算可能失敗，導致 SQL 寫入空值</summary>
+
+`ahead=$(git rev-list --count "origin/$BRANCH"..HEAD 2>/dev/null)` 若失敗（例如遠端分支不存在），`ahead` 將為空字串，後續 `[ "$ahead" -gt 0 ]` 會報錯，且 SQL 插入的 `$ahead` 為空，可能導致資料不一致。建議檢查 `ahead` 是否為數字，失敗時設定為 0 或跳過。
+
+**判斷依據**：第 36 行未檢查命令執行結果，且第 38 行使用 `-gt` 比較，空字串會導致錯誤。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:87</code> 使用 ls 解析目錄，可能因特殊字元或空白而失敗</summary>
+
+`for d in $(ls "$ROOT")` 會將 `ls` 的輸出按空白分割，若 repo 目錄名稱包含空白或特殊字元，將無法正確處理。建議改用 `for d in "$ROOT"/*/` 或 `find` 搭配 `-print0`。
+
+**判斷依據**：第 62 行使用命令替換與 ls，未處理檔名中的空白或換行。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/repo_sync.sh:88</code> local 在函數外使用，可能導致非預期行為</summary>
+
+`local target="$ROOT/$d"` 出現在 `main` 函數中，但 `local` 僅能在函數內使用。若腳本以 bash 執行，此處會報錯（`local: can only be used in a function`），但腳本仍會繼續執行，可能導致 `target` 變數未正確設定。建議移除 `local` 或改用一般賦值。
+
+**判斷依據**：第 63 行在 `main` 函數內使用 `local`，但 `main` 是函數，此處應為合法，但需確認 bash 版本。實際上 `local` 在函數內是合法的，此 finding 可能不成立，故 confidence 較低。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 2430 (cache hit 2304) ｜ completion tokens 1603 ｜ PR #13</sub>

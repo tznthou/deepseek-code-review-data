@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`commits_between` 未檢查子程序失敗，可能回傳空列表並誤導流程",
+    "body": "`subprocess.run` 沒有設定 `check=True`，當 `git log` 失敗（例如 repo 路徑無效、git 不在 PATH、或 `prev..tag` 不是有效範圍）時，`proc.returncode` 非零但程式不會拋出例外。`proc.stdout` 可能為空字串，導致函式回傳空列表，`main` 會印出「之間沒有新 commit」並回傳 0，讓使用者誤以為成功。\n\n建議：加上 `check=True`，或在呼叫後檢查 `proc.returncode != 0` 並記錄錯誤後回傳非零。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `subprocess.run` 沒有 `check=True`，且回傳值 `proc` 的 `returncode` 未被檢查。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "只有一個符合條件的 tag 時，`prev` 會取到 `tags[-1]` 造成錯誤",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，`tags.index(tag) - 1` 會是 `-1`，因此 `prev` 會變成最後一個 tag（即 `tag` 本身），導致 `prev..tag` 是空範圍，`commits_between` 回傳空列表，程式印出「之間沒有新 commit」並回傳 0。\n\n建議：檢查 `tags.index(tag) == 0` 時，記錄錯誤並回傳非零，或改用 `tags[tags.index(tag) - 1] if tags.index(tag) > 0 else None` 並處理 `None`。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `prev` 的計算沒有處理 `tag` 是第一個元素的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`NOTES_MAX` 沒有下限，可能導致負數或零造成意外行為",
+    "body": "`max_items()` 將環境變數轉成整數，但沒有檢查是否為正數。若使用者設定 `NOTES_MAX=0` 或負數，`commits[: max_items()]` 會是空列表或全部元素（負索引切片），導致公告內容不正確。\n\n建議：在轉換後檢查 `value < 1` 時記錄警告並使用預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items()` 只處理了 `ValueError`，沒有檢查數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "webhook URL 未驗證 scheme，可能被用於 SSRF 或非預期協定",
+    "body": "`post` 直接將 `url` 傳給 `urllib.request.Request`，沒有檢查 scheme 是否為 `http` 或 `https`。若環境變數被設為 `file:///etc/passwd` 或 `ftp://...`，程式會嘗試讀取或傳送資料到非預期的位置。\n\n建議：在 `main` 中驗證 `url` 的 scheme 為 `http` 或 `https`，否則回傳錯誤。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `url` 直接來自環境變數，未經 scheme 驗證即用於 `urllib.request.Request`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`post` 未處理 HTTP 錯誤狀態碼，可能誤報成功",
+    "body": "`post` 只檢查 `200 <= resp.status < 300`，但 `urllib.request.urlopen` 在 HTTP 錯誤狀態碼（如 404、500）時會拋出 `urllib.error.HTTPError`，而 `HTTPError` 是 `URLError` 的子類別，因此會被 `except urllib.error.URLError` 捕捉並記錄錯誤，但函式回傳 `False`，`main` 會回傳 1。這部分行為正確，但若 webhook 端回傳 3xx 重定向，`urlopen` 會自動跟隨，最終可能得到 2xx 或拋出例外。整體而言，錯誤處理尚可，但建議明確捕捉 `HTTPError` 以提供更精確的錯誤訊息。",
+    "existing_code": "try:\n        with urllib.request.urlopen(req, timeout=10) as resp:\n            return 200 <= resp.status < 300\n    except urllib.error.URLError as e:\n        log(f\"[error] 貼到 {url} 失敗：{e}\")\n        return False",
+    "evidence": "diff 中 `post` 的例外處理只捕捉 `URLError`，未區分 `HTTPError`。"
+  }
+]

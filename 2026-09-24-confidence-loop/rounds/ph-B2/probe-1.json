@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "git log 失敗時未檢查回傳碼，可能導致後續 IndexError",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時未設定 `check=True`，也未檢查 `proc.returncode`。若 `git log` 因 repo 損毀、權限不足或 tag 不存在而失敗，`proc.stdout` 可能為空字串，`commits` 會是空 list。在 `main` 中，`latest = commits[0][0]` 會因此拋出 `IndexError`，程式直接 crash。建議在 `subprocess.run` 加上 `check=True`，或檢查 `proc.returncode != 0` 時記錄錯誤並回傳空 list 或拋出例外。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式未檢查 `proc.returncode`，而 `main` 中 `latest = commits[0][0]` 假設 `commits` 非空。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "只有一個 tag 時 `tags.index(tag) - 1` 會取到最後一個 tag",
+    "body": "在 `main` 中，`prev = tags[tags.index(tag) - 1]`。若 `tags` 只有一個元素（即目前 tag 是第一個 tag），`tags.index(tag)` 為 0，`-1` 會變成 -1，Python 會取到最後一個元素（也就是自己），導致 `prev == tag`，`git log prev..tag` 會是空範圍，`commits` 為空，進而觸發 `IndexError`。建議在 `tags.index(tag) == 0` 時處理（例如回報錯誤或使用 repo 初始 commit）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `prev = tags[tags.index(tag) - 1]` 未處理 `index` 為 0 的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 31,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "NOTES_MAX 為負數或非整數時行為不一致",
+    "body": "`max_items` 對 `NOTES_MAX` 的處理：若為空字串回傳預設值；若無法轉為整數則記錄警告並回傳預設值；但若轉為負數（例如 `-1`），會直接回傳負數。在 `main` 中 `commits[: max_items()]` 若 `max_items()` 為負數，切片會取到倒數幾個元素，可能不是預期行為。建議對負數也回傳預設值或設定下限。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 未處理負數輸入。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "webhook URL 未驗證 scheme，可能造成 SSRF",
+    "body": "`post` 直接使用 `NOTES_WEBHOOK` 環境變數作為 URL，未檢查 scheme 是否為 http/https。若攻擊者能控制環境變數（例如 CI 設定），可指定 `file://` 或 `gopher://` 等 scheme，導致任意檔案讀取或內網請求。建議限制 scheme 為 `http` 或 `https`。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 未對 `url` 做 scheme 驗證。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "設定檔 JSON 型別未驗證",
+    "body": "`load_config` 回傳 `json.load` 的結果，但未驗證其型別是否為 dict。若 `.release-notes.json` 內容為 list 或字串，後續 `cfg.get('title', ...)` 會拋出 `AttributeError`。建議檢查 `isinstance(data, dict)`，否則回傳空 dict 或拋出明確錯誤。",
+    "existing_code": "with open(path, encoding=\"utf-8\") as fh:\n            return json.load(fh)",
+    "evidence": "diff 中 `load_config` 直接回傳 `json.load` 結果，未做型別檢查。"
+  }
+]

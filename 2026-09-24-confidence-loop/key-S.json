@@ -1,0 +1,252 @@
+{
+ "S01": {
+  "source": "py-3way",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S02": {
+  "source": "py-3way",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S03": {
+  "source": "py-3way",
+  "confidence": 0.9,
+  "severity": "major"
+ },
+ "S04": {
+  "source": "py-3way",
+  "confidence": 0.85,
+  "severity": "major"
+ },
+ "S05": {
+  "source": "py-3way",
+  "confidence": 0.85,
+  "severity": "major"
+ },
+ "S06": {
+  "source": "py-3way",
+  "confidence": 0.85,
+  "severity": "major"
+ },
+ "S07": {
+  "source": "py-3way",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S08": {
+  "source": "py-3way",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S09": {
+  "source": "py-3way",
+  "confidence": 0.7,
+  "severity": "minor"
+ },
+ "S10": {
+  "source": "py-r1",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S11": {
+  "source": "py-r1",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S12": {
+  "source": "py-r1",
+  "confidence": 0.9,
+  "severity": "major"
+ },
+ "S13": {
+  "source": "py-r1",
+  "confidence": 0.85,
+  "severity": "major"
+ },
+ "S14": {
+  "source": "py-r1",
+  "confidence": 0.8,
+  "severity": "minor"
+ },
+ "S15": {
+  "source": "py-r1",
+  "confidence": 0.75,
+  "severity": "minor"
+ },
+ "S16": {
+  "source": "py-r1",
+  "confidence": 0.7,
+  "severity": "minor"
+ },
+ "S17": {
+  "source": "py-r1",
+  "confidence": 0.7,
+  "severity": "minor"
+ },
+ "S18": {
+  "source": "py-r2",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S19": {
+  "source": "py-r2",
+  "confidence": 0.9,
+  "severity": "blocker"
+ },
+ "S20": {
+  "source": "py-r2",
+  "confidence": 0.85,
+  "severity": "major"
+ },
+ "S21": {
+  "source": "py-r2",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S22": {
+  "source": "py-r2",
+  "confidence": 0.75,
+  "severity": "major"
+ },
+ "S23": {
+  "source": "py-r2",
+  "confidence": 0.7,
+  "severity": "major"
+ },
+ "S24": {
+  "source": "py-r2",
+  "confidence": 0.65,
+  "severity": "minor"
+ },
+ "S25": {
+  "source": "py-r3",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S26": {
+  "source": "py-r3",
+  "confidence": 0.9,
+  "severity": "blocker"
+ },
+ "S27": {
+  "source": "py-r3",
+  "confidence": 0.85,
+  "severity": "major"
+ },
+ "S28": {
+  "source": "py-r3",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S29": {
+  "source": "py-r3",
+  "confidence": 0.75,
+  "severity": "major"
+ },
+ "S30": {
+  "source": "py-r3",
+  "confidence": 0.7,
+  "severity": "minor"
+ },
+ "S31": {
+  "source": "sh-r1",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S32": {
+  "source": "sh-r1",
+  "confidence": 0.9,
+  "severity": "blocker"
+ },
+ "S33": {
+  "source": "sh-r1",
+  "confidence": 0.85,
+  "severity": "major"
+ },
+ "S34": {
+  "source": "sh-r1",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S35": {
+  "source": "sh-r1",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S36": {
+  "source": "sh-r1",
+  "confidence": 0.75,
+  "severity": "major"
+ },
+ "S37": {
+  "source": "sh-r1",
+  "confidence": 0.7,
+  "severity": "minor"
+ },
+ "S38": {
+  "source": "sh-r2",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S39": {
+  "source": "sh-r2",
+  "confidence": 0.9,
+  "severity": "blocker"
+ },
+ "S40": {
+  "source": "sh-r2",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S41": {
+  "source": "sh-r2",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S42": {
+  "source": "sh-r2",
+  "confidence": 0.7,
+  "severity": "major"
+ },
+ "S43": {
+  "source": "sh-r2",
+  "confidence": 0.6,
+  "severity": "minor"
+ },
+ "S44": {
+  "source": "sh-r3",
+  "confidence": 0.95,
+  "severity": "blocker"
+ },
+ "S45": {
+  "source": "sh-r3",
+  "confidence": 0.9,
+  "severity": "blocker"
+ },
+ "S46": {
+  "source": "sh-r3",
+  "confidence": 0.85,
+  "severity": "major"
+ },
+ "S47": {
+  "source": "sh-r3",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S48": {
+  "source": "sh-r3",
+  "confidence": 0.8,
+  "severity": "major"
+ },
+ "S49": {
+  "source": "sh-r3",
+  "confidence": 0.75,
+  "severity": "major"
+ },
+ "S50": {
+  "source": "sh-r3",
+  "confidence": 0.7,
+  "severity": "minor"
+ }
+}

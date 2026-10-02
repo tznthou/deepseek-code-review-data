@@ -1,0 +1,107 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+這個 PR 新增了一個從 GitHub API 撈取 PR 資料並計算統計的小工具。主要風險在於錯誤處理不當（_fetch 吞掉所有例外）、可變預設值（collect_authors 的 seen=[]）、shell=True 的指令注入（archive 函式）、以及 CSV 輸出未處理特殊字元。建議先修正這些問題再合併。
+
+### Findings（8 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `sandbox/pr_stats.py:24` | _fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰 | 0.95 |
+| 🛑 | Blocker | `sandbox/pr_stats.py:77` | archive 函式使用 shell=True 且指令由外部輸入拼接，存在指令注入風險 | 0.90 |
+| ⚠️ | Major | `sandbox/pr_stats.py:29` | collect_authors 使用可變預設值 seen=[]，跨呼叫共用狀態 | 0.90 |
+| ⚠️ | Major | `sandbox/pr_stats.py:72` | export_csv 未處理 CSV 特殊字元，可能產生格式錯誤或注入 | 0.85 |
+| 🔸 | Minor | `sandbox/pr_stats.py:69` | export_csv 未使用 with 開啟檔案，可能導致資源洩漏 | 0.80 |
+| 🔸 | Minor | `sandbox/pr_stats.py:40` | review_latency 假設 events 已排序，可能計算錯誤 | 0.70 |
+| 🔸 | Minor | `sandbox/pr_stats.py:54` | threshold_from_env 未處理環境變數轉換失敗 | 0.70 |
+| 🔸 | Minor | `sandbox/pr_stats.py:59` | classify 函式假設 pr 一定有 additions 和 changed_files 欄位 | 0.60 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/pr_stats.py:24</code> _fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰</summary>
+
+`_fetch` 函式中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使得函式可能回傳 `None`。後續程式碼（例如 `pr["user"]["login"]`）會因為 `pr` 為 `None` 而拋出 `TypeError`，且錯誤訊息不明確。
+
+建議：
+- 至少記錄例外（使用 `logging` 模組）。
+- 重新拋出例外或回傳明確的錯誤值，並在呼叫端處理。
+- 避免使用裸 `except:`，改為捕捉具體例外（如 `urllib.error.URLError`, `json.JSONDecodeError`）。
+
+**判斷依據**：diff 第 24 行：`except:` 後只有 `pass`，沒有記錄或重新拋出。
+
+</details>
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/pr_stats.py:77</code> archive 函式使用 shell=True 且指令由外部輸入拼接，存在指令注入風險</summary>
+
+`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path`，這些值來自命令列參數（`sys.argv`），可能被惡意使用者注入額外指令。例如 `repo` 為 `"; rm -rf / #"` 時，會執行任意指令。
+
+建議：
+- 避免使用 `shell=True`，改用參數列表形式：`subprocess.run(["tar", "czf", f"{path}.tgz", path])`。
+- 對於 `gh repo view`，也應使用列表形式並分開參數。
+- 如果必須使用 shell，請對輸入進行嚴格驗證或轉義。
+
+**判斷依據**：diff 第 61 行：`shell=True` 且 f-string 包含外部輸入 `repo` 和 `path`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/pr_stats.py:29</code> collect_authors 使用可變預設值 seen=[]，跨呼叫共用狀態</summary>
+
+`collect_authors` 的參數 `seen=[]` 是可變預設值，會在多次呼叫之間共用同一個 list。如果呼叫者沒有傳入 `seen`，每次呼叫都會累積到同一個 list，導致結果不正確。
+
+建議：將預設值改為 `None`，並在函式內初始化：
+```python
+def collect_authors(repo, numbers, seen=None):
+    if seen is None:
+        seen = []
+    ...
+```
+
+**判斷依據**：diff 第 27 行：參數 `seen=[]` 是可變預設值。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/pr_stats.py:72</code> export_csv 未處理 CSV 特殊字元，可能產生格式錯誤或注入</summary>
+
+`export_csv` 直接使用 f-string 寫入 CSV，未對欄位值進行轉義。如果 `author`、`latency` 或 `kind` 包含逗號、引號或換行符，會破壞 CSV 格式，甚至可能被用於 CSV 注入（例如以 `=`, `+`, `-`, `@` 開頭的值）。
+
+建議：使用 `csv` 模組的 `csv.writer` 來正確處理轉義。
+
+**判斷依據**：diff 第 53 行：直接寫入未轉義的值。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/pr_stats.py:69</code> export_csv 未使用 with 開啟檔案，可能導致資源洩漏</summary>
+
+`export_csv` 使用 `open` 和 `close`，但如果在寫入過程中發生例外，檔案可能不會被關閉。建議使用 `with open(path, "w") as f:` 來確保檔案正確關閉。
+
+**判斷依據**：diff 第 55-58 行：手動開啟和關閉檔案，沒有使用 context manager。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/pr_stats.py:40</code> review_latency 假設 events 已排序，可能計算錯誤</summary>
+
+`review_latency` 直接取 `events[0]` 和 `events[-1]` 的 `created_at` 來計算延遲，但 GitHub API 回傳的 timeline 事件不一定按時間排序。如果事件順序混亂，計算出的延遲可能為負值或不準確。
+
+建議：先按 `created_at` 排序事件，或明確使用 `min` 和 `max`。
+
+**判斷依據**：diff 第 34-35 行：直接使用第一個和最後一個事件，未排序。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/pr_stats.py:54</code> threshold_from_env 未處理環境變數轉換失敗</summary>
+
+`threshold_from_env` 使用 `int(raw)` 轉換環境變數 `PR_STALE_DAYS`，如果該值不是有效整數，會拋出 `ValueError` 導致程式崩潰。建議捕捉例外並提供預設值或明確錯誤訊息。
+
+**判斷依據**：diff 第 40 行：`int(raw)` 未處理轉換失敗。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/pr_stats.py:59</code> classify 函式假設 pr 一定有 additions 和 changed_files 欄位</summary>
+
+`classify` 直接存取 `pr["additions"]` 和 `pr["changed_files"]`，但 GitHub API 的回應可能不包含這些欄位（例如某些事件或權限不足時）。如果欄位缺失，會拋出 `KeyError`。建議使用 `pr.get("additions", 0)` 等方式提供預設值。
+
+**判斷依據**：diff 第 44-46 行：直接存取可能不存在的鍵。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 3279 (cache hit 3200) ｜ completion tokens 2035 ｜ PR #12</sub>

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "shell=True 搭配外部輸入可能造成指令注入",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 與 `path` 參數。`repo` 來自命令列參數（`sys.argv[1]`），攻擊者可注入額外 shell 指令，例如 `repo = \"x; rm -rf /\"`。建議改用參數陣列並避免 `shell=True`，或至少對輸入做嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 104 行：`subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)`，其中 `repo` 來自 `sys.argv[1]`（第 96 行），未經驗證。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼可能因 None 而崩潰",
+    "body": "`_fetch` 的 `except:` 區塊只有 `pass`，沒有記錄或重新拋出。當網路錯誤或 API 回傳非 2xx 時，函式會回傳 `None`。呼叫端（如 `collect_authors` 第 31 行、`main` 第 99 行）直接使用回傳值，會導致 `TypeError` 或 `AttributeError`。建議至少記錄錯誤並拋出例外，或讓呼叫端檢查回傳值。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 22-23 行：`except:` 後只有 `pass`，且 `_fetch` 的回傳值在 `collect_authors` 和 `main` 中被直接使用。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "可變預設值 seen=[] 會跨呼叫累積資料",
+    "body": "`collect_authors` 的參數 `seen=[]` 使用可變預設值，每次呼叫都會共用同一個 list。若函式被多次呼叫，結果會累積，造成非預期行為。建議改為 `seen=None` 並在函式內初始化。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：`def collect_authors(repo, numbers, seen=[]):`，且函式內有 `seen.append(...)`（第 31 行）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "export_csv 未使用 with 開啟檔案，可能造成資源洩漏",
+    "body": "`export_csv` 使用 `open` 但未使用 `with`，若寫入過程發生例外，檔案不會被關閉。建議改用 `with open(path, \"w\") as f:`。",
+    "existing_code": "f = open(path, \"w\")",
+    "evidence": "diff 第 88 行：`f = open(path, \"w\")`，且後續寫入與關閉未包在 try/finally 或 with 中。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "review_latency 假設 events 存在且非空，但 PR 物件可能沒有 timeline 鍵",
+    "body": "`review_latency` 使用 `pr.get(\"timeline\", [])`，但 GitHub API 的 PR 物件通常不包含 `timeline` 鍵，因此 `events` 會是空 list，函式回傳 0。這可能不是預期行為。建議確認 API 回應結構或改用其他方式取得時間資料。",
+    "existing_code": "events = pr.get(\"timeline\", [])",
+    "evidence": "diff 第 34 行：`events = pr.get(\"timeline\", [])`，但 GitHub PR API 回應中沒有 `timeline` 欄位。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "threshold_from_env 的 int() 轉換可能拋出未處理的例外",
+    "body": "`threshold_from_env` 將環境變數 `PR_STALE_DAYS` 轉為整數，若值不是有效整數會拋出 `ValueError`，導致程式崩潰。建議捕捉例外並提供預設值或錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 48 行：`return {\"days\": int(raw)}`，且 `raw` 來自環境變數，未驗證。"
+  }
+]

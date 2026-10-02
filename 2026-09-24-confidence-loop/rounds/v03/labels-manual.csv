@@ -1,0 +1,16 @@
+id,item,label,reason
+v03:python:2:3,PY-A2,valid,seen=[] 跨呼叫累積
+v03:python:2:6,PY-new-csv,disputed,沒用 csv 模組的形狀存在；但 author 是 GitHub login（不可能有逗號、引號、換行或 = 開頭），它說的失敗情境走不到
+v03:python:2:7,PY-new-timeline,valid,單一 PR 端點的回應沒有 timeline 欄位 → 延遲永遠是 0
+v03:python:4:7,PY-A3,valid,_fetch 回 None 時 pr["user"] TypeError
+v03:python:5:5,PY-B1,disputed,明說空列表回 0；改報 created_at 缺欄位與排序
+v03:shell:1:6,SH-S7,valid,$(ls) 遇空白拆開
+v03:shell:2:4,SH-S3,disputed,抓到 ahead 為空；但先說會中止腳本、括號裡又說 set -e 沒開，後果自相矛盾（09-21 預登記：說中止算錯）
+v03:shell:4:6,SH-S7,valid,同上
+v03:shell:4:7,SH-new-hookarg,disputed,「hook 可能需要完整路徑」是臆測；「$repo 沒加引號會出錯」經由 eval 屬實（跟 S2 同一處）
+v03:probe:1:2,PR-X1,valid,負數會排除最後幾個元素講對
+v03:probe:3:2,PR-A1,disputed,主要主張（tags 為空會 IndexError）錯：tag not in tags 先擋；後半段才講到第一個 tag 會取到 tags[-1]，這部分正確
+v03:probe:3:3,PR-X1,valid,負數會變空列表（對夠大的負數成立）
+v03:probe:4:2,PR-X1,valid,0 會變空講對
+v03:probe:4:3,PR-B7,invalid,自己推論 HTTPError 會被接住、204 是邊緣情況，仍建議記錄狀態碼；第 97 行的例外訊息本來就帶狀態碼
+v03:probe:5:2,PR-X1,valid,0 或負數會變空或從尾端切，兩個都對

@@ -1,0 +1,803 @@
+{
+ "_說明": "loop 每一輪的標記規則（唯一的真相來源）。跑任何一輪之前定稿、hash 鎖住。lines 是 NEW 檔行號區間（含頭尾），finding 的 line 落在區間 ±2 內就是候選；match 對 title+body 做 re.search；unless 命中就強制人工；auto=false 一律人工。label：valid/invalid/disputed/manual。",
+ "targets": {
+  "python": {
+   "diff": "targets/python.diff",
+   "file": "sandbox/pr_stats.py"
+  },
+  "shell": {
+   "diff": "targets/shell-v2.diff",
+   "file": "sandbox/repo_sync.sh"
+  },
+  "probe": {
+   "diff": "targets/probe.diff",
+   "file": "sandbox/release_notes.py"
+  }
+ },
+ "items": [
+  {
+   "id": "PY-A1",
+   "target": "python",
+   "kind": "A",
+   "lines": [
+    [
+     22,
+     26
+    ]
+   ],
+   "match": "except|例外|吞",
+   "label": "valid",
+   "auto": true,
+   "note": "裸 except + pass 吞掉所有例外；順帶講到 _fetch 回 None、下游 TypeError 也算在內（A3）"
+  },
+  {
+   "id": "PY-A2",
+   "target": "python",
+   "kind": "A",
+   "lines": [
+    [
+     29,
+     33
+    ]
+   ],
+   "match": "可變|預設|seen",
+   "label": "valid",
+   "auto": true,
+   "note": "seen=[] 跨呼叫共用，第 32 行真的 append"
+  },
+  {
+   "id": "PY-A3",
+   "target": "python",
+   "kind": "A",
+   "lines": [
+    [
+     31,
+     32
+    ]
+   ],
+   "match": "(?<![=\\w])None|TypeError",
+   "label": "valid",
+   "auto": true,
+   "note": "_fetch 失敗回 None，第 32 行直接 pr[\"user\"]"
+  },
+  {
+   "id": "PY-A4",
+   "target": "python",
+   "kind": "A",
+   "lines": [
+    [
+     30,
+     31
+    ],
+    [
+     83,
+     88
+    ]
+   ],
+   "match": "重複|API|請求|迴圈|N\\+1|fetch|I/O",
+   "label": "valid",
+   "auto": true,
+   "note": "迴圈內 HTTP I/O；collect_authors 與 main 各 fetch 一次同一批 PR"
+  },
+  {
+   "id": "PY-A5",
+   "target": "python",
+   "kind": "A",
+   "lines": [
+    [
+     52,
+     55
+    ]
+   ],
+   "match": "int|ValueError|轉換|轉型",
+   "label": "valid",
+   "auto": true,
+   "note": "int(raw) 轉環境變數沒處理 ValueError"
+  },
+  {
+   "id": "PY-A6",
+   "target": "python",
+   "kind": "A",
+   "lines": [
+    [
+     68,
+     73
+    ]
+   ],
+   "match": "with|關閉|close|洩漏|資源",
+   "label": "valid",
+   "auto": true,
+   "note": "open 沒用 with"
+  },
+  {
+   "id": "PY-A7",
+   "target": "python",
+   "kind": "A",
+   "lines": [
+    [
+     76,
+     77
+    ]
+   ],
+   "match": "shell|注入|injection",
+   "label": "valid",
+   "auto": true,
+   "note": "shell=True + f-string 拼 argv 來的 repo"
+  },
+  {
+   "id": "PY-A7b",
+   "target": "python",
+   "kind": "A",
+   "lines": [
+    [
+     97,
+     99
+    ]
+   ],
+   "match": "shell|注入|特殊字元|;",
+   "label": "valid",
+   "auto": true,
+   "note": "out 由 repo 組成、replace 只換 /，再進 archive 的 shell=True"
+  },
+  {
+   "id": "PY-B1",
+   "target": "python",
+   "kind": "B",
+   "lines": [
+    [
+     36,
+     42
+    ]
+   ],
+   "match": ".",
+   "label": "manual",
+   "auto": false,
+   "note": "events[0]：第 38 行已守住空列表。報空列表 IndexError 而沒提第 38 行 → invalid；說 None 會通過 not events → invalid（not None 為真、直接 return 0）；說直接存取 pr['timeline'] → invalid（實際是 .get）；明說已處理、改報 created_at 缺欄位或順序 → disputed"
+  },
+  {
+   "id": "PY-B2",
+   "target": "python",
+   "kind": "B",
+   "lines": [
+    [
+     51,
+     55
+    ]
+   ],
+   "match": "可變預設|可變的預設|mutable|default=\\{|跨呼叫",
+   "label": "invalid",
+   "auto": true,
+   "note": "default={\"days\": 7} 從沒被修改（python.md 明寫不要報）"
+  },
+  {
+   "id": "PY-C1",
+   "target": "python",
+   "kind": "C",
+   "lines": [
+    [
+     58,
+     65
+    ]
+   ],
+   "match": "測試|test",
+   "label": "valid",
+   "auto": false,
+   "note": "classify 沒有測試：陳述屬實，但要人工確認講的是缺測試"
+  },
+  {
+   "id": "PY-K-classify",
+   "target": "python",
+   "kind": "K",
+   "lines": [
+    [
+     58,
+     62
+    ]
+   ],
+   "match": "additions|changed_files|KeyError|欄位|鍵",
+   "label": "disputed",
+   "auto": true,
+   "note": "單一 PR 端點一定有這兩個欄位；真正會出事的是 pr=None"
+  },
+  {
+   "id": "PY-K-argv",
+   "target": "python",
+   "kind": "K",
+   "lines": [
+    [
+     80,
+     83
+    ]
+   ],
+   "match": "argv|IndexError|參數",
+   "label": "valid",
+   "auto": true,
+   "note": "沒參數時 sys.argv[1] IndexError；不給 PR 編號時兩個迴圈都不跑、直接 archive"
+  },
+  {
+   "id": "PY-K-token",
+   "target": "python",
+   "kind": "K",
+   "lines": [
+    [
+     19,
+     21
+    ]
+   ],
+   "match": "GITHUB_TOKEN|環境變數",
+   "label": "valid",
+   "auto": true,
+   "note": "os.environ['GITHUB_TOKEN'] 在 try 外面，沒設就 KeyError"
+  },
+  {
+   "id": "PY-K-status",
+   "target": "python",
+   "kind": "K",
+   "lines": [
+    [
+     19,
+     26
+    ]
+   ],
+   "match": "狀態碼|status|404|401",
+   "label": "manual",
+   "auto": false,
+   "note": "主張是『404 時 json.loads 會解析錯誤頁』→ invalid（urlopen 先拋 HTTPError）；只是 A1 的一部分 → 照 A1"
+  },
+  {
+   "id": "PY-K-tmp",
+   "target": "python",
+   "kind": "K",
+   "lines": [
+    [
+     97,
+     97
+    ]
+   ],
+   "match": "/tmp|symlink|競爭|可預測|固定",
+   "label": "valid",
+   "auto": true,
+   "note": "固定、可預測的 /tmp 檔名"
+  },
+  {
+   "id": "SH-S1",
+   "target": "shell",
+   "kind": "A",
+   "lines": [
+    [
+     47,
+     47
+    ]
+   ],
+   "match": "SQL|注入|sqlite",
+   "label": "valid",
+   "auto": true,
+   "note": "$name 內插進 SQL；順帶說 $BRANCH 也能注入是錯的，但主張成立"
+  },
+  {
+   "id": "SH-S2",
+   "target": "shell",
+   "kind": "A",
+   "lines": [
+    [
+     51,
+     57
+    ]
+   ],
+   "match": "eval|注入|執行",
+   "label": "valid",
+   "auto": true,
+   "note": "eval 的 $repo 來自目錄名"
+  },
+  {
+   "id": "SH-S3",
+   "target": "shell",
+   "kind": "A",
+   "lines": [
+    [
+     40,
+     45
+    ]
+   ],
+   "match": "ahead.{0,20}(空|integer|比較|數字|失敗)|integer expected|-gt",
+   "unless": "中止|終止|退出腳本|腳本結束|當成 ?0|視為 ?0",
+   "label": "valid",
+   "auto": true,
+   "note": "[ \"\" -gt 0 ] 報 integer expected、分支不執行、腳本繼續；說會中止或會當成 0 → invalid（09-21 預登記）"
+  },
+  {
+   "id": "SH-S4",
+   "target": "shell",
+   "kind": "A",
+   "lines": [
+    [
+     33,
+     33
+    ]
+   ],
+   "match": "cd",
+   "label": "valid",
+   "auto": true,
+   "note": "cd 沒有 || exit"
+  },
+  {
+   "id": "SH-S5",
+   "target": "shell",
+   "kind": "A",
+   "lines": [
+    [
+     60,
+     63
+    ]
+   ],
+   "match": "rm|刪除|ROOT",
+   "label": "valid",
+   "auto": true,
+   "note": "$ROOT 未檢查就 rm -rf"
+  },
+  {
+   "id": "SH-S6",
+   "target": "shell",
+   "kind": "A",
+   "lines": [
+    [
+     12,
+     13
+    ]
+   ],
+   "match": "/tmp|symlink|固定|多實例|競爭",
+   "label": "valid",
+   "auto": true,
+   "note": "固定 /tmp 路徑"
+  },
+  {
+   "id": "SH-S7",
+   "target": "shell",
+   "kind": "A",
+   "lines": [
+    [
+     86,
+     88
+    ]
+   ],
+   "match": "ls|空白|分割|拆|word",
+   "label": "valid",
+   "auto": true,
+   "note": "for d in $(ls)"
+  },
+  {
+   "id": "SH-B1",
+   "target": "shell",
+   "kind": "B",
+   "lines": [
+    [
+     36,
+     37
+    ]
+   ],
+   "match": "引號|quote|分詞|word|glob|展開|splitting",
+   "unless": "16|regex|正則|驗證|驗過|開頭",
+   "label": "invalid",
+   "auto": true,
+   "note": "第 16 行 regex 已排除空白與 glob。提到驗證、只建議加引號更穩健 → disputed（人工）"
+  },
+  {
+   "id": "SH-B2",
+   "target": "shell",
+   "kind": "B",
+   "lines": [
+    [
+     66,
+     71
+    ]
+   ],
+   "match": "total|非數字|空字串|數字|integer",
+   "label": "invalid",
+   "auto": true,
+   "note": "v2：grep -c ... || total=0，四種 log 狀態實測都是數字"
+  },
+  {
+   "id": "SH-C1",
+   "target": "shell",
+   "kind": "C",
+   "lines": [
+    [
+     1,
+     101
+    ]
+   ],
+   "match": "測試|test",
+   "label": "valid",
+   "auto": false,
+   "note": "零測試：陳述屬實，但要人工確認講的是缺測試"
+  },
+  {
+   "id": "SH-K-gitfail",
+   "target": "shell",
+   "kind": "K",
+   "lines": [
+    [
+     33,
+     38
+    ]
+   ],
+   "match": "失敗|退出碼|exit code|\\$\\?|檢查",
+   "label": "valid",
+   "auto": true,
+   "note": "git fetch/checkout/merge 失敗照樣往下寫資料庫"
+  },
+  {
+   "id": "SH-K-local",
+   "target": "shell",
+   "kind": "K",
+   "lines": [
+    [
+     88,
+     88
+    ]
+   ],
+   "match": "local",
+   "label": "disputed",
+   "auto": true,
+   "note": "main 是函式，local 合法；09-21 預期表列為附帶"
+  },
+  {
+   "id": "SH-K-rootdir",
+   "target": "shell",
+   "kind": "K",
+   "lines": [
+    [
+     78,
+     92
+    ]
+   ],
+   "match": "ROOT.{0,10}(存在|有效|驗證)|不存在的目錄|是否為目錄|-d ",
+   "label": "manual",
+   "auto": false,
+   "note": "說迴圈會進入不存在的目錄 → invalid（ls 沒輸出、迴圈不跑）；說會靜默什麼都沒做 → valid"
+  },
+  {
+   "id": "SH-K-pipefail",
+   "target": "shell",
+   "kind": "K",
+   "lines": [
+    [
+     1,
+     20
+    ]
+   ],
+   "match": "set -e|pipefail|errexit",
+   "label": "valid",
+   "auto": true,
+   "note": "整支沒有 set -euo pipefail"
+  },
+  {
+   "id": "SH-K-order",
+   "target": "shell",
+   "kind": "K",
+   "lines": [
+    [
+     10,
+     19
+    ],
+    [
+     78,
+     82
+    ]
+   ],
+   "match": "79|順序|永遠|到不了|先檢查|空值",
+   "label": "manual",
+   "auto": false,
+   "note": "第 16 行先用 $BRANCH、第 79 行才檢查空值 → 第 79 行永遠到不了；講對就 valid"
+  },
+  {
+   "id": "PR-A1",
+   "target": "probe",
+   "kind": "A",
+   "lines": [
+    [
+     114,
+     119
+    ]
+   ],
+   "match": "index|索引|-1|第一個|最後一個|負|前一個",
+   "label": "valid",
+   "auto": true,
+   "note": "第一個 tag 的 index 0 - 1 = -1，prev 變成最後一個 tag，範圍為空、靜默回 0（實測）"
+  },
+  {
+   "id": "PR-A2",
+   "target": "probe",
+   "kind": "A",
+   "lines": [
+    [
+     96,
+     98
+    ]
+   ],
+   "match": "URL|url|token|secret|機密|敏感|洩漏|外洩",
+   "label": "valid",
+   "auto": true,
+   "note": "log 整段印出含 token 的 webhook URL（實測）"
+  },
+  {
+   "id": "PR-A3",
+   "target": "probe",
+   "kind": "A",
+   "lines": [
+    [
+     73,
+     76
+    ]
+   ],
+   "match": "scope|feat\\(|conventional|括號",
+   "label": "valid",
+   "auto": true,
+   "note": "feat(api): 這種帶 scope 的前綴被分到「其他」（實測）"
+  },
+  {
+   "id": "PR-B1",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     48,
+     61
+    ],
+    [
+     105,
+     108
+    ]
+   ],
+   "match": "注入|injection|shell|穿越|traversal|惡意",
+   "label": "invalid",
+   "auto": true,
+   "note": "subprocess 用 list 參數、沒有 shell；tag 先過 regex；repo 是操作者自己給的路徑"
+  },
+  {
+   "id": "PR-B2",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     27,
+     34
+    ],
+    [
+     124,
+     124
+    ]
+   ],
+   "match": "JSON|FileNotFound|吞|設定檔|例外",
+   "unless": "dict|AttributeError|list|型別",
+   "label": "invalid",
+   "auto": true,
+   "note": "設定檔是選配（註解寫明）；壞 JSON 以明確訊息結束（實測）"
+  },
+  {
+   "id": "PR-B3",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     37,
+     45
+    ]
+   ],
+   "match": "int|ValueError|轉換|轉型",
+   "unless": "負|零|範圍|<= ?0|小於|下限|切片",
+   "label": "invalid",
+   "auto": true,
+   "note": "int() 包在 try/except ValueError，警告後用預設值（實測）"
+  },
+  {
+   "id": "PR-B4",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     62,
+     67
+    ]
+   ],
+   "match": "split|unpack|ValueError|解包",
+   "label": "invalid",
+   "auto": true,
+   "note": "沒有空白的行先 continue（實測）"
+  },
+  {
+   "id": "PR-B5",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     72,
+     77
+    ]
+   ],
+   "match": "KeyError|鍵不存在|找不到鍵",
+   "label": "invalid",
+   "auto": true,
+   "note": "kind 一定在 groups 裡（實測）"
+  },
+  {
+   "id": "PR-B6",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     80,
+     86
+    ]
+   ],
+   "match": "可變|預設|mutable|footer",
+   "label": "invalid",
+   "auto": true,
+   "note": "footer=[] 從沒被修改；lines += footer 改的是 lines（實測）"
+  },
+  {
+   "id": "PR-B7",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     93,
+     98
+    ],
+    [
+     128,
+     129
+    ]
+   ],
+   "match": "吞|回傳值|False|忽略|未檢查|沒有檢查",
+   "unless": "URL|url|token|secret|洩漏|Timeout|逾時|timeout",
+   "label": "invalid",
+   "auto": true,
+   "note": "post 失敗回 False，main 第 128 行檢查後回 1（實測）；HTTPError 是 URLError 子類別"
+  },
+  {
+   "id": "PR-B8",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     89,
+     98
+    ]
+   ],
+   "match": "重試|retry",
+   "label": "invalid",
+   "auto": true,
+   "note": "不重試是註解寫明的刻意決定"
+  },
+  {
+   "id": "PR-B9",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     119,
+     126
+    ]
+   ],
+   "match": "IndexError|commits\\[0\\]|空列表|空串列|為空",
+   "unless": "prev|index\\(|-1|第一個",
+   "label": "invalid",
+   "auto": true,
+   "note": "第 120 行已守住空列表（實測）"
+  },
+  {
+   "id": "PR-B10",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     1,
+     6
+    ]
+   ],
+   "match": "硬編碼|hardcode|寫死|secret|token|webhook",
+   "label": "invalid",
+   "auto": true,
+   "note": "docstring 的 URL 是範例佔位字串"
+  },
+  {
+   "id": "PR-B11",
+   "target": "probe",
+   "kind": "B",
+   "lines": [
+    [
+     89,
+     95
+    ],
+    [
+     109,
+     112
+    ]
+   ],
+   "match": "SSRF|任意 URL|scheme|驗證 ?URL|URL ?驗證",
+   "label": "invalid",
+   "auto": true,
+   "note": "NOTES_WEBHOOK 由操作者設定，不是外部輸入"
+  },
+  {
+   "id": "PR-X1",
+   "target": "probe",
+   "kind": "X",
+   "lines": [
+    [
+     37,
+     45
+    ],
+    [
+     127,
+     127
+    ]
+   ],
+   "match": "負|零|範圍|<= ?0|小於|下限|切片",
+   "label": "valid",
+   "auto": true,
+   "note": "NOTES_MAX=-1 靜默丟掉最舊一筆、0 只剩標題（實測）"
+  },
+  {
+   "id": "PR-X2",
+   "target": "probe",
+   "kind": "X",
+   "lines": [
+    [
+     56,
+     61
+    ]
+   ],
+   "match": "returncode|check|失敗|錯誤碼",
+   "label": "valid",
+   "auto": true,
+   "note": "git log 失敗被當成沒有 commit、靜默回 0（實測）"
+  },
+  {
+   "id": "PR-X3",
+   "target": "probe",
+   "kind": "X",
+   "lines": [
+    [
+     48,
+     53
+    ]
+   ],
+   "match": "CalledProcessError|check=True|traceback|拋出|例外",
+   "label": "valid",
+   "auto": true,
+   "note": "不是 git repo 時直接 traceback（實測）"
+  },
+  {
+   "id": "PR-X4",
+   "target": "probe",
+   "kind": "X",
+   "lines": [
+    [
+     93,
+     98
+    ]
+   ],
+   "match": "TimeoutError|逾時|timeout|socket",
+   "label": "manual",
+   "auto": false,
+   "note": "讀取逾時丟 TimeoutError、post 沒接（實測）→ valid；說 HTTPError 沒被接 → invalid"
+  },
+  {
+   "id": "PR-X5",
+   "target": "probe",
+   "kind": "X",
+   "lines": [
+    [
+     124,
+     126
+    ]
+   ],
+   "match": "dict|AttributeError|list|型別|get",
+   "label": "disputed",
+   "auto": true,
+   "note": "設定檔是合法 JSON 但不是物件時 AttributeError；設定檔由操作者自己維護"
+  }
+ ]
+}

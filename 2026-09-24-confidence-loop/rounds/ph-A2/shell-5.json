@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 未經跳脫直接插入 SQL",
+    "body": "`name` 來自目錄名稱，`BRANCH` 雖有格式驗證但未做 SQL 跳脫，攻擊者若能在 repo 根目錄建立惡意名稱的目錄（例如 `x'); DROP TABLE runs;--`），即可注入任意 SQL。建議改用參數化查詢，例如 `sqlite3 \"$DB\" \"INSERT INTO runs VALUES(?, ?, ?, datetime('now'))\" \"$name\" \"$BRANCH\" \"$ahead\"`。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "第 47 行直接將變數嵌入 SQL 字串，未使用參數綁定。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入：eval 執行 hook 時未安全處理 repo 名稱",
+    "body": "`eval \"$hook $repo\"` 會將 `$repo` 的內容當作 shell 程式碼執行。若 repo 名稱包含特殊字元（例如 `$(rm -rf ~)`），可能造成任意命令執行。建議改用直接執行並傳參數：`\"$hook\" \"$repo\"`，或使用陣列。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "第 58 行使用 eval 拼接字串，未對 repo 名稱做任何跳脫。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "cleanup_cache 使用 rm -rf 且路徑未驗證，可能誤刪重要資料",
+    "body": "`rm -rf \"$ROOT\"/.cache/*` 若 `$ROOT` 未正確設定或包含符號連結，可能刪除非預期檔案。建議檢查 `$ROOT` 是否存在且為目錄，並避免使用萬用字元，或改用更安全的刪除方式（例如 find 搭配 -delete）。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "第 63 行直接使用 rm -rf 搭配萬用字元，未做任何防護。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "git checkout 與 merge 失敗時未中止，可能導致資料不一致",
+    "body": "`git checkout $BRANCH` 或 `git merge --ff-only` 失敗時，腳本仍會繼續執行後續的 rev-list 與 SQL 寫入，可能記錄錯誤的 ahead 值。建議在每個 git 指令後檢查 exit code，失敗即 return 非零值並記錄錯誤。",
+    "existing_code": "git checkout $BRANCH 2>>\"$LOG\"\ngit merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "第 31-32 行未檢查指令執行結果。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "ahead 計算可能因 rev-list 失敗而得到空值，導致 SQL 錯誤",
+    "body": "`ahead=$(git rev-list --count ... 2>/dev/null)` 若指令失敗（例如 branch 不存在），ahead 會是空字串，後續 `[ \"$ahead\" -gt 0 ]` 會報錯，且 SQL 插入會失敗。建議檢查 ahead 是否為數字，失敗時設為 0 或中止。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "第 34 行未處理 rev-list 失敗的情況。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "for 迴圈使用 ls 輸出，檔名含空白或換行會出錯",
+    "body": "`for d in $(ls \"$ROOT\")` 會將 ls 的輸出按空白分割，若 repo 目錄名稱包含空白或換行，會導致迴圈變數錯誤。建議改用 `for d in \"$ROOT\"/*/` 或 `find` 搭配 while read。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "第 72 行使用命令替換與 ls，未處理特殊檔名。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "SQL 寫入未使用交易，多個 repo 同步時可能部分寫入",
+    "body": "每個 repo 的 INSERT 都是獨立交易，若中途失敗，資料庫會留下不完整的執行紀錄。建議在 main 中包一層 BEGIN/COMMIT，或至少記錄失敗的 repo。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "第 47 行未使用交易。"
+  }
+]

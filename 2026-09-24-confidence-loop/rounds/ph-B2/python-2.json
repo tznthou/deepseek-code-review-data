@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），且不回傳任何值。呼叫端（`collect_authors` 和 `main`）直接使用回傳值當作 dict 存取 `pr[\"user\"][\"login\"]` 等欄位，若 `_fetch` 回傳 `None` 或非 dict，會拋出 `TypeError` 或 `KeyError`，且沒有上下文可除錯。\n\n具體失敗情境：GitHub API 回傳 404（PR 不存在）或 401（token 無效）時，`urlopen` 會拋出 `HTTPError`，被 `except` 吞掉，`_fetch` 回傳 `None`，接著 `pr[\"user\"]` 就會拋出 `TypeError: 'NoneType' object is not subscriptable`。\n\n建議：至少記錄錯誤並重新拋出，或回傳明確的錯誤物件；並在呼叫端檢查回傳值。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 25-26 行：`except:` 後只有 `pass`，且函式沒有回傳值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令包含外部輸入，存在命令注入風險",
+    "body": "`archive` 使用 `subprocess.run` 搭配 `shell=True`，且指令字串中拼接了 `path` 和 `repo`。這兩個參數來自命令列參數（`repo`）或由 `repo` 衍生（`path`），攻擊者可注入額外 shell 命令。\n\n具體攻擊情境：執行 `python pr_stats.py '$(rm -rf /)' 1` 時，`repo` 的值會被 shell 展開，導致任意命令執行。\n\n建議：改用 `subprocess.run` 的 list 形式，避免 `shell=True`；或使用 `shlex.quote` 對參數進行轉義。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 73 行：`shell=True` 且 f-string 包含外部輸入。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設值 seen=[]，跨呼叫累積狀態",
+    "body": "`collect_authors` 的參數 `seen=[]` 是 Python 的可變預設值，只會在函式定義時建立一次。每次呼叫若未傳入 `seen`，都會共用同一個 list，導致作者名單跨呼叫累積。\n\n具體失敗情境：第一次呼叫 `collect_authors(repo, [1,2])` 回傳 `['alice', 'bob']`；第二次呼叫 `collect_authors(repo, [3])` 會回傳 `['alice', 'bob', 'carol']`，而不是 `['carol']`。\n\n建議：改用 `seen=None`，在函式內判斷 `if seen is None: seen = []`。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 29 行：參數預設值為 `[]`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "threshold_from_env 將環境變數直接轉型為 int，未處理轉換失敗",
+    "body": "`threshold_from_env` 讀取環境變數 `PR_STALE_DAYS` 並直接 `int(raw)`。若該變數不是合法整數（例如設為 `abc` 或空字串），會拋出 `ValueError`，導致程式崩潰。\n\n具體失敗情境：使用者設定 `PR_STALE_DAYS=seven` 時，程式在啟動階段就崩潰。\n\n建議：使用 `try/except` 捕捉 `ValueError`，並提供有意義的錯誤訊息或回退到預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 42 行：`int(raw)` 沒有例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "classify 直接存取 pr[\"additions\"] 等欄位，未處理缺失鍵",
+    "body": "`classify` 假設 `pr` 字典一定包含 `additions`、`changed_files`、`title` 等鍵。但 GitHub API 的回應可能因權限或 API 版本而缺少這些欄位（例如使用精簡版 PR 物件時）。\n\n具體失敗情境：若 API 回傳的 PR 物件沒有 `additions` 欄位，`pr[\"additions\"]` 會拋出 `KeyError`。\n\n建議：使用 `pr.get(\"additions\", 0)` 等方式提供預設值，或先驗證回應結構。",
+    "existing_code": "if pr[\"additions\"] > 500:",
+    "evidence": "diff 第 48 行：直接以鍵值存取，未使用 `.get()` 或檢查存在性。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "export_csv 未使用 with 管理檔案，例外時可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案。若在寫入過程中發生例外（例如磁碟滿、權限不足），`f.close()` 不會被執行，導致檔案控制代碼洩漏。\n\n建議：改用 `with open(path, \"w\") as f:` 確保檔案總會被關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 58-62 行：手動 open/close，無例外保護。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "review_latency 假設 events 非空且元素有 created_at，未處理空列表或缺失欄位",
+    "body": "`review_latency` 在 `events` 為空時回傳 0，但若 `events` 非空但元素缺少 `created_at` 欄位（例如 API 回應格式變更），`events[0][\"created_at\"]` 會拋出 `KeyError`。\n\n建議：使用 `events[0].get(\"created_at\")` 並檢查是否為 None。",
+    "existing_code": "first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 36-37 行：直接以鍵值存取，未使用 `.get()`。"
+  }
+]

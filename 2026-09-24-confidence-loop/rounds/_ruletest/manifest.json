@@ -1,0 +1,1 @@
+{"runs": 3, "results": [{"target": "python", "run": 1, "exit": 0, "findings": 8}, {"target": "python", "run": 2, "exit": 0, "findings": 7}, {"target": "python", "run": 3, "exit": 0, "findings": 6}, {"target": "shell", "run": 1, "exit": 0, "findings": 7}, {"target": "shell", "run": 2, "exit": 0, "findings": 6}, {"target": "shell", "run": 3, "exit": 0, "findings": 7}]}

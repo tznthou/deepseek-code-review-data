@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "子程序失敗未檢查，可能導致後續 IndexError",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時未設定 `check=True`，也未檢查 `proc.returncode`。若 `git log` 因 repo 路徑無效、權限不足或 git 本身錯誤而失敗，`proc.stdout` 可能為空字串，後續 `commits[0][0]` 會拋出 `IndexError`，程式直接崩潰且無明確錯誤訊息。建議加上 `check=True` 或檢查 `returncode`，並在失敗時記錄錯誤並回傳非零 exit code。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式未檢查 `proc.returncode`，且 `main` 中直接使用 `commits[0][0]`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "tag 清單為空時，prev 會取到最後一個元素而非第一個",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tags` 為空時，`tags.index(tag)` 會拋出 `ValueError`，但若 `tags` 非空且 `tag` 位於第一個位置，`tags.index(tag) - 1` 會是 -1，取到最後一個 tag，而非前一個版本。這會導致 release notes 範圍錯誤。建議先檢查 `tags.index(tag) > 0`，否則回報錯誤。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式直接使用 `tags.index(tag) - 1` 作為索引，未處理邊界。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "NOTES_MAX 負數或非整數處理不完整",
+    "body": "`max_items` 只處理 `ValueError`，但若 `NOTES_MAX` 設為負數，`int(raw)` 會成功，回傳負數，導致 `commits[: max_items()]` 切片行為異常（可能回傳空列表）。建議檢查數值是否為正整數，否則回退預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式未檢查轉換後的數值是否為正整數。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "webhook URL 未驗證 scheme，可能造成 SSRF",
+    "body": "`post` 函式直接使用 `urllib.request.urlopen` 開啟使用者提供的 URL，未限制 scheme 為 `https`。攻擊者若控制 `NOTES_WEBHOOK` 環境變數，可指定 `file://` 或 `gopher://` 等 scheme，讀取本機檔案或進行內網探測。建議驗證 URL 的 scheme 必須為 `https` 或 `http`（若允許），並考慮使用白名單。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 函式未對 `url` 進行 scheme 驗證。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "HTTP 狀態碼未檢查，可能誤報成功",
+    "body": "`post` 函式僅檢查 `resp.status` 是否在 200-299 之間，但 `urllib.request.urlopen` 對 4xx/5xx 回應會拋出 `HTTPError`，該例外是 `URLError` 的子類別，會被捕捉並記錄錯誤，但函式回傳 `False`。然而，若伺服器回傳 3xx 且未自動跟隨重定向，`urlopen` 可能拋出 `HTTPError`，同樣被捕捉。但若伺服器回傳 2xx 以外的狀態碼且未拋出例外（例如某些自訂 handler），則可能回傳 `True`。建議明確檢查 `resp.status` 並處理非 2xx 情況。",
+    "existing_code": "with urllib.request.urlopen(req, timeout=10) as resp:\n            return 200 <= resp.status < 300",
+    "evidence": "diff 中 `post` 函式依賴 `urlopen` 的例外行為，未明確處理所有非 2xx 狀態。"
+  }
+]

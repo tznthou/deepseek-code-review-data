@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使得函式可能回傳 `None`。呼叫端（`collect_authors` 和 `main` 中的迴圈）直接使用回傳值，例如 `pr[\"user\"][\"login\"]`，當 `pr` 為 `None` 時會拋出 `TypeError`，造成程式崩潰。建議：讓例外向上傳播，或回傳明確的錯誤值並在呼叫端檢查。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 22 行顯示 `except: pass`，且 `_fetch` 的回傳值在 `collect_authors`（第 27 行）和 `main`（第 77 行）中被直接使用。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "shell=True 且指令包含外部輸入，可能導致命令注入",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串中包含 `repo` 和 `path` 參數。`repo` 來自命令列參數，攻擊者可注入額外指令，例如 `repo = \"x; rm -rf /\"`。建議改用參數列表形式，並避免使用 `shell=True`。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 88 行顯示 `shell=True` 且指令由 f-string 組成，其中 `repo` 來自 `sys.argv[1]`（第 72 行）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "可變預設值參數 seen=[] 可能導致跨呼叫累積",
+    "body": "`collect_authors` 的參數 `seen=[]` 使用可變預設值，每次呼叫都會共用同一個 list。如果函式被多次呼叫（例如在測試或迴圈中），結果會累積，導致非預期行為。建議改為 `seen=None` 並在函式內初始化。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 27 行顯示 `seen=[]`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 的預設值為可變字典，可能被意外修改",
+    "body": "`threshold_from_env` 的參數 `default={\"days\": 7}` 是可變字典，若函式內部修改該字典（目前沒有），會影響後續呼叫。即使目前未修改，仍建議改為 `None` 並在函式內設定預設值，以避免未來修改時引入 bug。",
+    "existing_code": "def threshold_from_env(default={\"days\": 7}):",
+    "evidence": "diff 第 46 行顯示 `default={\"days\": 7}`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "export_csv 未使用 with 開啟檔案，可能導致資源洩漏",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，若寫入過程中發生例外，檔案不會被關閉。建議使用 `with open(path, \"w\") as f:` 來確保資源釋放。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 62-66 行顯示手動開啟和關閉檔案。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "classify 函式可能因缺少鍵而拋出 KeyError",
+    "body": "`classify` 直接存取 `pr[\"additions\"]`、`pr[\"changed_files\"]` 和 `pr[\"title\"]`，但 GitHub API 的回應可能缺少這些欄位（例如某些事件類型）。建議使用 `pr.get(...)` 並提供預設值。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):\n        return \"fix\"",
+    "evidence": "diff 第 55-60 行顯示直接使用鍵存取。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "review_latency 假設 timeline 存在且非空，可能導致錯誤",
+    "body": "`review_latency` 使用 `pr.get(\"timeline\", [])`，但 GitHub API 的 PR 物件通常不包含 `timeline` 欄位，因此 `events` 會是空列表，函式回傳 0。這可能不是預期行為，建議確認 API 回應結構或改用其他端點取得時間線。",
+    "existing_code": "events = pr.get(\"timeline\", [])\n    if not events:\n        return 0",
+    "evidence": "diff 第 34-36 行顯示對 `timeline` 的處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "環境變數轉換為整數時未處理 ValueError",
+    "body": "`threshold_from_env` 中 `int(raw)` 可能拋出 `ValueError`，若環境變數 `PR_STALE_DAYS` 不是有效整數，程式會崩潰。建議捕捉例外並提供預設值或錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 50 行顯示 `int(raw)`。"
+  }
+]

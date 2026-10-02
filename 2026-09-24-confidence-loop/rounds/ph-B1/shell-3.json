@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 未跳脫直接插入 SQL",
+    "body": "`sync_one` 中的 `sqlite3` 指令直接將 `$name` 與 `$BRANCH` 插入 SQL 字串，若 repo 名稱或 branch 包含單引號，可注入任意 SQL。例如 repo 目錄名為 `x'; DROP TABLE runs; --` 時，會執行惡意 SQL。建議改用參數化查詢（sqlite3 支援 `?` 佔位符）或使用 `sqlite3` 的 `-cmd` 與 `.parameter` 機制，或至少對輸入進行單引號跳脫。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "第 42 行直接將變數嵌入 SQL 字串，且 `$name` 來自 `basename \"$dir\"`，`$BRANCH` 雖有格式驗證但允許單引號以外的字元，仍可能包含單引號。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "`eval` 執行 hook 可能被惡意 repo 名稱利用",
+    "body": "`run_hook` 使用 `eval \"$hook $repo\"`，其中 `$repo` 是 repo 名稱（來自 `basename \"$dir\"`），若 repo 名稱包含 shell 特殊字元（如 `; rm -rf ~`），可注入任意指令。建議改用陣列方式執行：`\"$hook\" \"$repo\"`，避免 eval。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "第 50 行使用 eval 執行字串，且 `$repo` 未經任何 sanitization。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 33,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`cd` 失敗後未中止，後續 git 指令可能在錯誤目錄執行",
+    "body": "`sync_one` 中 `cd \"$dir\"` 若失敗（例如目錄不存在或權限不足），腳本不會停止，後續 `git fetch`、`git checkout` 等指令會在錯誤的目錄執行，可能導致非預期行為。建議在 `cd` 後檢查 `$?` 或使用 `set -e`，或改為 `cd \"$dir\" || return 1`。",
+    "existing_code": "cd \"$dir\"",
+    "evidence": "第 31 行直接 `cd`，未檢查結果。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 `ls` 解析目錄列表，路徑含空白或特殊字元時可能出錯",
+    "body": "`for d in $(ls \"$ROOT\")` 會將 `ls` 的輸出進行分詞，若 repo 目錄名稱包含空白、換行或 glob 字元，會導致迭代錯誤。建議改用 `for d in \"$ROOT\"/*/` 或 `find` 搭配 `-print0` 與 `while read -d ''`。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "第 68 行使用 `ls` 且未加引號，容易受特殊字元影響。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`git checkout` 與 `git merge` 失敗未處理，可能導致資料不一致",
+    "body": "`git checkout $BRANCH` 或 `git merge --ff-only` 失敗時（例如 branch 不存在、有衝突），腳本仍繼續執行，並將錯誤結果寫入資料庫。建議檢查每個 git 指令的 exit code，失敗時記錄錯誤並跳過該 repo。",
+    "existing_code": "git checkout $BRANCH 2>>\"$LOG\"\ngit merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "第 34-35 行未檢查 git 指令的執行結果。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`ahead` 可能為空字串，導致 SQL 插入錯誤",
+    "body": "`ahead=$(git rev-list --count ...)` 若 git 指令失敗（例如 branch 不存在），`ahead` 可能為空字串，後續 `sqlite3` 插入時會產生語法錯誤。建議在插入前檢查 `ahead` 是否為數字，或設定預設值。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "第 37 行未處理 git 指令失敗的情況。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`cleanup_cache` 使用 `rm -rf` 可能誤刪非預期檔案",
+    "body": "`rm -rf \"$ROOT\"/.cache/*` 若 `$ROOT` 未正確設定或包含符號連結，可能刪除不該刪除的檔案。建議檢查 `$ROOT` 是否存在且為目錄，並避免使用 `*` 萬用字元，或改用 `find` 搭配更精確的刪除條件。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "第 58 行使用 `rm -rf` 且路徑來自使用者輸入。"
+  }
+]

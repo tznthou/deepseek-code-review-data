@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），且不回報任何錯誤。這使得呼叫端無法得知失敗，後續程式碼（如 `pr[\"user\"][\"login\"]`）在 `pr` 為 `None` 或缺少鍵時會拋出未處理的例外，造成程式崩潰。\n\n建議：\n- 至少記錄錯誤並重新拋出，或回傳一個明確的錯誤值。\n- 使用 `raise` 保留原始例外，或改用 `except Exception as e: raise RuntimeError(...) from e`。\n- 檢查 HTTP 狀態碼，非 2xx 時拋出例外。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 25-26 行：`except:` 後直接 `pass`，沒有記錄或重新拋出。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "archive 使用 shell=True 且指令字串由外部輸入拼接，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串中包含 `repo` 和 `path`，這兩個參數來自命令列參數或程式內部，但 `repo` 是使用者輸入（`sys.argv[1]`）。攻擊者可以注入額外的 shell 指令，例如 `repo` 設為 `foo; rm -rf /`。\n\n建議：避免使用 `shell=True`，改用參數列表形式：\n```python\nsubprocess.run([\"tar\", \"czf\", f\"{path}.tgz\", path])\nsubprocess.run([\"gh\", \"repo\", \"view\", repo])\n```\n或至少對輸入進行嚴格的驗證與轉義。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 70 行：`shell=True` 且 f-string 包含外部輸入。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設值 seen=[]，跨呼叫累積資料",
+    "body": "`collect_authors` 的參數 `seen=[]` 是可變預設值，在函式定義時建立一次，之後每次呼叫都會共用同一個 list。這會導致多次呼叫時作者名單不斷累積，而不是每次重新開始。\n\n建議：改用 `seen=None`，並在函式內初始化：\n```python\ndef collect_authors(repo, numbers, seen=None):\n    if seen is None:\n        seen = []\n    ...\n```",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 30 行：參數預設值為 `[]`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "export_csv 未使用 with 開啟檔案，例外時可能洩漏檔案描述子",
+    "body": "`export_csv` 使用 `open` 和 `close`，但沒有使用 `with` 語句。如果在寫入過程中發生例外（例如磁碟滿、權限錯誤），檔案不會被關閉，造成資源洩漏。\n\n建議：改用 `with open(path, \"w\") as f:`。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 62-66 行：手動 open/close，無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 的 int() 轉換可能拋出未處理的 ValueError",
+    "body": "`threshold_from_env` 從環境變數 `PR_STALE_DAYS` 讀取值並直接 `int(raw)`，如果該值不是合法整數（例如 \"abc\" 或空字串），會拋出 `ValueError`，導致程式崩潰。\n\n建議：捕捉 `ValueError` 並回傳預設值，或記錄警告。",
+    "existing_code": "if raw:\n        return {\"days\": int(raw)}",
+    "evidence": "diff 第 45-46 行：直接 `int(raw)` 無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "classify 假設 pr 一定有 additions、changed_files、title 鍵，可能 KeyError",
+    "body": "`classify` 直接存取 `pr[\"additions\"]`、`pr[\"changed_files\"]`、`pr[\"title\"]`，但 `_fetch` 回傳的 JSON 可能缺少這些鍵（例如 API 回應格式變更或部分 PR 資料不完整），導致 `KeyError`。\n\n建議：使用 `pr.get(\"additions\", 0)` 等方式，或先驗證資料結構。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):\n        return \"fix\"",
+    "evidence": "diff 第 50-55 行：直接索引字典。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "review_latency 假設 events 非空且每個事件都有 created_at",
+    "body": "`review_latency` 在 `events` 非空時直接取 `events[0][\"created_at\"]` 和 `events[-1][\"created_at\"]`，但事件物件可能缺少 `created_at` 鍵，或 `events` 為空（已處理），但若 `events` 為空則回傳 0，可能掩蓋真實延遲。此外，若 `created_at` 格式不正確，`_to_epoch` 會拋出例外。\n\n建議：檢查鍵是否存在，並處理時間解析錯誤。",
+    "existing_code": "first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 36-37 行：直接索引事件列表。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Authorization header 直接使用環境變數，若未設定會 KeyError",
+    "body": "`_fetch` 使用 `os.environ[\"GITHUB_TOKEN\"]`，如果環境變數未設定，會拋出 `KeyError`，且沒有提供明確的錯誤訊息。\n\n建議：使用 `os.environ.get(\"GITHUB_TOKEN\")` 並檢查是否為 `None`，或提供預設值。",
+    "existing_code": "req.add_header(\"Authorization\", \"Bearer \" + os.environ[\"GITHUB_TOKEN\"])",
+    "evidence": "diff 第 22 行：直接索引環境變數。"
+  }
+]

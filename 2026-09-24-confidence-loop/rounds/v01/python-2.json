@@ -1,0 +1,112 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使得函式可能回傳 `None`。呼叫端（`collect_authors` 和 `main`）直接對回傳值做 `pr[\"user\"][\"login\"]` 或 `pr[\"additions\"]`，當 `_fetch` 回傳 `None` 時會拋出 `TypeError`，且沒有提供任何錯誤訊息。\n\n具體失敗情境：當 GitHub API 回傳 404（例如 PR 不存在）或網路逾時，`_fetch` 回傳 `None`，`main` 中的 `pr[\"user\"][\"login\"]` 會拋出 `TypeError: 'NoneType' object is not subscriptable`，程式直接崩潰且沒有 log。\n\n建議：在 `_fetch` 中不要吞掉例外，或至少記錄錯誤並重新拋出；或者讓呼叫端檢查回傳值是否為 `None`。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 22-23 行：`except:` 後只有 `pass`，且 `_fetch` 的回傳值在 `collect_authors`（第 27 行）和 `main`（第 75 行）被直接使用。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "shell=True 且指令字串包含外部輸入，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串中直接拼接了 `repo` 和 `path`。`repo` 來自命令列參數（`sys.argv[1]`），攻擊者可以注入額外的 shell 指令。\n\n具體攻擊情境：執行 `python3 pr_stats.py 'repo; rm -rf /' 1`，`repo` 的值為 `repo; rm -rf /`，拼接後的指令為 `tar czf /tmp/pr-stats-repo; rm -rf /.tgz /tmp/pr-stats-repo; rm -rf / && gh repo view repo; rm -rf /`，導致任意指令執行。\n\n建議：使用參數列表形式呼叫 `subprocess.run`，避免 `shell=True`；或對輸入進行嚴格的驗證與轉義。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 61 行：`subprocess.run` 使用 `shell=True`，且 f-string 中包含 `repo`（來自 `sys.argv[1]`）和 `path`（來自 `out`，但 `out` 由 `repo` 衍生）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "可變預設值 `seen=[]` 導致跨呼叫累積",
+    "body": "`collect_authors` 的參數 `seen` 預設為空列表，這是一個可變預設值。每次呼叫時若未傳入 `seen`，會共用同一個列表物件，導致多次呼叫的結果累積。\n\n具體情境：第一次呼叫 `collect_authors(repo, [1])` 回傳 `['user1']`；第二次呼叫 `collect_authors(repo, [2])` 會回傳 `['user1', 'user2']`，而不是預期的 `['user2']`。\n\n建議：將預設值改為 `None`，並在函式內初始化：`if seen is None: seen = []`。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 26 行：`seen=[]` 是可變預設值，且函式內對 `seen` 進行了 `append` 操作（第 28 行）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "review_latency 假設 timeline 存在且非空，但 API 回應可能不含該欄位",
+    "body": "`review_latency` 直接使用 `pr.get(\"timeline\", [])`，但 GitHub API 的 PR 物件通常不包含 `timeline` 欄位（需要另外請求 timeline API）。因此 `events` 會是空列表，函式回傳 0，導致延遲指標失真。\n\n具體情境：`_fetch` 回傳的 PR JSON 沒有 `timeline` 鍵，`events` 為空，函式回傳 0，所有 PR 的延遲都顯示為 0。\n\n建議：確認 API 回應結構，或另外請求 timeline 資料；若無法取得，應回傳 `None` 或拋出明確錯誤。",
+    "existing_code": "events = pr.get(\"timeline\", [])",
+    "evidence": "diff 第 31 行：`pr.get(\"timeline\", [])` 預設為空列表，但 GitHub PR API 回應中沒有 `timeline` 欄位。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 的 int() 轉換未處理例外",
+    "body": "`threshold_from_env` 中 `int(raw)` 直接轉換環境變數 `PR_STALE_DAYS` 的值，若該值不是合法整數（例如 `abc`），會拋出 `ValueError`，導致程式崩潰。\n\n具體情境：使用者設定 `PR_STALE_DAYS=abc`，程式在 `threshold_from_env` 中拋出 `ValueError`，且沒有提供任何錯誤訊息。\n\n建議：使用 try-except 處理轉換失敗，或提供預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 39 行：`int(raw)` 直接轉換，未處理 `ValueError`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "classify 直接存取 pr[\"additions\"] 等鍵，未處理缺失",
+    "body": "`classify` 直接使用 `pr[\"additions\"]`、`pr[\"changed_files\"]`、`pr[\"title\"]`，若 API 回應缺少這些鍵（例如權限不足或 API 變更），會拋出 `KeyError`。\n\n具體情境：GitHub API 回應中缺少 `additions` 欄位（例如某些事件類型），`classify` 拋出 `KeyError`，程式崩潰。\n\n建議：使用 `.get()` 並提供預設值，或先驗證回應結構。",
+    "existing_code": "if pr[\"additions\"] > 500:",
+    "evidence": "diff 第 44 行：直接使用 `pr[\"additions\"]`，未檢查鍵是否存在。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "export_csv 未使用 with 開啟檔案，可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，若在寫入過程中發生例外（例如磁碟滿、權限不足），檔案不會被關閉，造成資源洩漏。\n\n具體情境：寫入 CSV 時發生 `OSError`，檔案控制代碼未關閉，可能導致後續操作失敗或檔案鎖定。\n\n建議：使用 `with open(path, \"w\") as f:` 確保檔案總是被關閉。",
+    "existing_code": "f = open(path, \"w\")",
+    "evidence": "diff 第 52 行：`open` 未搭配 `with`，且後續有 `f.write` 和 `f.close`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "archive 中的 tar 指令未處理路徑中的特殊字元",
+    "body": "`archive` 使用 `tar czf {path}.tgz {path}`，其中 `path` 來自 `out`（由 `repo` 衍生）。若 `repo` 包含空格或特殊字元（例如 `;`、`&`），可能導致指令執行錯誤或注入。\n\n具體情境：`repo` 為 `my repo`，`path` 為 `/tmp/pr-stats-my repo.csv`，指令變成 `tar czf /tmp/pr-stats-my repo.csv.tgz /tmp/pr-stats-my repo.csv`，tar 會將 `repo.csv.tgz` 和 `repo.csv` 視為兩個檔案，導致錯誤。\n\n建議：使用 `subprocess.run` 的參數列表形式，避免 shell 解析；或對路徑進行轉義。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 61 行：`path` 和 `repo` 直接拼接進 shell 指令。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "main 中重複呼叫 _fetch，且未檢查回傳值",
+    "body": "`main` 在迴圈中對每個 PR 呼叫 `_fetch`，但 `_fetch` 可能回傳 `None`（因為吞掉例外），導致後續 `pr[\"user\"][\"login\"]` 拋出 `TypeError`。此外，`collect_authors` 已經呼叫過一次 `_fetch`，這裡又重複呼叫，造成不必要的 API 請求。\n\n具體情境：某個 PR 的 API 請求失敗，`_fetch` 回傳 `None`，`main` 中的 `pr[\"user\"][\"login\"]` 拋出 `TypeError`。\n\n建議：在 `_fetch` 中處理錯誤並拋出例外，或在 `main` 中檢查回傳值；同時考慮重用 `collect_authors` 的結果，避免重複請求。",
+    "existing_code": "pr = _fetch(f\"/repos/{repo}/pulls/{n}\")",
+    "evidence": "diff 第 75 行：`_fetch` 的回傳值未檢查，且 `_fetch` 可能回傳 `None`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "裸 except 會捕捉 KeyboardInterrupt 和 SystemExit",
+    "body": "`_fetch` 中的 `except:` 是裸 except，會捕捉所有例外，包括 `KeyboardInterrupt` 和 `SystemExit`，這可能導致程式無法被使用者中斷。\n\n具體情境：使用者在程式執行時按下 Ctrl+C，`KeyboardInterrupt` 被捕捉並忽略，程式繼續執行。\n\n建議：至少改為 `except Exception:`，或更精確地捕捉特定例外。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 22 行：裸 `except:`。"
+  }
+]

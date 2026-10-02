@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`_fetch` 吞掉所有例外且回傳 `None`，導致後續程式碼崩潰",
+    "body": "`_fetch` 的 `except` 區塊只有 `pass`，沒有記錄或重新拋出。當網路錯誤、API 回傳非 2xx、JSON 解析失敗或 `GITHUB_TOKEN` 未設定時，函式會回傳 `None`。呼叫端（`collect_authors` 和 `main`）直接對回傳值做 `pr[\"user\"][\"login\"]` 或 `pr[\"additions\"]`，會拋出 `TypeError` 或 `KeyError`，導致程式崩潰且沒有有用的錯誤訊息。\n\n建議：在 `except` 中記錄錯誤並重新拋出，或讓 `_fetch` 回傳明確的錯誤值，並在呼叫端檢查。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 25-26 行：`except:` 後只有 `pass`，且函式沒有回傳值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "`archive` 使用 `shell=True` 且指令由外部輸入拼接，存在命令注入風險",
+    "body": "`archive` 使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path` 參數。`repo` 來自命令列參數，攻擊者可注入額外指令，例如 `repo = \"x; rm -rf /\"`，導致任意命令執行。\n\n建議：改用參數列表形式並移除 `shell=True`，或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 88 行：`subprocess.run` 使用 `shell=True` 且 f-string 包含外部輸入。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`export_csv` 未使用 `with` 管理檔案，例外時可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 開啟檔案後手動 `close`，但若寫入過程拋出例外（例如磁碟滿、權限不足），檔案不會被關閉，造成資源洩漏。\n\n建議：使用 `with open(path, \"w\") as f:` 確保檔案關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 82-86 行：手動開啟與關閉檔案，沒有 `with` 或 `try/finally`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`collect_authors` 使用可變預設值 `seen=[]`，跨呼叫共用狀態",
+    "body": "`collect_authors` 的參數 `seen` 預設為空串列，這是可變物件，會在函式定義時建立一次並在所有呼叫間共用。若呼叫者未傳入 `seen`，多次呼叫會累積先前結果，導致作者清單不正確。\n\n建議：改用 `seen=None`，並在函式內初始化為空串列。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 29 行：`seen=[]` 為可變預設值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`collect_authors` 直接修改傳入的 `seen` 並回傳，可能造成非預期副作用",
+    "body": "`collect_authors` 對傳入的 `seen` 串列進行 `append`，並回傳同一個串列。若呼叫者傳入自己的串列，該串列會被修改，可能造成非預期副作用。\n\n建議：在函式內建立新串列，或複製傳入的串列後再修改。",
+    "existing_code": "seen.append(pr[\"user\"][\"login\"])\n    return seen",
+    "evidence": "diff 第 34-35 行：直接修改參數並回傳。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "`threshold_from_env` 的 `default` 參數為可變預設值，且未處理轉換失敗",
+    "body": "`threshold_from_env` 的 `default` 參數預設為 `{\"days\": 7}`，是可變字典。雖然函式內未修改 `default`，但若未來修改可能引入共用狀態問題。此外，`int(raw)` 轉換環境變數時若值不是整數會拋出 `ValueError`，導致程式崩潰。\n\n建議：改用 `default=None` 並在函式內設定預設值，並捕捉 `ValueError` 或提供明確錯誤訊息。",
+    "existing_code": "def threshold_from_env(default={\"days\": 7}):\n    raw = os.environ.get(\"PR_STALE_DAYS\", \"\")\n    if raw:\n        return {\"days\": int(raw)}",
+    "evidence": "diff 第 48-51 行：可變預設值與未處理的 `int()` 轉換。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`classify` 依賴 `pr` 中的鍵，若 API 回傳缺少欄位會拋出 `KeyError`",
+    "body": "`classify` 直接存取 `pr[\"additions\"]`、`pr[\"changed_files\"]` 和 `pr[\"title\"]`。若 GitHub API 回傳的 JSON 缺少這些欄位（例如 API 變更或權限不足），會拋出 `KeyError`。\n\n建議：使用 `pr.get(\"additions\", 0)` 等方式提供預設值，或先驗證資料結構。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):",
+    "evidence": "diff 第 55-59 行：直接使用鍵存取。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "`review_latency` 假設 `events` 非空且元素有 `created_at`，可能拋出例外",
+    "body": "`review_latency` 在 `events` 為空時回傳 0，但若 `events` 非空但元素缺少 `created_at` 鍵，會拋出 `KeyError`。此外，`events` 可能不是串列（例如 API 回傳 `None`），`events[0]` 會拋出 `TypeError`。\n\n建議：檢查 `events` 型別與元素結構，或使用 `events[0].get(\"created_at\")`。",
+    "existing_code": "first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 40-41 行：直接索引與鍵存取。"
+  }
+]

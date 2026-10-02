@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入風險：repo 名稱與 branch 未跳脫",
+    "body": "`name` 與 `BRANCH` 直接以單引號字串拼接方式插入 SQL 語句。若 repo 目錄名稱包含單引號（例如 `my'repo`），會破壞 SQL 語法，甚至可注入任意 SQL 指令。攻擊者可透過建立惡意目錄名稱來竄改或刪除資料庫內容。\n\n建議改用參數化查詢，例如：\n```bash\nsqlite3 \"$DB\" \"INSERT INTO runs VALUES(?, ?, ?, datetime('now'))\" \"$name\" \"$BRANCH\" \"$ahead\"\n```",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 42 行：`sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "任意指令執行：eval 執行未受信任的 hook 路徑",
+    "body": "`eval \"$hook $repo\"` 會執行 `$hook` 的內容。雖然 `$hook` 是固定路徑，但 `$repo` 來自 `$d`（由 `ls` 輸出），可能包含 shell 特殊字元（如 `;`、`$(...)`），導致任意指令注入。例如 repo 名稱為 `x; rm -rf ~` 時，`eval` 會執行 `rm -rf ~`。\n\n建議避免使用 `eval`，改為直接執行：\n```bash\n\"$hook\" \"$repo\"\n```\n並確保 `$hook` 與 `$repo` 以引號包裹。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 52 行：`eval \"$hook $repo\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "路徑解析脆弱：ls 輸出未處理特殊字元",
+    "body": "`for d in $(ls \"$ROOT\")` 使用 `ls` 的輸出進行迴圈，若目錄名稱包含空白、換行或 glob 字元（如 `*`），會導致路徑解析錯誤或意外展開。例如目錄名為 `my repo` 會被拆成兩個 token。\n\n建議改用 glob 或 `find`：\n```bash\nfor d in \"$ROOT\"/*/; do\n  d=${d%/}\n  d=${d##*/}\n  ...\n```",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "diff 第 68 行：`for d in $(ls \"$ROOT\"); do`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錯誤處理不足：git checkout 失敗仍繼續執行",
+    "body": "`git checkout $BRANCH` 失敗時（例如 branch 不存在），腳本仍會繼續執行 `git merge` 與後續步驟，可能導致錯誤的同步結果或資料庫寫入不正確的資料。\n\n建議在每個 git 指令後檢查 exit code，失敗時記錄錯誤並跳過該 repo：\n```bash\ngit checkout \"$BRANCH\" 2>>\"$LOG\" || { echo \"checkout failed for $name\" >> \"$LOG\"; return 1; }\n```",
+    "existing_code": "git checkout $BRANCH 2>>\"$LOG\"",
+    "evidence": "diff 第 32 行：`git checkout $BRANCH 2>>\"$LOG\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "ahead 計算可能失敗但未處理",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若 `origin/$BRANCH` 不存在或 rev-list 失敗，`ahead` 會是空字串，後續 `[ \"$ahead\" -gt 0 ]` 會因語法錯誤而失敗，且 SQL 插入的 `ahead` 為空值可能導致資料型別不符。\n\n建議檢查 `ahead` 是否為數字，失敗時設為 0 或記錄錯誤。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "diff 第 36 行：`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)`"
+  }
+]

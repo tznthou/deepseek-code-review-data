@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使得函式可能回傳 `None`。呼叫端（`collect_authors` 和 `main`）直接使用 `pr[\"user\"][\"login\"]` 等鍵值，若 `pr` 為 `None` 會拋出 `TypeError`，程式直接崩潰。\n\n失敗情境：當 GitHub API 回傳 404（PR 不存在）或網路逾時，`_fetch` 回傳 `None`，下一行 `pr[\"user\"]` 就會拋出例外。\n\n建議：在 `_fetch` 中記錄錯誤並重新拋出，或讓呼叫端檢查回傳值。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 25 行 `except: pass`，且後續 `collect_authors` 第 30 行 `seen.append(pr[\"user\"][\"login\"])` 未檢查 `pr` 是否為 `None`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path` 參數。`repo` 來自命令列參數，攻擊者可注入額外指令。\n\n失敗情境：執行 `python3 pr_stats.py '; rm -rf / #' 1`，`repo` 值會讓指令變成 `tar czf /tmp/....tgz /tmp/... && gh repo view ; rm -rf / #`，造成任意指令執行。\n\n建議：避免使用 `shell=True`，改用參數列表傳遞，或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 62 行，`shell=True` 且 f-string 包含外部輸入 `repo`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設值 seen=[]，跨呼叫累積資料",
+    "body": "`collect_authors` 的參數 `seen=[]` 是 Python 的可變預設值，只會在函式定義時建立一次。每次呼叫若未傳入 `seen`，都會共用同一個 list，導致結果累積。\n\n失敗情境：第一次呼叫 `collect_authors(repo, [1,2])` 回傳 `['user1','user2']`；第二次呼叫 `collect_authors(repo, [3])` 會回傳 `['user1','user2','user3']`，而不是 `['user3']`。\n\n建議：改用 `seen=None`，在函式內判斷並建立新 list。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行，可變預設值 `seen=[]`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "export_csv 未使用 with 開啟檔案，例外時可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，若在寫入過程中發生例外（例如磁碟滿、權限不足），檔案不會被關閉，造成資源洩漏。\n\n失敗情境：寫入時發生 `OSError`，程式跳過 `f.close()`，檔案控制代碼未釋放。\n\n建議：改用 `with open(path, \"w\") as f:` 確保檔案關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 54-58 行，未使用 context manager。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 未處理環境變數轉型失敗",
+    "body": "`threshold_from_env` 直接將 `PR_STALE_DAYS` 環境變數轉為 `int`，若該變數不是有效整數（例如 `abc`），會拋出 `ValueError` 導致程式崩潰。\n\n失敗情境：使用者設定 `PR_STALE_DAYS=abc`，程式在 `int(raw)` 處拋出例外。\n\n建議：使用 try/except 捕捉轉換錯誤，或提供預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 40 行，`int(raw)` 未處理例外。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "classify 假設 PR 一定有 additions 和 changed_files 欄位",
+    "body": "`classify` 直接存取 `pr[\"additions\"]` 和 `pr[\"changed_files\"]`，但 GitHub API 的回應可能缺少這些欄位（例如某些事件或權限不足時），導致 `KeyError`。\n\n失敗情境：若 API 回傳的 PR 物件沒有 `additions` 欄位，程式會拋出 `KeyError`。\n\n建議：使用 `pr.get(\"additions\", 0)` 等方式提供預設值。",
+    "existing_code": "if pr[\"additions\"] > 500:",
+    "evidence": "diff 第 45 行，直接使用鍵值存取。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "review_latency 假設 timeline 事件有 created_at 欄位",
+    "body": "`review_latency` 直接存取 `events[0][\"created_at\"]` 和 `events[-1][\"created_at\"]`，但某些事件類型可能沒有 `created_at` 欄位，導致 `KeyError`。\n\n失敗情境：若 timeline 中包含沒有 `created_at` 的事件（例如某些內部事件），程式會拋出例外。\n\n建議：使用 `event.get(\"created_at\")` 並過濾無效事件。",
+    "existing_code": "first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 34-35 行，直接存取鍵值。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "git log 子程序失敗時未檢查回傳碼",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，且未檢查 `proc.returncode`。若 `git log` 因 repo 損毀、權限不足或 `prev..tag` 範圍無效而失敗，程式會把空的 stdout 當成「沒有 commit」，繼續執行並回報成功。建議加上 `check=True`，或在呼叫後檢查 `proc.returncode != 0` 並拋出例外。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "只有一個 tag 時 `prev` 會取到負索引",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，索引會變成 -1，取到最後一個 tag，導致 `commits_between` 的範圍錯誤。建議在 `tags.index(tag) == 0` 時明確處理（例如回報錯誤或使用空範圍）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中直接使用 `tags.index(tag) - 1`，未檢查是否為 0。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 109,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "webhook URL 未驗證，可能造成 SSRF",
+    "body": "`NOTES_WEBHOOK` 環境變數直接傳給 `urllib.request.urlopen`，未檢查 scheme 或主機。攻擊者若可控制環境變數，可指定 `file://` 或內網位址，造成資訊洩漏或內部服務攻擊。建議限制 scheme 為 `https`，並可考慮使用 allowlist。",
+    "existing_code": "url = os.environ.get(\"NOTES_WEBHOOK\")\n    if not url:\n        log(\"請先設定 NOTES_WEBHOOK\")\n        return 2",
+    "evidence": "diff 中直接使用環境變數作為 URL，未做任何驗證。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "NOTES_MAX 為負數或零時未處理",
+    "body": "`max_items()` 只檢查是否為整數，未檢查是否為正數。若設定為負數，`commits[: max_items()]` 會取到空列表；若為 0 也會得到空列表，可能非預期。建議限制最小值為 1。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `int(raw)` 成功後直接回傳，未檢查數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "commit subject 可能包含換行字元，導致輸出格式錯亂",
+    "body": "`git log --format=%h %s` 的 subject 可能包含換行（例如 merge commit 或手動輸入），`group()` 直接將 subject 放入列表，`render()` 輸出時未跳脫，可能破壞 Markdown 格式或注入額外內容。建議對 subject 做 sanitize（例如取代換行）。",
+    "existing_code": "sha, subject = line.split(\" \", 1)\n        commits.append((sha, subject))",
+    "evidence": "diff 中直接使用 `subject`，未做任何處理。"
+  }
+]

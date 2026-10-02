@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`git log` 失敗時未檢查回傳碼，可能靜默產生空列表",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 路徑錯誤、權限不足或 git 本身出錯而失敗，`proc.stdout` 會是空字串，函式會回傳空列表，導致 `main` 誤以為「沒有新 commit」而回傳 0，實際上根本沒有成功取得任何資料。建議加上 `check=True` 或明確檢查 `proc.returncode != 0` 並拋出例外或回傳錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 第 55-58 行，`subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "當 tag 是第一個版本時，`prev = tags[tags.index(tag) - 1]` 會拋出 IndexError",
+    "body": "如果使用者指定的 tag 是 `list_tags` 回傳列表中的第一個元素（例如 repo 只有一個 tag，或該 tag 是最早的版本），`tags.index(tag)` 會是 0，`tags[0 - 1]` 會拋出 `IndexError`，程式直接崩潰。建議在取 `prev` 前檢查 `tags.index(tag) == 0`，並給出明確錯誤訊息或改用其他方式處理（例如從 repo 初始 commit 開始）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 第 94 行，直接對 `tags.index(tag) - 1` 取值，未處理 index 為 0 的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`max_items()` 未處理負數或零，可能導致非預期行為",
+    "body": "`max_items()` 將環境變數 `NOTES_MAX` 轉為整數後直接回傳，沒有檢查是否為正數。如果使用者設定 `NOTES_MAX=-1` 或 `NOTES_MAX=0`，`commits[: max_items()]` 會分別取得空列表或全部 commit（因為 `commits[:-1]` 會排除最後一個，`commits[:0]` 會是空列表），與預期的「限制數量」不符。建議在轉換後檢查數值是否大於 0，否則回傳預設值或拋出錯誤。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 第 39-43 行，`int(raw)` 成功後直接回傳，未驗證數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`post` 函式只捕捉 `URLError`，其他例外可能導致程式崩潰",
+    "body": "`urllib.request.urlopen` 除了 `URLError` 之外，還可能拋出 `ValueError`（例如 URL 格式錯誤）、`TimeoutError`（在 Python 3.10+ 中 timeout 會拋出 `TimeoutError`，它是 `URLError` 的子類別，但某些情況可能不是）或 `http.client.HTTPException`。目前只捕捉 `URLError`，其他例外會讓程式直接崩潰。建議捕捉更廣泛的例外（例如 `Exception`）或至少加上 `except Exception as e` 並記錄錯誤。",
+    "existing_code": "except urllib.error.URLError as e:\n        log(f\"[error] 貼到 {url} 失敗：{e}\")\n        return False",
+    "evidence": "diff 第 79-81 行，只捕捉 `URLError`，未涵蓋所有可能的例外。"
+  }
+]

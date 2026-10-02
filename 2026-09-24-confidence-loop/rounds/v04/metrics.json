@@ -1,0 +1,51 @@
+{
+ "label": "v04",
+ "runs_total": 15,
+ "runs_ok": 15,
+ "findings": 79,
+ "per_target": {
+  "python": {
+   "findings": 32,
+   "valid": 26,
+   "not_valid": 6,
+   "auc_strict": 0.9423076923076923,
+   "a_recall": 25,
+   "runs_ok": 5
+  },
+  "shell": {
+   "findings": 33,
+   "valid": 30,
+   "not_valid": 3,
+   "auc_strict": 0.8611111111111112,
+   "a_recall": 25,
+   "runs_ok": 5
+  },
+  "probe": {
+   "findings": 14,
+   "valid": 13,
+   "not_valid": 1,
+   "auc_strict": 0.46153846153846156,
+   "a_recall": 4,
+   "runs_ok": 5
+  }
+ },
+ "auc_strict": 0.8144927536231884,
+ "auc_strict_exact": "281/345",
+ "ci_strict": [
+  0.727,
+  0.896
+ ],
+ "n_pos_strict": 69,
+ "n_neg_strict": 10,
+ "gate_pass_valid": 0.9565217391304348,
+ "gate_pass_invalid": 0.9,
+ "auc_lenient": 0.8116883116883117,
+ "auc_lenient_exact": "125/154",
+ "ci_lenient": [
+  0.721,
+  0.89
+ ],
+ "n_pos_lenient": 77,
+ "n_neg_lenient": 2,
+ "evidence_rate": 1.0
+}

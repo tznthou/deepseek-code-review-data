@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "git log 失敗時未檢查退出碼，可能貼出空公告",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。當 `repo` 路徑不存在、不是 git repo，或 `prev`/`tag` 不存在時，`git log` 會以非零退出碼結束，但程式會繼續執行，`proc.stdout` 會是空字串，最後 `commits` 為空 list。接著 `main` 會因為 `if not commits` 而直接回傳 0，不會貼出任何東西，但也不會回報錯誤，使用者會以為成功。\n\n建議：加上 `check=True`，或在呼叫後檢查 `proc.returncode != 0` 並拋出例外或回傳錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式的 `subprocess.run` 呼叫沒有 `check=True`，且後續沒有檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "tag 是第一個 tag 時會拋出 IndexError",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，`tags.index(tag)` 會是 0，`0 - 1` 變成 -1，`tags[-1]` 會取到最後一個 tag，而不是報錯。這會導致 release notes 的範圍錯誤（從最後一個 tag 到第一個 tag）。\n\n建議：檢查 `tags.index(tag) == 0` 時，提示使用者這是第一個 tag，沒有前一個 tag 可以比較。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式的這一行，沒有處理 `tag` 是第一個 tag 的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "NOTES_MAX 為負數或零時切片行為異常",
+    "body": "`max_items` 只處理了非整數的情況，沒有檢查負數或零。如果使用者設定 `NOTES_MAX=-1`，`commits[: -1]` 會回傳除了最後一個 commit 以外的所有 commit；如果設定 `NOTES_MAX=0`，會回傳空 list，導致公告沒有內容。\n\n建議：在 `max_items` 中檢查 `value <= 0` 時回傳預設值或記錄警告。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式只處理了 `ValueError`，沒有處理負數或零。"
+  }
+]

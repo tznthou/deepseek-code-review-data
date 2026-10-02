@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），且不回傳任何值。呼叫端（如 `collect_authors` 和 `main` 中的 `pr = _fetch(...)`）直接使用回傳值，當 `_fetch` 失敗時會得到 `None`，接著存取 `pr[\"user\"]` 或 `pr[\"additions\"]` 會拋出 `TypeError`，且原始錯誤被隱藏，難以除錯。\n\n建議：讓 `_fetch` 在失敗時拋出例外，或回傳明確的錯誤值並由呼叫端檢查。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24 行：`except: pass` 且函式沒有回傳值。呼叫端如第 30 行 `pr[\"user\"][\"login\"]` 直接使用回傳值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "shell=True 且指令由外部輸入拼接，存在命令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 參數（來自命令列參數）與 `path`（由 repo 衍生）。攻擊者可提供惡意 repo 名稱（例如 `foo; rm -rf /`）來執行任意命令。\n\n建議：避免使用 `shell=True`，改用參數列表形式，並將 `gh repo view` 分開執行。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 62 行：`subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)`，其中 `repo` 來自 `sys.argv[1]`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "可變預設值 seen=[] 導致跨呼叫共用狀態",
+    "body": "`collect_authors` 的參數 `seen=[]` 使用可變預設值，每次呼叫都會累積到同一個 list，導致結果不正確。例如連續呼叫兩次，第二次會包含第一次的作者。\n\n建議：改用 `seen=None` 並在函式內初始化。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：`def collect_authors(repo, numbers, seen=[]):`"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "export_csv 未使用 with 開啟檔案，可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close`，但若寫入過程拋出例外（例如磁碟滿），檔案不會被關閉。建議使用 `with open(path, \"w\") as f:` 確保資源釋放。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 58-62 行：手動 open/close，無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "GITHUB_TOKEN 可能因例外而外洩",
+    "body": "`_fetch` 在建立請求時直接從環境變數讀取 token，若後續發生例外（例如網路錯誤），traceback 可能包含請求物件，進而洩漏 token。此外，若 token 無效，錯誤訊息可能包含 token。建議在錯誤處理中避免輸出請求內容，或使用更安全的方式傳遞憑證。",
+    "existing_code": "req.add_header(\"Authorization\", \"Bearer \" + os.environ[\"GITHUB_TOKEN\"])",
+    "evidence": "diff 第 20 行：直接將 token 加入 header，且後續例外處理不當。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "review_latency 假設 timeline 事件存在且有序",
+    "body": "`review_latency` 直接取 `events[0]` 和 `events[-1]`，但 `pr.get(\"timeline\", [])` 可能回傳空 list（已處理），但若 timeline 存在但為空（例如 `[]`），則會拋出 IndexError。此外，事件順序未保證按時間排序，可能導致負數延遲。建議檢查空 list 並排序事件。",
+    "existing_code": "first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 36-37 行：直接索引 events，未檢查空 list 或排序。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "threshold_from_env 的 int() 轉換可能拋出未處理例外",
+    "body": "`int(raw)` 若環境變數 `PR_STALE_DAYS` 不是有效整數，會拋出 ValueError，導致程式崩潰。建議捕捉例外並提供預設值或錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 44 行：`int(raw)` 無例外處理。"
+  }
+]

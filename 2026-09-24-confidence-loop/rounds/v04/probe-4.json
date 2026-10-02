@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "未檢查 git log 的執行結果",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 路徑錯誤、權限不足或 tag 不存在而失敗，`proc.stdout` 會是空字串，函式會回傳空 list，導致後續流程誤以為沒有 commit 而回傳成功（return 0）。建議加上 `check=True` 或檢查 returncode，並在失敗時拋出例外或回傳錯誤碼。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "當 tag 是第一個版本時會拋出 IndexError",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，`tags.index(tag)` 為 0，`-1` 會取到最後一個元素，而不是報錯。這會導致錯誤的 `prev`，進而產生錯誤的 commit 範圍。應檢查 `tags.index(tag) == 0` 並處理此情況（例如提示沒有前一個 tag 或使用其他基準）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中該行直接使用 `-1` 索引，未處理邊界。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "設定檔載入可能拋出未處理的例外",
+    "body": "`load_config` 在檔案存在但內容不是合法 JSON 時會拋出 `SystemExit`，但若檔案權限不足或讀取時發生其他 I/O 錯誤，會拋出未捕捉的 `OSError`，導致程式直接崩潰。建議捕捉 `OSError` 並提供友善錯誤訊息。",
+    "existing_code": "try:\n        with open(path, encoding=\"utf-8\") as fh:\n            return json.load(fh)\n    except FileNotFoundError:\n        return {}\n    except json.JSONDecodeError as e:\n        raise SystemExit(f\"設定檔 {path} 不是合法的 JSON：{e}\")",
+    "evidence": "diff 中 `load_config` 只處理了 `FileNotFoundError` 和 `JSONDecodeError`，未處理其他 `OSError`。"
+  }
+]

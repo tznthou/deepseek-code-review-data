@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 未經跳脫直接插入 SQL 語句",
+    "body": "`name` 來自 `basename \"$dir\"`，`BRANCH` 雖有格式驗證，但兩者都直接以單引號字串拼接進 SQL 語句。若 repo 目錄名稱包含單引號（例如 `my'repo`），會破壞 SQL 語法甚至執行任意 SQL。攻擊者若能在 `$ROOT` 下建立惡意名稱的目錄，即可操縱資料庫。\n\n建議改用參數化查詢，例如：\n```bash\nsqlite3 \"$DB\" \"INSERT INTO runs VALUES(?, ?, ?, datetime('now'))\" \"$name\" \"$BRANCH\" \"$ahead\"\n```\n或至少使用 `sqlite3` 的 `:name` 綁定參數。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "第 48 行直接將 `$name` 與 `$BRANCH` 插入 SQL 字串，未做任何跳脫。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入：eval 執行未受信任的 hook 路徑與 repo 名稱",
+    "body": "`eval \"$hook $repo\"` 會將 `$hook` 與 `$repo` 的內容當作 shell 指令執行。`$hook` 是固定路徑，但 `$repo` 來自 `basename \"$dir\"`，若 repo 目錄名稱包含 shell 特殊字元（例如 `; rm -rf ~`），可能導致任意指令執行。\n\n建議避免使用 eval，改為直接執行：\n```bash\n\"$hook\" \"$repo\"\n```\n若需要傳遞多個參數，應使用陣列。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "第 57 行使用 eval 執行包含未受信任變數的字串。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "git checkout 未加引號，branch 名稱可能被 shell 展開",
+    "body": "`git checkout $BRANCH` 未將 `$BRANCH` 加上雙引號。雖然前面有格式驗證，但若 branch 名稱包含 glob 字元（例如 `*`）或空白（雖然格式驗證已排除空白），仍可能造成非預期行為。建議改為 `git checkout \"$BRANCH\"`。",
+    "existing_code": "git checkout $BRANCH 2>>\"$LOG\"",
+    "evidence": "第 34 行未對 `$BRANCH` 加引號。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "git merge 未檢查失敗，可能導致後續操作在錯誤狀態下執行",
+    "body": "`git merge --ff-only \"origin/$BRANCH\"` 若因衝突或非 fast-forward 而失敗，腳本不會中止，仍會繼續計算 ahead 並寫入資料庫。這可能導致資料庫記錄不正確的同步結果。建議在 merge 後檢查 exit code，失敗時記錄錯誤並跳過該 repo。",
+    "existing_code": "git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "第 36 行未檢查 merge 的 exit code。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ahead 計算可能失敗，導致變數為空或非數字",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若指令失敗（例如 branch 不存在），`ahead` 會是空字串。後續 `if [ \"$ahead\" -gt 0 ]` 會因語法錯誤而失敗，且 SQL 插入時 `$ahead` 為空可能導致型別錯誤。建議檢查指令是否成功，失敗時設定預設值或中止。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "第 38 行未檢查 rev-list 的 exit code。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "cleanup_cache 使用未加引號的 glob，可能誤刪檔案",
+    "body": "`rm -rf \"$ROOT\"/.cache/*` 若 `$ROOT` 包含空白或特殊字元，glob 可能展開成多個路徑，導致刪除非預期的檔案。此外，若 `.cache` 目錄不存在，`rm` 會報錯但腳本繼續執行。建議先檢查目錄是否存在，並使用 `find` 或正確引號處理。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "第 63 行未對 glob 加引號，且未檢查目錄存在。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "summarize 中 total 計算可能因 grep 失敗而誤設為 0",
+    "body": "`total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0` 若 `$LOG` 不存在或無法讀取，grep 回傳非零，`total` 會被設為 0，但實際上可能有錯誤。建議先檢查檔案是否存在，或使用 `wc -l` 並處理錯誤。",
+    "existing_code": "total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0",
+    "evidence": "第 72 行將 grep 失敗視為 0 筆紀錄。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "for 迴圈使用 ls 輸出，檔名含空白或換行會出錯",
+    "body": "`for d in $(ls \"$ROOT\")` 依賴 `ls` 的輸出以空白分隔，若 repo 目錄名稱包含空白或換行，迴圈會錯誤分割。建議改用 `find` 或 glob：\n```bash\nfor d in \"$ROOT\"/*/; do\n  d=${d%/}\n  ...\n```",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "第 80 行使用 `ls` 輸出進行迴圈。"
+  }
+]

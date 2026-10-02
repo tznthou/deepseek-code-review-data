@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 未經跳脫直接插入 SQL 語句",
+    "body": "`sync_one` 中的 `sqlite3` 指令直接將 `$name` 與 `$BRANCH` 插入 SQL 字串。若 repo 目錄名稱或 branch 名稱包含單引號（例如 `test'repo`），會破壞 SQL 語法，甚至可能執行任意 SQL 指令。雖然 branch 有格式驗證，但 repo 名稱完全未驗證。\n\n**失敗情境**：若 `$ROOT` 下有一個名為 `x'; DROP TABLE runs;--` 的目錄，執行後會刪除 `runs` 資料表。\n\n**建議**：使用參數化查詢，例如 `sqlite3 \"$DB\" \"INSERT INTO runs VALUES(?, ?, ?, datetime('now'))\" \"$name\" \"$BRANCH\" \"$ahead\"`，或至少對字串進行單引號跳脫（`${name//\\'/\\'\\'}`）。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 44 行：`sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入：`eval \"$hook $repo\"` 執行未受信任的 hook 路徑與 repo 名稱",
+    "body": "`run_hook` 使用 `eval` 執行 `$hook $repo`。`$hook` 是固定路徑，但 `$repo` 來自目錄名稱，未經驗證。若 repo 名稱包含 shell 特殊字元（例如 `$(rm -rf ~)`），會被執行。\n\n**失敗情境**：若 `$ROOT` 下有名為 `$(touch /tmp/pwned)` 的目錄，執行此腳本會建立 `/tmp/pwned` 檔案。\n\n**建議**：避免使用 `eval`，改用直接執行：`\"$hook\" \"$repo\"`。若 hook 需要 shell 解析，應明確限制 repo 名稱格式（例如只允許 `[A-Za-z0-9._-]+`）。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 52 行：`eval \"$hook $repo\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑刪除風險：`rm -rf \"$ROOT\"/.cache/*` 可能因 `$ROOT` 未定義或含空格而出錯",
+    "body": "`cleanup_cache` 直接使用 `rm -rf \"$ROOT\"/.cache/*`。若 `$ROOT` 未設定（例如使用者未傳第一個參數），會變成 `rm -rf /.cache/*`，可能刪除系統檔案。此外，若 `$ROOT` 包含空格，路徑會被正確引用，但 glob 展開可能不如預期。\n\n**失敗情境**：執行 `./repo_sync.sh`（未帶參數）時，`$ROOT` 為空，`rm -rf /.cache/*` 會嘗試刪除根目錄下的 `.cache` 內容。\n\n**建議**：在 `main` 中檢查 `$ROOT` 是否為空，並確保其為絕對路徑。使用 `rm -rf -- \"$ROOT/.cache\"/*` 並考慮使用 `find` 搭配 `-delete` 更安全。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "diff 第 57 行：`rm -rf \"$ROOT\"/.cache/*`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "迴圈中使用 `ls` 解析目錄，可能因檔名包含換行或空格而失敗",
+    "body": "`for d in $(ls \"$ROOT\")` 使用 `ls` 的輸出進行迴圈，但 `ls` 的輸出會將檔名中的換行或空格視為分隔符，導致檔名被拆開。若 repo 目錄名稱包含空格，迴圈會將每個部分視為獨立項目。\n\n**失敗情境**：若 `$ROOT` 下有名為 `my repo` 的目錄，迴圈會嘗試處理 `my` 和 `repo` 兩個項目，導致錯誤。\n\n**建議**：使用 `for d in \"$ROOT\"/*/; do` 或 `find \"$ROOT\" -maxdepth 1 -mindepth 1 -type d -printf '%f\\n'` 並搭配 `while IFS= read -r` 處理。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "diff 第 74 行：`for d in $(ls \"$ROOT\"); do`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "錯誤處理不足：`git checkout` 與 `git merge` 失敗後仍繼續執行",
+    "body": "`sync_one` 中的 `git checkout $BRANCH` 和 `git merge --ff-only \"origin/$BRANCH\"` 的錯誤僅被重導向到 log，但腳本不會檢查退出碼。若 checkout 或 merge 失敗（例如 branch 不存在、衝突），後續的 `git rev-list` 和 SQL 插入仍會執行，可能記錄錯誤的 ahead 值。\n\n**失敗情境**：若 `$BRANCH` 不存在於 remote，`git checkout` 失敗，但 `git merge` 可能基於錯誤的狀態執行，導致 `ahead` 計算錯誤。\n\n**建議**：在每個 git 指令後檢查 `$?`，失敗時記錄錯誤並跳過該 repo（`return 1`）。",
+    "existing_code": "git checkout $BRANCH 2>>\"$LOG\"\n  git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "diff 第 36-37 行：`git checkout $BRANCH 2>>\"$LOG\"` 和 `git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`ahead` 變數可能未定義或為空，導致 SQL 插入失敗",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若 `git rev-list` 失敗（例如 branch 不存在），`ahead` 會是空字串。後續的 `if [ \"$ahead\" -gt 0 ]` 會因 `$ahead` 非整數而報錯，且 SQL 插入的 `$ahead` 為空會導致語法錯誤。\n\n**失敗情境**：若 `origin/$BRANCH` 不存在，`git rev-list` 回傳錯誤，`ahead` 為空，`[ \"$ahead\" -gt 0 ]` 會輸出錯誤訊息，且 SQL 插入失敗。\n\n**建議**：在 `git rev-list` 後檢查退出碼，失敗時設定 `ahead=0` 或跳過該 repo。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "diff 第 40 行：`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "`grep -c .` 可能因 log 檔案不存在或權限問題而失敗",
+    "body": "`total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0` 中，若 `$LOG` 不存在，`grep` 會回傳非零退出碼，`total` 會被設為 0，但錯誤訊息被隱藏。這可能掩蓋 log 檔案無法寫入的問題。\n\n**失敗情境**：若 `/tmp` 沒有寫入權限，`$LOG` 無法建立，`grep` 失敗，`total` 為 0，但使用者不會知道 log 未記錄。\n\n**建議**：在腳本開頭檢查 log 檔案是否可寫，或使用 `set -e` 並明確處理錯誤。",
+    "existing_code": "total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0",
+    "evidence": "diff 第 62 行：`total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0`"
+  }
+]

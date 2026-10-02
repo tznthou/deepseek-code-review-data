@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`_fetch` 吞掉所有例外且未檢查 HTTP 狀態碼",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、JSON 解析錯誤），且未檢查 HTTP 狀態碼（例如 404、401）。這會導致呼叫端在 API 失敗時拿到 `None`，後續程式碼（如 `pr[\"user\"][\"login\"]`）會拋出 `TypeError` 或 `KeyError`，造成程式崩潰。建議：明確捕捉 `urllib.error.URLError` 和 `json.JSONDecodeError`，並檢查 `resp.status`，若非 2xx 則拋出例外或記錄錯誤。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 22 行：`except:` 後直接 `pass`，且未檢查 `resp.status`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "`archive` 使用 `shell=True` 且拼接外部輸入，存在命令注入風險",
+    "body": "`subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)` 中，`path` 和 `repo` 來自命令列參數，攻擊者可注入額外命令（例如 `repo` 設為 `x; rm -rf /`）。即使 `path` 是內部產生的，`repo` 仍完全由使用者控制。建議：改用參數列表形式（`subprocess.run([\"tar\", \"czf\", f\"{path}.tgz\", path])`），並分開執行 `gh` 命令，避免 `shell=True`。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 72 行：`shell=True` 且 f-string 包含 `repo`（來自 `sys.argv[1]`）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`collect_authors` 使用可變預設參數 `seen=[]`",
+    "body": "`def collect_authors(repo, numbers, seen=[]):` 中，`seen` 預設為空列表，但列表是可變物件，會在函式定義時建立一次並在所有呼叫間共用。若呼叫者未傳入 `seen`，多次呼叫會累積先前結果，導致資料污染。建議改為 `seen=None`，並在函式內初始化：`if seen is None: seen = []`。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 27 行：可變預設參數。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`export_csv` 未使用 `with` 開啟檔案，可能洩漏資源",
+    "body": "`f = open(path, \"w\")` 後手動 `f.close()`，若寫入過程拋出例外（例如磁碟滿、權限不足），檔案控制代碼不會被關閉，造成資源洩漏。建議使用 `with open(path, \"w\") as f:` 確保自動關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 64-68 行：手動開啟與關閉檔案。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`threshold_from_env` 未處理環境變數轉換例外",
+    "body": "`int(raw)` 可能拋出 `ValueError`（例如 `PR_STALE_DAYS=abc`），導致程式崩潰。建議捕捉例外並提供預設值或明確錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 48 行：直接 `int(raw)` 未捕捉例外。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`review_latency` 假設 `timeline` 欄位存在且非空",
+    "body": "`events = pr.get(\"timeline\", [])` 若 `timeline` 不存在會回傳空列表，但後續 `events[0]` 和 `events[-1]` 在空列表時會拋出 `IndexError`。雖然目前有 `if not events: return 0` 保護，但若 `timeline` 存在但為空列表，仍會觸發。建議明確檢查 `if not events: return 0` 已足夠，但需確保 `timeline` 鍵存在時一定是列表。",
+    "existing_code": "events = pr.get(\"timeline\", [])\n    if not events:\n        return 0\n    first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 31-35 行：`events` 可能為空列表，但 `if not events` 已處理，此處為低風險。"
+  }
+]

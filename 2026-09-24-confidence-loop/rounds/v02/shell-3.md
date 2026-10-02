@@ -1,0 +1,67 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+這個 PR 新增了一個批次同步多個 Git repo 的 bash 腳本，並將結果寫入 SQLite。主要風險在於 SQL 注入、命令注入、錯誤處理不足，以及並行處理時可能出現的競態條件。最優先應修復 SQL 注入與命令注入問題，並加強錯誤處理與日誌記錄。
+
+### Findings（6 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `sandbox/repo_sync.sh:47` | SQL 注入風險：repo 名稱與 branch 未經跳脫直接插入 SQL 語句 | 0.95 |
+| 🛑 | Blocker | `sandbox/repo_sync.sh:56` | 命令注入風險：`eval` 執行未受信任的 hook 路徑與參數 | 0.90 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:34` | 錯誤處理不足：git 指令失敗後仍繼續執行並寫入錯誤結果 | 0.85 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:12` | 競態條件：多個實例同時執行時可能互相干擾 | 0.80 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:62` | 路徑處理不當：`cleanup_cache` 使用未加引號的 glob 可能誤刪檔案 | 0.75 |
+| 🔸 | Minor | `sandbox/repo_sync.sh:70` | 日誌截斷邏輯可能遺失重要資訊 | 0.70 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/repo_sync.sh:47</code> SQL 注入風險：repo 名稱與 branch 未經跳脫直接插入 SQL 語句</summary>
+
+`sync_one` 函式中的 `sqlite3` 指令直接將 `$name` 與 `$BRANCH` 插入 SQL 字串。若 repo 目錄名稱或 branch 名稱包含單引號，將導致 SQL 語法錯誤或注入攻擊。例如，若 repo 名稱為 `x'; DROP TABLE runs;--`，則會執行惡意 SQL。建議改用參數化查詢，例如 `sqlite3 "$DB" "INSERT INTO runs VALUES(?, ?, ?, datetime('now'))" "$name" "$BRANCH" "$ahead"`，或至少對變數進行單引號跳脫。
+
+**判斷依據**：diff 第 42 行：`sqlite3 "$DB" "INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))"`
+
+</details>
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/repo_sync.sh:56</code> 命令注入風險：`eval` 執行未受信任的 hook 路徑與參數</summary>
+
+`run_hook` 函式使用 `eval "$hook $repo"` 執行 hook。`$hook` 與 `$repo` 均來自使用者輸入（`$ROOT` 與 repo 名稱），若其中包含惡意內容（例如 repo 名稱為 `; rm -rf ~`），將導致任意命令執行。建議避免使用 `eval`，改為直接執行並正確引用參數：`"$hook" "$repo"`。
+
+**判斷依據**：diff 第 55 行：`eval "$hook $repo"`
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:34</code> 錯誤處理不足：git 指令失敗後仍繼續執行並寫入錯誤結果</summary>
+
+`sync_one` 函式中的 `git fetch`、`git checkout`、`git merge` 指令僅將 stderr 重導向至日誌檔，未檢查退出狀態。若 fetch 失敗（例如網路問題），後續的 checkout 與 merge 可能基於過時的遠端分支，導致錯誤的同步結果，且 `ahead` 計算可能不準確。建議在每個 git 指令後檢查 `$?`，失敗時記錄錯誤並跳過該 repo 或中止。
+
+**判斷依據**：diff 第 34-36 行：`git fetch origin --prune 2>>"$LOG"`、`git checkout $BRANCH 2>>"$LOG"`、`git merge --ff-only "origin/$BRANCH" 2>>"$LOG"`
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:12</code> 競態條件：多個實例同時執行時可能互相干擾</summary>
+
+腳本使用固定的 `/tmp/repo_sync.db` 與 `/tmp/repo_sync.log`，且未使用鎖定機制。若多個實例同時執行（例如手動執行與 cron 排程重疊），可能導致資料庫寫入衝突或日誌內容混亂。建議使用 `flock` 或將檔案路徑改為包含 PID 或時間戳的獨特名稱。
+
+**判斷依據**：diff 第 11-12 行：`DB=/tmp/repo_sync.db`、`LOG=/tmp/repo_sync.log`
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:62</code> 路徑處理不當：`cleanup_cache` 使用未加引號的 glob 可能誤刪檔案</summary>
+
+`cleanup_cache` 函式執行 `rm -rf "$ROOT"/.cache/*`。若 `$ROOT` 包含空格或特殊字元，或 `.cache` 目錄不存在，glob 可能展開為空，導致 `rm -rf` 收到未預期的參數。此外，若 `$ROOT` 為空（例如未提供參數），可能刪除根目錄下的 `.cache`。建議先檢查 `$ROOT` 非空且 `.cache` 存在，並使用 `find` 或正確引用。
+
+**判斷依據**：diff 第 60 行：`rm -rf "$ROOT"/.cache/*`
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/repo_sync.sh:70</code> 日誌截斷邏輯可能遺失重要資訊</summary>
+
+`summarize` 函式在日誌行數超過 100 時，僅保留最後 100 行。這可能遺失較早的錯誤訊息，尤其是當多個 repo 同步失敗時。建議考慮將錯誤與一般日誌分開，或保留完整日誌並僅在輸出摘要時截斷。
+
+**判斷依據**：diff 第 76-79 行：`if [ "$total" -gt 100 ]; then`、`tail -100 "$LOG" > "$LOG.trimmed"`、`mv "$LOG.trimmed" "$LOG"`
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 2566 (cache hit 2560) ｜ completion tokens 1688 ｜ PR #13</sub>

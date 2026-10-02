@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使得函式在失敗時回傳 `None`。後續程式碼（如 `collect_authors` 中的 `pr[\"user\"][\"login\"]`）會因為 `pr` 為 `None` 而拋出 `TypeError`，且沒有提供任何錯誤訊息。建議至少記錄錯誤並重新拋出，或讓呼叫端處理 `None`。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24 行顯示 `except: pass`，且 `_fetch` 的回傳值在 `collect_authors` 和 `main` 中被直接使用（如 `pr[\"user\"][\"login\"]`）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且參數未驗證，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path` 參數。這些參數來自命令列輸入（`repo` 來自 `sys.argv[1]`，`path` 來自 `out` 變數，而 `out` 包含 `repo`），攻擊者可注入任意 shell 指令。例如 `repo` 設為 `foo; rm -rf /` 會導致嚴重後果。建議改用參數列表形式（`subprocess.run([...])`）並避免 `shell=True`，或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 68 行顯示 `shell=True` 且指令字串由外部輸入拼接。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "collect_authors 使用可變預設值，導致跨呼叫累積作者",
+    "body": "`collect_authors` 的參數 `seen=[]` 使用可變預設值，每次呼叫都會累積作者而不會重置。這會導致多次呼叫時結果不正確（例如第二次呼叫會包含第一次的作者）。建議改為 `seen=None` 並在函式內初始化為空列表。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 22 行顯示可變預設值 `seen=[]`，且函式內對 `seen` 進行 `append` 操作。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 使用可變預設值，且未處理轉換例外",
+    "body": "`threshold_from_env` 的參數 `default={\"days\": 7}` 使用可變預設值，雖然函式內未修改該字典，但若未來修改可能導致問題。此外，`int(raw)` 可能拋出 `ValueError`（例如環境變數設為非數字），導致程式崩潰。建議改用不可變預設值（如 `None`）並處理轉換例外。",
+    "existing_code": "def threshold_from_env(default={\"days\": 7}):",
+    "evidence": "diff 第 38 行顯示可變預設值，且第 40 行 `int(raw)` 未處理例外。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "export_csv 未使用 with 開啟檔案，可能導致資源洩漏",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，若寫入過程中發生例外（如磁碟滿），檔案不會被關閉。建議使用 `with open(path, \"w\") as f:` 來確保資源釋放。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 62-66 行顯示手動開啟和關閉檔案，沒有使用 `with`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "classify 函式對缺失鍵的處理不完整",
+    "body": "`classify` 直接存取 `pr[\"additions\"]`、`pr[\"changed_files\"]` 和 `pr[\"title\"]`，若 API 回應缺少這些鍵（例如權限不足或 API 變更），會拋出 `KeyError`。建議使用 `.get()` 方法並提供預設值，或先驗證鍵是否存在。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):\n        return \"fix\"",
+    "evidence": "diff 第 52-56 行顯示直接存取鍵，未處理缺失情況。"
+  }
+]

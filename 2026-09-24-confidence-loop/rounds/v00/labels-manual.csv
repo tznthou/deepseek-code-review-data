@@ -1,0 +1,19 @@
+id,item,label,reason
+v00:python:2:3,PY-A2,valid,seen=[] 跨呼叫累積
+v00:python:3:6,PY-new-fixprefix,valid,startswith("fix") 會把 "fixed typo" 算成 fix、"Fix" 又對不到；陳述屬實、影響小
+v00:python:4:1,PY-A1,valid,裸 except 吞例外、下游 None；檢查狀態碼只是建議不是錯誤主張
+v00:python:4:3,PY-A2,valid,同上
+v00:python:4:4,PY-B1,disputed,明說空列表回 0（已讀到守衛）；改報 created_at 缺欄位與單一事件
+v00:python:4:8,PY-new-fixprefix,valid,同 python:3:6
+v00:python:5:3,PY-A2,valid,同上
+v00:python:5:5,PY-B1,disputed,明寫空列表已檢查；改報排序與 created_at
+v00:shell:1:4,SH-S7,valid,$(ls) 遇空白拆開
+v00:shell:1:6,SH-S3,valid,ahead 為空時 [ 出錯、SQL 拿到空值；「中止」出現在建議裡、不是主張腳本會中止
+v00:probe:1:2,PR-X1,disputed,主張沒檢查範圍屬實；後果寫反（-1 說會變空列表、0 說會變全部；實際 -1 丟最舊一筆、0 變空）
+v00:probe:2:2,PR-X1,valid,0 會變空公告講對；負數一律說成空列表不精確（只有 |n| ≥ 筆數才會）
+v00:probe:2:3,PR-B7,invalid,建議檢查 status 在 200–299，code 第 95 行就是這樣；3xx 跟隨後非 2xx 會丟 HTTPError、不會回 True
+v00:probe:2:4,PR-X5,disputed,設定檔是合法 JSON 但不是物件時 AttributeError；設定檔由操作者維護
+v00:probe:4:2,PR-X1,disputed,主張沒檢查範圍屬實；後果寫錯（說 -1 只剩最後一個 commit，實際是丟掉最後一個）
+v00:probe:4:3,PR-B7,invalid,非 2xx 時 urlopen 直接丟 HTTPError、第 97 行的例外訊息本來就帶狀態碼；它說的路徑走不到
+v00:probe:5:2,PR-A1,valid,標題寫 IndexError 不對，但內文正確：繞回最後一個 tag、範圍錯、可能變空
+v00:probe:5:4,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定，不是外部輸入

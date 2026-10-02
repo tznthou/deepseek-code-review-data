@@ -1,0 +1,6 @@
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 4099 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 sandbox/release_notes.py:103 → 118（片段唯一命中）
+[info] 重新定位 sandbox/release_notes.py:118 → 43（片段唯一命中）
+[info] 重新定位 sandbox/release_notes.py:126 → 31（片段唯一命中）
+[info] 完成於 10.2s ｜ findings=4 ｜ relocated=3 ｜ verdict=comment ｜ usage={"prompt_tokens": 3631, "completion_tokens": 1137, "total_tokens": 4768, "prompt_tokens_details": {"cached_tokens": 3584}, "prompt_cache_hit_tokens": 3584, "prompt_cache_miss_tokens": 47}

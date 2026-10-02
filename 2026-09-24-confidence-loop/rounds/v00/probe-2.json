@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`commits_between` 未檢查 `git log` 的執行結果",
+    "body": "`subprocess.run` 沒有設定 `check=True`，且回傳的 `proc.returncode` 沒有被檢查。如果 `repo` 路徑不是有效的 git 儲存庫，`git log` 會失敗並在 stderr 輸出錯誤，但函式仍會回傳空列表，導致 `main` 印出「之間沒有新 commit」的誤導訊息。\n\n建議：加上 `check=True`，或在函式內檢查 `proc.returncode != 0` 時拋出例外或回傳錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式呼叫 `subprocess.run` 時沒有 `check=True`，且後續沒有檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "`max_items` 未處理負數或零",
+    "body": "`int(raw)` 可以成功解析負數或零，但 `commits[: max_items()]` 在 `max_items()` 回傳負數時會得到空列表（因為切片從尾端倒數），回傳 0 時也會得到空列表，導致後續 `group` 收到空列表，最終產生沒有內容的公告。\n\n建議：在 `max_items` 中檢查數值必須大於 0，否則回傳預設值或記錄警告。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 只處理了 `ValueError`，沒有檢查數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`post` 未處理非 2xx 狀態碼",
+    "body": "`urllib.request.urlopen` 在 HTTP 錯誤狀態碼（如 4xx、5xx）時會拋出 `urllib.error.HTTPError`，但 `HTTPError` 是 `URLError` 的子類別，因此會被捕捉並記錄錯誤，但函式回傳 `False`。然而，如果伺服器回傳 3xx 且 `urlopen` 自動跟隨重定向，最終狀態碼可能不是 2xx，但函式仍會回傳 `True`。\n\n建議：明確檢查 `resp.status` 是否在 200-299 範圍，否則記錄錯誤並回傳 `False`。",
+    "existing_code": "with urllib.request.urlopen(req, timeout=10) as resp:\n            return 200 <= resp.status < 300",
+    "evidence": "diff 中 `post` 函式只檢查了狀態碼範圍，但未處理重定向後的非 2xx 情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`load_config` 未驗證 JSON 型別",
+    "body": "`json.load` 可能回傳任何 JSON 型別（例如 list、string、number），但後續程式碼假設它是 dict（例如 `cfg.get('title', ...)`）。如果設定檔內容是 `[]` 或 `\"abc\"`，會拋出 `AttributeError`。\n\n建議：在 `load_config` 中檢查 `isinstance(data, dict)`，否則拋出錯誤或回傳空 dict。",
+    "existing_code": "with open(path, encoding=\"utf-8\") as fh:\n            return json.load(fh)",
+    "evidence": "diff 中 `load_config` 直接回傳 `json.load` 的結果，沒有型別檢查。"
+  }
+]

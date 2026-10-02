@@ -1,0 +1,25 @@
+id,item,label,reason
+v02:python:1:1,PY-A1,valid,裸 except 吞例外、回 None、下游 TypeError
+v02:python:1:3,PY-A2,valid,seen=[] 跨呼叫累積
+v02:python:2:3,PY-A2,valid,同上（有提到 append）
+v02:python:3:5,PY-new-tokenleak,invalid,說例外的 traceback 或錯誤訊息會帶出 token；例外全被 except pass 吞掉、沒有 traceback，GitHub 的 401 也不回顯 token
+v02:python:3:6,PY-B1,invalid,先說空 list 已處理、又說 timeline 為 [] 時會 IndexError；[] 正是第 38 行擋掉的情況
+v02:python:4:1,PY-A1,valid,主張是 A1；「404 時 json.loads 會拋例外」這個細節不對（urlopen 先丟 HTTPError），照 K-status 規則依 A1 判
+v02:python:4:4,PY-B2,disputed,一半是陷阱（承認 default 沒被修改）、一半是真的 A5（int 沒接 ValueError）
+v02:python:4:6,PY-K-token,disputed,沒設 GITHUB_TOKEN 會 KeyError 屬實；但說會被 except pass 吞掉而靜默失敗是錯的（第 21 行在 try 外、會直接 traceback）
+v02:python:5:3,PY-A2,valid,同上（附例子）
+v02:python:5:7,PY-B1,disputed,明說空列表回 0；改報 created_at 缺欄位
+v02:shell:1:5,SH-S4,valid,cd 失敗後照樣在錯的目錄跑 git
+v02:shell:2:4,SH-S7,valid,$(ls) 遇空白拆開
+v02:shell:3:6,SH-new-trim,invalid,只留最後 100 行是第 65 行註解寫明的刻意設計
+v02:shell:4:1,SH-S1,valid,$name 內插進 SQL；說 $BRANCH 也能注入不對（第 16 行 regex 擋掉引號），主張成立
+v02:shell:4:4,SH-S3,valid,ahead 為空時 [ 報錯、SQL 語法錯誤；「中止」出現在建議裡
+v02:shell:5:7,SH-new-gitdir,disputed,只用 -d .git 判斷；它說的 .git 損壞情境走得到但屬邊緣，後果就是 git 指令失敗（跟 K-gitfail 重疊）
+v02:shell:5:8,SH-B2,invalid,說最後一行沒換行時 grep -c 會少算；實測 printf 'a\nb' | grep -c . 是 2
+v02:probe:1:5,PR-new-subject,invalid,%s 是標題、會把多行第一段併成一行（實測），不會有換行
+v02:probe:2:3,PR-X1,valid,0 會只剩標題講對；-1 的後果講錯
+v02:probe:2:4,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+v02:probe:3:3,PR-X1,valid,0 會只剩標題講對；負數一律說成空列表不精確
+v02:probe:3:4,PR-B11,invalid,同上
+v02:probe:4:4,PR-B11,invalid,同上（它自己也寫了環境變數通常由部署者控制）
+v02:probe:4:5,PR-B5,invalid,只分 feat/fix/其他是設計；它自己也說可能不是問題；沒看出 scope 的問題

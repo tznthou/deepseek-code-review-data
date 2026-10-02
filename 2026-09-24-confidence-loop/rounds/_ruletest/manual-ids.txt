@@ -1,0 +1,9 @@
+_ruletest:python:1:4
+_ruletest:python:2:1
+_ruletest:python:2:7
+_ruletest:python:3:1
+_ruletest:python:3:3
+_ruletest:python:3:6
+_ruletest:shell:2:1
+_ruletest:shell:3:6
+_ruletest:shell:3:7

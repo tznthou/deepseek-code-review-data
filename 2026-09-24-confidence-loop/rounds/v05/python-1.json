@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），且不回傳任何值。呼叫端（`collect_authors` 和 `main`）直接使用回傳值，若為 `None` 會拋出 `TypeError`，若為空 dict 則會拋出 `KeyError`。例如：網路中斷時，`pr[\"user\"][\"login\"]` 會因為 `pr` 是 `None` 而崩潰。建議：讓 `_fetch` 在失敗時拋出例外，或回傳明確的錯誤值，並在呼叫端處理。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 26 行：`except: pass` 吞掉所有例外，且函式沒有回傳值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 參數（來自命令列參數）。攻擊者可提供惡意的 repo 名稱（例如 `foo; rm -rf /`）來執行任意指令。建議：改用參數列表形式（`subprocess.run([\"tar\", \"czf\", ...])`），或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 69 行：`shell=True` 且 f-string 包含 `repo`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "collect_authors 使用可變預設值，導致跨呼叫累積作者",
+    "body": "`collect_authors` 的 `seen` 參數預設為 `[]`，這是一個可變物件，會在多次呼叫間共用。若呼叫者未傳入 `seen`，每次呼叫都會將作者附加到同一個 list，導致結果累積。例如：第一次呼叫後 `seen` 包含 A，第二次呼叫會包含 A 和 B。建議：將預設值改為 `None`，並在函式內初始化為空 list。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 31 行：`seen=[]` 是可變預設值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "review_latency 假設 timeline 事件存在且有 created_at 欄位",
+    "body": "`review_latency` 直接存取 `events[0][\"created_at\"]` 和 `events[-1][\"created_at\"]`，但 `pr.get(\"timeline\", [])` 可能回傳空 list（已處理），但事件物件可能缺少 `created_at` 欄位（例如某些事件類型），導致 `KeyError`。建議：使用 `.get(\"created_at\")` 並處理缺失值。",
+    "existing_code": "first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 38-39 行：直接索引事件物件的 `created_at`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 的預設值為可變 dict，且 int() 轉換可能失敗",
+    "body": "`threshold_from_env` 的 `default` 參數預設為 `{\"days\": 7}`，這是一個可變 dict，但函式內沒有修改它，所以不會造成跨呼叫污染（此點不報）。然而，`int(raw)` 若環境變數不是有效整數會拋出 `ValueError`，導致程式崩潰。建議：捕捉 `ValueError` 並提供有意義的錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 46 行：`int(raw)` 未處理轉換失敗。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "classify 假設 PR 物件有 additions、changed_files、title 欄位",
+    "body": "`classify` 直接存取 `pr[\"additions\"]`、`pr[\"changed_files\"]`、`pr[\"title\"]`，但 GitHub API 的回應可能缺少這些欄位（例如某些事件或權限不足），導致 `KeyError`。建議：使用 `.get()` 並提供預設值。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):",
+    "evidence": "diff 第 51-54 行：直接索引可能不存在的鍵。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "export_csv 未使用 with 開啟檔案，可能導致資源洩漏",
+    "body": "`export_csv` 使用 `open` 和 `close`，但若寫入過程中發生例外，檔案不會被關閉。建議：使用 `with open(path, \"w\") as f:` 來確保資源釋放。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 59-63 行：手動開啟和關閉檔案。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "archive 的 tar 指令可能因路徑包含空格或特殊字元而失敗",
+    "body": "`archive` 使用 f-string 將 `path` 直接嵌入 shell 指令，若 `path` 包含空格或特殊字元（例如 `/tmp/pr-stats-my repo.csv`），指令會解析錯誤。建議：使用參數列表形式，或對路徑進行轉義。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 69 行：路徑未轉義。"
+  }
+]

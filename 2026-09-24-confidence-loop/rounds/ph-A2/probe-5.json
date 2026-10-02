@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`git log` 失敗時未檢查退出碼，可能把錯誤輸出當成正常結果",
+    "body": "`subprocess.run` 沒有設定 `check=True`，當 `git log` 因為 repo 路徑錯誤、tag 不存在或權限問題失敗時，`proc.returncode` 非零，但程式仍會繼續解析 `proc.stdout`（可能是空字串或錯誤訊息），導致後續流程在錯誤的基礎上執行。建議加上 `check=True`，或明確檢查 `proc.returncode` 並在非零時拋出例外或回傳空列表。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式的 `subprocess.run` 呼叫沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`tags.index(tag)` 在 tag 不存在時拋出 `ValueError`，導致程式崩潰",
+    "body": "`main` 中先檢查 `if tag not in tags`，但 `tags` 是 `list_tags` 回傳的列表，而 `list_tags` 只回傳符合 `TAG_RE` 的 tag。如果使用者輸入的 tag 格式正確但不在 repo 中（例如 `v9.9.9`），`tag not in tags` 為真，程式會印出錯誤並回傳 2，不會執行到 `tags.index(tag)`。然而，如果 `list_tags` 因為某些原因回傳的列表不包含該 tag（例如 tag 名稱大小寫不同），則 `tags.index(tag)` 會拋出 `ValueError`。建議使用更安全的方式取得前一個 tag，例如 `prev = tags[tags.index(tag) - 1] if tag in tags else None`，或直接使用 `try/except` 處理。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式在 `if tag not in tags` 檢查後直接使用 `tags.index(tag)`，但 `tags` 的內容可能因 `list_tags` 的過濾條件而與預期不同。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`max_items` 未處理負數或零，可能導致公告內容為空",
+    "body": "`max_items` 從環境變數 `NOTES_MAX` 讀取整數，但沒有檢查是否為正數。如果設定為 `0` 或負數，`commits[: max_items()]` 會得到空列表或錯誤切片，導致公告內容為空或行為異常。建議加上驗證，例如 `if value < 1: return DEFAULT_MAX`。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式只處理了 `ValueError`，未檢查轉換後的整數是否為正數。"
+  }
+]

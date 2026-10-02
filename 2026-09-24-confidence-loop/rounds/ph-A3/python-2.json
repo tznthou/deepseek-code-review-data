@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except:` 區塊只有 `pass`，沒有記錄或重新拋出。當 GitHub API 呼叫失敗（例如網路錯誤、token 無效、PR 不存在）時，函式會回傳 `None`。呼叫端（`collect_authors` 和 `main`）直接對回傳值做 `pr[\"user\"][\"login\"]` 或 `pr[\"additions\"]`，會拋出 `TypeError` 或 `KeyError`，且錯誤訊息不明確。建議至少記錄錯誤並重新拋出，或讓呼叫端檢查 `None`。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24-25 行：`except:` 後只有 `pass`，且 `_fetch` 的回傳值在 `collect_authors`（第 29 行）和 `main`（第 72 行）被直接當成 dict 使用。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險",
+    "body": "`subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)` 中，`path` 和 `repo` 來自命令列參數或環境變數，攻擊者可注入額外指令（例如 `repo` 設為 `x; rm -rf /`）。應避免使用 `shell=True`，改用參數列表形式，並分開執行 `tar` 和 `gh` 指令。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 88 行：`shell=True` 且 f-string 包含外部輸入 `path` 和 `repo`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "collect_authors 使用可變預設值，導致跨呼叫累積作者",
+    "body": "`def collect_authors(repo, numbers, seen=[])` 的預設參數 `seen` 是 list，在函式定義時建立一次，之後每次呼叫都會共用同一個 list。如果呼叫者沒有傳入 `seen`，作者會被累積到同一個 list 中，造成結果錯誤。建議改為 `seen=None`，並在函式內初始化為空 list。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：可變預設值 `seen=[]`，且函式內對其進行 `append` 操作。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 使用可變預設值，且環境變數轉換可能失敗",
+    "body": "`def threshold_from_env(default={\"days\": 7})` 的預設參數是 dict，雖然函式內沒有修改它，但若未來修改可能導致跨呼叫污染。此外，`int(raw)` 沒有處理 `ValueError`，當環境變數 `PR_STALE_DAYS` 不是數字時會拋出例外。建議改用 `default=None` 並在函式內設定，同時捕捉轉換例外。",
+    "existing_code": "def threshold_from_env(default={\"days\": 7}):",
+    "evidence": "diff 第 44 行：可變預設值 dict，且第 46 行 `int(raw)` 未處理轉換失敗。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "export_csv 未使用 with 開啟檔案，可能導致資源洩漏",
+    "body": "`f = open(path, \"w\")` 後手動 `f.close()`，但若寫入過程拋出例外（例如磁碟滿），檔案不會被關閉。建議使用 `with open(path, \"w\") as f:` 確保資源釋放。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 83-87 行：手動開啟和關閉檔案，沒有例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Authorization header 直接使用環境變數，可能因缺失而拋出 KeyError",
+    "body": "`os.environ[\"GITHUB_TOKEN\"]` 在環境變數未設定時會拋出 `KeyError`，且錯誤訊息不明確。建議使用 `os.environ.get(\"GITHUB_TOKEN\")` 並檢查是否為 `None`，提供友善的錯誤訊息。",
+    "existing_code": "req.add_header(\"Authorization\", \"Bearer \" + os.environ[\"GITHUB_TOKEN\"])",
+    "evidence": "diff 第 21 行：直接索引環境變數，未處理缺失情況。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "classify 函式對 pr 的鍵存取可能因缺失而拋出 KeyError",
+    "body": "`pr[\"additions\"]`、`pr[\"changed_files\"]`、`pr[\"title\"]` 直接索引，若 API 回應缺少這些欄位（例如權限不足或 API 變更）會拋出 `KeyError`。建議使用 `pr.get(\"additions\", 0)` 等方式提供預設值。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):\n        return \"fix\"",
+    "evidence": "diff 第 52-56 行：直接索引 dict，未使用 `.get()`。"
+  }
+]

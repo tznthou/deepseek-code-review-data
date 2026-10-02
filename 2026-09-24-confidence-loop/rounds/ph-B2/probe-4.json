@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "未檢查 git log 的失敗回傳碼",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時未設定 `check=True`，也未檢查 `proc.returncode`。如果 `git log` 因為 repo 損毀、權限不足或 tag 不存在而失敗，`proc.stdout` 會是空字串，函式會回傳空列表，後續 `main` 中的 `commits[0][0]` 會拋出 `IndexError`，導致程式崩潰。建議加上 `check=True` 或檢查 `proc.returncode` 並處理錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式未檢查 `proc.returncode`，且 `main` 中直接使用 `commits[0][0]`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "max_items 未處理負數或零",
+    "body": "`max_items` 將環境變數 `NOTES_MAX` 轉為整數，但未檢查是否為正數。若設定為負數或零，`commits[: max_items()]` 會產生空列表或意外結果（負數切片會從尾端取元素），可能導致公告內容不正確。建議驗證數值必須大於 0，否則使用預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式僅處理 `ValueError`，未檢查數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "post 函式未檢查 HTTP 狀態碼",
+    "body": "`post` 函式在 `urlopen` 成功後僅回傳 `200 <= resp.status < 300`，但未處理其他狀態碼（如 4xx、5xx）。若 webhook 回傳 404 或 500，函式會回傳 `False`，但呼叫端 `main` 會回傳 1，導致程式被視為失敗。建議明確處理非 2xx 狀態碼，記錄錯誤並回傳 `False`。",
+    "existing_code": "with urllib.request.urlopen(req, timeout=10) as resp:\n            return 200 <= resp.status < 300",
+    "evidence": "diff 中 `post` 函式僅回傳布林值，未區分不同錯誤。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "load_config 的 JSON 解析錯誤處理可能造成程式提前終止",
+    "body": "`load_config` 在 JSON 解析失敗時直接 `raise SystemExit`，這會讓整個程式終止，即使設定檔是選配的。若設定檔損壞，使用者可能無法產生 release notes。建議改為記錄警告並回傳空字典，或讓呼叫端決定是否終止。",
+    "existing_code": "except json.JSONDecodeError as e:\n        raise SystemExit(f\"設定檔 {path} 不是合法的 JSON：{e}\")",
+    "evidence": "diff 中 `load_config` 的例外處理直接終止程式。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 名稱未經跳脫直接插入 SQL 語句",
+    "body": "`sync_one` 函式中，`$name` 與 `$BRANCH` 直接以單引號字串拼接方式插入 SQL 語句。若 repo 目錄名稱或 branch 名稱包含單引號，將可注入任意 SQL 指令。例如 repo 名稱若為 `x'); DROP TABLE runs;--`，將導致資料表被刪除。建議改用參數化查詢（sqlite3 支援 `?` 佔位符）或至少對輸入進行跳脫（如將單引號替換為兩個單引號）。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 42 行：`sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "任意程式碼執行：eval 執行 hook 路徑未受信任",
+    "body": "`run_hook` 函式使用 `eval \"$hook $repo\"` 執行 hook。`$hook` 路徑由 `$ROOT` 決定，而 `$ROOT` 是使用者提供的參數。若攻擊者能控制 `$ROOT`（例如提供一個包含惡意 hook 的目錄），即可執行任意程式碼。建議移除 eval，改用直接執行（如 `\"$hook\" \"$repo\"`），並確保 hook 路徑來自受信任的來源。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 55 行：`eval \"$hook $repo\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "路徑未加引號：rm -rf 可能誤刪檔案",
+    "body": "`cleanup_cache` 函式使用 `rm -rf \"$ROOT\"/.cache/*`。若 `$ROOT` 包含空白或特殊字元，路徑可能被錯誤解析，導致刪除非預期的檔案。建議將整個路徑用雙引號包住：`rm -rf \"$ROOT/.cache\"/*`。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "diff 第 60 行：`rm -rf \"$ROOT\"/.cache/*`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ls 輸出未加引號，路徑含空白時會出錯",
+    "body": "`for d in $(ls \"$ROOT\")` 使用命令替換，若 repo 目錄名稱包含空白或換行，迴圈會錯誤分割。建議改用 `find` 或 `for d in \"$ROOT\"/*` 並檢查是否為目錄。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "diff 第 76 行：`for d in $(ls \"$ROOT\"); do`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "git checkout 未加引號，branch 名稱含特殊字元可能出錯",
+    "body": "`git checkout $BRANCH` 未將 `$BRANCH` 用雙引號包住。雖然開頭有驗證格式，但若 branch 名稱包含空白（例如 `feature branch`），仍可能被 shell 分割。建議改為 `git checkout \"$BRANCH\"`。",
+    "existing_code": "git checkout $BRANCH 2>>\"$LOG\"",
+    "evidence": "diff 第 33 行：`git checkout $BRANCH 2>>\"$LOG\"`"
+  }
+]

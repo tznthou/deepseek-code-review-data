@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "git log 失敗時未檢查回傳碼，可能導致後續 IndexError",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，如果 `git log` 因為 repo 損毀、權限不足或 tag 不存在而失敗，`proc.returncode` 非零但程式不會拋出例外，`proc.stdout` 可能是空字串。接著 `main` 中 `commits[0][0]` 會因為 `commits` 為空而拋出 `IndexError`，且沒有提供有用的錯誤訊息。\n\n建議：在 `subprocess.run` 加上 `check=True`，或在取得 `commits` 後檢查是否為空並回傳明確錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式未檢查 `proc.returncode`，而 `main` 中 `latest = commits[0][0]` 直接取第一個元素。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "list_tags 在 tag 不存在時會拋出未處理的 IndexError",
+    "body": "`list_tags` 使用 `subprocess.run` 且設定 `check=True`，若 `git tag` 失敗會拋出 `CalledProcessError`，但呼叫端 `main` 沒有捕捉。此外，`main` 中 `prev = tags[tags.index(tag) - 1]` 在 `tag` 是第一個 tag 時會取到 `tags[-1]`（最後一個 tag），這可能不是預期的行為；若 `tags` 為空，`tags.index(tag)` 會拋出 `ValueError`。\n\n建議：在 `main` 中捕捉 `CalledProcessError` 並回傳錯誤碼；檢查 `tags.index(tag)` 是否為 0，若是則提示沒有前一個 tag。",
+    "existing_code": "out = subprocess.run(\n        [\"git\", \"tag\", \"--list\", \"v*\", \"--sort=v:refname\"],\n        cwd=repo, capture_output=True, text=True, check=True,\n    ).stdout",
+    "evidence": "diff 中 `list_tags` 使用 `check=True`，但 `main` 呼叫時未捕捉例外；`prev = tags[tags.index(tag) - 1]` 在 `tag` 是第一個 tag 時會取到最後一個 tag。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "post 未驗證 URL scheme，可能造成 SSRF",
+    "body": "`post` 直接使用 `urllib.request.urlopen` 開啟 `url`，而 `url` 來自環境變數 `NOTES_WEBHOOK`，攻擊者若控制該環境變數，可指定 `file://`、`ftp://` 等 scheme，導致讀取本機檔案或進行內網掃描。\n\n建議：驗證 `url` 的 scheme 必須是 `https`，並限制 host 為允許的網域。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 未檢查 URL scheme，直接傳給 `urlopen`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "max_items 未處理負數或非整數的 NOTES_MAX",
+    "body": "`max_items` 將 `NOTES_MAX` 轉為整數，但未檢查是否為負數。若設定為負數，`commits[: max_items()]` 會變成 `commits[:-1]`，導致最後一個 commit 被排除，且沒有警告。另外，若 `NOTES_MAX` 為空字串，會回傳預設值，但若為 `0` 則會回傳 0，導致 `commits[:0]` 為空，後續 `latest = commits[0][0]` 會拋出 IndexError。\n\n建議：驗證 `NOTES_MAX` 為正整數，否則回傳預設值並記錄警告。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 只處理 ValueError，未處理負數或 0 的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "load_config 未驗證 JSON 型別，可能導致後續錯誤",
+    "body": "`load_config` 回傳 `json.load` 的結果，但未檢查是否為 dict。若 `.release-notes.json` 內容是 list 或字串，`cfg.get` 會拋出 AttributeError。\n\n建議：檢查 `isinstance(data, dict)`，否則回傳空 dict 或拋出明確錯誤。",
+    "existing_code": "with open(path, encoding=\"utf-8\") as fh:\n            return json.load(fh)",
+    "evidence": "diff 中 `load_config` 直接回傳 `json.load` 結果，未驗證型別。"
+  }
+]

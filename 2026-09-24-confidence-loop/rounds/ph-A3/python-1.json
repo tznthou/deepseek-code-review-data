@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），然後回傳 `None`。呼叫端（`collect_authors` 和 `main`）直接對回傳值做 `pr[\"user\"][\"login\"]` 或 `pr[\"additions\"]`，會拋出 `TypeError: 'NoneType' object is not subscriptable`。這會讓工具在 API 失敗時直接崩潰，且沒有錯誤訊息。建議：讓例外向上傳播，或在 `_fetch` 內記錄錯誤並拋出明確的例外，或回傳一個可辨識的錯誤物件。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24 行 `except: pass`，且呼叫端（第 28、47 行）直接使用回傳值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設值 seen=[]，跨呼叫累積狀態",
+    "body": "`collect_authors` 的 `seen=[]` 是可變預設值，會在多次呼叫間共用同一個 list。雖然目前程式只呼叫一次，但這是一個常見的陷阱，未來若重複呼叫會導致結果累積。建議改為 `seen=None`，在函式內初始化為空 list。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 27 行。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險",
+    "body": "`subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)` 中，`path` 和 `repo` 來自命令列參數，攻擊者可注入額外指令（例如 `repo` 設為 `x; rm -rf /`）。即使目前是內部工具，仍應避免 `shell=True`。建議改用 `subprocess.run` 的參數列表形式，並分開執行 `tar` 和 `gh`。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 65 行。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "export_csv 未使用 with 管理檔案，例外時可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close`，但若 `write` 拋出例外（例如磁碟滿），檔案不會被關閉。建議改用 `with open(path, \"w\") as f:`。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 58-62 行。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "threshold_from_env 未處理 int() 轉換失敗",
+    "body": "`int(raw)` 若環境變數 `PR_STALE_DAYS` 不是有效整數（例如 \"abc\"），會拋出 `ValueError` 且未處理，導致程式崩潰。建議捕捉例外並提供預設值或明確錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 36 行。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "classify 未處理 pr 缺少 additions 或 changed_files 鍵的情況",
+    "body": "`pr[\"additions\"]` 和 `pr[\"changed_files\"]` 直接取值，若 API 回應缺少這些鍵（例如權限不足或 API 變更），會拋出 `KeyError`。建議使用 `pr.get(\"additions\", 0)` 等方式。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:",
+    "evidence": "diff 第 42-43 行。"
+  }
+]

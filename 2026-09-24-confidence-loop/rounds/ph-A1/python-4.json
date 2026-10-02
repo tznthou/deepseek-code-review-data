@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），且不回報任何錯誤。呼叫端（`collect_authors` 和 `main`）直接使用回傳值，若 `_fetch` 回傳 `None`，後續的 `pr[\"user\"][\"login\"]` 或 `pr[\"additions\"]` 會拋出 `TypeError`，且原始錯誤被隱藏，難以除錯。\n\n建議：\n- 至少記錄例外（`logging.exception`）或重新拋出。\n- 檢查 HTTP 狀態碼，非 2xx 時拋出例外。\n- 若預期可能失敗，讓 `_fetch` 回傳 `None` 並在呼叫端檢查。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24-25 行：`except:` 後只有 `pass`，且 `_fetch` 的回傳值在 `collect_authors`（第 29 行）和 `main`（第 72 行）被直接使用。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "shell=True 且指令由外部輸入拼接，存在命令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path`，其中 `repo` 來自命令列參數（`sys.argv[1]`），完全由使用者控制。攻擊者可注入額外命令，例如 `repo` 設為 `x; rm -rf /`，導致任意命令執行。\n\n建議：\n- 避免使用 `shell=True`，改用參數列表形式：`subprocess.run([\"tar\", \"czf\", f\"{path}.tgz\", path])`。\n- 若必須使用 shell，請對輸入進行嚴格驗證或使用 `shlex.quote`。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 61 行：`subprocess.run` 使用 `shell=True`，且 f-string 中包含 `repo`（來自 `sys.argv[1]`）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "可變預設值 seen=[] 導致跨呼叫污染",
+    "body": "`collect_authors` 的參數 `seen=[]` 使用可變預設值。若呼叫者未傳入 `seen`，則每次呼叫都會共用同一個 list，導致結果累積。例如連續呼叫 `collect_authors(repo, [1])` 和 `collect_authors(repo, [2])`，第二次呼叫會回傳 `[author1, author2]` 而非 `[author2]`。\n\n建議：將預設值改為 `None`，並在函式內初始化：\n```python\ndef collect_authors(repo, numbers, seen=None):\n    if seen is None:\n        seen = []\n    ...\n```",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：參數 `seen=[]` 為可變預設值，且函式內對其進行 `append` 操作（第 30 行）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "export_csv 未使用 with 管理檔案，例外時可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close`，但若在寫入過程中發生例外（例如磁碟滿、權限不足），`close` 不會被執行，導致檔案控制代碼洩漏。\n\n建議：使用 `with open(path, \"w\") as f:` 確保檔案正確關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 55-59 行：手動 `open`/`close`，無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "環境變數轉型未處理例外，可能導致程式崩潰",
+    "body": "`threshold_from_env` 中 `int(raw)` 若 `raw` 不是有效整數（例如使用者設定 `PR_STALE_DAYS=abc`），會拋出 `ValueError` 且未被捕捉，導致程式終止。\n\n建議：捕捉 `ValueError` 並提供有意義的錯誤訊息，或使用預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 45 行：`int(raw)` 直接轉換環境變數，無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "classify 假設 PR 一定有 additions 和 changed_files 欄位",
+    "body": "`classify` 直接存取 `pr[\"additions\"]` 和 `pr[\"changed_files\"]`，但若 API 回應缺少這些欄位（例如權限不足或 API 變更），會拋出 `KeyError`。\n\n建議：使用 `pr.get(\"additions\", 0)` 和 `pr.get(\"changed_files\", 0)` 提供預設值。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:",
+    "evidence": "diff 第 50-52 行：直接使用鍵值存取，無預設值或檢查。"
+  }
+]

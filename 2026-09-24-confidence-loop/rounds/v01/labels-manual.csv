@@ -1,0 +1,26 @@
+id,item,label,reason
+v01:python:1:1,PY-A1,valid,裸 except 吞掉 HTTPError 等、回 None、下游 pr["user"] 崩潰
+v01:python:2:1,PY-A1,valid,同上
+v01:python:2:3,PY-A2,valid,seen=[] 跨呼叫累積，附具體例子
+v01:python:2:4,PY-new-timeline,valid,單一 PR 端點的回應沒有 timeline 欄位 → events 永遠是空的、延遲永遠是 0；陳述屬實
+v01:python:2:9,PY-A4,valid,main 迴圈再 fetch 一次同一批 PR、回傳值沒檢查 None
+v01:python:3:1,PY-A1,valid,同 python:1:1
+v01:python:3:3,PY-A2,valid,同上
+v01:python:3:4,PY-B1,disputed,明寫空列表已處理；改報排序與 created_at
+v01:python:4:3,PY-A2,valid,同上
+v01:python:4:7,PY-new-timeline,valid,同 python:2:4
+v01:python:5:4,PY-B2,disputed,一半是陷阱（自己承認 default 沒被修改卻還是報）、一半是真的 A5（int 沒接 ValueError）
+v01:shell:1:3,SH-S7,valid,$(ls) 遇空白拆開、該 repo 不會被同步
+v01:shell:1:5,SH-S6,disputed,抽查推翻自動標記：主張是同一次執行內多個 repo 交錯寫 log，但處理是循序的；「別的程序寫同一個檔」只順帶一句
+v01:shell:3:6,SH-S7,valid,同上
+v01:shell:3:7,SH-S3,valid,ahead 為空時 SQL 變成語法錯誤（下游那一環）
+v01:shell:5:4,SH-S7,valid,同上
+v01:shell:5:6,SH-S3,valid,ahead 為空時 -gt 報錯、SQL 語法錯誤；「中止」出現在建議裡
+v01:probe:1:4,PR-B9,invalid,說 tags 為空會索引錯誤，它自己推論出這條路徑走不到（tag not in tags 先擋）還是照報；沒看出第一個 tag 的問題
+v01:probe:2:2,PR-B5,invalid,沒有冒號的標題歸到 other 本來就是設計；它把預期行為當成問題
+v01:probe:3:2,PR-X1,valid,負數與 0 的後果都講對（-1 排除最後一個、0 變空）
+v01:probe:3:3,PR-X5,disputed,設定檔不是物件時 AttributeError；設定檔由操作者維護
+v01:probe:4:2,PR-X1,valid,0 會變空講對；負數一律說成空列表不精確
+v01:probe:4:4,PR-B5,invalid,建議「prefix 符合已知標籤才用、否則歸 other」正是第 75 行在做的事
+v01:probe:5:2,PR-X1,valid,負數或零會產生空列表或錯的切片；籠統但沒有錯
+v01:probe:5:4,PR-B7,invalid,4xx/5xx 時 urlopen 丟 HTTPError、第 97 行記下的例外本來就帶狀態碼；說沒記錄不對

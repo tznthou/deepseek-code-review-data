@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`git log` 失敗時未檢查回傳碼，可能導致後續 IndexError",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有 `check=True`，若 `git log` 因 repo 損毀或權限問題失敗，`proc.stdout` 會是空字串，`commits` 會是空 list。接著在 `main` 中 `latest = commits[0][0]` 會拋出 `IndexError`，程式直接 crash。建議加上 `check=True` 或檢查 `proc.returncode` 並回報錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式沒有 `check=True`，且 `main` 中 `latest = commits[0][0]` 假設 `commits` 非空。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "`max_items` 未處理負數或零，可能導致空公告或錯誤",
+    "body": "`max_items` 將環境變數 `NOTES_MAX` 轉為整數，但未檢查是否為正數。若設為負數，`commits[: max_items()]` 會變成 `commits[:-1]`（少最後一筆）；若設為 0，會得到空 list，導致 `latest = commits[0][0]` 拋出 IndexError。建議驗證數值為正整數，否則回退預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 只處理 ValueError，未處理負數或零。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`post` 未驗證 URL scheme，可能誤用非 HTTP(S) 協定",
+    "body": "`post` 直接將 `url` 傳給 `urllib.request.Request`，若環境變數 `NOTES_WEBHOOK` 設為 `file://` 或 `ftp://` 等非 HTTP(S) scheme，程式會嘗試以該協定連線，可能造成非預期行為或安全風險。建議檢查 `urlparse(url).scheme` 是否為 `http` 或 `https`。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 未對 URL scheme 做任何驗證。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "`load_config` 未限制設定檔大小，可能讀入超大檔案",
+    "body": "`load_config` 直接 `json.load(fh)`，若 `.release-notes.json` 被意外放入超大檔案，可能耗盡記憶體。建議在讀取前檢查檔案大小或限制讀取位元組數。",
+    "existing_code": "with open(path, encoding=\"utf-8\") as fh:\n            return json.load(fh)",
+    "evidence": "diff 中 `load_config` 未對檔案大小做任何限制。"
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 未跳脫直接插入 SQL",
+    "body": "`sync_one` 中的 `sqlite3` 指令直接將 `$name` 與 `$BRANCH` 插入 SQL 字串。若 repo 目錄名稱或 branch 名稱包含單引號（例如 `test'repo`），會破壞 SQL 語法，甚至可能執行任意 SQL。雖然 branch 有格式驗證，但 repo 名稱完全未驗證。建議改用參數化查詢（sqlite3 支援 `?` 佔位符）或至少使用 `sqlite3` 的 `-cmd` 與 `printf` 進行跳脫。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 41 行：`sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"`，其中 `$name` 來自 `basename \"$dir\"`，未經驗證或跳脫。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入：run_hook 使用 eval 執行未受信任的路徑",
+    "body": "`run_hook` 使用 `eval \"$hook $repo\"` 執行 hook。`$hook` 是固定路徑，但 `$repo` 來自目錄名稱，可能包含 shell 特殊字元（例如 `; rm -rf ~`）。攻擊者可建立惡意名稱的 repo 目錄，導致任意命令執行。建議改用陣列方式執行：`\"$hook\" \"$repo\"`，避免 eval。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 50 行：`eval \"$hook $repo\"`，其中 `$repo` 為傳入的目錄名稱，未經驗證。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "git 指令失敗後仍繼續執行，可能寫入錯誤資料",
+    "body": "`sync_one` 中的 `git fetch`、`git checkout`、`git merge` 失敗時僅將 stderr 重導至 log，未檢查退出碼。若 fetch 失敗（例如網路問題），後續 checkout 可能失敗，merge 可能基於舊資料，最後仍會寫入 SQLite，導致報表資料不正確。建議在每個 git 指令後檢查 `$?` 或使用 `set -e`，並在失敗時跳過寫入。",
+    "existing_code": "git fetch origin --prune 2>>\"$LOG\"\n\ngit checkout $BRANCH 2>>\"$LOG\"\ngit merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "diff 第 34-36 行：連續執行 git 指令，無任何錯誤檢查。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ahead 計算可能失敗，導致 SQL 寫入空值或錯誤",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若 rev-list 失敗（例如 branch 不存在），`ahead` 會是空字串。後續 `if [ \"$ahead\" -gt 0 ]` 會因空字串而報錯，且 SQL 插入時 `$ahead` 為空，可能導致資料型別錯誤。建議檢查 rev-list 的退出碼，失敗時設定 ahead=0 或跳過。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "diff 第 38 行：未檢查 rev-list 是否成功。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "使用 ls 解析目錄名稱，特殊字元可能導致錯誤",
+    "body": "`for d in $(ls \"$ROOT\")` 使用 ls 的輸出進行 word splitting，若目錄名稱包含空格、換行或 glob 字元，會導致迴圈變數錯誤。建議改用 `for d in \"$ROOT\"/*/` 或 `find` 搭配 `-print0`。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "diff 第 68 行：`for d in $(ls \"$ROOT\"); do`。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少 set -e 或錯誤處理，部分失敗可能被忽略",
+    "body": "腳本未設定 `set -e` 或 `set -o pipefail`，許多指令失敗後仍會繼續執行，可能導致後續操作基於錯誤狀態。建議在腳本開頭加入 `set -euo pipefail`，並對預期可能失敗的指令（如 grep）明確處理。",
+    "existing_code": "#!/usr/bin/env bash",
+    "evidence": "diff 第 1 行：shebang 後無任何 set 指令。"
+  }
+]

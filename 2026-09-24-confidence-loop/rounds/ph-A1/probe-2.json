@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "git log 失敗時未檢查回傳碼，可能導致後續處理空輸出",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時未設定 `check=True`，也未檢查 `proc.returncode`。若 git 指令失敗（例如 repo 路徑錯誤、權限不足），`proc.stdout` 可能為空字串，函式會回傳空 list，後續 `main` 會印出「沒有新 commit」並回傳 0，但實際上並未成功取得 commit 清單。建議加上 `check=True` 或檢查 `proc.returncode`，失敗時拋出例外或回傳錯誤碼。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "NOTES_MAX 未限制為正整數，負值或零會造成切片異常",
+    "body": "`max_items` 將環境變數 NOTES_MAX 轉為整數後直接回傳，未檢查是否為正數。若設定為負數或零，`commits[: max_items()]` 會產生空 list 或錯誤切片（負數切片會從尾端取，可能導致非預期行為）。建議驗證數值必須大於 0，否則使用預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `int(raw)` 成功後直接回傳，沒有檢查是否為正數。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "webhook URL 未驗證 scheme，可能被用於 SSRF",
+    "body": "`post` 直接使用環境變數 NOTES_WEBHOOK 作為 URL，未檢查其 scheme 是否為 http/https。攻擊者若控制環境變數，可指定 `file://` 或 `gopher://` 等 scheme，導致任意檔案讀取或內網請求。建議驗證 URL 的 scheme 必須是 http 或 https。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `url` 來自環境變數，未經 scheme 驗證即傳入 `urllib.request.Request`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "webhook 回應狀態碼檢查可能不完整",
+    "body": "`post` 檢查 `200 <= resp.status < 300`，但某些 webhook 服務可能回傳 204 No Content 或其他 2xx 狀態碼，此處已涵蓋。然而，若服務回傳 3xx 重定向，`urllib` 預設會自動跟隨，可能導致非預期行為。建議明確處理重定向或停用自動跟隨。",
+    "existing_code": "with urllib.request.urlopen(req, timeout=10) as resp:\n            return 200 <= resp.status < 300",
+    "evidence": "diff 中未處理 3xx 狀態碼，且 `urlopen` 預設會跟隨重定向。"
+  }
+]

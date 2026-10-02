@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "git log 失敗時未檢查，可能回報成功但沒有內容",
+    "body": "`subprocess.run` 沒有設定 `check=True`，當 `git log` 因為 repo 損毀、權限不足或 tag 不存在而失敗時，`proc.returncode` 非零，但程式仍會繼續執行，最後可能回傳空列表並視為成功。建議加上 `check=True` 或檢查 `proc.returncode`，失敗時拋出例外或回傳錯誤碼。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式內呼叫 `subprocess.run` 但沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "當 tag 是第一個 tag 時，prev 會取到錯誤的 tag",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，`tags.index(tag)` 為 0，`-1` 會取到最後一個 tag，導致 `git log` 範圍錯誤。應檢查 index 是否為 0，若是則可能沒有前一個 tag，需處理此情況（例如從 repo 初始 commit 開始）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式內直接使用 `tags.index(tag) - 1`，未檢查是否為 0。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "NOTES_MAX 為負數或零時，max_items 回傳非預期值",
+    "body": "`max_items` 直接將環境變數轉為整數，若設定為負數或零，`commits[: max_items()]` 會得到空列表或全部元素（負數切片），可能非使用者預期。建議限制最小值為 1 或驗證範圍。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:",
+    "evidence": "diff 中 `max_items` 函式僅處理 ValueError，未檢查數值範圍。"
+  }
+]

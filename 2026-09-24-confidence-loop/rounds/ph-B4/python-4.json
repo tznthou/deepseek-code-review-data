@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使得函式在失敗時回傳 `None`。後續程式碼（如 `collect_authors` 中的 `pr[\"user\"][\"login\"]`）會因為 `pr` 為 `None` 而拋出 `TypeError`，且沒有提供任何錯誤訊息。建議：至少記錄例外並重新拋出，或回傳一個明確的錯誤物件，讓呼叫端能處理。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 26 行：`except: pass` 吞掉所有例外，且函式沒有回傳值，導致呼叫端無法區分成功與失敗。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令字串包含外部輸入，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串中包含了 `repo` 和 `path` 參數。這些參數來自命令列參數（`repo`）或由程式內部產生（`path`），但 `repo` 是使用者可控的。攻擊者可以提供類似 `foo; rm -rf /` 的 repo 名稱，導致任意指令執行。建議改用參數列表形式（`shell=False`）並分開傳遞參數，或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 72 行：`shell=True` 且 f-string 包含 `repo` 變數，該變數來自 `sys.argv[1]`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設參數 seen=[]，跨呼叫累積資料",
+    "body": "`collect_authors` 的預設參數 `seen=[]` 在函式定義時建立一次，之後每次呼叫都會共用同一個 list。如果這個函式被多次呼叫（例如在同一個程序內處理多個 repo），作者名單會不斷累積，導致結果錯誤。建議改為 `seen=None`，並在函式內初始化為空 list。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 31 行：`seen=[]` 是可變預設參數，且函式內會對其進行 `append` 操作。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "export_csv 未使用 with 開啟檔案，可能導致資源洩漏",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，但如果在寫入過程中發生例外（例如磁碟滿、權限問題），`close` 不會被執行，導致檔案控制代碼洩漏。建議使用 `with open(path, \"w\") as f:` 來確保檔案總會被關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 66-70 行：手動 open/close，沒有使用 with 或 try/finally。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 未處理環境變數轉型失敗",
+    "body": "`threshold_from_env` 直接將環境變數 `PR_STALE_DAYS` 轉為 `int`，如果該變數不是有效整數（例如設為 \"abc\"），會拋出 `ValueError` 且沒有提供任何錯誤訊息。建議使用 try/except 捕捉轉換錯誤，並提供有意義的錯誤訊息或回退到預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 48 行：`int(raw)` 沒有錯誤處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "review_latency 假設 timeline 事件存在且有序",
+    "body": "`review_latency` 直接取 `events[0]` 和 `events[-1]`，但沒有檢查 `events` 是否為空（雖然有 `if not events` 的檢查，但若 `events` 為 `None` 會拋出 `TypeError`）。此外，它假設事件按時間排序，但 GitHub API 的回傳順序可能不保證。建議明確處理 `None` 情況，並考慮對事件按時間排序後再計算。",
+    "existing_code": "first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 40-41 行：直接索引 events，未處理 None 或順序問題。"
+  }
+]

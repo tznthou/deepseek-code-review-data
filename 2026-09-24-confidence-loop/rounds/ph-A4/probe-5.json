@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "commits_between 未檢查 git log 的失敗",
+    "body": "`subprocess.run` 沒有設定 `check=True`，如果 `git log` 失敗（例如 repo 路徑不正確、git 指令不存在），`proc.returncode` 非零但程式不會拋出例外，而是繼續處理空的 `stdout`，導致後續邏輯誤判為沒有 commit。建議加上 `check=True` 或檢查 `proc.returncode` 並處理錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，沒有檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "post 未處理 HTTP 錯誤狀態碼",
+    "body": "`urllib.request.urlopen` 在 HTTP 回應狀態碼非 2xx 時會拋出 `urllib.error.HTTPError`，但目前的 `except` 只捕捉 `urllib.error.URLError`。`HTTPError` 是 `URLError` 的子類別，所以會被捕捉，但函式會回傳 `False`，導致呼叫端誤以為發送失敗。建議明確處理 `HTTPError`，並根據狀態碼決定是否重試或記錄更詳細的錯誤。",
+    "existing_code": "except urllib.error.URLError as e:\n        log(f\"[error] 貼到 {url} 失敗：{e}\")\n        return False",
+    "evidence": "diff 中 `except` 捕捉 `URLError`，但 `HTTPError` 是其子類別，且函式回傳 `False` 表示失敗，但實際上可能只是回應狀態碼非 2xx。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "max_items 未驗證範圍",
+    "body": "`NOTES_MAX` 環境變數轉成整數後沒有檢查是否為負數或過大。負數會導致 `commits[: max_items()]` 切片行為異常（例如 `commits[:-1]` 會排除最後一個元素），過大的值可能導致記憶體問題。建議加上範圍檢查，例如限制在 1 到某個合理上限。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `int(raw)` 沒有範圍驗證，且後續使用 `commits[: max_items()]`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "list_tags 未處理 git tag 失敗",
+    "body": "`subprocess.run` 設定了 `check=True`，所以失敗會拋出例外，但 `main` 中沒有捕捉，導致程式直接崩潰。建議在 `main` 中捕捉 `subprocess.CalledProcessError` 並回傳錯誤碼。",
+    "existing_code": "out = subprocess.run(\n        [\"git\", \"tag\", \"--list\", \"v*\", \"--sort=v:refname\"],\n        cwd=repo, capture_output=True, text=True, check=True,\n    ).stdout",
+    "evidence": "diff 中 `check=True` 會拋出例外，但 `main` 沒有 try-except 處理。"
+  }
+]

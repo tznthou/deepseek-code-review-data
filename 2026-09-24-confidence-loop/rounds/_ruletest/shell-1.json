@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 未經跳脫直接插入 SQL 查詢",
+    "body": "`sync_one` 中的 `sqlite3` 指令直接將 `$name` 與 `$BRANCH` 插入 SQL 字串。如果 repo 目錄名稱或 branch 名稱包含單引號，攻擊者可以注入任意 SQL 指令。例如，若 repo 名稱為 `x'; DROP TABLE runs; --`，則會執行 `DROP TABLE runs`。建議改用參數化查詢（sqlite3 支援 `?` 佔位符），或至少對輸入進行跳脫。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 42 行：`sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入：`eval` 執行未受信任的 hook 路徑與參數",
+    "body": "`run_hook` 使用 `eval \"$hook $repo\"` 執行 hook。`$hook` 是固定路徑，但 `$repo` 來自 `$d`（`ls` 的輸出），可能包含惡意內容。例如，若 repo 目錄名稱為 `x; rm -rf /`，則會執行 `rm -rf /`。建議改用陣列或直接執行，避免 `eval`。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 51 行：`eval \"$hook $repo\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "錯誤處理不足：`git checkout` 與 `git merge` 失敗後仍繼續執行",
+    "body": "`git checkout $BRANCH` 或 `git merge --ff-only` 失敗時，腳本仍會繼續執行後續的 `git rev-list` 與 SQL 插入，可能記錄錯誤的資料。建議檢查每個 git 指令的退出碼，失敗時跳過該 repo 或中止。",
+    "existing_code": "git checkout $BRANCH 2>>\"$LOG\"\ngit merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "diff 第 31-32 行：`git checkout $BRANCH 2>>\"$LOG\"` 與 `git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑處理不當：`ls` 輸出未處理空白或特殊字元",
+    "body": "`for d in $(ls \"$ROOT\")` 會將 `ls` 的輸出按空白分割，導致包含空白的目錄名稱被拆成多個 token。建議改用 `for d in \"$ROOT\"/*/` 或 `find` 搭配 `-print0`。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "diff 第 61 行：`for d in $(ls \"$ROOT\"); do`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "未檢查 `ahead` 是否為有效數字",
+    "body": "`ahead=$(git rev-list --count ...)` 若 git 指令失敗，`ahead` 可能為空字串或錯誤訊息，導致後續的 `[ \"$ahead\" -gt 0 ]` 比較出錯，或 SQL 插入失敗。建議檢查 git 指令的退出碼，並確保 `ahead` 是整數。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "diff 第 35 行：`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`cleanup_cache` 使用 `rm -rf` 刪除快取，若 `$ROOT` 未正確設定可能造成災難",
+    "body": "`rm -rf \"$ROOT\"/.cache/*` 若 `$ROOT` 為空或未定義，可能刪除根目錄下的 `.cache`。建議檢查 `$ROOT` 是否為有效目錄，並避免使用 `rm -rf` 搭配變數。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "diff 第 57 行：`rm -rf \"$ROOT\"/.cache/*`"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`summarize` 中的 `total` 可能包含非數字內容",
+    "body": "`total=$(grep -c . \"$LOG\" 2>/dev/null || echo 0)` 若 `grep` 失敗，`total` 可能為空字串，導致後續的 `[ \"$total\" -gt 100 ]` 比較出錯。建議確保 `total` 為整數。",
+    "existing_code": "total=$(grep -c . \"$LOG\" 2>/dev/null || echo 0)",
+    "evidence": "diff 第 67 行：`total=$(grep -c . \"$LOG\" 2>/dev/null || echo 0)`"
+  }
+]

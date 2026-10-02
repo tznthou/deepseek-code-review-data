@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "git log 執行失敗時未檢查，可能產生空公告",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有傳入 `check=True`，也沒有檢查 `proc.returncode`。如果 `repo` 路徑不是有效的 git 儲存庫，或 `git log` 因其他原因失敗，`proc.stdout` 會是空字串，函式回傳空 list。後續 `main` 會因為 `commits` 為空而直接回傳 0，不會貼出任何東西，但也不會回報錯誤。更糟的是，如果 `git log` 部分失敗但仍有輸出（例如 rev 不存在），程式可能貼出不完整的公告。建議加上 `check=True` 或明確檢查 `proc.returncode`，並在失敗時記錄錯誤並回傳非零 exit code。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式沒有檢查 `proc.returncode`，且 `subprocess.run` 未設 `check=True`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "NOTES_MAX 為負數時會意外截斷 commit 列表",
+    "body": "`max_items` 將環境變數 `NOTES_MAX` 轉成整數後直接回傳，沒有檢查是否為負數。在 `main` 中，`commits[: max_items()]` 若 `max_items()` 回傳負數，Python 切片會從尾端倒數，導致只取最後幾個 commit，而不是全部或前 N 個。例如 `NOTES_MAX=-1` 會讓公告只包含最後一個 commit。建議在轉換後檢查是否為正整數，若不是則回傳預設值或記錄警告。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式只處理了 `ValueError`，沒有檢查轉換後的整數是否為負數。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "webhook 回應非 2xx 時未記錄回應內容",
+    "body": "`post` 函式在 `urlopen` 成功取得回應後，只檢查 status code 是否在 200-299 之間，若不是則回傳 False，但沒有記錄回應的 status code 或 body。這會讓除錯變得困難，因為無法知道 webhook 端拒絕的具體原因（例如 400 或 403）。建議在非 2xx 時記錄 `resp.status` 和 `resp.read()` 的內容（注意不要洩漏敏感資訊）。",
+    "existing_code": "with urllib.request.urlopen(req, timeout=10) as resp:\n            return 200 <= resp.status < 300",
+    "evidence": "diff 中 `post` 函式在回應非 2xx 時直接回傳 False，沒有記錄任何資訊。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`commits_between` 未檢查 `git log` 的失敗",
+    "body": "`subprocess.run` 沒有設定 `check=True`，當 `git log` 失敗時（例如 repo 路徑無效、git 指令不存在、或 `prev..tag` 範圍無效），`proc.returncode` 非零但程式不會拋出例外。後續程式碼會繼續執行，並把 `proc.stdout`（可能是空字串或錯誤訊息）當成正常輸出處理，導致產生錯誤的 release notes 或誤報成功。\n\n建議加上 `check=True`，讓失敗時拋出 `subprocess.CalledProcessError`，由呼叫端處理或讓程式直接失敗。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式的 `subprocess.run` 呼叫沒有 `check=True`，且回傳值 `proc` 的 `returncode` 未被檢查。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`load_config` 未驗證 JSON 頂層型別",
+    "body": "`load_config` 直接回傳 `json.load` 的結果，但沒有檢查它是否為 dict。如果 `.release-notes.json` 的內容是陣列、字串或數字，`cfg.get('title', ...)` 會拋出 `AttributeError`，導致程式崩潰。\n\n建議在 `json.load` 後檢查 `isinstance(data, dict)`，若不是則拋出明確的錯誤訊息。",
+    "existing_code": "with open(path, encoding=\"utf-8\") as fh:\n            return json.load(fh)",
+    "evidence": "diff 中 `load_config` 函式直接回傳 `json.load(fh)` 的結果，沒有型別檢查。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`max_items` 未處理負數或非整數值",
+    "body": "`max_items` 將環境變數 `NOTES_MAX` 轉成整數，但沒有檢查是否為負數。若設定為負數，`commits[: max_items()]` 會變成 `commits[:-n]`，導致截斷錯誤。另外，若值為 `0`，會回傳空列表，可能不是預期行為。\n\n建議加上檢查，確保值為正整數，否則使用預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式只處理了 `ValueError`，沒有檢查轉換後的數值是否合理。"
+  }
+]

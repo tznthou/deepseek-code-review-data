@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "未檢查 git log 執行結果，可能導致程式崩潰",
+    "body": "`commits_between` 函式呼叫 `subprocess.run` 時未設定 `check=True`，也未檢查回傳碼。如果 `repo` 路徑無效或不是 git repository，`git log` 會失敗並將錯誤訊息寫入 stderr，但 `proc.stdout` 會是空字串，函式會回傳空列表。後續 `main` 函式會因為 `commits` 為空而回傳 0，但實際上並未產生任何 release notes，造成誤導。建議加上 `check=True` 或檢查 `proc.returncode`，並在失敗時拋出例外或回傳錯誤碼。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式的 `subprocess.run` 呼叫沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "tag 是第一個 tag 時會 IndexError",
+    "body": "`main` 函式中，`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 列表的第一個元素時會嘗試存取 `tags[-1]`，這會回傳最後一個 tag，而不是正確的前一個 tag（實際上沒有前一個）。這會導致錯誤的 commit 範圍，甚至可能產生空列表或錯誤的 release notes。建議檢查 `tags.index(tag) == 0` 的情況，並回傳錯誤或使用不同的邏輯。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式直接使用 `tags.index(tag) - 1` 作為索引，未處理 `tag` 是第一個元素的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "NOTES_MAX 未處理負數或零值",
+    "body": "`max_items` 函式將環境變數 `NOTES_MAX` 轉為整數後直接回傳，未檢查是否為正數。如果設定為負數或零，`commits[: max_items()]` 會產生空列表或錯誤切片，導致輸出異常。建議加上驗證，例如 `if value < 1: return DEFAULT_MAX`。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式只處理了 `ValueError`，未檢查轉換後的值是否合理。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "webhook URL 未驗證 scheme，存在 SSRF 風險",
+    "body": "`post` 函式直接使用 `urllib.request.urlopen` 發送請求，未檢查 URL 的 scheme。如果 `NOTES_WEBHOOK` 被設定為 `file://` 或 `ftp://` 等非 HTTP(S) 協定，可能導致本地檔案讀取或內部網路掃描。建議驗證 URL 必須以 `https://` 開頭（或至少限制為 `http://` 和 `https://`）。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 函式直接使用 `url` 參數建立請求，未進行任何 scheme 檢查。"
+  }
+]

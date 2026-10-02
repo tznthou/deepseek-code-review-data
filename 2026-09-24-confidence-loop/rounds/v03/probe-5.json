@@ -1,0 +1,24 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "子程序失敗時未檢查回傳碼，可能導致後續處理空資料",
+    "body": "`commits_between` 執行 `git log` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 路徑錯誤、權限不足或 git 本身異常而失敗，`proc.stdout` 會是空字串，函式會回傳空 list，後續 `main` 會印出「沒有新 commit」並回傳 0，讓使用者誤以為成功。建議加上 `check=True` 或明確檢查 `returncode`，並在失敗時拋出例外或回傳錯誤碼。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式內呼叫 `subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "NOTES_MAX 設為負數或零時會產生空公告或錯誤",
+    "body": "`max_items` 只驗證 `NOTES_MAX` 是否為整數，沒有檢查是否為正數。若設定為 0 或負數，`commits[: max_items()]` 會變成空 list 或從尾端切片，導致公告內容為空或不完整。建議加上 `if value < 1` 的檢查，並回退到預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式只處理 `ValueError`，未檢查轉換後的值是否大於 0。"
+  }
+]

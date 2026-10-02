@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "git log 失敗時未檢查退出碼，可能把錯誤輸出當成正常結果",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有傳入 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 路徑錯誤、權限不足或 tag 不存在而失敗，`proc.stdout` 會是空字串或錯誤訊息，函式會回傳空列表或把錯誤訊息當成 commit 解析。建議加上 `check=True`，或明確檢查 `proc.returncode != 0` 並拋出例外。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 的 `subprocess.run` 呼叫沒有 `check=True`，且後續直接使用 `proc.stdout`，沒有檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "只有一個 tag 時，prev 會取到最後一個 tag 而非前一個版本",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是列表第一個元素時，索引 -1 會取到最後一個 tag，導致 `commits_between` 的範圍錯誤。例如 repo 只有 `v1.0.0` 一個 tag 時，`prev` 會是 `v1.0.0` 本身，`git log v1.0.0..v1.0.0` 會回傳空。建議在 `tags.index(tag) == 0` 時改用其他方式決定 prev（例如第一個 commit 或直接報錯）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式直接使用 `tags.index(tag) - 1`，沒有檢查 `tag` 是否為第一個元素。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "NOTES_MAX 設為負數或零時，會產生空公告或錯誤",
+    "body": "`max_items` 只處理了非整數的情況，但沒有檢查 `int(raw)` 是否為正數。如果 `NOTES_MAX=0` 或負數，`commits[: max_items()]` 會是空列表，`render` 會產生只有標題的公告；如果 `NOTES_MAX=-1`，切片會取到倒數第一個元素，行為怪異。建議加上 `if n <= 0: return DEFAULT_MAX` 之類的檢查。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 只處理 `ValueError`，沒有檢查轉換後的整數是否大於 0。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "webhook URL 未驗證 scheme，可能被用於 SSRF",
+    "body": "`post` 直接使用 `urllib.request.urlopen` 開啟 `url`，沒有檢查 scheme 是否為 `http` 或 `https`。如果攻擊者能控制 `NOTES_WEBHOOK` 環境變數（例如 CI 環境），可以指定 `file:///etc/passwd` 或 `gopher://` 等 scheme，造成資訊洩漏或 SSRF。建議在 `post` 開頭加上 `if not url.startswith(('http://', 'https://')): raise ValueError(...)`。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 函式直接使用 `url` 建立 Request，沒有檢查 scheme。"
+  }
+]

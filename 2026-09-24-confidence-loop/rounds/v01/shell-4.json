@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 未經跳脫直接插入 SQL 語句",
+    "body": "`sync_one` 中的 `sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"` 直接將 `$name` 與 `$BRANCH` 插入 SQL 字串。雖然 `$BRANCH` 已驗證格式，但 `$name` 來自目錄名稱，完全未驗證。攻擊者若建立名為 `x'); DROP TABLE runs;--` 的目錄，即可執行任意 SQL。建議改用參數化查詢（sqlite3 支援 `?` 佔位符）或至少對單引號進行跳脫。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 42 行，`$name` 來自 `basename \"$dir\"`（第 29 行），未經驗證。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入：eval 執行未受信任的 repo 名稱",
+    "body": "`run_hook` 使用 `eval \"$hook $repo\"`，其中 `$repo` 是 repo 名稱（來自目錄名稱），未經驗證。攻擊者可建立名為 `; rm -rf ~` 的目錄，導致任意命令執行。建議改用陣列方式執行：`\"$hook\" \"$repo\"`，避免 eval。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 51 行，`$repo` 來自 `$d`（第 76 行），未經驗證。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "rm -rf 使用變數路徑，若 ROOT 為空或錯誤可能刪除大量檔案",
+    "body": "`cleanup_cache` 執行 `rm -rf \"$ROOT\"/.cache/*`。若 `$ROOT` 為空字串，會變成 `rm -rf /.cache/*`，可能刪除系統檔案。雖然 `main` 檢查了 `$BRANCH` 但未檢查 `$ROOT` 是否為空。建議在腳本開頭驗證 `$ROOT` 非空且為目錄，或使用更安全的路徑處理。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "diff 第 57 行，`$ROOT` 來自命令列參數，未驗證。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "使用 ls 解析目錄列表，檔名含空格或換行會出錯",
+    "body": "`for d in $(ls \"$ROOT\")` 依賴 ls 的輸出，若目錄名稱包含空格、換行或特殊字元，迴圈會錯誤分割。建議改用 glob：`for d in \"$ROOT\"/*/` 或 `find` 搭配 `-print0`。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "diff 第 76 行，未使用安全的方式迭代目錄。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "git 指令失敗未檢查，可能導致錯誤結果或資料不一致",
+    "body": "`git fetch`、`git checkout`、`git merge` 的輸出僅重導向到 log，未檢查退出碼。若 fetch 失敗（如網路問題），後續 checkout/merge 可能基於過時資料，甚至 merge 失敗仍繼續執行，導致 ahead 計算錯誤或資料庫記錄不正確。建議每個 git 指令後檢查 `$?` 或使用 `set -e`（但需注意 set -e 的陷阱）。",
+    "existing_code": "git fetch origin --prune 2>>\"$LOG\"\n  git checkout $BRANCH 2>>\"$LOG\"\n  git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "diff 第 35-37 行，未檢查退出碼。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "ahead 計算可能失敗，導致 SQL 插入空值或錯誤",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若 git 指令失敗（如 branch 不存在），`$ahead` 會是空字串，後續 `[ \"$ahead\" -gt 0 ]` 會出錯，且 SQL 插入時 `$ahead` 為空可能導致語法錯誤。建議檢查 ahead 是否為數字，或設定預設值。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "diff 第 39 行，未處理 git 失敗情況。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "DB 路徑固定為 /tmp/repo_sync.db，多個實例同時執行會互相干擾",
+    "body": "`DB=/tmp/repo_sync.db` 是固定路徑，若多個使用者或排程同時執行此腳本，會寫入同一個資料庫，導致資料混亂或鎖定問題。建議使用唯一路徑（如包含 PID 或時間戳）或使用鎖定機制。",
+    "existing_code": "DB=/tmp/repo_sync.db",
+    "evidence": "diff 第 13 行，固定路徑。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "LOG 路徑固定，多個實例同時執行會互相覆蓋",
+    "body": "`LOG=/tmp/repo_sync.log` 是固定路徑，多個實例同時執行會互相覆蓋日誌，導致資訊遺失。建議使用唯一路徑或附加模式。",
+    "existing_code": "LOG=/tmp/repo_sync.log",
+    "evidence": "diff 第 14 行，固定路徑。"
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 的 `except: pass` 會吞掉所有例外（包含網路錯誤、HTTP 錯誤、JSON 解析錯誤），且不回傳任何值。呼叫端（`collect_authors` 和 `main`）直接使用回傳值，當 `_fetch` 失敗時會得到 `None`，接著存取 `pr[\"user\"]` 或 `pr[\"additions\"]` 會拋出 `TypeError`，造成程式崩潰。\n\n**失敗情境**：網路中斷、API 回傳 404（PR 不存在）、token 無效、回應不是合法 JSON 時，程式會以未處理的例外結束。\n\n**建議**：\n- 讓 `_fetch` 在失敗時拋出例外（不要 `pass`），或回傳一個明確的錯誤值，並在呼叫端檢查。\n- 至少記錄錯誤訊息（例如 `logging.exception`）以便除錯。\n- 考慮使用 `raise ... from err` 保留原始例外資訊。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24-25 行：`except:` 後只有 `pass`，沒有回傳值或重新拋出。呼叫端如第 29 行 `pr = _fetch(...)` 後直接 `pr[\"user\"]`，若 `_fetch` 回傳 `None` 會拋出 `TypeError`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "shell=True 且指令包含外部輸入，存在指令注入風險",
+    "body": "`archive` 使用 `subprocess.run` 搭配 `shell=True`，且指令字串由 `path` 和 `repo` 拼接而成。`repo` 來自命令列參數（`sys.argv[1]`），攻擊者可以注入額外指令。\n\n**失敗情境**：若使用者執行 `python pr_stats.py 'repo; rm -rf /' 1`，`repo` 中的分號會讓 shell 執行 `rm -rf /`。\n\n**建議**：\n- 避免使用 `shell=True`，改用參數列表傳遞：\n```python\nsubprocess.run([\"tar\", \"czf\", f\"{path}.tgz\", path])\nsubprocess.run([\"gh\", \"repo\", \"view\", repo])\n```\n- 若必須使用 shell，請對輸入進行嚴格的驗證或轉義。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 72 行：`shell=True` 且 f-string 包含 `repo`（來自 `sys.argv[1]`）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "可變預設值 seen=[] 導致跨呼叫累積",
+    "body": "`collect_authors` 的參數 `seen=[]` 使用可變預設值，該 list 在函式定義時建立一次，之後每次呼叫都會共用同一個 list。這會導致多次呼叫時，先前呼叫的作者會被保留，造成結果不正確。\n\n**失敗情境**：若在同一個程序內呼叫 `collect_authors` 兩次（例如處理多個 repo），第二次呼叫的結果會包含第一次的作者。\n\n**建議**：改用 `None` 作為預設值，並在函式內初始化：\n```python\ndef collect_authors(repo, numbers, seen=None):\n    if seen is None:\n        seen = []\n    ...\n```",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：`seen=[]` 是可變預設值，且函式內有 `seen.append(...)` 修改該 list。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "檔案未使用 with 開啟，例外時可能未關閉",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，若在寫入過程中發生例外（例如磁碟滿、權限錯誤），檔案不會被關閉，可能造成資源洩漏或資料不完整。\n\n**建議**：使用 `with` 陳述式：\n```python\nwith open(path, \"w\") as f:\n    f.write(...)\n```",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 64-68 行：手動 `open` 和 `close`，沒有 `with` 或 `try/finally`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "threshold_from_env 的 int() 轉換可能拋出未處理的例外",
+    "body": "`threshold_from_env` 從環境變數 `PR_STALE_DAYS` 讀取值並直接 `int(raw)`，若該值不是合法整數（例如 \"abc\" 或空字串），會拋出 `ValueError`，導致程式崩潰。\n\n**失敗情境**：使用者設定 `PR_STALE_DAYS=abc` 時，程式會以未處理的例外結束。\n\n**建議**：捕捉 `ValueError` 並提供預設值或錯誤訊息：\n```python\ntry:\n    days = int(raw)\nexcept ValueError:\n    days = 7  # 或記錄警告\n```",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 48 行：`int(raw)` 沒有例外處理，`raw` 來自環境變數。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "classify 對 pr 欄位存取可能因缺失鍵而拋出 KeyError",
+    "body": "`classify` 直接存取 `pr[\"additions\"]`、`pr[\"changed_files\"]`、`pr[\"title\"]`，但 GitHub API 的回應可能因權限或 PR 類型而缺少這些欄位（例如某些事件可能沒有 `additions`）。若鍵不存在，會拋出 `KeyError`。\n\n**建議**：使用 `pr.get(\"additions\", 0)` 等方式提供預設值，或先驗證回應結構。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):\n        return \"fix\"",
+    "evidence": "diff 第 53-58 行：直接使用 `pr[...]` 存取，沒有檢查鍵是否存在。"
+  }
+]

@@ -1,0 +1,22 @@
+id,label,source,reason
+R01,invalid,README:876-877,「workflow 放錯位置是先前已知的陷阱」事實相反
+R02,valid,README:878-879,抓到 fork PR 驗證的語氣被弱化，已採納修回
+R03,invalid,memory deepseek-review-kit-quality 失敗形狀二,同一位置第二輪編出另一個理由
+R04,invalid,memory deepseek-review-kit-quality 失敗形狀二,說 checklist 缺驗證方式，下面兩行就是（報已經做了的事）
+R05,invalid,memory deepseek-review-kit-quality（5 筆只有 1 筆成立）,段落冗長屬風格意見
+R06,valid,memory PR #2 表,workflow_dispatch 觸發時 BASE 為空、靜默產生空 review
+R07,disputed,memory PR #2 表（部分成立）,PR 編號已用 API 反查，但其他欄位確實原樣進 prompt
+R08,valid,memory PR #2 表,codeql 的 config-file 沒驗存在性，同 PR 的 rubric 路徑有驗
+R09,invalid,memory PR #2 表,lint-command 由 repo 擁有者自己填，不是外部輸入
+R10,invalid,memory PR #3 表,payload 其實有該欄位，且 BASE 檢查排在 Python 之前
+R11,invalid,memory PR #3 表,行為變更正是這次修正的目的
+R12,invalid,memory PR #3 表,有 ::warning::，不是靜默
+R13,invalid,README:505-508,Python 端讀 os.environ 的那行就在同一份 diff 裡；真實 CI 也實測到攔截生效
+R14,invalid,README:491-492,假設的輸入情境不存在（唯一呼叫點只回 str 或 None）
+R15,invalid,README:509,(text or "") 已經處理了
+R16,invalid,README:496-499,Actions 確實會遮蔽（同日實測）
+R17,invalid,README:493-495,lower() 本來就在外層迴圈（報已經做了的事）
+R18,invalid,README:510-511,讀進來一律是 str，非法位元組變 surrogate，實測不拋例外
+R19,invalid,README:485（#22：1 筆、0 成立）,紀錄只有計數沒有逐筆理由
+R20,valid,README:538-541,ROOT =pathlib 空格被吃掉，確實成立
+R21,invalid,README:543-545,selftest 不在 CI 跑；實作 128K 字元只要 0.04 毫秒

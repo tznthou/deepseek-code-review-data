@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 函式中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），且不回報任何錯誤。這會導致呼叫端（如 `collect_authors` 和 `main` 中的 `pr[\"user\"][\"login\"]`）在 `_fetch` 回傳 `None` 時拋出 `TypeError` 或 `KeyError`，且沒有明確的錯誤訊息。\n\n建議：\n- 至少記錄例外並重新拋出，或回傳一個明確的錯誤值。\n- 使用 `raise ... from err` 保留原始追蹤資訊。\n- 考慮使用 `urllib.error.HTTPError` 來處理特定的 HTTP 狀態碼。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24-25 行：`except:` 後只有 `pass`，沒有記錄或重新拋出。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串中包含 `repo` 和 `path`，這兩個參數來自命令列參數或內部變數。如果 `repo` 包含惡意內容（例如 `; rm -rf /`），就可能執行任意指令。\n\n建議：\n- 避免使用 `shell=True`，改用參數列表形式：`subprocess.run([\"tar\", \"czf\", f\"{path}.tgz\", path])`。\n- 如果必須使用 shell，請對輸入進行嚴格的驗證或轉義。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 72 行：`shell=True` 且指令字串由 f-string 組成，包含外部輸入。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設值 seen=[]，跨呼叫累積狀態",
+    "body": "`collect_authors` 的參數 `seen=[]` 是可變預設值，會在多次呼叫之間共用同一個 list。這可能導致非預期的行為，例如第二次呼叫時會包含第一次的結果。\n\n建議：將預設值改為 `None`，並在函式內初始化為空 list：\n```python\ndef collect_authors(repo, numbers, seen=None):\n    if seen is None:\n        seen = []\n    ...\n```",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 29 行：`seen=[]` 是可變預設值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "export_csv 未使用 with 開啟檔案，可能導致資源洩漏",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，但如果在寫入過程中發生例外，檔案可能不會被關閉。\n\n建議：使用 `with open(path, \"w\") as f:` 來確保檔案總是被關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 64-68 行：手動 open/close，沒有使用 with。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 未處理 int() 轉換失敗",
+    "body": "`threshold_from_env` 從環境變數 `PR_STALE_DAYS` 讀取值並直接 `int(raw)`，如果該值不是有效的整數（例如 \"abc\"），會拋出 `ValueError` 且沒有處理。\n\n建議：使用 try/except 捕捉轉換錯誤，並提供預設值或明確的錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 51 行：`int(raw)` 沒有例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "classify 函式假設 pr 字典一定有 additions、changed_files、title 鍵",
+    "body": "`classify` 直接存取 `pr[\"additions\"]`、`pr[\"changed_files\"]`、`pr[\"title\"]`，如果 API 回應缺少這些鍵（例如權限不足或 API 變更），會拋出 `KeyError`。\n\n建議：使用 `pr.get(\"additions\", 0)` 等方式提供預設值，或先驗證回應結構。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):\n        return \"fix\"",
+    "evidence": "diff 第 56-61 行：直接使用鍵存取，沒有檢查鍵是否存在。"
+  }
+]

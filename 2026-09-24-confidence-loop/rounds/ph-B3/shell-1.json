@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱與 branch 未經跳脫直接插入 SQL 語句",
+    "body": "`sync_one` 中的 `sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"` 直接將 `$name` 與 `$BRANCH` 插入 SQL 字串。若 repo 目錄名稱或 branch 名稱包含單引號，將導致 SQL 語法錯誤或注入。例如，若 repo 名稱為 `x'); DROP TABLE runs;--`，則會執行惡意 SQL。建議使用參數化查詢（sqlite3 支援 `?` 佔位符）或至少對輸入進行單引號跳脫。",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "diff 第 42 行，直接將變數插入 SQL 字串，未做任何跳脫。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入：使用 eval 執行 hook 腳本",
+    "body": "`run_hook` 使用 `eval \"$hook $repo\"` 執行 hook。若 `$hook` 或 `$repo` 包含惡意內容（例如 repo 名稱為 `; rm -rf /`），將導致任意命令執行。即使 hook 路徑看似固定，但 repo 名稱來自目錄名稱，可能受攻擊者控制。建議改用直接執行：`\"$hook\" \"$repo\"`，避免 eval。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "diff 第 53 行，使用 eval 執行字串。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錯誤處理不足：git 指令失敗仍繼續執行",
+    "body": "`sync_one` 中 `git fetch`、`git checkout`、`git merge` 的錯誤僅被重導向到 log，未檢查退出碼。若 fetch 失敗（例如網路問題），後續 checkout 或 merge 可能基於過時的遠端分支，導致錯誤的同步結果。建議在每個 git 指令後檢查 `$?`，失敗時中止該 repo 的同步並記錄錯誤。",
+    "existing_code": "git fetch origin --prune 2>>\"$LOG\"\n  git checkout $BRANCH 2>>\"$LOG\"\n  git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "diff 第 31-33 行，未檢查退出碼。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "ahead 計算可能失敗，導致 SQL 插入空值",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若指令失敗（例如分支不存在），`ahead` 將為空字串。後續 `if [ \"$ahead\" -gt 0 ]` 會因語法錯誤而失敗，且 SQL 插入時 `$ahead` 為空會導致 SQL 錯誤。建議檢查 `ahead` 是否為數字，失敗時設定為 0 或中止。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "diff 第 36 行，未處理指令失敗。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "cleanup_cache 使用 rm -rf 可能誤刪重要檔案",
+    "body": "`cleanup_cache` 執行 `rm -rf \"$ROOT\"/.cache/*`。若 `$ROOT` 未正確設定或包含符號連結，可能刪除非預期的檔案。建議檢查 `.cache` 是否為目錄，並避免使用 `*` 萬用字元，或使用更安全的刪除方式。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "diff 第 60 行，使用 rm -rf 與萬用字元。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "summarize 中 total 計算可能不準確",
+    "body": "`total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0` 若 log 檔案不存在，grep 回傳非零，`total` 會被設為 0，但若 log 存在但為空，grep 回傳 1，`total` 也會被設為 0，導致無法區分。建議使用 `wc -l` 或檢查檔案存在性。",
+    "existing_code": "total=$(grep -c . \"$LOG\" 2>/dev/null) || total=0",
+    "evidence": "diff 第 70 行，邏輯可能混淆。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "for 迴圈使用 ls 輸出，檔名含空格或換行會出錯",
+    "body": "`for d in $(ls \"$ROOT\")` 依賴 ls 的輸出，若目錄名稱包含空格或換行，迴圈會錯誤分割。建議使用 `for d in \"$ROOT\"/*/` 或 `find` 搭配 `-print0`。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "diff 第 80 行，使用 ls 輸出。"
+  }
+]

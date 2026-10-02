@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "git log 失敗時未檢查回傳碼，可能產生不完整的 release notes",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，且未檢查 `proc.returncode`。如果 `git log` 因為 repo 損毀、權限不足或 tag 不存在而失敗，程式會繼續執行，把空的或部分輸出當成正常結果，最後貼出錯誤的公告。\n\n建議：加上 `check=True`，或在呼叫後檢查 `proc.returncode != 0` 並拋出例外。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式的 `subprocess.run` 呼叫沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "NOTES_MAX 未限制範圍，可能造成記憶體耗盡",
+    "body": "`max_items()` 從環境變數讀取整數，但沒有檢查上限。如果使用者設定 `NOTES_MAX=999999999`，`commits[: max_items()]` 會嘗試建立一個巨大的 list，可能耗盡記憶體。\n\n建議：加上合理的上限（例如 1000），或至少檢查是否為正整數。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items()` 只處理了 `ValueError`，沒有檢查轉換後的數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "webhook URL 未驗證，可能被用於 SSRF",
+    "body": "`post()` 直接使用環境變數 `NOTES_WEBHOOK` 作為 URL，沒有驗證 scheme 或主機。如果攻擊者能控制環境變數（例如透過 CI 設定），可以讓程式向內部服務發送請求。\n\n建議：檢查 URL 是否為 `https://` 且主機在允許清單中，或至少限制為 https。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post()` 直接使用 `url` 參數，而 `url` 來自環境變數，未做任何驗證。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "list_tags 使用 check=True 但未處理 CalledProcessError",
+    "body": "`list_tags` 呼叫 `subprocess.run` 時設定了 `check=True`，但沒有捕捉 `subprocess.CalledProcessError`。如果 `git tag` 失敗，程式會直接 traceback 退出，使用者只看到一堆錯誤訊息。\n\n建議：捕捉例外並印出友善的錯誤訊息，或讓上層處理。",
+    "existing_code": "out = subprocess.run(\n        [\"git\", \"tag\", \"--list\", \"v*\", \"--sort=v:refname\"],\n        cwd=repo, capture_output=True, text=True, check=True,\n    ).stdout",
+    "evidence": "diff 中 `list_tags` 的 `subprocess.run` 有 `check=True`，但函式沒有 try/except 處理可能的 `CalledProcessError`。"
+  }
+]

@@ -1,0 +1,159 @@
+{
+ "label": "ph-A3",
+ "rubric": "<repo>/.claude/experiments/2026-10-01-prompt-hygiene/variants/rubric-A.md",
+ "rules_dir": "<repo>/.claude/experiments/2026-10-01-prompt-hygiene/variants/rules-A",
+ "model": "deepseek-v4-pro",
+ "runs": 5,
+ "results": [
+  {
+   "target": "probe",
+   "run": 1,
+   "exit": 0,
+   "findings": 3,
+   "seconds": 8.3,
+   "prompt_tokens": 3787,
+   "cache_hit": 3712,
+   "completion_tokens": 894
+  },
+  {
+   "target": "probe",
+   "run": 2,
+   "exit": 0,
+   "findings": 3,
+   "seconds": 8.2,
+   "prompt_tokens": 3787,
+   "cache_hit": 3712,
+   "completion_tokens": 905
+  },
+  {
+   "target": "probe",
+   "run": 3,
+   "exit": 0,
+   "findings": 3,
+   "seconds": 8.1,
+   "prompt_tokens": 3787,
+   "cache_hit": 3712,
+   "completion_tokens": 948
+  },
+  {
+   "target": "probe",
+   "run": 4,
+   "exit": 0,
+   "findings": 4,
+   "seconds": 10.0,
+   "prompt_tokens": 3787,
+   "cache_hit": 3712,
+   "completion_tokens": 1247
+  },
+  {
+   "target": "probe",
+   "run": 5,
+   "exit": 0,
+   "findings": 5,
+   "seconds": 12.4,
+   "prompt_tokens": 3787,
+   "cache_hit": 3712,
+   "completion_tokens": 1464
+  },
+  {
+   "target": "python",
+   "run": 1,
+   "exit": 0,
+   "findings": 6,
+   "seconds": 12.3,
+   "prompt_tokens": 3279,
+   "cache_hit": 3200,
+   "completion_tokens": 1385
+  },
+  {
+   "target": "python",
+   "run": 2,
+   "exit": 0,
+   "findings": 7,
+   "seconds": 15.5,
+   "prompt_tokens": 3279,
+   "cache_hit": 3200,
+   "completion_tokens": 1800
+  },
+  {
+   "target": "python",
+   "run": 3,
+   "exit": 0,
+   "findings": 7,
+   "seconds": 16.2,
+   "prompt_tokens": 3279,
+   "cache_hit": 3200,
+   "completion_tokens": 1991
+  },
+  {
+   "target": "python",
+   "run": 4,
+   "exit": 0,
+   "findings": 7,
+   "seconds": 16.1,
+   "prompt_tokens": 3279,
+   "cache_hit": 3200,
+   "completion_tokens": 1879
+  },
+  {
+   "target": "python",
+   "run": 5,
+   "exit": 0,
+   "findings": 8,
+   "seconds": 16.6,
+   "prompt_tokens": 3279,
+   "cache_hit": 3200,
+   "completion_tokens": 2035
+  },
+  {
+   "target": "shell",
+   "run": 1,
+   "exit": 0,
+   "findings": 7,
+   "seconds": 13.3,
+   "prompt_tokens": 2566,
+   "cache_hit": 2560,
+   "completion_tokens": 1590
+  },
+  {
+   "target": "shell",
+   "run": 2,
+   "exit": 0,
+   "findings": 6,
+   "seconds": 17.3,
+   "prompt_tokens": 2566,
+   "cache_hit": 2560,
+   "completion_tokens": 2151
+  },
+  {
+   "target": "shell",
+   "run": 3,
+   "exit": 0,
+   "findings": 6,
+   "seconds": 13.2,
+   "prompt_tokens": 2566,
+   "cache_hit": 2560,
+   "completion_tokens": 1575
+  },
+  {
+   "target": "shell",
+   "run": 4,
+   "exit": 0,
+   "findings": 7,
+   "seconds": 23.6,
+   "prompt_tokens": 2566,
+   "cache_hit": 2560,
+   "completion_tokens": 2822
+  },
+  {
+   "target": "shell",
+   "run": 5,
+   "exit": 0,
+   "findings": 6,
+   "seconds": 12.9,
+   "prompt_tokens": 2566,
+   "cache_hit": 2560,
+   "completion_tokens": 1451
+  }
+ ]
+}

@@ -1,0 +1,101 @@
+   1  #!/usr/bin/env bash
+   2  # 批次同步一批 repo，把每次同步的結果寫進 sqlite，給每日維運報表用。
+   3  #
+   4  # 用法：
+   5  #   ./repo_sync.sh ~/work/repos main
+   6  #   ./repo_sync.sh ~/work/repos release/2026-09
+   7  #
+   8  # 報表欄位：repo 名稱、追蹤的 branch、本地領先幾個 commit、同步時間。
+   9  
+  10  ROOT="$1"
+  11  BRANCH="$2"
+  12  DB=/tmp/repo_sync.db
+  13  LOG=/tmp/repo_sync.log
+  14  
+  15  # branch 名稱會進 git 指令，先擋掉不合法的字元
+  16  if [[ ! "$BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]]; then
+  17    echo "branch 名稱只接受英數與 . _ / - ：$BRANCH" >&2
+  18    exit 2
+  19  fi
+  20  
+  21  init_db() {
+  22    sqlite3 "$DB" "CREATE TABLE IF NOT EXISTS runs (
+  23      repo TEXT, branch TEXT, ahead INT, synced_at TEXT
+  24    )"
+  25  }
+  26  
+  27  # 把單一 repo 同步到指定 branch，回報本地領先幾個 commit
+  28  sync_one() {
+  29    local dir="$1"
+  30    local name
+  31    name=$(basename "$dir")
+  32  
+  33    cd "$dir"
+  34    git fetch origin --prune 2>>"$LOG"
+  35  
+  36    # branch 已在開頭驗過格式，可以直接用
+  37    git checkout $BRANCH 2>>"$LOG"
+  38    git merge --ff-only "origin/$BRANCH" 2>>"$LOG"
+  39  
+  40    local ahead
+  41    ahead=$(git rev-list --count "origin/$BRANCH"..HEAD 2>/dev/null)
+  42  
+  43    if [ "$ahead" -gt 0 ]; then
+  44      echo "[$name] 本地領先 $ahead 個 commit，尚未推送" >> "$LOG"
+  45    fi
+  46  
+  47    sqlite3 "$DB" "INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))"
+  48  }
+  49  
+  50  # 同步完成後跑專案自訂的 hook（如果有的話）
+  51  run_hook() {
+  52    local repo="$1"
+  53    local hook="$ROOT/.hooks/post-sync"
+  54  
+  55    if [ -x "$hook" ]; then
+  56      eval "$hook $repo"
+  57    fi
+  58  }
+  59  
+  60  # 清掉上一輪留下的建置快取
+  61  cleanup_cache() {
+  62    rm -rf "$ROOT"/.cache/*
+  63  }
+  64  
+  65  # 產生當日摘要，行數太多就只留最後 100 行
+  66  summarize() {
+  67    local total
+  68    total=$(grep -c . "$LOG" 2>/dev/null || echo 0)
+  69  
+  70    if [ "$total" -gt 100 ]; then
+  71      tail -100 "$LOG" > "$LOG.trimmed"
+  72      mv "$LOG.trimmed" "$LOG"
+  73    fi
+  74  
+  75    echo "本次同步共 $total 筆紀錄，詳見 $LOG"
+  76  }
+  77  
+  78  main() {
+  79    if [ -z "$BRANCH" ]; then
+  80      echo "用法：$0 <repos-root> <branch>" >&2
+  81      exit 1
+  82    fi
+  83  
+  84    init_db
+  85    cleanup_cache
+  86  
+  87    for d in $(ls "$ROOT"); do
+  88      local target="$ROOT/$d"
+  89  
+  90      if [ ! -d "$target/.git" ]; then
+  91        continue
+  92      fi
+  93  
+  94      sync_one "$target"
+  95      run_hook "$d"
+  96    done
+  97  
+  98    summarize
+  99  }
+ 100  
+ 101  main "$@"

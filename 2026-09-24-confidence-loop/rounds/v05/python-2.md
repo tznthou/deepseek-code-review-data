@@ -1,0 +1,67 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+這個 PR 新增了一個從 GitHub API 撈 PR 資料並計算統計的小工具。主要風險在於錯誤處理不當（_fetch 吞掉所有例外）、可變預設參數（collect_authors 的 seen=[]）、shell=True 指令注入（archive）、以及資源管理（export_csv 未使用 with）。最該先修的是 _fetch 的例外處理與 archive 的 shell 注入，因為它們可能導致靜默失敗或任意指令執行。
+
+### Findings（6 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `sandbox/pr_stats.py:24` | _fetch 吞掉所有例外，導致靜默失敗 | 0.95 |
+| 🛑 | Blocker | `sandbox/pr_stats.py:77` | archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險 | 0.90 |
+| ⚠️ | Major | `sandbox/pr_stats.py:29` | 可變預設參數 seen=[] 導致跨呼叫共用狀態 | 0.90 |
+| ⚠️ | Major | `sandbox/pr_stats.py:69` | export_csv 未使用 with 管理檔案，可能洩漏資源 | 0.85 |
+| ⚠️ | Major | `sandbox/pr_stats.py:54` | threshold_from_env 未處理環境變數轉換失敗 | 0.80 |
+| 🔸 | Minor | `sandbox/pr_stats.py:59` | classify 未處理缺失欄位，可能拋出 KeyError | 0.70 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/pr_stats.py:24</code> _fetch 吞掉所有例外，導致靜默失敗</summary>
+
+`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使得呼叫端無法得知失敗。例如當 API 回傳 404 或 token 無效時，`_fetch` 會回傳 `None`，後續程式碼（如 `pr["user"]["login"]`）會拋出 `TypeError`，但真正的錯誤原因已被隱藏。建議至少記錄錯誤並重新拋出，或讓函式回傳明確的錯誤結果。
+
+**判斷依據**：diff 第 24 行顯示 `except: pass`，且 `_fetch` 被多處呼叫（如 `collect_authors` 和 `main` 中），呼叫端未檢查回傳值是否為 `None`。
+
+</details>
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/pr_stats.py:77</code> archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險</summary>
+
+`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path` 參數。這些參數來自命令列參數（`repo`）和內部產生的路徑，但 `repo` 完全由使用者控制，攻擊者可注入額外指令（例如 `repo` 設為 `x; rm -rf /`）。建議改用參數列表形式並避免 `shell=True`，或對輸入進行嚴格驗證。
+
+**判斷依據**：diff 第 55 行顯示 `shell=True` 且 f-string 包含 `repo` 和 `path`，其中 `repo` 來自 `sys.argv[1]`（見 `main` 函式）。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/pr_stats.py:29</code> 可變預設參數 seen=[] 導致跨呼叫共用狀態</summary>
+
+`collect_authors` 的 `seen` 參數預設為空列表，但 Python 的可變預設參數只會建立一次，之後每次呼叫都會共用同一個列表。若呼叫者未傳入 `seen`，多次呼叫會累積先前結果，導致作者清單不正確。建議改為 `seen=None` 並在函式內初始化。
+
+**判斷依據**：diff 第 28 行顯示 `seen=[]`，且函式內有 `seen.append(...)`，會修改該列表。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/pr_stats.py:69</code> export_csv 未使用 with 管理檔案，可能洩漏資源</summary>
+
+`export_csv` 直接使用 `open` 和 `close`，若寫入過程中發生例外（例如磁碟滿），檔案不會被關閉，造成資源洩漏。建議改用 `with open(...) as f:` 確保檔案正確關閉。
+
+**判斷依據**：diff 第 49-53 行顯示手動開啟和關閉檔案，沒有使用 `with`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/pr_stats.py:54</code> threshold_from_env 未處理環境變數轉換失敗</summary>
+
+`threshold_from_env` 直接將 `PR_STALE_DAYS` 環境變數轉為 `int`，若該變數不是有效整數（例如設為 `abc`），會拋出 `ValueError` 導致程式崩潰。建議捕捉例外並提供預設值或明確錯誤訊息。
+
+**判斷依據**：diff 第 39 行顯示 `int(raw)` 沒有例外處理，而 `raw` 來自環境變數，可能由使用者設定。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/pr_stats.py:59</code> classify 未處理缺失欄位，可能拋出 KeyError</summary>
+
+`classify` 直接存取 `pr["additions"]`、`pr["changed_files"]` 和 `pr["title"]`，若 API 回應缺少這些欄位（例如權限不足或 API 變更），會拋出 `KeyError`。建議使用 `.get()` 並提供預設值，或先驗證回應結構。
+
+**判斷依據**：diff 第 44-48 行顯示直接使用鍵值存取，且 `pr` 來自 `_fetch`，可能因錯誤而為 `None` 或缺少欄位。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 3279 (cache hit 3200) ｜ completion tokens 1573 ｜ PR #12</sub>

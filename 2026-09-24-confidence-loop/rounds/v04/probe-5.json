@@ -1,0 +1,24 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "git log 失敗時未檢查，可能導致錯誤的 release notes",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，且未檢查 `proc.returncode`。如果 git 指令失敗（例如 repo 路徑無效、git 不在 PATH、或權限不足），`proc.stdout` 會是空字串，函式會回傳空 list，後續流程會誤以為沒有 commit 而回傳 0，但實際上沒有產生任何 release notes。建議加上 `check=True` 或檢查 `proc.returncode`，並在失敗時拋出例外或回傳錯誤碼。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式內呼叫 `subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "當 tag 是第一個符合格式的 tag 時，prev 會造成 IndexError",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，`tags.index(tag)` 為 0，`tags[-1]` 會取到最後一個 tag，這通常不是預期的行為，且可能導致錯誤的 commit 範圍。建議檢查 `tags.index(tag) == 0` 的情況，並決定要如何處理（例如回報錯誤或使用其他基準）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式內直接使用 `tags.index(tag) - 1` 作為索引，未處理 `tag` 是第一個元素的情況。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`git log` 失敗時未檢查退出碼，可能導致誤報成功",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `prev` 或 `tag` 不存在，`git log` 會回傳非零退出碼並在 stderr 輸出錯誤，但函式仍會回傳空列表，讓主流程誤以為沒有 commit 而回報成功。建議加上 `check=True` 或明確檢查 `proc.returncode`，並在失敗時拋出例外或回傳錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式沒有處理 `subprocess.run` 的錯誤，且 `main` 中呼叫後直接檢查 `if not commits`，未考慮 git 失敗的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`max_items()` 未處理負數或非整數輸入，可能導致意外行為",
+    "body": "`max_items()` 將環境變數 `NOTES_MAX` 轉為整數，但未檢查是否為負數。若設為負數，`commits[: max_items()]` 會切片到倒數第 N 個元素，可能遺漏大部分 commit。建議驗證數值為正整數，否則回退到預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items()` 只處理了 `ValueError`，未檢查轉換後的數值是否合理。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "錯誤訊息可能洩漏 webhook URL",
+    "body": "`post()` 在 `URLError` 的錯誤訊息中直接印出 `url`，而 webhook URL 通常包含 secret token，可能意外洩漏到 log 中。建議在錯誤訊息中隱藏 URL 或僅顯示 host。",
+    "existing_code": "log(f\"[error] 貼到 {url} 失敗：{e}\")",
+    "evidence": "diff 中 `post()` 的錯誤處理直接將 `url` 寫入 log。"
+  }
+]

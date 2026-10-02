@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致後續程式碼在資料缺失時崩潰",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使得函式回傳 `None`。後續程式碼（如 `collect_authors` 中的 `pr[\"user\"][\"login\"]`）會因為 `pr` 為 `None` 而拋出 `TypeError`，且沒有提供任何錯誤訊息。建議至少記錄例外並重新拋出，或回傳明確的錯誤物件，並在呼叫端處理。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24 行：`except:` 後只有 `pass`，且 `_fetch` 的回傳值被直接使用（例如 `collect_authors` 第 29 行 `pr[\"user\"][\"login\"]`）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "archive 使用 shell=True 且指令由外部輸入拼接，存在指令注入風險",
+    "body": "`archive` 函式使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path`，這些值來自命令列參數或檔案路徑，可能包含惡意 shell 指令。攻擊者可透過控制 `repo` 參數注入任意指令。建議改用參數列表形式，避免 shell 解析，或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 74 行：`shell=True` 且 f-string 包含外部輸入 `repo` 和 `path`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "collect_authors 使用可變預設參數 seen=[]，跨呼叫累積資料",
+    "body": "`collect_authors` 的 `seen` 參數預設為空 list，這是可變物件，會在函式定義時建立一次並在所有呼叫間共用。若呼叫多次，前一次的結果會殘留，導致後續呼叫的 `seen` 包含先前資料。建議改為 `seen=None`，並在函式內初始化為空 list。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：`seen=[]` 是可變預設值，且函式內有 `seen.append(...)` 修改它。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "export_csv 未使用 with 開啟檔案，例外時可能洩漏檔案描述子",
+    "body": "`export_csv` 使用 `open` 和 `close` 手動管理檔案，若在寫入過程中發生例外（如磁碟滿、權限問題），檔案不會被關閉，造成資源洩漏。建議使用 `with open(path, \"w\") as f:` 確保檔案正確關閉。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 70-74 行：手動 open/close，無 with 或 try/finally。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 的 int 轉換未處理例外，可能導致程式崩潰",
+    "body": "`threshold_from_env` 將環境變數 `PR_STALE_DAYS` 直接轉為 int，若該值不是合法整數（例如 \"abc\"），會拋出 `ValueError` 且未處理，導致程式終止。建議使用 try/except 或先驗證輸入。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 45 行：`int(raw)` 無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "classify 假設 pr[\"additions\"] 和 pr[\"changed_files\"] 為數字，可能因型別錯誤而崩潰",
+    "body": "`classify` 直接比較 `pr[\"additions\"] > 500` 和 `pr[\"changed_files\"] > 20`，但 GitHub API 回傳的這些欄位可能是字串或缺失，導致 TypeError 或 KeyError。建議先驗證型別或使用 `int()` 轉換並處理例外。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:",
+    "evidence": "diff 第 51-53 行：直接比較，無型別檢查。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "review_latency 對空 events 回傳 0，可能誤導指標",
+    "body": "`review_latency` 在 `events` 為空時回傳 0，但 0 可能被解讀為「零延遲」，而實際上可能是資料缺失。建議回傳 None 或拋出例外，讓呼叫端處理。",
+    "existing_code": "if not events:\n        return 0",
+    "evidence": "diff 第 35-36 行：空 events 回傳 0。"
+  }
+]

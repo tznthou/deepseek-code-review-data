@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "例外被完全吞掉，導致靜默失敗",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外，包括網路錯誤、HTTP 錯誤、JSON 解析錯誤。呼叫端（`collect_authors` 和 `main`）會繼續執行，但 `pr` 可能是 `None`，後續 `pr[\"user\"]` 會拋出 `TypeError`，且沒有原始錯誤資訊。建議至少記錄例外並重新拋出，或讓函式回傳 `None` 並在呼叫端檢查。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 23-24 行：`except:` 後只有 `pass`，沒有記錄或重新拋出。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "shell=True 且指令由外部輸入拼接，可能造成指令注入",
+    "body": "`archive` 使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo` 和 `path`。`repo` 來自命令列參數，攻擊者可注入額外指令，例如 `repo = 'x; rm -rf /'`。建議改用參數列表形式並避免 `shell=True`，或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 62 行：`shell=True` 且 f-string 包含外部輸入 `repo` 和 `path`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "可變預設值 seen=[] 跨呼叫共用",
+    "body": "`collect_authors` 的 `seen=[]` 是可變預設值，每次呼叫都會累積到同一個 list，導致結果包含前一次呼叫的作者。例如第一次呼叫 `collect_authors('repo', [1])` 回傳 `['alice']`，第二次呼叫 `collect_authors('repo', [2])` 會回傳 `['alice', 'bob']`。建議改用 `seen=None` 並在函式內初始化。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：函式定義使用可變預設值 `seen=[]`。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "環境變數轉換為整數未處理例外",
+    "body": "`threshold_from_env` 中 `int(raw)` 可能拋出 `ValueError`，導致程式崩潰。如果 `PR_STALE_DAYS` 設為非數字字串，使用者會看到 traceback。建議捕捉例外並提供有意義的錯誤訊息，或使用預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 36 行：`int(raw)` 未包在 try-except 中。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "檔案開啟未使用 with，可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close`，但若寫入過程拋出例外（例如磁碟滿），檔案不會被關閉。建議改用 `with open(path, 'w') as f:`。",
+    "existing_code": "f = open(path, \"w\")",
+    "evidence": "diff 第 48 行：直接呼叫 `open` 而沒有使用 context manager。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 72,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "CSV 欄位未處理逗號或換行，可能破壞格式",
+    "body": "`export_csv` 直接使用 f-string 寫入 CSV，若 `author` 或 `kind` 包含逗號或換行，會破壞 CSV 結構。建議使用 `csv` 模組的 writer。",
+    "existing_code": "f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")",
+    "evidence": "diff 第 53 行：手動拼接 CSV 欄位，未做 escaping。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Authorization header 直接使用環境變數，可能洩漏 token",
+    "body": "`_fetch` 從環境變數讀取 `GITHUB_TOKEN` 並直接放入 header，若請求被記錄或發生例外，token 可能外洩。建議使用更安全的方式管理憑證，例如從 keyring 讀取。",
+    "existing_code": "req.add_header(\"Authorization\", \"Bearer \" + os.environ[\"GITHUB_TOKEN\"])",
+    "evidence": "diff 第 21 行：直接使用環境變數作為敏感 header。"
+  }
+]

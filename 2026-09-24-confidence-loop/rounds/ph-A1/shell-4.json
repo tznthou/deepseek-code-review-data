@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入：repo 名稱未經跳脫直接插入 SQL 語句",
+    "body": "`sync_one` 中的 `sqlite3` 指令直接將 `$name` 與 `$BRANCH` 插入 SQL 字串。如果 repo 目錄名稱包含單引號（例如 `my'repo`），會破壞 SQL 語法，甚至可能執行任意 SQL 指令。攻擊者可透過建立惡意名稱的 repo 目錄來竄改資料庫內容。\n\n建議改用參數化查詢，例如：\n```bash\nsqlite3 \"$DB\" \"INSERT INTO runs VALUES(?, ?, ?, datetime('now'))\" \"$name\" \"$BRANCH\" \"$ahead\"\n```",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "第 45 行直接將變數嵌入 SQL 字串，未做任何跳脫。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入：`eval` 執行未受信任的 hook 路徑與參數",
+    "body": "`run_hook` 使用 `eval \"$hook $repo\"` 執行 hook。雖然 `$hook` 是固定路徑，但 `$repo` 來自目錄名稱，攻擊者可建立名稱包含 shell 特殊字元的 repo 目錄（例如 `x; rm -rf ~`），導致任意命令執行。\n\n建議避免使用 `eval`，改為直接執行並正確引用參數：\n```bash\n\"$hook\" \"$repo\"\n```",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "第 58 行使用 eval 執行包含未受信任變數的字串。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "git 指令失敗未中止，可能導致錯誤資料寫入資料庫",
+    "body": "`sync_one` 中的 `git fetch`、`git checkout`、`git merge` 失敗時僅將 stderr 寫入 log，腳本仍會繼續執行。例如，若 `git checkout` 因本地變更而失敗，後續的 `git merge` 可能基於錯誤的 branch 執行，且 `ahead` 的計算結果可能不正確，最終將錯誤資料寫入資料庫。\n\n建議在每個 git 指令後檢查 exit code，失敗時中止該 repo 的同步並記錄錯誤。",
+    "existing_code": "git fetch origin --prune 2>>\"$LOG\"\n\n  # branch 已在開頭驗過格式，可以直接用\n  git checkout $BRANCH 2>>\"$LOG\"\n  git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "第 34-36 行未檢查 git 指令的執行結果。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`ahead` 可能為空字串，導致 SQL 語法錯誤",
+    "body": "`ahead=$(git rev-list --count ... 2>/dev/null)` 若 `git rev-list` 失敗（例如 branch 不存在），`ahead` 會是空字串。後續的 SQL 插入會變成 `INSERT INTO runs VALUES('repo', 'branch', , datetime('now'))`，導致 SQL 錯誤。\n\n建議在計算後檢查 `ahead` 是否為空，並設定預設值（如 0）或中止。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "第 38 行未處理命令失敗時變數為空的情況。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`local` 使用在函式外，導致變數作用域錯誤",
+    "body": "`main` 函式中的 `for d in $(ls \"$ROOT\"); do` 迴圈內使用了 `local target=\"$ROOT/$d\"`。`local` 只能在函式內使用，在函式外使用會報錯（在某些 bash 版本中會導致腳本終止）。\n\n應移除 `local`，直接賦值：`target=\"$ROOT/$d\"`。",
+    "existing_code": "local target=\"$ROOT/$d\"",
+    "evidence": "第 75 行在 main 函式內使用 local，但 main 本身是函式，此處 local 是合法的。然而，若此迴圈不在函式內（例如直接放在腳本主體），則會出錯。根據 diff，此行位於 main 函式內，因此可能不是問題。但需確認 main 函式的範圍。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 `ls` 解析目錄列表，可能因檔名包含換行或空格而失敗",
+    "body": "`for d in $(ls \"$ROOT\")` 會將 `ls` 的輸出以空白分割，若 repo 目錄名稱包含空格或換行，會導致迴圈變數錯誤。\n\n建議使用 glob 或 `find` 搭配 `-print0` 與 `while read -d ''` 來處理。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "第 73 行使用 ls 的輸出進行迴圈。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`cleanup_cache` 使用 `rm -rf` 刪除快取，若 `$ROOT` 未正確設定可能造成災難",
+    "body": "`rm -rf \"$ROOT\"/.cache/*` 若 `$ROOT` 因輸入錯誤而為空或根目錄，可能刪除大量檔案。雖然 `$ROOT` 來自使用者輸入，但建議加入防護，例如檢查 `$ROOT` 是否為有效目錄且非根目錄。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "第 63 行直接使用 rm -rf。"
+  }
+]

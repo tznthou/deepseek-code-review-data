@@ -1,0 +1,100 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 新增一個批次同步多個 Git repo 的 bash 腳本，並將結果寫入 SQLite。主要風險在於 SQL 注入、命令注入、錯誤處理不足、以及使用全域變數與 eval 等可維護性問題。最優先應修復 SQL 注入與命令注入漏洞，並改善錯誤處理與變數作用域。
+
+### Findings（7 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `sandbox/repo_sync.sh:47` | SQL 注入：repo 名稱與 branch 未經跳脫直接插入 SQL 查詢 | 0.95 |
+| 🛑 | Blocker | `sandbox/repo_sync.sh:56` | 命令注入：`eval` 執行未受信任的 hook 路徑與 repo 名稱 | 0.90 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:34` | 錯誤處理不足：git 指令失敗仍繼續執行 | 0.85 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:41` | ahead 計算可能因 rev-list 失敗而得到空值，導致 SQL 錯誤 | 0.80 |
+| ⚠️ | Major | `sandbox/repo_sync.sh:62` | cleanup_cache 使用 rm -rf 可能誤刪重要檔案 | 0.75 |
+| 🔸 | Minor | `sandbox/repo_sync.sh:68` | summarize 中 total 計算可能因 grep 失敗而錯誤 | 0.70 |
+| 🔸 | Minor | `sandbox/repo_sync.sh:94` | 使用全域變數傳遞參數，降低可讀性與可測試性 | 0.65 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/repo_sync.sh:47</code> SQL 注入：repo 名稱與 branch 未經跳脫直接插入 SQL 查詢</summary>
+
+`sync_one` 中的 `sqlite3` 指令直接將 `$name` 與 `$BRANCH` 插入 SQL 字串。若 repo 目錄名稱或 branch 名稱包含單引號，將可注入任意 SQL 語句，導致資料毀損或執行未預期的資料庫操作。
+
+**失敗情境**：假設 repo 目錄名稱為 `test'repo`，則 SQL 指令變成 `INSERT INTO runs VALUES('test'repo', 'main', 0, datetime('now'))`，造成語法錯誤；若精心構造名稱，可插入任意 SQL。
+
+**建議修法**：使用參數化查詢，例如 `sqlite3 "$DB" "INSERT INTO runs VALUES(?, ?, ?, datetime('now'))" "$name" "$BRANCH" "$ahead"`，或使用 `sqlite3` 的 `-cmd` 與 `.parameter` 機制。
+
+**判斷依據**：diff 第 43 行：`sqlite3 "$DB" "INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))"`
+
+</details>
+
+<details><summary>🛑 <b>Blocker</b> — <code>sandbox/repo_sync.sh:56</code> 命令注入：`eval` 執行未受信任的 hook 路徑與 repo 名稱</summary>
+
+`run_hook` 使用 `eval "$hook $repo"` 執行 hook。`$hook` 與 `$repo` 皆來自使用者輸入（`$ROOT` 與 repo 目錄名稱），若其中包含 shell 特殊字元，將導致任意命令執行。
+
+**失敗情境**：若 `$ROOT` 包含空格或特殊字元（例如 `/tmp/evil; rm -rf ~`），或 repo 名稱為 `$(malicious)`，則 `eval` 會執行注入的命令。
+
+**建議修法**：避免使用 `eval`，直接執行 `"$hook" "$repo"`，並確保 hook 路徑與參數正確引用。
+
+**判斷依據**：diff 第 55 行：`eval "$hook $repo"`
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:34</code> 錯誤處理不足：git 指令失敗仍繼續執行</summary>
+
+`sync_one` 中的 `git fetch`、`git checkout`、`git merge` 失敗時僅將錯誤寫入 log，但腳本仍繼續執行後續步驟，可能導致資料不一致或錯誤的 ahead 計算。
+
+**失敗情境**：若 `git fetch` 因網路問題失敗，`origin/$BRANCH` 可能不存在，`git merge` 將失敗，但腳本仍會執行 `git rev-list` 並寫入錯誤的 ahead 值。
+
+**建議修法**：在每個 git 指令後檢查 exit code，失敗時終止該 repo 的同步並記錄錯誤。
+
+**判斷依據**：diff 第 31-35 行：git 指令僅將 stderr 重定向至 log，未檢查 exit code。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:41</code> ahead 計算可能因 rev-list 失敗而得到空值，導致 SQL 錯誤</summary>
+
+`ahead=$(git rev-list --count "origin/$BRANCH"..HEAD 2>/dev/null)` 若 `git rev-list` 失敗（例如 branch 不存在），`ahead` 將為空字串，後續 `[ "$ahead" -gt 0 ]` 會因語法錯誤而失敗，且 SQL 插入時 `$ahead` 為空可能導致型別錯誤。
+
+**失敗情境**：若 `origin/$BRANCH` 不存在，`git rev-list` 回傳非零 exit code，`ahead` 為空，`[ "$ahead" -gt 0 ]` 會報錯，且 SQL 插入時 `$ahead` 為空字串，可能導致資料型別不符。
+
+**建議修法**：檢查 `git rev-list` 的 exit code，失敗時設定 `ahead=0` 或終止處理。
+
+**判斷依據**：diff 第 38 行：`ahead=$(git rev-list --count "origin/$BRANCH"..HEAD 2>/dev/null)`
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>sandbox/repo_sync.sh:62</code> cleanup_cache 使用 rm -rf 可能誤刪重要檔案</summary>
+
+`cleanup_cache` 執行 `rm -rf "$ROOT"/.cache/*`，若 `$ROOT` 未正確設定或包含符號連結，可能刪除非預期的檔案。
+
+**失敗情境**：若 `$ROOT` 為 `/` 且 `.cache` 為符號連結至重要目錄，則可能刪除系統檔案。
+
+**建議修法**：檢查 `$ROOT` 是否有效，並避免使用 `rm -rf` 搭配萬用字元，或改用更安全的刪除方式。
+
+**判斷依據**：diff 第 62 行：`rm -rf "$ROOT"/.cache/*`
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/repo_sync.sh:68</code> summarize 中 total 計算可能因 grep 失敗而錯誤</summary>
+
+`total=$(grep -c . "$LOG" 2>/dev/null) || total=0` 若 `grep` 因檔案不存在而失敗，`total` 會被設為 0，但若檔案存在但為空，`grep -c .` 回傳 0 且 exit code 為 1，此時 `total` 會被設為 0，但實際上檔案存在且為空，後續 `if [ "$total" -gt 100 ]` 判斷正確，但 `echo` 顯示的筆數為 0，可能造成誤解。
+
+**建議修法**：使用 `wc -l < "$LOG"` 或先檢查檔案是否存在。
+
+**判斷依據**：diff 第 70 行：`total=$(grep -c . "$LOG" 2>/dev/null) || total=0`
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>sandbox/repo_sync.sh:94</code> 使用全域變數傳遞參數，降低可讀性與可測試性</summary>
+
+`sync_one` 與 `run_hook` 依賴全域變數 `$ROOT`、`$BRANCH`、`$DB`、`$LOG`，而非透過參數傳遞，這使得函式難以獨立測試與重用。
+
+**建議修法**：將所需變數作為函式參數傳入，或使用 `local` 變數並在呼叫時明確指定。
+
+**判斷依據**：diff 第 79-80 行：呼叫 `sync_one` 與 `run_hook` 時僅傳入部分參數，其餘依賴全域變數。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 2566 (cache hit 2560) ｜ completion tokens 2216 ｜ PR #13</sub>

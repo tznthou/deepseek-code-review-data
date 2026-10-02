@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`git log` 失敗時未檢查退出碼，可能把錯誤輸出當成正常結果",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 路徑錯誤、權限不足或其他原因失敗，`proc.stdout` 會是空字串或錯誤訊息，函式會回傳空列表或把錯誤訊息當成 commit 來解析。建議加上 `check=True`，或至少檢查 `proc.returncode != 0` 時記錄錯誤並回傳空列表。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，沒有檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "當 tag 是第一個版本時，`prev = tags[tags.index(tag) - 1]` 會拋出 IndexError",
+    "body": "如果使用者指定的 tag 是 `tags` 列表中的第一個元素（例如 repo 只有一個 tag），`tags.index(tag) - 1` 會是 -1，`tags[-1]` 會取到最後一個 tag，而不是拋出錯誤。這會導致 `prev` 指向錯誤的 tag，產生錯誤的 commit 範圍。建議在 `tags.index(tag) == 0` 時顯示錯誤訊息並回傳非零退出碼。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中這一行直接使用 `tags.index(tag) - 1` 作為索引，沒有檢查是否為 0。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`NOTES_MAX` 未處理負數或零，可能導致公告內容不完整",
+    "body": "`max_items()` 將 `NOTES_MAX` 轉成整數後直接回傳，沒有檢查是否為正數。如果使用者設定 `NOTES_MAX=0` 或負數，`commits[: max_items()]` 會是空列表或錯誤切片，導致公告沒有內容或拋出例外。建議在轉換後檢查數值是否大於 0，否則使用預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items()` 只處理了 `ValueError`，沒有檢查轉換後的數值是否合理。"
+  }
+]

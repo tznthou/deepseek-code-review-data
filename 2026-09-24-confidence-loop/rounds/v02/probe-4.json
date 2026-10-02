@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "git log 失敗時未檢查回傳碼，可能回報成功但沒有內容",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有 `check=True`，且未檢查 `proc.returncode`。如果 `git log` 因為 repo 損毀、權限不足或 `prev`/`tag` 不存在而失敗，`proc.stdout` 會是空字串，函式回傳空 list，`main` 會印出「之間沒有新 commit」並回傳 0，讓使用者誤以為成功。\n\n建議：加上 `check=True`，或明確檢查 `proc.returncode != 0` 並拋出例外或回傳錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 第 51-54 行顯示 `subprocess.run` 沒有 `check=True`，且後續直接使用 `proc.stdout`，沒有檢查 `returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "只有一個符合條件的 tag 時，`prev` 會取到 `tags[-1]` 造成錯誤",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，會取到 `tags[-1]`（最後一個 tag），而不是更早的 commit。這會讓 `git log prev..tag` 的範圍完全錯誤，可能包含大量不相關的 commit 或根本沒有 commit。\n\n建議：檢查 `tags.index(tag) == 0` 的情況，並決定要如何處理（例如從 repo 的第一個 commit 開始，或直接報錯）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 第 105 行，`tags.index(tag)` 可能為 0，此時 `-1` 會指向最後一個元素。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`max_items` 未限制負數，可能導致切片行為異常",
+    "body": "`max_items` 直接將環境變數轉成整數，沒有檢查是否為負數。若 `NOTES_MAX=-1`，`commits[: -1]` 會回傳除了最後一個以外的所有 commit，而不是全部或報錯。這可能不是使用者預期的行為。\n\n建議：檢查數值是否為正整數，否則使用預設值或報錯。",
+    "existing_code": "return int(raw)",
+    "evidence": "diff 第 39 行，`int(raw)` 沒有驗證範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "webhook URL 未驗證 scheme，可能被用於 SSRF 或非預期協定",
+    "body": "`post` 直接使用 `urllib.request.urlopen` 開啟 `url`，沒有檢查 scheme 是否為 `http` 或 `https`。如果環境變數被設為 `file:///etc/passwd` 或 `ftp://...`，程式會嘗試讀取或連線到非預期的資源。雖然環境變數通常由部署者控制，但這仍是一個潛在的安全風險。\n\n建議：在 `main` 中驗證 `url` 的 scheme 為 `http` 或 `https`。",
+    "existing_code": "with urllib.request.urlopen(req, timeout=10) as resp:",
+    "evidence": "diff 第 93 行，`urlopen` 接受任意 scheme。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 74,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "commit subject 的 prefix 解析可能誤分類",
+    "body": "`group` 使用 `subject.split(\":\", 1)[0]` 作為分類依據，但若 commit subject 本身包含冒號（例如 `fix: handle: edge case`），prefix 會是 `fix`，仍能正確分類；但若 subject 開頭不是 `feat:` 或 `fix:`，就會被歸為 `other`。這可能不是問題，但若團隊使用其他 prefix（如 `docs:`、`chore:`），這些 commit 會被歸為「其他」，可能不符合預期。\n\n建議：確認團隊的 commit 慣例，或考慮更彈性的分類方式。",
+    "existing_code": "prefix = subject.split(\":\", 1)[0]",
+    "evidence": "diff 第 61 行，只處理 `feat` 和 `fix`，其他都歸為 `other`。"
+  }
+]

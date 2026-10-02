@@ -1,0 +1,79 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，導致靜默失敗",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包括網路錯誤、HTTP 錯誤、JSON 解析錯誤），使呼叫端無法得知失敗，後續程式碼會因 `pr` 為 `None` 而拋出 `TypeError` 或 `KeyError`。例如：當 GitHub API 回傳 404 或網路中斷時，`_fetch` 回傳 `None`，`collect_authors` 中的 `pr[\"user\"][\"login\"]` 會拋出 `TypeError`。建議至少記錄錯誤並重新拋出，或讓呼叫端處理 `None`。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24 行：`except:` 後只有 `pass`，沒有記錄或重新拋出。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "shell=True 且指令字串包含外部輸入，存在指令注入風險",
+    "body": "`archive` 使用 `subprocess.run` 搭配 `shell=True`，且指令字串中包含 `repo` 和 `path`，這些值來自命令列參數或環境，攻擊者可注入額外指令。例如：`repo` 設為 `foo; rm -rf /` 時，會執行任意指令。建議改用參數列表形式並避免 `shell=True`，或對輸入進行嚴格驗證。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 63 行：`shell=True` 且 f-string 包含外部輸入。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "可變預設值 seen=[] 導致跨呼叫狀態累積",
+    "body": "`collect_authors` 的參數 `seen=[]` 使用可變預設值，每次呼叫都會共用同一個 list。若多次呼叫此函式，作者名稱會不斷累積，造成結果錯誤。例如：第一次呼叫後 `seen` 包含 ['alice']，第二次呼叫時會從 ['alice'] 開始，最後回傳 ['alice', 'bob'] 而非 ['bob']。建議改為 `seen=None`，並在函式內初始化。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：`seen=[]` 是可變預設值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "檔案未使用 with 開啟，例外時可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close`，但若寫入過程中發生例外（如磁碟滿），檔案不會被關閉。建議使用 `with open(path, 'w') as f:` 確保資源釋放。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 57-61 行：手動 open/close，無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "環境變數轉換為整數未處理例外",
+    "body": "`threshold_from_env` 中 `int(raw)` 可能拋出 `ValueError`，若環境變數 `PR_STALE_DAYS` 不是有效整數，程式會崩潰。建議捕捉例外並提供預設值或錯誤訊息。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 42 行：`int(raw)` 未處理轉換失敗。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "classify 依賴可能不存在的鍵",
+    "body": "`classify` 直接存取 `pr[\"additions\"]`、`pr[\"changed_files\"]`、`pr[\"title\"]`，若 API 回應缺少這些鍵（例如權限不足或欄位變更），會拋出 `KeyError`。建議使用 `.get()` 並提供預設值。",
+    "existing_code": "if pr[\"additions\"] > 500:\n        return \"large\"\n    elif pr[\"changed_files\"] > 20:\n        return \"wide\"\n    elif pr[\"title\"].startswith(\"fix\"):\n        return \"fix\"",
+    "evidence": "diff 第 46-51 行：直接索引字典。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "review_latency 對空 timeline 回傳 0 可能誤導",
+    "body": "當 `events` 為空時回傳 0，但 0 可能被解讀為「無延遲」，與實際情況（無資料）混淆。建議回傳 `None` 或拋出例外，讓呼叫端處理。",
+    "existing_code": "if not events:\n        return 0",
+    "evidence": "diff 第 34-35 行：空列表回傳 0。"
+  }
+]

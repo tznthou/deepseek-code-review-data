@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`git log` 失敗時未檢查回傳碼，可能產生空公告",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 損壞、權限不足或 `prev..tag` 範圍無效而失敗，`proc.stdout` 會是空字串，函式會回傳空 list，導致後續產生空公告並貼到 webhook。建議加上 `check=True` 或檢查 `proc.returncode != 0` 時拋出例外。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式呼叫 `subprocess.run` 沒有 `check=True`，且未檢查 `proc.returncode`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "只有一個符合條件的 tag 時，`prev` 會取到最後一個 tag 而非前一個",
+    "body": "`list_tags` 回傳所有符合 `TAG_RE` 的 tag，若 repo 中只有一個符合條件的 tag（例如只有 `v1.0.0`），則 `tags.index(tag)` 為 0，`prev = tags[-1]` 會是 `v1.0.0` 本身，導致 `prev..tag` 範圍為空，`commits_between` 回傳空 list，最後輸出「沒有新 commit」。建議在 `tags.index(tag) == 0` 時處理（例如從 repo 初始 commit 開始，或提示使用者）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式直接使用 `tags.index(tag) - 1`，未處理 index 為 0 的情況。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`NOTES_MAX` 為負數時會導致 `commits[:max_items()]` 切片行為異常",
+    "body": "`max_items` 只處理了非整數的情況，若 `NOTES_MAX` 設為負數（例如 `-1`），`int(raw)` 會成功，回傳負數。之後 `commits[: max_items()]` 會變成 `commits[:-1]`，意外排除最後一個 commit。建議在 `max_items` 中檢查數值是否為正整數，否則回傳預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式只捕捉 `ValueError`，未檢查轉換後的數值是否為正。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`post` 未驗證 URL scheme，可能被用於 SSRF",
+    "body": "`NOTES_WEBHOOK` 由環境變數控制，攻擊者若可控制該變數，可將 URL 設為 `file:///etc/passwd` 或內網位址，`urllib.request.urlopen` 會嘗試讀取或連線。雖然此工具通常由開發者自行執行，但若在 CI 或共享環境中使用，可能造成資訊洩漏。建議限制 scheme 為 `https` 或 `http`，並考慮阻擋內網位址。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 函式直接使用 `url` 建立 Request，未檢查 scheme。"
+  }
+]

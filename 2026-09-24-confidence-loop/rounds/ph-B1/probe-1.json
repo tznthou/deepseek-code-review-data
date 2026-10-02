@@ -1,0 +1,35 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`git log` 失敗時未檢查回傳碼，可能導致誤報成功",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時未設定 `check=True`，也未檢查 `proc.returncode`。若 `git log` 因 repo 損壞、權限不足或 tag 不存在而失敗，`proc.stdout` 會是空字串，函式回傳空 list。後續 `main` 會因 `commits` 為空而回傳 0（成功），但實際上沒有產生任何公告。建議加上 `check=True` 或檢查 `proc.returncode != 0` 時拋出例外或回傳錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式未檢查 `proc.returncode`，且 `main` 中 `if not commits:` 會回傳 0。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "`max_items` 未處理負數或零，可能產生空公告",
+    "body": "`max_items` 直接將環境變數 `NOTES_MAX` 轉為整數，但未檢查是否為正數。若設定為負數或 0，`commits[: max_items()]` 會得到空 list，導致 `group` 回傳空 sections，`render` 只輸出標題，最後仍會呼叫 `post` 貼出無內容的公告。建議限制最小值為 1，或對非法值回退到預設值。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 只處理 ValueError，未檢查數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`list_tags` 未處理 `git tag` 失敗，可能導致程式崩潰",
+    "body": "`list_tags` 使用 `check=True`，若 `git tag` 因 repo 不存在或權限問題失敗，會拋出 `subprocess.CalledProcessError`，但 `main` 未捕捉此例外，程式會以 traceback 結束。建議在 `main` 中捕捉並回傳錯誤碼，或改用 `check=False` 並檢查回傳碼。",
+    "existing_code": "out = subprocess.run(\n        [\"git\", \"tag\", \"--list\", \"v*\", \"--sort=v:refname\"],\n        cwd=repo, capture_output=True, text=True, check=True,\n    ).stdout",
+    "evidence": "diff 中 `list_tags` 使用 `check=True`，但 `main` 呼叫時未包在 try/except 中。"
+  }
+]

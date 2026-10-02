@@ -1,0 +1,57 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "git log 失敗時未檢查回傳碼，可能導致後續 IndexError",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時沒有設定 `check=True`，也沒有檢查 `proc.returncode`。如果 `git log` 因為 repo 路徑錯誤、權限不足或 tag 不存在而失敗，`proc.stdout` 會是空字串，`commits` 會是空 list。接著在 `main` 中 `latest = commits[0][0]` 會拋出 `IndexError`，程式直接 crash。\n\n建議：加上 `check=True`，或在呼叫後檢查 `proc.returncode != 0` 並記錄錯誤後回傳空 list 或拋出例外。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式沒有 `check=True`，且 `main` 中直接使用 `commits[0][0]`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "當 tag 是第一個版本時，prev 會取到錯誤的 tag",
+    "body": "`prev = tags[tags.index(tag) - 1]` 在 `tag` 是 `tags` 的第一個元素時，會取到 `tags[-1]`（最後一個 tag），而不是沒有前一個版本。這會導致 `commits_between` 使用錯誤的範圍，產生不正確的 release notes。\n\n建議：檢查 `tags.index(tag) == 0` 的情況，並處理沒有前一個 tag 的邏輯（例如從 repo 初始 commit 開始）。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式直接計算 `prev`，沒有檢查 index 是否為 0。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "webhook URL 未驗證 scheme，可能被用於 SSRF",
+    "body": "`post` 函式直接使用 `urllib.request.urlopen` 開啟使用者提供的 URL（來自環境變數 `NOTES_WEBHOOK`）。如果攻擊者能控制環境變數（例如在 CI 中），可以指定 `file://` 或 `ftp://` 等 scheme，讀取本機檔案或進行其他攻擊。\n\n建議：驗證 URL 的 scheme 必須是 `http` 或 `https`，並考慮使用 `urllib.parse.urlparse` 檢查。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 函式沒有對 URL 做任何驗證。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "NOTES_MAX 未限制上限，可能導致記憶體耗盡",
+    "body": "`max_items` 從環境變數讀取整數，但沒有檢查上限。如果使用者設定一個極大的值（例如 `NOTES_MAX=999999999`），`commits[: max_items()]` 會嘗試建立一個巨大的 list，可能耗盡記憶體。\n\n建議：設定一個合理的上限（例如 1000），並在超過時記錄警告或直接截斷。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式沒有對回傳值做上限檢查。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "git log 輸出解析脆弱，可能誤判 commit subject",
+    "body": "`commits_between` 使用 `line.split(\" \", 1)` 來分割 sha 和 subject，但 git log 的 `%h %s` 格式中，subject 可能包含多個空格，這部分沒問題。然而，如果 commit subject 本身以空格開頭（不太可能），或者 git 輸出格式因設定而改變，解析就會出錯。另外，`if \" \" not in line: continue` 會跳過沒有空格的列，但 git log 的輸出通常都有空格，所以這個檢查可能永遠不會觸發。\n\n建議：使用更嚴謹的解析方式，例如用 `--format=%h%x09%s` 並以 tab 分割。",
+    "existing_code": "if \" \" not in line:\n            continue\n        sha, subject = line.split(\" \", 1)",
+    "evidence": "diff 中 `commits_between` 的解析邏輯。"
+  }
+]

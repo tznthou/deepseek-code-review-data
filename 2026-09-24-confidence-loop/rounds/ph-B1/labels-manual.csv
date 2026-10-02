@@ -1,0 +1,29 @@
+id,item,label,reason
+ph-B1:python:5:4,PY-B1,disputed,明說空列表已檢查；改報 created_at 缺欄位與順序
+ph-B1:python:5:6,PY-new-isoformat,disputed,舊版 fromisoformat 限制屬實；但 Z 已先換成 +00:00，它說的失敗情境走不到（照 v04 前例）
+ph-B1:python:4:6,PY-A5,valid,int(raw) 沒接 ValueError（行號標在 42，內容是第 53–54 行）
+ph-B1:probe:5:4,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定，不是外部輸入
+ph-B1:shell:3:4,SH-S7,valid,for d in $(ls)
+ph-B1:probe:5:2,PR-A1,valid,標題的條件（空列表）寫錯，但 body 承認空列表已檢查，主軸是 index-1 取到最後一個、建議檢查 >0
+ph-B1:python:5:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-B1:probe:3:2,PR-A1,valid,承認空列表已處理；第一個 tag 時 tags[-1] 取到最後一個、建議檢查 ==0
+ph-B1:python:5:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-B1:probe:2:3,PR-B7,invalid,自己推論 HTTPError 會被接住，再拿 204 當邊緣情況；第 95 行已檢查 2xx（照 v03 前例）
+ph-B1:python:1:3,PY-A2,valid,同 M047
+ph-B1:probe:2:2,PR-new-oserror,valid,權限不足等 OSError 沒接、直接 traceback（照 v04 前例）
+ph-B1:probe:5:5,PR-B7,invalid,承認 HTTPError 會被接住；說沒記錄狀態碼不對，第 97 行記下的例外本來就帶狀態碼（照前例）
+ph-B1:probe:4:3,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+ph-B1:python:3:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-B1:python:2:7,PY-new-timeline,valid,空 events 回 0 會混淆資料缺失與零延遲（照 v04 前例）
+ph-B1:python:1:4,PY-new-timeline,valid,空列表回 0 會混淆，且 timeline 永遠是空的、latency 永遠為 0
+ph-B1:shell:2:7,SH-S7,valid,for d in $(ls)
+ph-B1:python:3:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-B1:python:4:1,PY-A1,valid,同 M084
+ph-B1:shell:4:3,SH-B1,invalid,承認驗過格式，卻說 branch 含空格會被拆成多個參數；第 16 行 regex 正好排除空白（照 v04 前例）
+ph-B1:probe:4:2,PR-X1,disputed,主張沒檢查範圍屬實；後果寫反：說 -1 會變空 list、0 會變幾乎全部，實際 -1 丟最舊一筆、0 變空（照 v00 前例）
+ph-B1:probe:4:4,PR-new-oserror,valid,PermissionError 沒接、直接 traceback（照 v04 前例）
+ph-B1:probe:2:4,PR-X1,valid,NOTES_MAX 0 會變空、負數切片錯誤；後果沒寫錯
+ph-B1:shell:3:3,SH-S4,valid,cd 沒有檢查
+ph-B1:python:1:5,PY-new-csv,disputed,"沒用 csv 模組的形狀存在；GitHub login 不可能含逗號或空格，例子 Doe, John 走不到（照 v03 前例）"
+ph-B1:probe:4:1,PR-X2,disputed,殘差推翻：同 R006
+ph-B1:probe:1:2,PR-X1,disputed,殘差推翻：0 只剩標題對；但說負數也會變空 list 是錯的（同 R004）

@@ -1,0 +1,35 @@
+id,item,label,reason
+ph-B3:probe:5:4,PR-X5,disputed,設定檔是合法 JSON 但不是物件時 AttributeError；設定檔由操作者維護（照前例）
+ph-B3:python:2:5,PY-new-timeline,valid,PR 端點沒有 timeline 欄位，延遲永遠為 0
+ph-B3:probe:5:2,PR-A1,valid,標題說 IndexError 錯，body 主軸正確：最早的 tag 取到 tags[-1]、範圍錯誤或空列表
+ph-B3:probe:2:3,PR-X1,valid,負數時 commits[:-1] 排除最後一個，後果寫對
+ph-B3:probe:4:3,PR-X1,disputed,主張沒檢查範圍屬實；主句的對應寫反（-1→空列表、0→全部），括號裡的解釋才對（照 v00 前例）
+ph-B3:shell:2:1,SH-S1,valid,$name 內插進 SQL；順帶說 branch 也能注入是錯的，不影響主張
+ph-B3:python:1:6,PY-B2,disputed,一半是陷阱（承認 default 沒被修改還是報、建議改 None），一半是真的 A5（照 v05 前例）
+ph-B3:probe:3:3,PR-X1,valid,負數沒檢查屬實；「可能回傳空列表」在負數絕對值大於 commit 數時成立，沒寫錯
+ph-B3:probe:1:5,PR-X5,disputed,設定檔不是物件時 AttributeError；設定檔由操作者維護（照前例）
+ph-B3:shell:1:4,SH-S3,valid,ahead 為空時 -gt 失敗、SQL 插入錯誤；沒說中止
+ph-B3:shell:2:8,SH-new-summary0,invalid,log 為空時印「共 0 筆」是正確資訊，不是誤導
+ph-B3:python:3:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-B3:probe:4:2,PR-A1,disputed,條件找對（第一個 tag）、修法也對；後果寫錯：說 tags[0-1] 會 IndexError 崩潰，實際取到最後一個 tag、靜默回 0
+ph-B3:python:5:4,PY-A2,valid,seen=[] 跨呼叫累積
+ph-B3:python:4:7,PY-B1,disputed,承認空列表回 0；改報 created_at 缺欄位與單一事件
+ph-B3:python:4:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-B3:probe:2:4,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+ph-B3:python:2:6,PY-new-fixprefix,valid,"startswith(""fix"") 沒有字界、fixed／fixing 會被算成 fix，屬實；例子用大寫 Fixed 其實對不到，不影響主張（照 v00 前例）"
+ph-B3:python:5:1,PY-A1,valid,裸 except 吞例外、下游崩潰
+ph-B3:python:5:6,PY-new-fixprefix,valid,"startswith(""fix"") 會把 fixation 算成 fix；陳述屬實、影響小（照 v00 前例）"
+ph-B3:probe:3:5,PR-B7,invalid,自己推論 4xx/5xx 會被接住；「自訂 handler 不丟例外」是這份 code 沒有的情境
+ph-B3:python:3:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-B3:probe:5:3,PR-new-maxcap,invalid,NOTES_MAX 設很大是操作者自己的設定；切片不會造成記憶體壓力
+ph-B3:python:1:8,PY-B1,disputed,主軸是改報 created_at 缺欄位（承認空列表回 0）；附帶說 None 會走到 events[0] 是錯的
+ph-B3:python:2:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-B3:probe:4:4,PR-X4,valid,只接 URLError、逾時等其他例外會直接 crash 屬實（X4）；它對 TimeoutError 與 URLError 關係的解釋寫錯，不影響主張
+ph-B3:probe:3:2,PR-A1,disputed,標題的條件（清單為空）錯、body 開頭也沒提第 115 行已擋；後半講到第一個 tag 取到 tags[-1] 正確（照 v03 前例）
+ph-B3:python:4:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-B3:probe:1:4,PR-X1,disputed,抽查推翻自動標記：負數排除最後一筆屬實；但說 0 時 latest = commits[0][0] 會 IndexError 是錯的（同 M033）
+ph-B3:shell:3:8,SH-new-trimcount,disputed,抽查推翻自動標記：不是 B2；截斷後訊息的筆數跟 log 內容對不上，屬實但影響小
+ph-B3:probe:2:1,PR-X2,disputed,殘差推翻：同 R006，說 commits[0] 會 IndexError
+ph-B3:probe:1:1,PR-X2,disputed,殘差推翻：同 R006
+ph-B3:probe:3:1,PR-X2,disputed,殘差推翻：同 R006
+ph-B3:probe:2:2,NONE,invalid,殘差推翻：同 R014，講 ValueError、沒講第一個 tag

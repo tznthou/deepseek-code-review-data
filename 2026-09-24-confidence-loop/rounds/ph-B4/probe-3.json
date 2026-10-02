@@ -1,0 +1,46 @@
+[
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`git log` 失敗時未檢查回傳碼，可能誤判為無 commit",
+    "body": "`commits_between` 呼叫 `subprocess.run` 時未設定 `check=True`，也未檢查 `proc.returncode`。若 `git log` 因 repo 路徑錯誤、權限不足或 tag 不存在而失敗，`proc.stdout` 會是空字串，函式回傳空 list，導致主流程印出「之間沒有新 commit」並回傳 0，但實際上是錯誤。建議加上 `check=True` 或檢查 `proc.returncode != 0` 時拋出例外或記錄錯誤。",
+    "existing_code": "proc = subprocess.run(\n        [\"git\", \"log\", \"--format=%h %s\", f\"{prev}..{tag}\"],\n        cwd=repo, capture_output=True, text=True,\n    )",
+    "evidence": "diff 中 `commits_between` 函式未檢查 `proc.returncode`，且 `subprocess.run` 未設 `check=True`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 118,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`tags.index(tag)` 在 tag 不存在時拋出未處理的 `ValueError`",
+    "body": "`main` 中先檢查 `if tag not in tags`，但 `tags` 是 `list_tags` 回傳的 list，而 `list_tags` 只回傳符合 `TAG_RE` 的 tag。若使用者輸入的 tag 格式正確但不在 repo 中（例如 `v9.9.9`），`tag not in tags` 為 True，會先印出錯誤並 return 2，不會執行到 `tags.index(tag)`。但若 `list_tags` 因某些原因回傳的 list 不包含該 tag（例如 tag 名稱符合 regex 但實際不存在），則 `tags.index(tag)` 會拋出 `ValueError`，導致程式崩潰。建議使用 `try/except` 或先檢查 `tag in tags` 再取 index。",
+    "existing_code": "prev = tags[tags.index(tag) - 1]",
+    "evidence": "diff 中 `main` 函式在 `if tag not in tags` 檢查後直接使用 `tags.index(tag)`，但未處理 `ValueError`。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`max_items` 未處理負數或零值，可能導致切片行為異常",
+    "body": "`max_items` 從環境變數 `NOTES_MAX` 讀取整數，但未檢查是否為正數。若設定為負數，`commits[: max_items()]` 會回傳空 list（因為負索引切片會從尾端取，但這裡是負數會導致空結果），若為 0 則回傳空 list，可能造成公告內容空白。建議加上下限檢查，例如 `max(1, int(raw))` 或明確拒絕非正整數。",
+    "existing_code": "try:\n        return int(raw)\n    except ValueError:\n        log(f\"[warn] NOTES_MAX={raw!r} 不是整數，改用預設值 {DEFAULT_MAX}\")\n        return DEFAULT_MAX",
+    "evidence": "diff 中 `max_items` 函式僅處理 `ValueError`，未檢查數值範圍。"
+  },
+  {
+    "path": "sandbox/release_notes.py",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`post` 函式未驗證 webhook URL 的 scheme，存在 SSRF 風險",
+    "body": "`post` 直接使用 `urllib.request.urlopen` 開啟使用者提供的 URL（來自環境變數 `NOTES_WEBHOOK`）。若攻擊者能控制該環境變數，可指定 `file://` 或 `gopher://` 等 scheme 來讀取本機檔案或進行內網探測。建議限制 scheme 為 `http` 或 `https`，並可考慮驗證主機名稱。",
+    "existing_code": "req = urllib.request.Request(url, data=body, headers={\"Content-Type\": \"application/json\"})",
+    "evidence": "diff 中 `post` 函式未對 `url` 進行 scheme 檢查。"
+  }
+]

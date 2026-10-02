@@ -1,0 +1,233 @@
+[
+ {
+  "pr": 1,
+  "run": 1,
+  "submitted_at": "2026-09-20T14:54:49Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": "README.md:550",
+  "title": "「不會報錯的失敗模式」用詞可能誤導",
+  "confidence": 0.7,
+  "id": "R01"
+ },
+ {
+  "pr": 1,
+  "run": 1,
+  "submitted_at": "2026-09-20T14:54:49Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": "README.md:564",
+  "title": "未驗證項目中 fork PR 隔離路徑的說明可能弱化風險",
+  "confidence": 0.65,
+  "id": "R02"
+ },
+ {
+  "pr": 1,
+  "run": 2,
+  "submitted_at": "2026-09-20T15:01:12Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": "README.md:550",
+  "title": "「不會報錯的失敗模式」描述可能造成誤解",
+  "confidence": 0.7,
+  "id": "R03"
+ },
+ {
+  "pr": 1,
+  "run": 2,
+  "submitted_at": "2026-09-20T15:01:12Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": "SETUP-CHECKLIST.md:73",
+  "title": "「先啟用 Dependency graph」步驟缺少驗證方式",
+  "confidence": 0.7,
+  "id": "R04"
+ },
+ {
+  "pr": 1,
+  "run": 2,
+  "submitted_at": "2026-09-20T15:01:12Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": "README.md:558",
+  "title": "「那次 review 的 2 筆 finding 品質」段落可能過於冗長",
+  "confidence": 0.65,
+  "id": "R05"
+ },
+ {
+  "pr": 2,
+  "run": 1,
+  "submitted_at": "2026-09-20T16:06:36Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Major",
+  "loc": ".github/workflows/reusable-ai-review-collect.yml:48",
+  "title": "base SHA 可能為空導致 diff 不正確",
+  "confidence": 0.8,
+  "id": "R06"
+ },
+ {
+  "pr": 2,
+  "run": 1,
+  "submitted_at": "2026-09-20T16:06:36Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Major",
+  "loc": ".github/workflows/reusable-ai-review-post.yml:126",
+  "title": "artifact 內容未驗證可能導致腳本錯誤",
+  "confidence": 0.75,
+  "id": "R07"
+ },
+ {
+  "pr": 2,
+  "run": 1,
+  "submitted_at": "2026-09-20T16:06:36Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": ".github/workflows/reusable-codeql.yml:80",
+  "title": "自訂 config-file 路徑未驗證存在性",
+  "confidence": 0.7,
+  "id": "R08"
+ },
+ {
+  "pr": 2,
+  "run": 1,
+  "submitted_at": "2026-09-20T16:06:36Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": ".github/workflows/reusable-static-review.yml:88",
+  "title": "lint-command 執行可能受 shell 注入影響",
+  "confidence": 0.65,
+  "id": "R09"
+ },
+ {
+  "pr": 3,
+  "run": 1,
+  "submitted_at": "2026-09-20T16:28:39Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Major",
+  "loc": ".github/workflows/03-ai-review-collect.yml:78",
+  "title": "環境變數可能為空或非數字，導致 int() 轉換失敗",
+  "confidence": 0.8,
+  "id": "R10"
+ },
+ {
+  "pr": 3,
+  "run": 1,
+  "submitted_at": "2026-09-20T16:28:39Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Major",
+  "loc": ".github/workflows/reusable-ai-review-collect.yml:68",
+  "title": "新增的 base SHA 驗證可能破壞既有呼叫方的相容性",
+  "confidence": 0.75,
+  "id": "R11"
+ },
+ {
+  "pr": 3,
+  "run": 1,
+  "submitted_at": "2026-09-20T16:28:39Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": ".github/workflows/reusable-codeql.yml:86",
+  "title": "fallback 邏輯可能隱藏真正的錯誤",
+  "confidence": 0.7,
+  "id": "R12"
+ },
+ {
+  "pr": 21,
+  "run": 1,
+  "submitted_at": "2026-09-22T05:15:52Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Major",
+  "loc": ".github/workflows/reusable-ai-review-post.yml:188",
+  "title": "REVIEW_BLOCKED_TERMS 可能未正確傳遞至 Python 腳本",
+  "confidence": 0.8,
+  "id": "R13"
+ },
+ {
+  "pr": 21,
+  "run": 1,
+  "submitted_at": "2026-09-22T05:15:52Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": ".github/scripts/deepseek_review.py:190",
+  "title": "load_blocked_terms 對輸入型別假設過強",
+  "confidence": 0.7,
+  "id": "R14"
+ },
+ {
+  "pr": 21,
+  "run": 1,
+  "submitted_at": "2026-09-22T05:15:52Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": ".github/scripts/deepseek_review.py:210",
+  "title": "blocked_terms_hits 對 sections 的值未處理 None",
+  "confidence": 0.6,
+  "id": "R15"
+ },
+ {
+  "pr": 21,
+  "run": 2,
+  "submitted_at": "2026-09-22T05:19:58Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Major",
+  "loc": ".github/workflows/reusable-ai-review-post.yml:188",
+  "title": "secret 傳遞方式可能導致值未正確遮蔽",
+  "confidence": 0.9,
+  "id": "R16"
+ },
+ {
+  "pr": 21,
+  "run": 2,
+  "submitted_at": "2026-09-22T05:19:58Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": ".github/scripts/deepseek_review.py:211",
+  "title": "blocked_terms_hits 效能問題：對每個詞重複掃描整個文字",
+  "confidence": 0.7,
+  "id": "R17"
+ },
+ {
+  "pr": 21,
+  "run": 2,
+  "submitted_at": "2026-09-22T05:19:58Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": ".github/scripts/deepseek_review.py:190",
+  "title": "load_blocked_terms 未處理可能的編碼問題",
+  "confidence": 0.6,
+  "id": "R18"
+ },
+ {
+  "pr": 22,
+  "run": 1,
+  "submitted_at": "2026-09-22T05:02:27Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": ".github/scripts/deepseek_review.py:330",
+  "title": "fence 剝離失敗後直接使用 inner 可能改變 fallback 行為",
+  "confidence": 0.7,
+  "id": "R19"
+ },
+ {
+  "pr": 27,
+  "run": 1,
+  "submitted_at": "2026-09-23T05:53:30Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": "tools/selftest.py:16",
+  "title": "賦值運算子前缺少空格",
+  "confidence": 0.9,
+  "id": "R20"
+ },
+ {
+  "pr": 27,
+  "run": 1,
+  "submitted_at": "2026-09-23T05:53:30Z",
+  "model": "deepseek-v4-pro",
+  "severity": "Minor",
+  "loc": "tools/selftest.py:520",
+  "title": "時間探針可能因環境負載而產生 flaky 測試",
+  "confidence": 0.7,
+  "id": "R21"
+ }
+]

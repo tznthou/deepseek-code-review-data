@@ -1,0 +1,68 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "例外被吞掉，導致後續程式碼在資料缺失時崩潰",
+    "body": "_fetch 函式在 try 區塊中捕捉所有例外後僅執行 pass，沒有記錄或重新拋出。當網路錯誤、API 回傳非 2xx 狀態碼、或 JSON 解析失敗時，函式會回傳 None。呼叫端（collect_authors 和 main）直接使用回傳值，例如 pr[\"user\"][\"login\"]，會導致 TypeError 或 KeyError，且沒有明確的錯誤訊息。\n\n建議：\n- 至少記錄例外（logging.exception）並重新拋出，或回傳一個明確的錯誤物件。\n- 檢查 HTTP 狀態碼，非 2xx 時拋出例外。\n- 在呼叫端處理 None 的情況。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24 行：`except:` 後接 `pass`，且函式無回傳值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "shell=True 搭配外部輸入，存在指令注入風險",
+    "body": "archive 函式使用 subprocess.run 並設定 shell=True，且指令字串包含 repo 和 path 參數。repo 來自命令列參數（使用者可控），若包含特殊字元（如分號、管道、反引號），可注入任意指令。\n\n建議：避免使用 shell=True，改用參數列表形式，例如：\nsubprocess.run([\"tar\", \"czf\", f\"{path}.tgz\", path])\nsubprocess.run([\"gh\", \"repo\", \"view\", repo])",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 75 行：`shell=True` 且指令字串由外部輸入拼接。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "可變預設值 seen=[] 導致跨呼叫累積",
+    "body": "collect_authors 函式的參數 seen 預設為空串列，這是可變物件，會在函式定義時建立一次並在所有呼叫間共用。雖然目前程式碼中只呼叫一次，但若未來重複呼叫，會累積先前結果，造成非預期行為。\n\n建議：將預設值改為 None，並在函式內初始化為空串列。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：`seen=[]` 為可變預設值。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "檔案未使用 with 開啟，可能洩漏資源",
+    "body": "export_csv 函式使用 open 開啟檔案，但未使用 with 或 try/finally 確保關閉。若寫入過程中發生例外，檔案可能未關閉，造成資源洩漏。\n\n建議：使用 with open(path, \"w\") as f: 來管理檔案。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 71-74 行：手動 open/close，無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "環境變數轉換為整數未處理例外",
+    "body": "threshold_from_env 函式將環境變數 PR_STALE_DAYS 轉換為整數，但未處理 ValueError。若使用者設定非數字值，程式會崩潰。\n\n建議：使用 try/except 捕捉轉換錯誤，並提供有意義的錯誤訊息或回退到預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 40 行：`int(raw)` 未處理轉換失敗。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "review_latency 對空事件列表回傳 0，可能誤導",
+    "body": "review_latency 函式在 events 為空時回傳 0，這可能被解讀為「零延遲」，但實際上可能是資料缺失。建議回傳 None 或拋出例外，讓呼叫端處理。",
+    "existing_code": "if not events:\n        return 0",
+    "evidence": "diff 第 33-34 行：空列表回傳 0。"
+  }
+]

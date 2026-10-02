@@ -1,0 +1,34 @@
+id,item,label,reason
+ph-B2:python:4:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-B2:shell:2:6,SH-S7,valid,for d in $(ls)
+ph-B2:python:2:7,PY-B1,disputed,明說空列表已處理；改報 created_at 缺欄位
+ph-B2:shell:4:4,SH-S4,valid,cd 沒有檢查
+ph-B2:python:2:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-B2:python:5:7,PY-new-tokenleak,invalid,從環境變數讀 token 放 header 是標準做法，沒有地方記錄 header（照前例）
+ph-B2:probe:5:2,PR-A1,valid,第一個 tag 時 index-1 取到 tags[-1]，範圍為空、回「沒有新 commit」
+ph-B2:python:2:1,PY-A1,valid,同 M031
+ph-B2:probe:2:2,PR-A1,valid,第一個 tag 時 index-1 取到最後一個 tag、範圍錯誤
+ph-B2:shell:3:6,SH-S7,valid,for d in $(ls)；順帶說 $ROOT 不存在時迴圈仍可能執行是錯的（ls 沒輸出），不影響主張
+ph-B2:probe:5:3,PR-X1,valid,NOTES_MAX=-1 時 commits[:-1] 丟掉最後一筆，後果寫對
+ph-B2:python:4:7,PY-new-timeline,valid,空事件回 0 會混淆資料缺失與零延遲（照 v04 前例）
+ph-B2:probe:1:4,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+ph-B2:probe:3:4,PR-B11,invalid,同 M054（誤設 scheme 是操作者自己的設定）
+ph-B2:python:3:8,PY-new-isoformat,disputed,舊版 fromisoformat 限制屬實；GitHub 格式固定、Z 已先換掉，失敗情境走不到（照 v04 前例）
+ph-B2:shell:1:6,SH-S3,invalid,說 -gt 會「中止腳本」；實際報 integer expected、分支不執行、腳本繼續（09-21 預登記：說中止算錯）
+ph-B2:shell:5:2,SH-S1,valid,$name 內插進 SQL；有注意到 $BRANCH 已驗證
+ph-B2:python:3:7,PY-B1,disputed,承認 events 非空才走到這裡；改報第一個事件缺 created_at
+ph-B2:shell:5:5,SH-B1,invalid,承認開頭驗過格式，卻說 branch 可能含 *；第 16 行 regex 正好排除 glob（照 v04 前例）
+ph-B2:probe:4:3,PR-B7,invalid,4xx/5xx 時 urlopen 丟 HTTPError、被接住並回 False，main 回 1 正是正確行為；建議的處理已經存在
+ph-B2:probe:1:5,PR-X5,disputed,設定檔是合法 JSON 但不是物件時 AttributeError；設定檔由操作者維護（照前例）
+ph-B2:probe:1:3,PR-X1,disputed,主張沒檢查負數屬實；後果寫錯：說會取到倒數幾個元素，實際是丟掉最後一個（照 v00 前例）
+ph-B2:shell:4:1,SH-S1,valid,$name 內插進 SQL；有注意到 branch 已驗證
+ph-B2:python:3:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-B2:shell:1:5,SH-new-dotdot,invalid,說變數沒加引號，但這一行的 origin/$BRANCH 有加引號；git 的 refname 本來就不允許 ..，這種 branch 在 checkout 就會失敗
+ph-B2:probe:1:2,PR-A1,disputed,機制對（只有一個 tag 時 prev 等於自己、範圍為空）；後果寫錯：說 commits 為空會觸發 IndexError，實際第 120 行先回 0
+ph-B2:python:5:6,PY-new-csv,disputed,沒用 csv 模組的形狀存在；但 author 是 GitHub login、kind 是固定字串，它說的失敗情境走不到（照 v03 前例）
+ph-B2:probe:5:1,PR-X2,disputed,抽查推翻自動標記：returncode 沒檢查、失敗被當成空 list 屬實；但說會產生空公告貼到 webhook 是錯的，第 120 行先回 0、沒有貼文
+ph-B2:probe:2:3,PR-new-oserror,valid,抽查推翻自動標記：同 S007
+ph-B2:probe:4:1,PR-X2,disputed,殘差推翻：說 main 的 commits[0][0] 會 IndexError 崩潰；第 120 行先回 0
+ph-B2:probe:3:2,PR-A1,disputed,殘差推翻：機制對（第一個 tag 取到 tags[-1]）；後果寫錯：說會包含所有 commit，實際範圍為空（同 M051）
+ph-B2:probe:3:3,PR-X1,disputed,殘差推翻：說負數會得到全部 commit；實際是少 n 筆（同 M058）
+ph-B2:probe:1:1,PR-X2,disputed,殘差推翻：同 R006

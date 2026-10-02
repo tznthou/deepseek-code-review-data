@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入風險：repo 名稱與 branch 未經跳脫直接插入 SQL 語句",
+    "body": "`name` 來自 `basename \"$dir\"`，`BRANCH` 雖有格式驗證，但兩者皆未經 SQL 跳脫即直接嵌入 INSERT 語句。若 repo 目錄名稱包含單引號（例如 `my'repo`），將導致 SQL 語法錯誤或注入任意 SQL。攻擊者若能在 `$ROOT` 下建立惡意名稱的目錄，即可執行任意 SQL 指令。\n\n建議改用參數化查詢，例如：\n```bash\nsqlite3 \"$DB\" \"INSERT INTO runs VALUES(?, ?, ?, datetime('now'))\" \"$name\" \"$BRANCH\" \"$ahead\"\n```",
+    "existing_code": "sqlite3 \"$DB\" \"INSERT INTO runs VALUES('$name', '$BRANCH', $ahead, datetime('now'))\"",
+    "evidence": "第 44 行直接將變數插入 SQL 字串，未使用參數化查詢或跳脫。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "命令注入風險：使用 eval 執行 hook 且未驗證參數",
+    "body": "`run_hook` 使用 `eval \"$hook $repo\"` 執行 hook 腳本。`$repo` 來自 `basename \"$dir\"`，可能包含 shell 特殊字元（如 `;`, `$(...)`, 反引號）。若 repo 目錄名稱被惡意控制，可注入任意命令。\n\n建議改為直接執行：\n```bash\n\"$hook\" \"$repo\"\n```\n並確保 `$hook` 路徑安全。",
+    "existing_code": "eval \"$hook $repo\"",
+    "evidence": "第 55 行使用 eval 將未驗證的變數組合成命令。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "路徑處理不當：cleanup_cache 使用未加引號的 glob 可能誤刪檔案",
+    "body": "`rm -rf \"$ROOT\"/.cache/*` 中，`*` 未加引號，若 `$ROOT` 包含空格或特殊字元，可能導致路徑解析錯誤。此外，若 `.cache` 目錄不存在，`rm -rf` 會報錯但腳本仍繼續執行。建議先檢查目錄是否存在，並使用 `find` 或正確引號處理。",
+    "existing_code": "rm -rf \"$ROOT\"/.cache/*",
+    "evidence": "第 61 行 glob 未加引號，且未檢查目錄存在性。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錯誤處理不足：git 指令失敗仍繼續執行",
+    "body": "`git fetch`、`git checkout`、`git merge` 的 stderr 被重定向到日誌，但未檢查退出碼。若 fetch 失敗（如網路問題），後續 checkout 或 merge 可能基於過時的遠端分支，導致錯誤的同步結果。建議在每個 git 指令後檢查 `$?`，失敗時記錄錯誤並跳過該 repo。",
+    "existing_code": "git fetch origin --prune 2>>\"$LOG\"\n  git checkout $BRANCH 2>>\"$LOG\"\n  git merge --ff-only \"origin/$BRANCH\" 2>>\"$LOG\"",
+    "evidence": "第 30-32 行未檢查 git 指令的退出碼。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "變數 ahead 可能未賦值導致 SQL 錯誤",
+    "body": "`ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)` 若 git 指令失敗（例如分支不存在），`ahead` 將為空字串。後續 `if [ \"$ahead\" -gt 0 ]` 會因空字串導致語法錯誤，且 SQL 插入時 `$ahead` 為空會造成 SQL 語法錯誤。建議在賦值後檢查是否為空，並設定預設值 0。",
+    "existing_code": "ahead=$(git rev-list --count \"origin/$BRANCH\"..HEAD 2>/dev/null)",
+    "evidence": "第 35 行未處理 git 指令失敗時 ahead 為空的情況。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "變數作用域錯誤：在 for 迴圈中使用 local 導致變數全域可見",
+    "body": "在 `main` 函數的 for 迴圈中使用 `local target=\"$ROOT/$d\"`，但 `local` 只能在函數內使用，此處 `main` 是函數，所以合法，但 `target` 的作用域是整個 `main` 函數，而非迴圈內。這可能導致後續迭代意外使用前一次的值。建議改用 `declare` 或直接賦值，並注意作用域。",
+    "existing_code": "local target=\"$ROOT/$d\"",
+    "evidence": "第 72 行在 for 迴圈內使用 local，作用域為整個函數。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "使用 ls 解析目錄列表可能導致問題",
+    "body": "`for d in $(ls \"$ROOT\")` 使用 `ls` 的輸出進行迭代，若目錄名稱包含空格或換行符，將無法正確處理。建議改用 glob：`for d in \"$ROOT\"/*/; do` 並去除尾隨斜線。",
+    "existing_code": "for d in $(ls \"$ROOT\"); do",
+    "evidence": "第 82 行使用 ls 輸出進行迴圈。"
+  },
+  {
+    "path": "sandbox/repo_sync.sh",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "日誌截斷邏輯可能丟失資料",
+    "body": "`summarize` 中若日誌行數超過 100，會將日誌截斷為最後 100 行，但 `total` 變數仍記錄原始行數，導致輸出訊息「本次同步共 $total 筆紀錄」與實際日誌內容不符。建議在截斷後更新 total 或調整訊息。",
+    "existing_code": "if [ \"$total\" -gt 100 ]; then\n    tail -100 \"$LOG\" > \"$LOG.trimmed\"\n    mv \"$LOG.trimmed\" \"$LOG\"\n  fi\n\n  echo \"本次同步共 $total 筆紀錄，詳見 $LOG\"",
+    "evidence": "第 67-71 行截斷日誌但未更新 total。"
+  }
+]

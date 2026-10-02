@@ -1,0 +1,31 @@
+id,item,label,reason
+ph-A4:shell:4:1,SH-S1,valid,$name 內插進 SQL；順帶說 branch 也能注入是錯的，不影響主張
+ph-A4:probe:2:2,PR-A1,valid,第一個 tag 時 prev 是自己、範圍為空、印「沒有新 commit」回 0；後果寫對
+ph-A4:probe:3:2,PR-X1,disputed,負數排除最後 n 筆屬實；但說 NOTES_MAX=0 時 main 取 commits[0] 會崩潰是錯的，commits[0] 取自沒切片的 list
+ph-A4:python:1:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-A4:shell:3:4,SH-S3,valid,ahead 為空時 -gt 失敗（沒說中止）、SQL 型別不符
+ph-A4:probe:4:2,PR-X1,disputed,負數少最後一筆屬實；但說 0 時 latest = commits[0][0] 會 IndexError 是錯的，commits[0] 取自沒切片的 list
+ph-A4:python:2:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-A4:python:2:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-A4:python:3:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-A4:shell:3:7,SH-new-globals,invalid,依賴全域變數是可測試性的風格意見，不是缺陷
+ph-A4:probe:2:4,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+ph-A4:python:3:5,PY-B1,disputed,承認空列表已處理；改報事件順序
+ph-A4:python:4:3,PY-A2,valid,seen=[] 跨呼叫累積
+ph-A4:python:3:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-A4:probe:1:2,PR-A1,valid,第一個 tag 取到 tags[-1]「而不是拋出錯誤」、範圍錯誤；「可能讓 git log 失敗」是多加的推測，不影響主張
+ph-A4:shell:1:1,SH-S1,valid,$name 內插進 SQL；有注意到 branch 已驗證
+ph-A4:probe:2:3,PR-X1,disputed,主張沒檢查範圍屬實；後果寫錯：說負數會得到全部元素，實際是少掉 n 筆
+ph-A4:shell:3:1,SH-S1,valid,$name 內插進 SQL；順帶說 branch 也能注入是錯的，不影響主張
+ph-A4:python:1:4,PY-new-timeline,valid,PR 端點沒有 timeline 欄位，延遲永遠為 0；順帶說將來可能 KeyError 是錯的，不影響主張
+ph-A4:python:3:4,PY-K-token,disputed,沒設 GITHUB_TOKEN 會 KeyError 屬實；但說會被 except pass 吞掉是錯的（第 21 行在 try 外），token 外洩的情境也只是假設（照 v02 前例）
+ph-A4:python:5:4,PY-B2,disputed,一半是陷阱（承認 default 沒被修改還是報），一半是真的 A5（照 v05 前例）
+ph-A4:probe:2:5,PR-B7,invalid,自己承認 HTTPError 會被接住、行為正確；只建議分開捕捉以改善訊息，不是缺陷
+ph-A4:python:4:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-A4:probe:5:2,PR-B7,invalid,說 HTTPError 被接住、回 False 會讓呼叫端「誤以為失敗」；非 2xx 本來就是失敗，主張不成立
+ph-A4:python:1:1,PY-A1,valid,裸 except 吞例外、下游 TypeError
+ph-A4:probe:3:3,PR-B11,invalid,NOTES_WEBHOOK 由操作者設定
+ph-A4:shell:4:7,SH-S7,valid,for d in $(ls)
+ph-A4:probe:3:1,PR-X2,disputed,抽查推翻自動標記：returncode 沒檢查屬實；但說 main 取 commits[0][0] 會 IndexError 是錯的，第 120 行先回 0
+ph-A4:probe:1:3,PR-X1,disputed,殘差推翻：說負數或零都會得到空列表；0 對，負數 -1 只丟一筆（同 M042）
+ph-A4:probe:4:1,PR-X2,disputed,殘差推翻：同 R006

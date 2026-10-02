@@ -1,0 +1,90 @@
+[
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "_fetch 吞掉所有例外，呼叫端無法得知失敗",
+    "body": "`_fetch` 中的 `except: pass` 會吞掉所有例外（包含網路錯誤、HTTP 錯誤、JSON 解析錯誤），導致呼叫端拿到 `None` 或繼續執行，後續程式碼可能因為 `pr` 為 `None` 而拋出 `TypeError`，且錯誤被隱藏，難以除錯。\n\n建議：\n- 至少記錄例外（`logging.exception`）或重新拋出。\n- 檢查 HTTP 狀態碼，非 2xx 時拋出例外。\n- 讓呼叫端處理錯誤，而不是靜默失敗。",
+    "existing_code": "except:\n        pass",
+    "evidence": "diff 第 24 行：`except:` 後直接 `pass`，且 `_fetch` 被 `collect_authors` 和 `main` 呼叫，其回傳值被直接使用（如 `pr[\"user\"][\"login\"]`）。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "shell=True 且指令包含外部輸入，存在指令注入風險",
+    "body": "`archive` 使用 `subprocess.run` 搭配 `shell=True`，且指令字串包含 `repo`（來自命令列參數）與 `path`（由 repo 衍生）。攻擊者可注入額外指令，例如 `repo` 設為 `x; rm -rf /`。\n\n建議：\n- 避免 `shell=True`，改用參數列表形式：`subprocess.run([\"tar\", \"czf\", f\"{path}.tgz\", path])`。\n- 若需使用 shell，務必驗證輸入或使用 `shlex.quote`。",
+    "existing_code": "subprocess.run(f\"tar czf {path}.tgz {path} && gh repo view {repo}\", shell=True)",
+    "evidence": "diff 第 68 行：`repo` 來自 `sys.argv[1]`，未經驗證直接嵌入 shell 指令。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "可變預設值 seen=[] 導致跨呼叫狀態累積",
+    "body": "`collect_authors` 的參數 `seen=[]` 使用可變預設值，每次呼叫都會累積作者，且不會清空。若多次呼叫此函式，結果會包含先前呼叫的作者，造成資料污染。\n\n建議：改為 `seen=None`，並在函式內初始化：`if seen is None: seen = []`。",
+    "existing_code": "def collect_authors(repo, numbers, seen=[]):",
+    "evidence": "diff 第 28 行：`seen=[]` 為可變預設值，且函式內對其進行 `append` 操作。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "review_latency 假設 events 非空且元素有 created_at",
+    "body": "`review_latency` 在 `events` 為空時回傳 0，但若 `events` 非空但元素缺少 `created_at` 鍵，會拋出 `KeyError`。此外，若 `events` 只有一個元素，`first` 和 `last` 相同，回傳 0，可能無法反映真實延遲。\n\n建議：檢查 `events` 是否為空，並確認每個事件都有 `created_at`，或使用更精確的計算方式。",
+    "existing_code": "first = events[0][\"created_at\"]\n    last = events[-1][\"created_at\"]",
+    "evidence": "diff 第 34-35 行：直接存取 `events[0]` 和 `events[-1]`，未檢查鍵是否存在。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "threshold_from_env 的 int() 轉換可能拋出未處理例外",
+    "body": "`threshold_from_env` 從環境變數 `PR_STALE_DAYS` 讀取值並直接 `int(raw)`，若值不是整數（例如 `abc`），會拋出 `ValueError`，導致程式崩潰。\n\n建議：使用 `try/except` 處理轉換失敗，或提供預設值。",
+    "existing_code": "return {\"days\": int(raw)}",
+    "evidence": "diff 第 42 行：`int(raw)` 未處理例外。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "export_csv 未使用 with 管理檔案，可能洩漏資源",
+    "body": "`export_csv` 使用 `open` 和 `close`，但若寫入過程中發生例外，檔案不會被關閉。建議使用 `with open(path, \"w\") as f:` 確保資源釋放。",
+    "existing_code": "f = open(path, \"w\")\n    f.write(\"author,latency,kind\\n\")\n    for r in rows:\n        f.write(f\"{r['author']},{r['latency']},{r['kind']}\\n\")\n    f.close()",
+    "evidence": "diff 第 58-62 行：手動開啟與關閉檔案，無例外處理。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 81,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "main 中未檢查命令列參數數量，可能 IndexError",
+    "body": "`main` 直接使用 `sys.argv[1]` 和 `sys.argv[2:]`，若使用者未提供足夠參數，會拋出 `IndexError`。建議檢查參數數量並顯示用法。",
+    "existing_code": "repo = sys.argv[1]\n    numbers = sys.argv[2:]",
+    "evidence": "diff 第 72-73 行：直接索引 `sys.argv`，未檢查長度。"
+  },
+  {
+    "path": "sandbox/pr_stats.py",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "classify 中 title.startswith(\"fix\") 可能誤判",
+    "body": "`classify` 使用 `pr[\"title\"].startswith(\"fix\")` 判斷是否為 fix，但大小寫敏感且可能誤判（例如 \"fixed\" 或 \"Fix\"）。建議使用正規表示式或忽略大小寫。",
+    "existing_code": "elif pr[\"title\"].startswith(\"fix\"):",
+    "evidence": "diff 第 53 行：`startswith(\"fix\")` 未考慮大小寫變體。"
+  }
+]
