@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "false positive", "dismissed_comment": "實測線性，不會爆。re.M 下 $ 在每個換行前都成立，(.+)$ 不可能被拒絕，沒有失敗就沒有回溯。16 MB 輸入 4 ms（1→16 MB 翻倍耗時 ×2）。對照：同一個 regex 拿掉 re.M 就是平方（翻倍耗時 ×4）——重構這行必須保住 re.M。"}

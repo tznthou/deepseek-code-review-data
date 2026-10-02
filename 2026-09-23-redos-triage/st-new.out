@@ -1,0 +1,112 @@
+[warn] 無法取得既有 inline comment：gh api 失敗：HTTP 403
+[1] parse_valid_lines：行號必須精準對到新增側
+  PASS  新增行被辨識
+  PASS  第二個檔案被辨識
+[2] normalize：過濾壞資料、排序、補 verdict
+  PASS  verdict 自動升級為 request_changes
+  PASS  依嚴重度排序且壞資料被丟棄
+[3] extract_json：容忍 code fence 與前後綴
+  PASS  code fence
+  PASS  雜訊前後綴
+[4] truncate：超大 diff 要在檔案邊界截斷
+  PASS  有標記截斷
+  PASS  保留整數個檔案區塊
+[5] render_markdown：產出可貼的 Markdown
+  PASS  含標記註解
+  PASS  含嚴重度與模型資訊
+[6] post_review 過濾：不在 diff 行號內的 finding 必須被跳過
+  PASS  只留下合法行號
+[7] existing_inline_keys：gh 失敗要回 None，不能回空集合
+  PASS  gh 失敗回 None
+  PASS  gh 成功但無結果回空集合
+  PASS  gh 成功時正確解析 path:line
+[8] 貼摘要的 `gh pr review` 必須帶 --repo
+  PASS  原始碼中找得到 gh pr review 的呼叫
+  PASS  該呼叫帶 --repo
+[9] locate：行號要由片段文字比對算出來，不能照抄模型報的
+  PASS  index_diff 留下行內容而不只是行號
+  PASS  片段唯一命中時修正錯誤行號
+  PASS  片段定不到時退回模型行號
+  PASS  兩者都定不到時回 None
+  PASS  多重命中時拒絕定位
+  PASS  跨檔唯一命中時改寫 path
+  PASS  過短的片段被忽略
+  PASS  literal_snippets 不挖反引號，整段當一個片段
+  PASS  含反引號的整段程式碼定位到它的第一行
+  PASS  散文欄位仍然挖反引號
+  PASS  摘要用的是修正後的行號
+  PASS  摘要不再出現模型報錯的行號
+[10] select_rules：依 diff 的檔案型態挑補充規則
+  PASS  純 ts/markdown 的 diff 不套任何補充規則
+  PASS  workflow 檔案套到 github-workflows.md
+  PASS  規則內容真的被讀進來
+  PASS  py 檔案套到 python.md
+  PASS  混合 diff 兩份都套且不重複
+  PASS  非 workflow 的 yml 不套 workflow 規則
+  PASS  規則目錄不存在時安靜跳過
+  PASS  github-workflows.md 沒有元評論標記
+  PASS  python.md 沒有元評論標記
+[11] truncation_error：輸出被 max_tokens 砍斷要講實話，不要讓它偽裝成解析失敗
+  PASS  正常結束不報錯
+  PASS  沒有 finish_reason 不報錯
+  PASS  截斷時回傳訊息
+  PASS  訊息點出 max_tokens 與數值
+  PASS  訊息給的是調高額度的指示
+  PASS  thinking 吃光額度時指向 thinking 而不是 max_tokens
+  PASS  thinking=disabled 但內容空白時仍走一般訊息
+  PASS  thinking 開著且已有部分輸出時仍指向 thinking
+  PASS  content 為 None 時不崩潰且仍回訊息
+[12] review-local.sh：本機入口的參數必須跟 CI 對齊
+  PASS  有傳 --rules-dir
+  PASS  指向 prompts/rules
+  PASS  --max-tokens 可由環境變數覆寫
+[13] extract_json：內容不完整不可以偽裝成格式錯誤
+  PASS  物件中途截斷講的是不完整
+  PASS  物件中途截斷點出還差幾層括號
+  PASS  有完整前綴的截斷也不偽裝
+  PASS  字串中途截斷指向字串沒收尾
+  PASS  有 { 無 } 報不完整
+  PASS  括號平衡但語法錯仍報格式錯誤
+  PASS  收尾多過開頭不判成不完整
+  PASS  字串內的括號不誤判
+  PASS  跳脫引號不誤判
+  PASS  body 裡含 code fence 的合法 JSON 仍解析得出來
+  PASS  body 內容沒有被 fence 剝壞
+  PASS  body 含 fence 又被截斷時報不完整
+  PASS  純 JSON 仍可解析
+  PASS  整份被 fence 包住仍可解析
+  PASS  前後綴雜訊仍可解析
+  PASS  前後綴雜訊 + fence 包 JSON 仍可解析
+[14] diagnostic_excerpt：解析失敗要印得出斷點
+  PASS  有講總長度
+  PASS  印得到尾巴
+  PASS  短內容整份印出
+  PASS  content 為 None 時不崩潰
+  PASS  找得到解析失敗那行
+  PASS  解析失敗路徑有接上 diagnostic_excerpt
+  PASS  沒有退回只印開頭的寫法
+[15] 送出前掃描：禁用詞命中就拒送，而且訊息不可以洩漏內容
+  PASS  正常清單解析出兩條
+  PASS  正常清單沒有東西被忽略
+  PASS  空行與 # 註解被略過
+  PASS  空行沒有讓掃描擋下一切
+  PASS  過短的詞被忽略
+  PASS  忽略時回報的是行號不是值
+  PASS  大寫形式仍然命中
+  PASS  命中回報正確區段
+  PASS  沒命中就不擋
+  PASS  未設清單等於不掃
+  PASS  回傳值不含禁用詞本身
+  PASS  找得到掃描的錯誤訊息
+  PASS  錯誤訊息沒有內插禁用詞
+  PASS  命中時走離開碼 3
+[16] extract_snippets：『』 沒有收尾時不可以退化成平方時間
+  PASS  『』 與反引號都挖得出來
+  PASS  巢狀：從第一個 『 取到第一個 』
+  PASS  緊接在 『 後面的 』 算內容（.+? 至少吃一個字元）
+  PASS  內容可以跨行（re.S 語意）
+  PASS  沒有收尾就沒有片段
+  PASS  64K 字元、『 沒有收尾：0.5 秒內跑完
+  PASS  64K 字元、唯一的 』 在最前面：0.5 秒內跑完
+
+ALL TESTS PASSED

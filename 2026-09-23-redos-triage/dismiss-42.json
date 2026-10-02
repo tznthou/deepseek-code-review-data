@@ -1,0 +1,1 @@
+{"state": "dismissed", "dismissed_reason": "false positive", "dismissed_comment": "實測線性，不會爆。index_diff 餵進來的是 splitlines() 切過的單行，行內沒有換行字元，$ 只可能在字串尾成立，search 在第一個「 b/」就成功。16 MB 單行 13 ms。對照：同一個 regex 直接 search 沒切行的字串就是平方（翻倍耗時 ×4）——重構必須保住 splitlines()。"}
