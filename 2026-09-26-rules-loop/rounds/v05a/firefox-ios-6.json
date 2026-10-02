@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "使用 assert 取代 XCTAssert 可能導致測試失效",
+    "body": "在 testRequestAuthorization 中，原本使用 XCTAssertTrue 進行斷言，現在改為 assert。在 XCTest 中，assert 來自 Swift 標準庫，在 debug 模式下會中止程式，但在 release 模式下會被忽略。測試 target 通常以 debug 模式建置，因此 assert 仍會執行，但若測試以 release 模式執行，斷言將不會生效。此外，assert 失敗時不會產生 XCTest 的失敗記錄，而是直接 crash，這會讓測試結果難以診斷。建議改回 XCTAssertTrue 或使用 XCTFail 搭配條件判斷。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\nassert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將原本的 XCTAssertTrue(granted) 和 XCTAssertTrue(self.center.requestAuthorizationWasCalled) 改為 assert(...)。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Mocks/MockProfile.swift",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "completion handler 標註 @Sendable 可能造成不必要的限制",
+    "body": "getQueuedTabs 的 completion handler 從 @escaping @MainActor ([ShareItem]) -> Void 改為 @MainActor @Sendable @escaping ([ShareItem]) -> Void。新增 @Sendable 可能導致呼叫端必須傳入 Sendable closure，若原本的 closure 捕獲非 Sendable 狀態，會產生編譯錯誤。此處為 mock，影響有限，但需確認所有使用此 mock 的測試仍能編譯。",
+    "existing_code": "func getQueuedTabs(completion: @MainActor @Sendable @escaping ([ShareItem]) -> Void) {",
+    "evidence": "diff 中新增 @Sendable 標註。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Mocks/MockUserNotificationCenter.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Mock 類別加上 @unchecked Sendable 可能隱藏執行緒安全問題",
+    "body": "MockUserNotificationCenter 被加上 @unchecked Sendable，這表示編譯器不會檢查其內部狀態的執行緒安全。若此 mock 在多執行緒環境下被使用，可能導致資料競爭。但此為測試 mock，通常只在單一執行緒使用，風險較低。建議確認是否有必要加上此標註，或改用 actor 或鎖定機制。",
+    "existing_code": "class MockUserNotificationCenter: UserNotificationCenterProtocol, @unchecked Sendable {",
+    "evidence": "diff 中新增 @unchecked Sendable。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/StoriesFeed/StoriesFeedDiffableDataSourceTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "setUp 改為 async 後，super.setUp 呼叫順序可能影響測試",
+    "body": "原本 setUpWithError 中先呼叫 super.setUpWithError() 再進行設定，現在改為 async setUp 並先呼叫 try await super.setUp()。在 XCTest 中，async setUp 的 super 呼叫必須在進行其他設定之前，此處順序正確。但需注意若 super.setUp 失敗，後續設定不會執行，這與原本行為一致。",
+    "existing_code": "override func setUp() async throws {\n    try await super.setUp()",
+    "evidence": "diff 中 setUp 改為 async throws 並呼叫 super.setUp()。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/Bookmarks/EditBookmarkViewModelTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 @MainActor 可能導致測試在背景執行緒執行",
+    "body": "原本 EditBookmarkViewModelTests 有 @MainActor 標註，現在被移除。若此測試類別中的程式碼涉及 UI 或需要主執行緒，移除後可能導致測試在背景執行緒執行而失敗。需確認此測試類別是否真的不需要 @MainActor。",
+    "existing_code": "class EditBookmarkViewModelTests: XCTestCase {",
+    "evidence": "diff 中移除了 @MainActor 標註。"
+  }
+]

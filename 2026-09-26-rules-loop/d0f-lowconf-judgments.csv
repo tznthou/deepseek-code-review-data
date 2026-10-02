@@ -1,0 +1,13 @@
+fid,confidence,severity,verdict,basis
+hold-v01a:prefect-9:5,0.5,minor,有爭議,R10 的 success criteria 字面要求同目錄有 .test.tsx；PR 只加了元件、stories、index，沒有測試檔。但規則目的講的是測試檔的位置，不是有沒有
+hold-v01a:dify-10:4,0.6,minor,相關但不同,引用命中但盲標 partial：GT 是 __str__ 缺對應的 __repr__，finding 說 __str__ 覆寫不必要
+hold-v01a:tauri-2:5,0.6,minor,誤報,說 write_and_make_executable 是 pub fn；diff 第 309 行是私有 fn，R07 管不到
+hold-v01a:tauri-2:6,0.6,minor,誤報,標題說用了 expect 會 panic；diff 用的是 map_err 加 ?，內文自己承認沒用 expect
+hold-v01b:tauri-2:4,0.6,minor,真的違規,盲標 same tauri-2#0（自訂錯誤型別沒用 thiserror）
+v01a:prefect-1:4,0.5,minor,真的違規,引用命中 prefect-1#0（logger 初始化；調參組沒有盲標）
+v01b:Ghost-1:4,0.5,nit,真的違規,引用命中 Ghost-1#0（不必要的註解；調參組沒有盲標）
+v01b:tauri-12:5,0.5,minor,誤報,懷疑 minor:feat 不是 covector 格式；資料集其他 tauri PR 的 change file 都這樣寫（minor:feat、patch:changes、minor:enhance）
+v01a:cal.com-13:4,0.6,minor,真的違規（不在標準答案）,第 11 行行尾多餘空白，Biome 會清掉
+v01a:cal.com-6:5,0.6,minor,真的違規,引用命中 cal.com-6#5（檔尾缺換行；調參組沒有盲標）
+v01b:tauri-12:3,0.6,minor,誤報,content_types 上方 1180–1183 行就有 /// 文件註解
+v01b:tauri-12:4,0.6,minor,誤報,exported_type 上方 1199–1201 行就有 /// 文件註解

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_renderer.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "render_template 回傳值可能為 None，導致後續 len() 出錯",
+    "body": "`render_template` 在 `rendered` 為 `None` 時直接回傳 `None`，但呼叫端 `TemplateTransformNode._run` 會對回傳值執行 `len(rendered)`，若為 `None` 將拋出 `TypeError`。建議在回傳前檢查 `rendered is None` 並拋出 `TemplateRenderError`，或確保 `execute_workflow_code_template` 永遠回傳字串。",
+    "existing_code": "rendered = result.get(\"result\")\n        if rendered is not None and not isinstance(rendered, str):\n            raise TemplateRenderError(\"Template render result must be a string.\")\n        return rendered",
+    "evidence": "diff 中 `render_template` 方法回傳 `rendered`，但未處理 `rendered` 為 `None` 的情況；而 `template_transform_node.py` 中呼叫後直接 `len(rendered)`。"
+  },
+  {
+    "path": "api/core/workflow/nodes/node_factory.py",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "NodeFactory 建構 renderer 時未傳入 code_executor，可能破壞依賴注入",
+    "body": "`self._template_renderer = template_renderer or CodeExecutorJinja2TemplateRenderer(code_executor)` 中，若 `template_renderer` 為 None，則使用傳入的 `code_executor` 建立 renderer；但若 `template_renderer` 已提供，則忽略 `code_executor`。這可能導致測試或自訂 renderer 無法使用預期的 executor。建議統一由 factory 傳入 `code_executor`，或明確文件說明。",
+    "existing_code": "self._template_renderer = template_renderer or CodeExecutorJinja2TemplateRenderer(code_executor)",
+    "evidence": "diff 中 NodeFactory.__init__ 新增 `template_renderer` 參數，並在建構時使用 `or` 邏輯，可能忽略傳入的 `code_executor`。"
+  },
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_transform_node.py",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "輸出長度檢查前未驗證 rendered 型別",
+    "body": "`len(rendered)` 假設 `rendered` 為字串，但 `render_template` 可能回傳非字串（若實作未嚴格遵守 Protocol）。建議在呼叫後先檢查型別，或由 renderer 保證回傳字串。",
+    "existing_code": "rendered = self._template_renderer.render_template(self.node_data.template, variables)\n            if len(rendered) > MAX_TEMPLATE_TRANSFORM_OUTPUT_LENGTH:",
+    "evidence": "diff 中直接對 `rendered` 呼叫 `len()`，未先確認其型別。"
+  }
+]

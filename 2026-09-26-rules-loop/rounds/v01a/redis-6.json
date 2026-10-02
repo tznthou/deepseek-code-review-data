@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "恢復 active_defrag_enabled 時未使用原始值，可能覆寫使用者設定",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 儲存於 `orig_active_defrag`，然後設為 0，但在清空資料庫後卻直接設回 1，而非使用 `orig_active_defrag`。\n\n**失敗情境**：若使用者在執行 `REPLICAOF` 前已將 `activedefrag` 設為 `no`，此函式執行後會將該設定強制改為 `yes`，導致非預期的行為變更。\n\n**建議修法**：將 `server.active_defrag_enabled = 1;` 改為 `server.active_defrag_enabled = orig_active_defrag;`。",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```c\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n...\n+    server.active_defrag_enabled = 1;\n```\n變數 `orig_active_defrag` 被儲存但從未被使用，且恢復時使用常數 1，明顯與註解「Restore the original」矛盾。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "streamEntryIsReferenced 在無 cgroups_ref 時直接回傳 1，可能導致記憶體洩漏或錯誤保留",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 使得當 stream 沒有消費者群組參考時，函式直接回傳 1（表示被參考）。這可能導致呼叫者認為該 entry 仍被參考而無法刪除，造成記憶體無法釋放。\n\n**失敗情境**：若某個 stream 從未有消費者群組，且呼叫 `streamEntryIsReferenced` 來判斷是否可刪除 entry，此函式會錯誤地回傳 1，使 entry 永遠無法被刪除。\n\n**建議修法**：確認此處的意圖。若無 cgroups_ref 即代表沒有 PEL 參考，應回傳 0；若此函式僅用於特定情境（如 ACKED 選項），請補充註解說明為何回傳 1 是安全的。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的這一行直接回傳 1，但函式名稱與上下文暗示應回傳是否被參考。若無參考，邏輯上應回傳 0。"
+  }
+]

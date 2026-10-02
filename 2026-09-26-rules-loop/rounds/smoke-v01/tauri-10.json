@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1316,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "window_features 方法中 size 與 position 的處理順序變更可能影響視窗建立行為",
+    "body": "在 `window_features` 方法中，原本先處理 `position` 再處理 `size`，現在改為先處理 `size` 再處理 `position`。雖然在大多數情況下順序不影響最終結果，但若 `position` 或 `size` 的設定有相依性（例如某些平台在設定位置後會重置大小），可能導致行為不一致。建議確認此變更的必要性，或恢復原本順序以降低風險。",
+    "existing_code": "if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 中顯示原本先處理 position 再處理 size，現在順序對調。"
+  },
+  {
+    "path": "examples/api/src-tauri/src/lib.rs",
+    "line": 76,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "on_new_window 回呼移至桌面平台專屬區塊可能導致非桌面平台失去新視窗處理",
+    "body": "原本 `on_new_window` 回呼在所有平台都會註冊，現在被移至 `#[cfg(all(desktop, not(test)))]` 區塊內。這表示在非桌面平台（例如行動裝置）上，當 WebView 要求開啟新視窗時，將不會有自訂處理邏輯，可能導致新視窗無法建立或行為不一致。若此回呼僅適用於桌面平台，則應在文件或註解中說明；否則應考慮保留在所有平台。",
+    "existing_code": "let app_ = app.handle().clone();\n        let mut created_window_count = std::sync::atomic::AtomicUsize::new(0);\n\n        window_builder = window_builder\n          .title(\"Tauri API Validation\")\n          .inner_size(1000., 800.)\n          .min_inner_size(600., 400.)\n          .menu(tauri::menu::Menu::default(app.handle())?)\n          .on_new_window(move |url, features| {",
+    "evidence": "diff 顯示 `on_new_window` 的註冊從原本的全平台區塊移至 `#[cfg(all(desktop, not(test)))]` 區塊內。"
+  },
+  {
+    "path": "crates/tauri/src/webview/mod.rs",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重新匯出 tauri_runtime::Cookie 可能造成 API 混淆",
+    "body": "新增 `pub use tauri_runtime::Cookie;` 並加上註解「Remove this re-export in v3」。這可能是為了向後相容，但同時存在 `cookie::Cookie` 的引用被移除，可能導致下游使用者混淆應使用哪個 Cookie 型別。建議在文件或遷移指南中清楚說明。",
+    "existing_code": "// Remove this re-export in v3\npub use tauri_runtime::Cookie;",
+    "evidence": "diff 中新增了此重新匯出，並移除了原本的 `use cookie::Cookie;`。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1317,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "程式碼格式問題：inner_size 呼叫中參數間多餘空白",
+    "body": "在 `inner_size(size.width,    size.height)` 中，`size.width` 與 `size.height` 之間有四個空格，不符合一般格式慣例。雖然不影響功能，但可能違反 rustfmt 規範（R03）。",
+    "existing_code": "self.window_builder = self.window_builder.inner_size(size.width,    size.height);",
+    "evidence": "diff 中該行顯示多餘空白。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1321,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "程式碼格式問題：position 呼叫中缺少逗號後空格",
+    "body": "在 `position(position.x,position.y)` 中，逗號後缺少空格，不符合一般格式慣例。可能違反 rustfmt 規範（R03）。",
+    "existing_code": "self.window_builder = self.window_builder.position(position.x,position.y);",
+    "evidence": "diff 中該行顯示缺少空格。"
+  }
+]

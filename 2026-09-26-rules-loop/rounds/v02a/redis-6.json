@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "Active defrag 設定恢復錯誤：硬編碼為 1 而非原始值",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 儲存於 `orig_active_defrag`，然後在 `emptyData` 呼叫後直接設定為 1，而非恢復為 `orig_active_defrag`。這會導致原本停用 active defrag 的伺服器在複製同步後被意外啟用，可能造成不必要的效能影響或行為改變。\n\n**失敗情境**：若使用者設定 `activedefrag no`，在複製同步觸發資料庫清空後，active defrag 會被強制啟用，直到下次設定變更。\n\n**建議修法**：將 `server.active_defrag_enabled = 1;` 改為 `server.active_defrag_enabled = orig_active_defrag;`",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼片段：\n```\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n+\n     emptyData(-1, empty_db_flags, replicationEmptyDbCallback);\n+\n+    /* Restore the original active defragmentation setting. */\n+    server.active_defrag_enabled = 1;\n```\n儲存了原始值但未使用，直接設定為 1，明顯違反意圖。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2707,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "streamEntryIsReferenced 在無 cgroups_ref 時回傳 1 可能掩蓋問題",
+    "body": "新增的檢查 `if (!s->cgroups_ref) return 1;` 在沒有 consumer group 參考時直接回傳 1（表示已引用）。這使得呼叫者認為該 entry 被引用，因此不會刪除它。然而，此函式的語意是檢查 entry 是否被任何 consumer group 的 PEL 引用，若無 cgroups_ref，理論上應回傳 0（未引用）。回傳 1 可能導致記憶體洩漏或錯誤的保留行為，特別是在其他呼叫情境中。\n\n**失敗情境**：若未來有其他程式碼路徑呼叫此函式，且預期在無 cgroups_ref 時回傳 0，則此變更會造成錯誤。\n\n**建議修法**：應回傳 0 而非 1，或確認所有呼叫者都能接受此行為。",
+    "existing_code": "/* Check if the message is in any consumer group's PEL */\n    if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的程式碼：\n```\n+    if (!s->cgroups_ref) return 1;\n```\n此回傳值與函式名稱及註解不符，且可能影響其他呼叫者。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試輔助函式 discard_replies_every 的邏輯可能不正確",
+    "body": "新增的 `discard_replies_every` 函式在 `count % frequency != 0` 時執行丟棄，這表示只有當 count 不是 frequency 的倍數時才丟棄。但原本的程式碼是在 `count % 10000 == 0` 時丟棄，兩者邏輯相反。這可能導致測試行為改變，甚至無法正確丟棄回覆，造成記憶體累積或測試失敗。\n\n**失敗情境**：若測試依賴定期丟棄回覆以避免記憶體耗盡，此變更可能導致測試不穩定或失敗。\n\n**建議修法**：確認條件是否應為 `if {$count % $frequency == 0}`，或調整函式名稱與實作。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {\n        if {$count % $frequency != 0} {\n            for {set k 0} {$k < $discard_num} {incr k} {\n                $rd read ; # Discard replies\n            }\n        }\n    }",
+    "evidence": "diff 中新增的函式，條件與原本的 `if {$count % 10000 == 0}` 相反。"
+  }
+]

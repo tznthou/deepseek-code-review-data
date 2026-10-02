@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R18] 使用雙引號字串，違反單引號規範",
+    "body": "此處將原本的單引號字串改為雙引號，違反 repo 規範 R18（Code Must Use Single Quotes for Strings）。建議改回單引號。",
+    "existing_code": "const STORAGE_KEY = \"ghost-history\";",
+    "evidence": "diff 中顯示 `-    const STORAGE_KEY = 'ghost-history';` 改為 `+    const STORAGE_KEY = \"ghost-history\";`，違反 R18。"
+  },
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R21] 使用寬鬆相等運算子，違反嚴格相等規範",
+    "body": "此處使用 `==` 比較 `window.location.host` 與 `new URL(siteUrl).host`，違反 repo 規範 R21（Code Must Use Strict Equality Operators）。建議改用 `===`。",
+    "existing_code": "if (window.location.host == new URL(siteUrl).host) {",
+    "evidence": "diff 中顯示此行未變更，但此 PR 觸及此檔案，且該行違反 R21。"
+  }
+]

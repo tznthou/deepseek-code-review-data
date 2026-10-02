@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Utils/MainThreadThrottler.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "throttle 方法中 lastExecutionTime 更新時機錯誤，導致節流失效",
+    "body": "在 `throttle(completion:)` 中，原本先檢查時間間隔再更新 `lastExecutionTime`，現在改為先更新 `lastExecutionTime` 再檢查。這會導致每次呼叫都更新時間戳，使得 `guard` 條件永遠為 false（因為 `lastExecutionTime.timeIntervalSinceNow` 會是極小的負值），節流機制完全失效。\n\n**失敗情境**：連續快速呼叫 `throttle` 時，原本應只執行最後一次，但現在每次都會執行。\n\n**建議**：將 `lastExecutionTime = Date()` 移回 `guard` 之後，或改為在 `guard` 通過後才更新。",
+    "existing_code": "lastExecutionTime = Date()\n        guard threshold <= 0 || lastExecutionTime.timeIntervalSinceNow < -threshold else { return }",
+    "evidence": "diff 中顯示原本的 `guard` 在 `lastExecutionTime = Date()` 之前，現在順序對調。"
+  },
+  {
+    "path": "firefox-ios/Client/Application/WebServer.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R12] WebServer 類別不應移除 final 修飾詞",
+    "body": "`WebServer` 原本宣告為 `final class`，此 PR 移除了 `final`。根據專案規範 R12，不應被子類別化的類別應標記為 `final`。此類別為單例且無子類別需求，移除 `final` 可能導致意外的繼承與效能損失。\n\n**建議**：恢復 `final` 修飾詞。",
+    "existing_code": "class WebServer: WebServerProtocol, @unchecked Sendable {",
+    "evidence": "diff 中 `final class WebServer` 改為 `class WebServer`。"
+  },
+  {
+    "path": "BrowserKit/Sources/Common/Utilities/DispatchQueueHelper.swift",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ensureMainThread 泛型版本在非主執行緒時回傳 nil，可能造成呼叫端未處理 nil 而崩潰",
+    "body": "`ensureMainThread<T>` 現在回傳 `T?`，在非主執行緒時直接回傳 `nil`。這改變了 API 行為，原本呼叫端可能假設會同步取得結果，現在可能收到 nil 而導致後續邏輯錯誤或崩潰。\n\n**失敗情境**：呼叫端在非主執行緒呼叫 `ensureMainThread` 並直接使用回傳值（例如強制解包），會得到 nil 而崩潰。\n\n**建議**：確認所有呼叫端都正確處理 nil，或考慮提供非同步版本。",
+    "existing_code": "public func ensureMainThread<T>(execute work: @escaping @MainActor () -> T) -> T? {",
+    "evidence": "diff 中新增了 `-> T?` 並在 else 分支回傳 nil。"
+  },
+  {
+    "path": "BrowserKit/Sources/Common/Utilities/DispatchQueueHelper.swift",
+    "line": 31,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "ensureMainThread 泛型版本在非主執行緒時未執行 work，可能造成行為不一致",
+    "body": "在非主執行緒時，原本會將 work 排入 main queue 執行，現在直接回傳 nil 而不執行 work。這可能導致某些依賴 work 執行的邏輯被跳過。\n\n**建議**：確認此變更符合預期，或考慮保留非同步執行。",
+    "existing_code": "return nil",
+    "evidence": "diff 中 else 分支從 `DispatchQueue.main.async { _ = work() }` 改為 `return nil`。"
+  }
+]

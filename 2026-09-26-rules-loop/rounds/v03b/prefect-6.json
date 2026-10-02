@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`run_deployment` 現在是 async 函式，同步呼叫會回傳 coroutine",
+    "body": "原本 `run_deployment` 有 `@sync_compatible` 裝飾器，可同時支援同步與非同步呼叫。現在改成 `run_deployment = arun_deployment`，而 `arun_deployment` 是 async 函式，因此同步呼叫 `run_deployment(...)` 會回傳 coroutine 物件而非 FlowRun。這會破壞既有同步使用者的程式碼，且與專案規範 R07（Async Functions Must Have Sync Compatibility Wrappers Where Public）衝突。\n\n建議：保留一個同步包裝函式，例如使用 `@sync_compatible` 裝飾 `arun_deployment`，或提供獨立的同步版本。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中 `run_deployment = arun_deployment` 取代了原本的 `@sync_compatible` 裝飾器。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`get_or_create_client` 可能無法正確處理 `client` 參數為 `None` 的情況",
+    "body": "原本使用 `@inject_client` 裝飾器，會自動注入 client 並處理生命週期。現在改為手動呼叫 `get_or_create_client(client)`，但未檢查回傳的 client 是否有效，也未處理可能的例外。此外，`get_or_create_client` 的實作可能與 `inject_client` 不同，例如是否會自動關閉 client。\n\n建議：確認 `get_or_create_client` 的行為，並考慮保留 `@inject_client` 或使用類似的生命週期管理。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中新增 `client, _ = get_or_create_client(client)`，取代了原本的 `@inject_client`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`collect_task_run_inputs` 改為同步呼叫，可能造成效能問題",
+    "body": "原本 `collect_task_run_inputs` 是 `await` 呼叫，現在改成直接呼叫。如果該函式是 async，這會導致 coroutine 未被 await，可能造成錯誤或效能問題。需要確認 `collect_task_run_inputs` 的實作。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中 `k: await collect_task_run_inputs(v)` 改為 `k: collect_task_run_inputs(v)`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 212,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 `deployment_id` 而非 `deployment.id` 可能造成型別不一致",
+    "body": "原本傳入 `deployment.id`，現在改為 `deployment_id`。如果 `deployment_id` 是 UUID 物件，而 API 預期字串，可能造成錯誤。需要確認型別。",
+    "existing_code": "deployment_id,",
+    "evidence": "diff 中 `deployment.id` 改為 `deployment_id`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 231,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "輪詢迴圈中先 sleep 再讀取，可能延遲首次狀態檢查",
+    "body": "原本先讀取 flow run 狀態，再 sleep。現在改成先 sleep 再讀取，這會導致即使 flow run 已經完成，也要等待一個 poll_interval 才能回傳。如果 poll_interval 較大，會增加不必要的延遲。",
+    "existing_code": "await anyio.sleep(poll_interval)\n            flow_run = await client.read_flow_run(flow_run_id)",
+    "evidence": "diff 中 `await anyio.sleep(poll_interval)` 移到 `flow_run = await client.read_flow_run(flow_run_id)` 之前。"
+  }
+]

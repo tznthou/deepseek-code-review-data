@@ -1,0 +1,112 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案第 18 行新增的 `DependencyHelperMock().bootstrapDependencies()` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案第 13 行新增的 `DependencyHelperMock().bootstrapDependencies()` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/Homepage/PrivateHomepageViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案第 15 行新增的 `DependencyHelperMock().bootstrapDependencies()` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/DownloadsPanelTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案第 14 行新增的 `DependencyHelperMock().bootstrapDependencies()` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/ReadingListPanelTests.swift",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案第 14 行新增的 `DependencyHelperMock().bootstrapDependencies()` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/MainMenu/MainMenuViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案第 15 行新增的 `DependencyHelperMock().bootstrapDependencies()` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Microsurvey/MicrosurveyViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案第 15 行新增的 `DependencyHelperMock().bootstrapDependencies()` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/NativeErrorPage/NativeErrorPageViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案第 15 行新增的 `DependencyHelperMock().bootstrapDependencies()` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/WindowManagerTests.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "bootstrapDependencies() 未加 await，可能導致測試不穩定或失敗",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies(injectedTabManager: tabManager)` 但未加 `await`。由於該方法現在是 async，未 await 會造成編譯錯誤或測試執行時依賴未正確初始化。請改為 `await DependencyHelperMock().bootstrapDependencies(injectedTabManager: tabManager)`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies(injectedTabManager: tabManager)",
+    "evidence": "diff 中此檔案第 17 行新增的 `DependencyHelperMock().bootstrapDependencies(injectedTabManager: tabManager)` 未加 `await`，而其他檔案多已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown() 中呼叫 super.tearDown() 可能需在最後執行",
+    "body": "在 `tearDown() async throws` 中，`try await super.tearDown()` 被放在最後，但通常應先呼叫 super 再進行清理，以確保父類別狀態正確。請確認此順序是否會影響測試隔離。",
+    "existing_code": "try await super.tearDown()",
+    "evidence": "diff 中此檔案第 28 行新增的 `try await super.tearDown()` 位於方法最後，與其他檔案常見的順序不同。"
+  }
+]

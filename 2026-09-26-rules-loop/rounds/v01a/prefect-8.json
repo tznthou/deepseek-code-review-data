@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 462,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "變數作用域錯誤：`source_static_path` 與 `static_subpath` 可能未定義",
+    "body": "在 `create_ui_app` 函式中，`source_static_path` 和 `static_subpath` 在 `if v2_enabled:` 區塊內賦值，但後續程式碼（如 `static_dir = ...` 和 `copy_directory(str(source_static_path), ...)`）在區塊外使用這些變數。如果 `v2_enabled` 為 `False`，則 `source_static_path` 和 `static_subpath` 不會被賦值，導致 `NameError`。\n\n建議在 `if` 區塊之前先定義預設值，或將後續使用邏輯移入對應的 `if`/`else` 分支中。",
+    "existing_code": "if v2_enabled:\n        source_static_path = prefect.__ui_v2_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v2:{prefect.__version__}:{base_url}\"\n    else:\n        source_static_path = prefect.__ui_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v1:{prefect.__version__}:{base_url}\"",
+    "evidence": "diff 中新增的程式碼在 `if` 區塊內賦值，但後續 `static_dir = prefect.settings.PREFECT_UI_STATIC_DIRECTORY.value() or str(static_subpath)` 和 `copy_directory(str(source_static_path), str(static_dir))` 在區塊外使用這些變數。"
+  },
+  {
+    "path": "src/prefect/settings/models/server/ui.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`v2_enabled` 預設為 `True` 可能導致使用者預設使用實驗性 UI",
+    "body": "新增的 `v2_enabled` 設定預設值為 `True`，這表示所有使用者預設會使用實驗性的 V2 UI。如果 V2 UI 尚未穩定或存在未修復的問題，這可能導致使用者體驗下降或功能異常。建議將預設值改為 `False`，並在 V2 UI 穩定後再考慮變更預設值。",
+    "existing_code": "v2_enabled: bool = Field(\n        default=True,\n        description=\"Whether to serve the experimental V2 UI instead of the default V1 UI.\",\n    )",
+    "evidence": "diff 中新增的設定欄位 `v2_enabled` 預設為 `True`，且描述中明確指出是 experimental。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 531,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "日誌記錄器未遵循標準初始化模式",
+    "body": "在 `create_ui_app` 中，使用 `logging.getLogger(\"ui_server\")` 直接建立 logger，違反了專案規範 [R03]（Logger Instances Must Follow Standard Initialization Pattern）。應使用 `get_logger(\"ui_server\")` 並加上型別註解。",
+    "existing_code": "ui_logger = logging.getLogger(\"ui_server\")",
+    "evidence": "diff 中新增的程式碼直接呼叫 `logging.getLogger`，而專案規範要求使用 `get_logger` 並遵循標準模式。"
+  }
+]

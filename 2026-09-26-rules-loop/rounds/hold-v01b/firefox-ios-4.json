@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/DisplaySettingsTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試斷言可能使用錯誤的 accessibility identifier",
+    "body": "在 `testCheckSystemThemeChanges` 中，原本檢查 `lightThemeView` 的 value，現在改為檢查 `darkThemeView`。但變數名稱仍為 `lightIsSelected`，且後續斷言 `XCTAssertEqual(lightIsSelected as? String, \"1\")` 可能與實際選取的主題不符。若測試目的是驗證選取 Light 模式後對應的按鈕狀態，應檢查 `lightThemeView` 而非 `darkThemeView`。建議確認此變更是否為預期，並修正變數名稱與斷言邏輯。",
+    "existing_code": "let lightIsSelected = app.buttons[AccessibilityIdentifiers.Settings.Appearance.darkThemeView].value",
+    "evidence": "diff 中將 `lightThemeView` 改為 `darkThemeView`，但變數名稱未同步更新，且後續斷言仍使用 `lightIsSelected`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/HomePageSettingsUITest.swift",
+    "line": 155,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試步驟順序變更可能影響穩定性",
+    "body": "在 `testDisableTopSitesSettingsRemovesSection` 中，原本先 `navigator.goto(NewTabScreen)` 再點擊 `Done`，現在改為先點擊 `Done` 再 `navigator.goto(NewTabScreen)`。此變更可能影響測試的時序，若 `Done` 按鈕的點擊需要在新分頁畫面出現後才能生效，可能導致測試不穩定。建議確認此順序調整是否為必要，並在 CI 中觀察測試結果。",
+    "existing_code": "app.buttons[\"Done\"].waitAndTap()\n        navigator.goto(NewTabScreen)",
+    "evidence": "diff 中將 `navigator.goto(NewTabScreen)` 移到 `app.buttons[\"Done\"].waitAndTap()` 之後。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ClipBoardTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "輔助方法改為 public 可能違反封裝原則",
+    "body": "將 `checkUrl()`、`copyUrl()`、`checkCopiedUrl()` 三個方法從 internal 改為 public。這些方法僅在測試類別內部使用，若無外部呼叫需求，建議維持 internal 或改為 private，以符合最小暴露原則。",
+    "existing_code": "public func checkUrl() {",
+    "evidence": "diff 中將三個方法的存取層級從無修飾改為 public。"
+  }
+]

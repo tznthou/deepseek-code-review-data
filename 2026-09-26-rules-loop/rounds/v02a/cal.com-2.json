@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.ts",
+    "line": 588,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "hasPendingInviteByUserId 查詢條件錯誤：應為 accepted: false",
+    "body": "此方法旨在檢查使用者是否有待處理的邀請，但查詢條件使用了 `accepted: true`，這會回傳已接受的邀請，導致回傳值與方法名稱相反。\n\n**失敗情境**：當使用者有未接受的邀請時，此方法會回傳 `false`，導致 onboarding 頁面不會進行預期的重新導向；反之，當使用者只有已接受的邀請時，會回傳 `true`，造成錯誤的重新導向。\n\n**建議修法**：將條件改為 `accepted: false`。",
+    "existing_code": "accepted: true,",
+    "evidence": "diff 中新增的 `hasPendingInviteByUserId` 方法內，`where` 條件為 `accepted: true`，但方法名稱與呼叫處的意圖皆為檢查「待處理」邀請（即 `accepted: false`）。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 60,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試資料清理不完整，可能殘留使用者資料",
+    "body": "在 `should return true when user has a pending invite (accepted: false)` 測試中，手動刪除了 membership 和 user，但未使用 `createdMembershipIds` 陣列進行統一清理，且若測試中途失敗，可能殘留資料。其他測試也有類似情況。\n\n**建議修法**：統一使用 `afterEach` 中的 `clearTestMemberships` 清理 membership，並在 `afterAll` 或 `afterEach` 中刪除建立的 user。",
+    "existing_code": "await prisma.membership.delete({ where: { id: membership.id } });\n      createdMembershipIds.length = 0;\n      await prisma.user.delete({ where: { id: newUser.id } });",
+    "evidence": "測試中手動刪除資料，且未將 user 加入清理清單，若斷言失敗或例外拋出，可能殘留測試使用者。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 127,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "測試依賴既有資料，可能因環境而異",
+    "body": "`should return true when user has both accepted and pending invites` 測試中，使用 `prisma.team.findFirst` 尋找第二個團隊，若資料庫中沒有其他團隊，則 `team2` 為 null，導致測試只驗證了 accepted 邀請的情況，未涵蓋 pending 邀請。\n\n**建議修法**：在測試中建立第二個團隊，或使用獨立的測試資料，確保測試的確定性。",
+    "existing_code": "const team2 = await prisma.team.findFirst({\n        where: {\n          slug: { not: null },\n          id: { not: testTeamId },\n        },\n      });",
+    "evidence": "測試依賴資料庫中已存在的其他團隊，若不存在則測試分支不執行，無法完整驗證混合邀請情境。"
+  },
+  {
+    "path": "apps/web/app/(use-page-wrapper)/onboarding/getting-started/page.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "直接呼叫靜態方法，未使用依賴注入",
+    "body": "在 ServerPage 中直接呼叫 `MembershipRepository.hasPendingInviteByUserId`，這使得測試和替換實作變得困難。建議透過依賴注入或使用 repository 實例。",
+    "existing_code": "const hasPendingInvite = await MembershipRepository.hasPendingInviteByUserId({ userId: session.user.id });",
+    "evidence": "此處直接使用靜態方法，與專案中其他 repository 的使用方式可能不一致，且不利於單元測試。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.ts",
+    "line": 588,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "hasPendingInviteByUserId 查詢條件錯誤：accepted 應為 false",
+    "body": "方法名稱為 `hasPendingInviteByUserId`，但查詢條件使用 `accepted: true`，這會回傳「已接受的邀請」而非「待處理的邀請」。這導致 `checkOnboardingRedirect` 中的判斷邏輯完全相反：沒有 pending invite 的使用者會被導向 `/onboarding/personal/settings`，而有 pending invite 的使用者不會被導向。\n\n**失敗情境**：使用者註冊後沒有任何 pending invite（`accepted: true` 的 membership 不存在），`hasPendingInviteByUserId` 回傳 `false`，因此不會 redirect，使用者停留在 getting-started 頁面；反之，有 pending invite 的使用者（`accepted: false`）會被 redirect 到 personal settings，與預期相反。\n\n**建議修法**：將 `accepted: true` 改為 `accepted: false`。",
+    "existing_code": "accepted: true,",
+    "evidence": "diff 中新增的 `hasPendingInviteByUserId` 方法內，`where` 條件為 `accepted: true`，但方法名稱與呼叫處（`checkOnboardingRedirect` 與 `ServerPage`）都預期檢查 pending invite（即 `accepted: false`）。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴既有資料庫中的 team，可能導致測試不穩定",
+    "body": "`beforeAll` 中先以 `prisma.team.findFirst({ where: { slug: { not: null } } })` 尋找任意 team，若不存在才建立新 team。這使得測試結果依賴資料庫中是否已有 team，且若已有 team，其資料可能被其他測試或既有資料影響。\n\n**失敗情境**：若資料庫中已存在一個 team，但該 team 的某些屬性（例如 slug 或 id）與測試假設不符，可能導致後續 membership 建立失敗或測試行為不一致。\n\n**建議修法**：在 `beforeAll` 中一律建立專屬的測試 team，並在 `afterAll` 中刪除，避免依賴既有資料。",
+    "existing_code": "let testTeam = await prisma.team.findFirst({\n      where: { slug: { not: null } },\n    });",
+    "evidence": "測試檔案第 15-17 行使用 `findFirst` 尋找任意 team，而非建立獨立測試資料。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 128,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試中手動清理資料可能遺漏，導致後續測試受污染",
+    "body": "多個測試在結束時手動刪除建立的 membership 和 user，但若測試中途失敗（例如 assertion 失敗），清理程式碼不會執行，可能留下殘留資料影響其他測試。\n\n**失敗情境**：若 `expect(result).toBe(true)` 失敗，後面的 `prisma.membership.delete` 和 `prisma.user.delete` 不會執行，該 user 和 membership 會殘留在資料庫中，可能影響後續測試的 `findFirst` 結果。\n\n**建議修法**：使用 `afterEach` 或 `try/finally` 確保清理必定執行，或使用測試資料庫交易回滾。",
+    "existing_code": "await prisma.membership.delete({ where: { id: membership.id } });\n      createdMembershipIds.length = 0;\n      await prisma.user.delete({ where: { id: newUser.id } });",
+    "evidence": "測試中在 assertion 之後手動刪除資料，若 assertion 失敗則清理不會執行。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 158,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試名稱與實際行為不符：'should return true when user has both accepted and pending invites' 但條件依賴 team2 是否存在",
+    "body": "測試名稱暗示應回傳 true，但實際期望值為 `team2 ? true : false`，若資料庫中沒有第二個 team，測試會期望 false，與名稱矛盾。\n\n**失敗情境**：若資料庫中只有一個 team，`team2` 為 null，測試會期望 false，但測試名稱暗示應為 true，造成閱讀混淆。\n\n**建議修法**：確保測試環境中一定有第二個 team，或調整測試名稱與邏輯一致。",
+    "existing_code": "expect(result).toBe(team2 ? true : false);",
+    "evidence": "測試名稱與期望值邏輯不一致，依賴 `team2` 是否存在。"
+  }
+]

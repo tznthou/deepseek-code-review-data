@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.ts",
+    "line": 588,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.98,
+    "title": "hasPendingInviteByUserId 查詢條件寫反，應為 accepted: false",
+    "body": "此方法名稱與用途是檢查是否有 pending invite（未接受的邀請），但查詢條件卻使用 `accepted: true`，這會回傳已接受的 membership，導致永遠無法偵測到 pending invite。\n\n**失敗情境**：當使用者有未接受的團隊邀請時，此方法會回傳 `false`，因此不會觸發 redirect，使用者仍會停留在 getting-started 頁面，與 PR 目的相反。\n\n**建議修法**：將 `accepted: true` 改為 `accepted: false`。",
+    "existing_code": "accepted: true,",
+    "evidence": "diff 中新增的 `hasPendingInviteByUserId` 方法內，`where` 條件為 `accepted: true`，但方法名稱與呼叫端（`checkOnboardingRedirect` 和 `page.tsx`）都預期是檢查 pending invite（未接受）。"
+  },
+  {
+    "path": "packages/features/auth/lib/onboardingUtils.ts",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "條件由 && 改為 || 可能導致未啟用 onboarding-v3 的使用者被錯誤導向",
+    "body": "原本的條件是 `pendingInvite && onboardingV3Enabled`，表示只有當使用者有 pending invite 且啟用 onboarding-v3 時才導向個人設定頁。現在改為 `hasPendingInvite || onboardingV3Enabled`，這表示只要啟用 onboarding-v3，即使沒有 pending invite 也會被導向個人設定頁，可能跳過原本的 onboarding 流程。\n\n**失敗情境**：若系統啟用 onboarding-v3，但使用者沒有 pending invite，原本應繼續進行 getting-started 流程，現在卻會被導向 `/onboarding/personal/settings`，造成流程中斷。\n\n**建議修法**：確認此行為變更是否為預期。若僅想修正 pending invite 的檢查，應保留 `&&` 條件，僅將 `pendingInvite` 改為 `hasPendingInvite`。",
+    "existing_code": "if (hasPendingInvite || onboardingV3Enabled) {",
+    "evidence": "diff 中將原本的 `if (pendingInvite && onboardingV3Enabled)` 改為 `if (hasPendingInvite || onboardingV3Enabled)`，改變了邏輯。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 45,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試資料清理不完整，可能殘留 user 或 membership",
+    "body": "在 `afterEach` 中只刪除 `createdMembershipIds` 中的 membership，但測試中建立的 user 並未被追蹤或刪除（除了在每個測試內手動刪除）。若測試中途失敗，user 會殘留在資料庫中。此外，`beforeAll` 中建立的 team 若原本不存在，會在 `afterAll` 刪除，但若測試中途失敗，`afterAll` 仍會執行，但 team 可能已被其他測試使用？\n\n**失敗情境**：測試失敗時，資料庫會殘留測試 user，影響後續測試或開發環境。\n\n**建議修法**：使用 `afterEach` 統一刪除所有建立的 user，或使用 transaction 包裹測試。",
+    "existing_code": "afterEach(async () => {\n    await clearTestMemberships();\n  });",
+    "evidence": "測試中多次呼叫 `prisma.user.create`，但沒有對應的清理機制，僅在每個測試內手動刪除，若測試失敗則會殘留。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 127,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試相依於既有資料，可能因環境而失敗",
+    "body": "在 `should return true when user has both accepted and pending invites` 測試中，使用 `prisma.team.findFirst` 尋找另一個 team，若資料庫中沒有其他 team，則 `team2` 為 null，測試會降級為只驗證 accepted membership 的情況，無法真正測試 mixed invites。\n\n**失敗情境**：在乾淨的測試資料庫中，此測試無法驗證同時有 accepted 和 pending invites 的情況。\n\n**建議修法**：在測試中建立第二個 team，或使用 mock 資料。",
+    "existing_code": "const team2 = await prisma.team.findFirst({\n        where: {\n          slug: { not: null },\n          id: { not: testTeamId },\n        },\n      });",
+    "evidence": "測試依賴資料庫中已存在其他 team，否則無法建立 pending membership。"
+  },
+  {
+    "path": "apps/web/app/(use-page-wrapper)/onboarding/getting-started/page.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重複的 pending invite 檢查可能造成不必要的資料庫查詢",
+    "body": "此頁面新增了 `hasPendingInviteByUserId` 檢查，但 `checkOnboardingRedirect` 中也會進行相同檢查。若使用者已通過 `checkOnboardingRedirect` 的檢查，此處的檢查可能是多餘的，增加一次資料庫查詢。\n\n**失敗情境**：效能影響輕微，但可考慮將檢查集中在一處。\n\n**建議修法**：確認是否可移除其中一個檢查，或將邏輯整合。",
+    "existing_code": "const hasPendingInvite = await MembershipRepository.hasPendingInviteByUserId({ userId: session.user.id });",
+    "evidence": "diff 中新增了此檢查，而 `checkOnboardingRedirect` 也呼叫了相同方法。"
+  }
+]

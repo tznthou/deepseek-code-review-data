@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2309,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "記憶體洩漏：argv[2] 使用 createStringObjectFromLongLong 建立後未釋放",
+    "body": "在 hincrbyfloatCommand 中，當 has_expiration 為真時，程式碼建立 argv[2] = createStringObjectFromLongLong(expireat)，但之後沒有對其呼叫 decrRefCount。這會導致每次執行此路徑時洩漏一個 robj。\n\n失敗情境：任何對具有過期時間的 hash 欄位執行 HINCRBYFLOAT 的請求，都會造成記憶體洩漏，長期下來可能耗盡記憶體。\n\n建議修法：在 alsoPropagate 呼叫之後，加入 decrRefCount(argv[2]); 釋放該物件。",
+    "existing_code": "argv[2] = createStringObjectFromLongLong(expireat);",
+    "evidence": "diff 中新增的這一行建立了 robj，但後續沒有對應的 decrRefCount 呼叫。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1300,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試中 TTL 範圍過窄可能導致不穩定",
+    "body": "測試使用 assert_range [r httl h1 FIELDS 1 f1] 90 100 來驗證 TTL。但 TTL 會隨時間遞減，若測試執行較慢（例如在 CI 負載高時），TTL 可能低於 90，導致測試失敗。\n\n失敗情境：在慢速環境下，從設定過期到檢查 TTL 之間經過超過 10 秒，TTL 將低於 90，assert_range 失敗。\n\n建議修法：放寬範圍，例如改為 assert_range [r httl h1 FIELDS 1 f1] 80 100，或使用更精確的等待機制。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "diff 中新增的測試行，TTL 下限 90 過於嚴格。"
+  }
+]

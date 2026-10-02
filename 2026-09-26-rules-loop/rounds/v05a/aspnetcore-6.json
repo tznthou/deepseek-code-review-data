@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "登出 CSRF 防護僅依賴 HistoryEntryState，可能導致登出失敗或安全風險",
+    "body": "移除了 SignOutSessionStateManager 後，登出驗證僅檢查 `ValidateSignOutRequestState()`，該方法依賴 `Navigation.HistoryEntryState`。若瀏覽器不支援 History API 或狀態遺失（例如使用者直接輸入登出 URL），`HistoryEntryState` 可能為 null，導致驗證失敗並導向登出失敗頁面。這可能破壞直接登出連結的使用情境，且若攻擊者能偽造 HistoryEntryState，可能繞過 CSRF 防護。建議確認此變更的相容性，並考慮保留某種後備驗證機制。",
+    "existing_code": "if (!ValidateSignOutRequestState())",
+    "evidence": "diff 中移除了原本的 `(Navigation.HistoryEntryState == null && !await SignOutManager.ValidateSignOutState())` 條件，改為僅依賴 `ValidateSignOutRequestState()`。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Redirect() 可能因 InteractiveRequestUrl 為 null 而拋出 NullReferenceException",
+    "body": "原本在 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 時才呼叫 `NavigateToLogin`，否則使用 `RedirectUrl`。現在改為只要 `InteractionOptions != null` 就呼叫 `NavigateToLogin(_tokenResult.InteractiveRequestUrl, ...)`，但 `InteractiveRequestUrl` 可能為 null（例如舊版建立的 AccessTokenResult 只設定 RedirectUrl）。這會導致 NullReferenceException。建議檢查 `InteractiveRequestUrl` 是否為 null，或確保所有建構路徑都會設定該屬性。",
+    "existing_code": "if (_tokenResult.InteractionOptions != null)\n        {\n            _navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, _tokenResult.InteractionOptions);",
+    "evidence": "diff 中條件從 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 改為僅 `_tokenResult.InteractionOptions != null`，且 `InteractiveRequestUrl` 屬性可能為 null（參見 AccessTokenResult 的建構子）。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 Task.Yield() 可能造成不必要的延遲",
+    "body": "在取得 AuthenticationState 之前新增了 `await Task.Yield();`，這會強制非同步切換，可能只是為了避免同步上下文問題，但若無明確理由，可能增加延遲。建議確認其必要性，或移除。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\n        await Task.Yield();",
+    "evidence": "diff 中新增了 `await Task.Yield();` 及註解。"
+  }
+]

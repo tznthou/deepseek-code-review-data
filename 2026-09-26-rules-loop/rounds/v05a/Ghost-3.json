@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "改用 findPage 可能導致查詢失敗或回傳格式不符",
+    "body": "`#getHighestCount` 從 `findOne` 改為 `findPage`，但 `EmailModel` 型別定義中的 `findPage` 回傳 `{data: EmailRecord[]}`。若實際 ORM 的 `findPage` 方法不存在或回傳格式不同（例如直接回傳陣列），會造成執行時期錯誤。建議確認 `Email` 模型確實提供 `findPage` 方法，且回傳物件包含 `data` 陣列；若否，應改用其他查詢方式或調整型別。",
+    "existing_code": "const result = await this.#emailModel.findPage({\n            filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,\n            order: 'csd_email_count DESC',\n            limit: 1\n        });",
+    "evidence": "diff 中 `#getHighestCount` 的實作從 `findOne` 改為 `findPage`，且型別定義也同步修改，但未提供 `findPage` 的實作或驗證其存在。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "高流量上限的計算可能不符合預期",
+    "body": "高流量（`lastCount >= 400000`）時，回傳 `Math.min(scaledIncrease, absoluteIncrease)`，其中 `scaledIncrease = Math.ceil(lastCount * 1.2)`，`absoluteIncrease = lastCount + 75000`。但 `scaledIncrease` 是「增加後總量」，而 `absoluteIncrease` 也是「增加後總量」，兩者取最小值可能導致成長幅度小於 20% 或 75k 的較小者。例如 `lastCount = 500000` 時，`scaledIncrease = 600000`，`absoluteIncrease = 575000`，回傳 575000，成長 15%，低於 20% 上限。若意圖是「成長不超過 20% 且不超過 75k」，應改為 `Math.min(lastCount * 1.2, lastCount + 75000)`，但需確認產品需求。",
+    "existing_code": "const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);\n            const absoluteIncrease = lastCount + WARMUP_SCALING_TABLE.highVolume.maxAbsoluteIncrease;\n            return Math.min(scaledIncrease, absoluteIncrease);",
+    "evidence": "diff 中新增的高流量處理邏輯，`scaledIncrease` 與 `absoluteIncrease` 皆為總量，取最小值可能造成成長幅度低於任一限制。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "邊界條件 `<` 與 `<=` 的差異可能造成非預期行為",
+    "body": "在 `getWarmupLimit` 中，原本使用 `lastCount <= threshold.limit`，現在改為 `lastCount < threshold.limit`。這會使得當 `lastCount` 恰好等於某個 threshold 的 `limit` 時，會落入下一個 threshold 的倍率。例如 `lastCount = 1000` 時，原本會套用 1.25 倍（因為 `<= 1000`），現在會套用 1.5 倍（因為 `< 1000` 不成立，進入下一個 threshold）。需確認此變更是否符合預期。",
+    "existing_code": "if (lastCount < threshold.limit) {\n                return Math.ceil(lastCount * threshold.scale);\n            }",
+    "evidence": "diff 中將 `<=` 改為 `<`，且測試案例中 `lastCount = 1000` 的預期值從 2000 改為 1250，但未說明此邊界變更的意圖。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中 Email 模型的 mock 方式可能與實際不符",
+    "body": "在單元測試中，`Email` 模型被 mock 為 `createModelClass({ findAll: [...] })`，但 `DomainWarmingService` 實際呼叫的是 `findPage`。若 `createModelClass` 未正確將 `findAll` 轉換為 `findPage`，測試可能無法正確模擬行為。建議確認 `createModelClass` 的實作，或直接 mock `findPage` 方法。",
+    "existing_code": "Email = createModelClass({\n                findAll: []\n            });",
+    "evidence": "diff 中多處測試將 `findOne` 改為 `findAll`，但服務程式碼使用 `findPage`，可能導致測試與實作不一致。"
+  }
+]

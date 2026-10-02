@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法改名後不再以 test 開頭，可能導致測試不被執行",
+    "body": "將 `testBookmarksShareNormalWebsiteReminders` 改名為 `verifyBookmarksShareNormalWebsiteReminders`，違反 XCTest 的命名慣例（測試方法必須以 `test` 開頭）。這會導致該方法不再被 XCTest 自動執行，測試涵蓋率下降。建議保留 `test` 前綴，或使用 `@Test` 屬性（若專案採用 Swift Testing）。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中 `-    func testBookmarksShareNormalWebsiteReminders() {` 改為 `+    func verifyBookmarksShareNormalWebsiteReminders() {`"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中提前 return 可能跳過 super.tearDown() 的清理",
+    "body": "在 `tearDown()` 中，當條件成立時直接 `return`，這會跳過後續的 `app.terminate()` 和 `try await super.tearDown()`。若 `super.tearDown()` 包含必要的清理（如釋放資源、重置狀態），可能導致測試污染或資源洩漏。建議改用 `if` 包住主題切換邏輯，而不是提前 return，確保清理程式碼總會執行。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 中新增的 `return` 位於 `tearDown()` 內，且後續仍有 `app.terminate()` 與 `try await super.tearDown()`"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 471,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "tapIfExists 可能隱藏貼上權限提示未出現的問題",
+    "body": "新增 `springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)` 用於處理系統貼上權限提示。若提示未在 0.5 秒內出現，測試仍會繼續，可能導致後續步驟失敗，但錯誤訊息可能不明確。建議考慮使用更明確的等待與斷言，或增加日誌以利除錯。",
+    "existing_code": "springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)",
+    "evidence": "diff 中新增該行，且 `tapIfExists` 通常用於可選元素，若元素未出現不會失敗"
+  }
+]

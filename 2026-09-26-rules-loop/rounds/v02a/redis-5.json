@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/object.c",
+    "line": 1330,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Stream 記憶體計算可能高估：取樣平均乘以 numele 而非 (numele-1)",
+    "body": "在 stream 的記憶體計算中，原本使用 `s->rax->numele-1` 來估算 listpack 總大小，此 PR 改為 `s->rax->numele`。由於 radix tree 中每個元素對應一個 listpack，但最後一個 listpack 可能未滿，若直接乘以總元素數，可能將最後一個 listpack 的實際大小高估為平均大小。建議確認此變更的意圖，或保留 `-1` 以避免高估。",
+    "existing_code": "asize += lpsize * s->rax->numele;",
+    "evidence": "diff 中將 `asize += lpsize * (s->rax->numele-1);` 改為 `asize += lpsize * s->rax->numele;`，但未提供理由。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1217,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 malloc_usable_size 可能包含未初始化的 padding，導致記憶體估算不精確",
+    "body": "`malloc_usable_size` 回傳的可用大小可能包含對齊用的 padding，實際配置大小可能小於此值。此處直接將其作為物件頭部大小，可能高估記憶體使用量。建議改用 `zmalloc_size` 或確認此處使用 `malloc_usable_size` 的合理性。",
+    "existing_code": "size_t asize = malloc_usable_size((void *)o);",
+    "evidence": "新增的 `malloc_usable_size` 呼叫，與其他使用 `zmalloc_size` 的程式碼不一致。"
+  },
+  {
+    "path": "tests/unit/type/string.tcl",
+    "line": 714,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 MEMORY USAGE 測試僅在 jemalloc 下執行，可能遺漏其他 allocator 的覆蓋",
+    "body": "此測試區塊被包在 `if {[string match {*jemalloc*} [s mem_allocator]]}` 中，因此僅在 jemalloc 環境下執行。若 CI 使用其他 allocator（如 libc），此測試將被跳過，無法驗證 kvobjComputeSize 的正確性。建議考慮將測試移至不受 allocator 限制的區塊，或增加條件判斷。",
+    "existing_code": "if {[string match {*jemalloc*} [s mem_allocator]]} {",
+    "evidence": "diff 顯示新增的測試位於 jemalloc 條件區塊內。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 182,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除型別檢查可能導致非 dict 的 variables 被指派給 job_vars_schema",
+    "body": "原本程式碼檢查 `base_job_template['variables']` 是否為 dict，若不是則保留空 dict。移除檢查後，若 `variables` 不是 dict（例如是 list 或 None），`job_vars_schema` 會被指派為該值，後續使用 `job_vars_schema` 的程式碼（例如在 `WorkPoolInfo` 中）可能預期 dict 而發生錯誤。建議保留型別檢查或使用 `isinstance` 驗證。",
+    "existing_code": "job_vars_schema = base_job_template[\"variables\"]",
+    "evidence": "diff 中刪除了 `if isinstance(variables, dict):` 的檢查，直接指派。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 220,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 zip 的 strict 參數可能掩蓋長度不一致的錯誤",
+    "body": "原本使用 `zip(pool_names_list, results, strict=True)` 確保兩個序列長度相同，移除 `strict=True` 後，若 `pool_names_list` 和 `results` 長度不同，多餘的元素會被靜默忽略，可能導致部分 work pool 未被處理且沒有警告。建議保留 `strict=True` 或手動檢查長度。",
+    "existing_code": "for name, result in zip(pool_names_list, results):",
+    "evidence": "diff 中移除了 `strict=True`。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 397,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "部署名稱比對邏輯變更可能導致過濾失效",
+    "body": "原本使用 `full_name`（`flow_name/deployment_name`）與 `deployment_names` 比對，現在改為只比對 `dep.name`。若使用者提供的 `deployment_names` 包含完整名稱（如 `flow/deployment`），則此比對會失敗，導致不應包含的部署被納入。建議確認 `deployment_names` 的格式，或同時支援兩種比對方式。",
+    "existing_code": "if deployment_names and dep.name not in deployment_names:",
+    "evidence": "diff 中將 `full_name not in deployment_names` 改為 `dep.name not in deployment_names`。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] Logger 初始化不符合專案標準",
+    "body": "專案規則 R03 要求 logger 使用 `get_logger(\"module_name\")` 並加上型別註解，但此處使用 `logging.getLogger(__name__)` 且未加型別註解。建議改為 `logger: \"logging.Logger\" = get_logger(\"prefect._sdk.fetcher\")`。",
+    "existing_code": "logger = logging.getLogger(__name__)",
+    "evidence": "diff 中新增了 `logger = logging.getLogger(__name__)`，違反 R03。"
+  }
+]

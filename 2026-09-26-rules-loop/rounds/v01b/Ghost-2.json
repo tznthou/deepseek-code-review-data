@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "編輯器可編輯條件改為 member?.expertise 可能導致無專業領域的會員無法編輯",
+    "body": "原本條件為 `!!memberName && progress !== 'sending'`，現在改為 `!!member?.expertise && progress !== 'sending'`。這表示若登入會員沒有設定專業領域（expertise 為 null 或空字串），即使有姓名，編輯器也會被設為不可編輯。這可能不是預期行為，因為姓名與專業領域是獨立欄位，會員可能只填了其中一項。建議確認此變更是否符合產品需求，或改回以 memberName 作為判斷依據。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`，且依賴陣列由 `[editor, memberName, progress]` 改為 `[editor, member, progress]`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/reply-form.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "回覆目標 ID 改為 parent.id 可能影響巢狀回覆的正確性",
+    "body": "原本使用 `openForm.in_reply_to_id`，現在改為 `parent.id`。若 `openForm` 代表的是回覆某則回覆（即巢狀回覆），則 `parent.id` 可能不是正確的回覆目標。需確認 `parent` 在此元件的定義：若 `parent` 是頂層評論，而 `openForm.in_reply_to_id` 可能指向另一則回覆，則此變更會導致回覆連結錯誤。建議確認後端如何處理 `in_reply_to_id`，並確保此變更不會破壞巢狀回覆功能。",
+    "existing_code": "in_reply_to_id: parent.id,",
+    "evidence": "diff 中此行由 `in_reply_to_id: openForm.in_reply_to_id,` 改為 `in_reply_to_id: parent.id,`，且依賴陣列移除了 `openForm`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 308,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 comment prop 後，FormWrapper 不再顯示父評論作者資訊",
+    "body": "原本 FormWrapper 會以 `member?.name ?? comment?.member?.name` 取得顯示名稱，現在僅使用 `member?.name`。這表示當登入會員沒有姓名時，表單將不會顯示任何名稱，即使父評論作者有姓名。這可能是預期行為（避免錯誤繼承），但需確認是否有其他情境需要顯示父評論作者資訊。",
+    "existing_code": "const memberName = member?.name;",
+    "evidence": "diff 中此行由 `const memberName = member?.name ?? comment?.member?.name;` 改為 `const memberName = member?.name;`，且 FormWrapperProps 移除了 `comment` 屬性。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 309,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 comment prop 後，FormWrapper 不再顯示父評論作者專業領域",
+    "body": "原本 FormWrapper 會以 `member?.expertise ?? comment?.member?.expertise` 取得專業領域，現在僅使用 `member?.expertise`。這表示當登入會員沒有專業領域時，表單將不會顯示任何專業領域，即使父評論作者有。這可能是預期行為，但需確認是否有其他情境需要顯示父評論作者專業領域。",
+    "existing_code": "const memberExpertise = member?.expertise;",
+    "evidence": "diff 中此行由 `const memberExpertise = member?.expertise ?? comment?.member?.expertise;` 改為 `const memberExpertise = member?.expertise;`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 313,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "openForm 可能為 undefined 時直接存取屬性可能導致錯誤",
+    "body": "原本使用 `openForm?.in_reply_to_snippet` 可選串連，現在改為 `openForm.in_reply_to_snippet`。若 `openForm` 可能為 undefined，則會拋出錯誤。需確認 `openForm` 在此處是否保證存在，否則應保留可選串連。",
+    "existing_code": "const isReplyToReply = !!openForm.in_reply_to_snippet;",
+    "evidence": "diff 中此行由 `const isReplyToReply = !!openForm?.in_reply_to_snippet;` 改為 `const isReplyToReply = !!openForm.in_reply_to_snippet;`。"
+  }
+]

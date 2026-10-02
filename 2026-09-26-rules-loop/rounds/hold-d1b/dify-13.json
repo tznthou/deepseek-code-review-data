@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R03] 使用 print 而非 logging",
+    "body": "在生產程式碼中使用 `print` 違反專案規範 R03，應改用 `logging` 模組。建議在模組頂端建立 logger，並以適當層級記錄此事件。",
+    "existing_code": "print(f\"Starting execution for node: {downstream_node_id}\")",
+    "evidence": "diff 中新增的 print 陳述式，且檔案位於 api/ 下，非測試檔案。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/graph_traversal/test_skip_propagator.py",
+    "line": 141,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試直接呼叫私有方法 _propagate_skip_to_node",
+    "body": "測試直接呼叫私有方法 `_propagate_skip_to_node`，這可能導致測試與實作細節耦合。建議改為透過公開方法觸發，或評估此測試的必要性。",
+    "existing_code": "propagator._propagate_skip_to_node(\"node_1\")",
+    "evidence": "測試中直接呼叫私有方法，而非透過公開介面。"
+  }
+]

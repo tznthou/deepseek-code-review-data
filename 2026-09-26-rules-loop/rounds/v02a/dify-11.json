@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "工具回應內容錯誤：使用 tool_inputs 而非 tool_responses",
+    "body": "在 organize_agent_history 中，ToolPromptMessage 的 content 原本使用 `tool_responses.get(tool, agent_thought.observation)`，現在改為 `str(tool_inputs.get(tool, agent_thought.observation))`。這會導致工具回應內容變成工具輸入，而非實際的觀察結果。例如，當工具輸入為 `{\"query\": \"...\"}` 且觀察結果為 `{\"result\": \"...\"}` 時，回應會錯誤地顯示輸入內容。建議改回使用 `tool_responses`。",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中此行將原本的 `tool_responses.get` 改為 `tool_inputs.get`，且未見其他邏輯調整。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R14] AgentThoughtValidation 使用 Pydantic v1 語法",
+    "body": "AgentThoughtValidation 類別使用 `class Config: extra = \"allow\"`，這是 Pydantic v1 的寫法。根據規範 R14，應使用 Pydantic v2 的 `model_config = ConfigDict(extra='forbid')`。此外，目前設定為 allow 可能允許未宣告的欄位，與規範的 forbid 預設不符。",
+    "existing_code": "class Config:\n        extra = \"allow\"  # Pydantic v1 syntax - should use ConfigDict(extra='forbid')",
+    "evidence": "diff 中新增的 AgentThoughtValidation 類別包含 Pydantic v1 的 Config 語法，且註解也指出應使用 ConfigDict。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1853,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "message_chain_id 欄位缺少 Mapped 型別註記",
+    "body": "在 MessageAgentThought 模型中，`message_chain_id` 欄位定義為 `message_chain_id: Mapped[str | None] = mapped_column(StringUUID, nullable=True, default=None)`，但其他欄位如 `id`、`message_id` 都有明確的 `Mapped` 型別。此處缺少 `Mapped` 可能導致型別檢查不一致。建議補上 `Mapped[str | None]`。",
+    "existing_code": "message_chain_id: Mapped[str | None] = mapped_column(StringUUID, nullable=True, default=None)",
+    "evidence": "diff 中此行未包含 Mapped 型別註記，與其他欄位不一致。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 320,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "message_price_unit 預設值從 0 改為 0.001 可能影響計費",
+    "body": "在 create_agent_thought 中，`message_price_unit` 從 `0` 改為 `Decimal(\"0.001\")`，`answer_unit_price` 從 `0` 改為 `Decimal(\"0.001\")`。這可能改變計費邏輯，若原本預期為 0 則可能導致費用計算錯誤。請確認此變更是否符合預期。",
+    "existing_code": "message_price_unit=Decimal(\"0.001\"),",
+    "evidence": "diff 中將原本的 `message_price_unit=0` 改為 `Decimal(\"0.001\")`，且未見相關說明。"
+  }
+]

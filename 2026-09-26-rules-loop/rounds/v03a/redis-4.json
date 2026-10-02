@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc 而非 zmalloc",
+    "body": "在 clusterCommonInit 中使用 `malloc` 配置 `server.cluster_slot_stats`，違反專案規範 R02（必須使用 zmalloc/zfree 系列）。這會導致記憶體使用量無法被 Redis 的記憶體追蹤機制記錄，且可能造成記憶體洩漏。請改用 `zmalloc`。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的這一行直接呼叫 malloc，而專案規範 R02 明確禁止直接使用 malloc。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2137,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R07] clusterCommonInit 未宣告為 static",
+    "body": "函式 `clusterCommonInit` 僅在 cluster.c 內部使用（由 server.c 呼叫），但未宣告為 `static`，違反專案規範 R07（內部輔助函式必須宣告為 static）。這會造成符號污染，並可能導致連結時的名稱衝突。請加上 `static` 修飾詞。",
+    "existing_code": "void clusterCommonInit(void) {",
+    "evidence": "diff 中新增的函式定義沒有 static 關鍵字，且該函式僅在 cluster.c 中被呼叫。"
+  },
+  {
+    "path": "src/cluster_legacy.c",
+    "line": 5262,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R07] clusterClaimUnassignedSlots 未宣告為 static",
+    "body": "函式 `clusterClaimUnassignedSlots` 僅在 cluster_legacy.c 內部使用（由 verifyClusterConfigWithData 呼叫），但未宣告為 `static`，違反專案規範 R07。請加上 `static` 修飾詞。",
+    "existing_code": "void clusterClaimUnassignedSlots(void) {",
+    "evidence": "diff 中新增的函式定義沒有 static 關鍵字，且該函式僅在 cluster_legacy.c 中被呼叫。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2153,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "clusterDeleteKeysInUnownedSlots 可能誤刪屬於自己的 slot 的 keys",
+    "body": "在 `clusterDeleteKeysInUnownedSlots` 中，條件判斷為 `!countKeysInSlot(i) || clusterIsMySlot(i) || getImportingSlotSource(i)`，但 `clusterIsMySlot(i)` 可能無法正確判斷 slot 是否屬於自己（例如在 cluster 尚未完全初始化時）。若判斷錯誤，可能導致刪除屬於自己的 slot 的 keys，造成資料遺失。建議確認 `clusterIsMySlot` 的實作是否可靠，或改用 `server.cluster->slots[i] == myself` 進行判斷。",
+    "existing_code": "if (!countKeysInSlot(i) ||\n            clusterIsMySlot(i) ||\n            getImportingSlotSource(i))",
+    "evidence": "diff 中新增的條件判斷使用 clusterIsMySlot，但該函式可能依賴於 cluster state，若 state 尚未完全建立可能回傳錯誤結果。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2210,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "clusterDeleteKeysInUnownedSlots 與 clusterClaimUnassignedSlots 的順序可能導致問題",
+    "body": "在 `verifyClusterConfigWithData` 中，先呼叫 `clusterDeleteKeysInUnownedSlots` 再呼叫 `clusterClaimUnassignedSlots`。若某 slot 同時有 keys 且未指派給任何節點，`clusterDeleteKeysInUnownedSlots` 會因為 `clusterIsMySlot(i)` 為 false 而刪除 keys，但隨後 `clusterClaimUnassignedSlots` 會將該 slot 指派給自己，造成資料遺失。建議調整順序或合併邏輯，先處理未指派的 slot。",
+    "existing_code": "clusterDeleteKeysInUnownedSlots();\n    /* Take over slots that we have keys for, but are assigned to no one. */\n    clusterClaimUnassignedSlots();",
+    "evidence": "diff 中顯示這兩個函式依序呼叫，且 clusterDeleteKeysInUnownedSlots 的條件未排除未指派的 slot。"
+  }
+]

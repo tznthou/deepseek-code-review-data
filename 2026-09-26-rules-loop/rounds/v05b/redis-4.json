@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc 而非 zmalloc",
+    "body": "在 clusterCommonInit 中使用 `malloc` 分配記憶體，違反專案規範 R02（應使用 zmalloc 系列函式）。這會導致記憶體使用量未被追蹤，且可能造成記憶體洩漏。請改用 `zmalloc`。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的 clusterCommonInit 函式內使用 malloc，而專案規範 R02 要求使用 zmalloc。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2137,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R07] clusterCommonInit 未宣告為 static",
+    "body": "clusterCommonInit 函式僅在 cluster.c 內部使用，但未宣告為 static，違反專案規範 R07。請加上 static 修飾詞。",
+    "existing_code": "void clusterCommonInit(void) {",
+    "evidence": "函式定義於 cluster.c，且未在其他檔案中引用，應為 static。"
+  },
+  {
+    "path": "src/cluster_legacy.c",
+    "line": 5262,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R07] clusterClaimUnassignedSlots 未宣告為 static",
+    "body": "clusterClaimUnassignedSlots 函式僅在 cluster_legacy.c 內部使用，但未宣告為 static，違反專案規範 R07。請加上 static 修飾詞。",
+    "existing_code": "void clusterClaimUnassignedSlots(void) {",
+    "evidence": "函式定義於 cluster_legacy.c，且未在其他檔案中引用，應為 static。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2153,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "countKeysInSlot 可能回傳負值，導致條件判斷錯誤",
+    "body": "在 clusterDeleteKeysInUnownedSlots 中，`countKeysInSlot(i)` 可能回傳負值（例如 -1 表示錯誤），但條件 `!countKeysInSlot(i)` 只會對 0 為真，負值會被視為 true，導致後續邏輯錯誤。建議明確檢查回傳值是否大於 0。",
+    "existing_code": "if (!countKeysInSlot(i) ||",
+    "evidence": "diff 中新增的 clusterDeleteKeysInUnownedSlots 函式使用 `!countKeysInSlot(i)`，但未處理負值情況。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2153,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "clusterDeleteKeysInUnownedSlots 未檢查 clusterIsMySlot 的例外情況",
+    "body": "在 clusterDeleteKeysInUnownedSlots 中，條件 `clusterIsMySlot(i)` 可能無法涵蓋所有應跳過的情況，例如當 slot 正在遷移中時。建議參考原有 verifyClusterConfigWithData 的邏輯，確認是否需要額外檢查。",
+    "existing_code": "if (!countKeysInSlot(i) ||\n            clusterIsMySlot(i) ||\n            getImportingSlotSource(i))",
+    "evidence": "原有 verifyClusterConfigWithData 中有更完整的檢查，此處可能遺漏某些情況。"
+  }
+]

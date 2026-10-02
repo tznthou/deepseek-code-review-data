@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "generate_github_alternative_url 忽略 alt_url 可能導致下載來源錯誤",
+    "body": "在 `generate_github_alternative_url` 中，原本使用 `alt_url` 作為下載 URL，但修改後改為使用原始的 `url`。這可能導致當 GitHub 下載失敗時，備援機制失效，因為它仍然嘗試從原始 URL 下載，而不是使用替代的鏡像 URL。\n\n**失敗情境**：當 GitHub 主要 URL 無法存取（例如網路問題或 GitHub 暫時故障），原本的備援機制會嘗試從鏡像下載，但修改後會再次嘗試相同的原始 URL，導致下載失敗。\n\n**建議**：確認此修改是否為預期行為。如果目的是為了避免使用替代 URL，則應移除整個備援機制；否則應保留 `alt_url` 的使用。",
+    "existing_code": ".map(|_alt_url| {\n      (\n        ureq::Agent::config_builder()\n          .user_agent(BUNDLER_USER_AGENT)\n          .build()\n          .into(),\n        url.to_owned(),\n      )\n    })",
+    "evidence": "diff 中將 `alt_url` 改為 `_alt_url`，並將回傳的 URL 從 `alt_url` 改為 `url.to_owned()`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 HashAlgorithm::Sha256 的 cfg(target_os = \"windows\") 可能影響跨平台行為",
+    "body": "原本 `HashAlgorithm::Sha256` 只在 Windows 上可用，現在移除 cfg 限制後，在所有平台都可用。這可能是有意的，但需確認在其他平台上使用 SHA-256 是否會造成問題（例如效能或相容性）。\n\n**建議**：確認此變更是否為預期，並確保在其他平台上的測試涵蓋此路徑。",
+    "existing_code": "pub enum HashAlgorithm {\n  Sha256,\n  Sha1,\n}",
+    "evidence": "diff 中移除了 `#[cfg(target_os = \"windows\")]` 屬性。"
+  }
+]

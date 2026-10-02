@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試方法改名導致不再被 XCTest 執行",
+    "body": "將 `testBookmarksShareNormalWebsiteReminders` 改名為 `verifyBookmarksShareNormalWebsiteReminders` 後，XCTest 不再將此方法視為測試案例（因為缺少 `test` 前綴），因此該測試將不會被執行。這可能導致測試涵蓋率下降，且若原本依賴此測試驗證功能，可能遺漏回歸。建議若需保留測試，應維持 `test` 前綴，或改用其他機制（如 `XCTestCase` 的 `invocation` 或 `testInvocations`）來控制執行。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中將原本的 `func testBookmarksShareNormalWebsiteReminders()` 改為 `func verifyBookmarksShareNormalWebsiteReminders()`，違反 XCTest 命名慣例（R06）。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中提前 return 可能跳過 super.tearDown()",
+    "body": "在 `tearDown()` 中，若 `self.name.contains(\"testSelectBottomPlacement\") || iPad()` 為真，會直接 `return`，導致後續的 `app.terminate()` 和 `try await super.tearDown()` 不會被執行。這可能造成測試狀態未清理，影響後續測試的獨立性。建議改為使用 `if` 條件包住主題切換，但保留 `app.terminate()` 和 `super.tearDown()` 的呼叫。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 顯示新增的 `return` 位於 `tearDown()` 中，且後續仍有 `app.terminate()` 和 `try await super.tearDown()`，提前返回會跳過這些清理步驟。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 471,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "tapIfExists 可能隱藏貼上權限提示未出現的問題",
+    "body": "新增的 `springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)` 會在按鈕存在時點擊，但若按鈕未出現（例如系統未顯示提示），測試仍會繼續，可能導致後續步驟失敗或測試不穩定。建議確認此提示是否必定出現，或增加等待與斷言，以確保測試意圖明確。",
+    "existing_code": "springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)",
+    "evidence": "diff 中新增此行，使用 `tapIfExists` 而非 `waitAndTap`，可能忽略提示未出現的情況。"
+  }
+]

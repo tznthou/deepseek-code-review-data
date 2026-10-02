@@ -1,0 +1,46 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 在 Kubernetes observer 啟動時加入 semaphore 限制並發 API 呼叫，避免大量既有 pods/jobs 造成 API server 過載。主要風險在於 semaphore 初始化與使用之間可能出現競態，且刪除測試檔案會降低覆蓋率。建議先處理 semaphore 初始化競態，並補回測試。
+
+### Findings（3 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:132` | Semaphore 初始化與使用之間存在競態 | 0.90 |
+| ⚠️ | Major | `src/integrations/prefect-kubernetes/tests/test_observer.py:1` | 刪除測試檔案降低覆蓋率 | 0.80 |
+| 🔸 | Minor | `src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:63` | Semaphore 未在停止時清理 | 0.60 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:132</code> Semaphore 初始化與使用之間存在競態</summary>
+
+`_startup_event_semaphore` 在 `initialize_clients` 中初始化，但 `_replicate_pod_event` 可能在初始化完成前被呼叫（例如 kopf 在啟動時就開始處理事件）。若此時 `_startup_event_semaphore` 仍為 `None`，會拋出 `RuntimeError`，導致事件處理失敗。
+
+建議：在 `_replicate_pod_event` 中若 semaphore 尚未初始化，先等待初始化完成（例如使用 `asyncio.Event`），或將 semaphore 初始化移至模組載入時。
+
+**判斷依據**：diff 中新增了 `_startup_event_semaphore` 全域變數，並在 `initialize_clients` 中賦值，但 `_replicate_pod_event` 在 `event_type is None` 時直接使用，沒有等待初始化。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/integrations/prefect-kubernetes/tests/test_observer.py:1</code> 刪除測試檔案降低覆蓋率</summary>
+
+此 PR 刪除了 `test_observer.py`，其中包含多個針對 `_replicate_pod_event` 和 observer 啟動/停止的測試。刪除後，新加入的 semaphore 邏輯沒有對應測試，可能隱藏回歸。
+
+建議：保留測試檔案，並新增測試驗證 semaphore 行為（例如並發限制、初始化競態）。
+
+**判斷依據**：diff 顯示整個測試檔案被刪除，且沒有新增替代測試。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:63</code> Semaphore 未在停止時清理</summary>
+
+`_startup_event_semaphore` 在 `initialize_clients` 中建立，但沒有在 observer 停止時釋放或重設。若 observer 重新啟動，舊的 semaphore 可能仍被使用，導致並發限制不正確。
+
+建議：在停止 observer 時將 `_startup_event_semaphore` 設為 `None`，或確保重新初始化時建立新實例。
+
+**判斷依據**：diff 中新增了 semaphore 初始化，但沒有看到對應的清理邏輯。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 9546 (cache hit 7168) ｜ completion tokens 875 ｜ PR #11</sub>

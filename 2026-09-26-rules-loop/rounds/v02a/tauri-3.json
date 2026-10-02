@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "錯誤處理不當：將 toml 解析錯誤包裝為 serde_json::Error",
+    "body": "在 do_parse_toml 中，原本使用 ConfigError::FormatToml 來封裝 toml 解析錯誤，但現在改為 ConfigError::FormatJson，並將錯誤轉換為 serde_json::Error。這會導致錯誤類型不匹配，且可能遺失 toml 特有的錯誤資訊（如行號、欄位）。建議保留 ConfigError::FormatToml 變體，並直接傳遞 toml::de::Error。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中將原本的 ConfigError::FormatToml 改為 ConfigError::FormatJson，並使用 serde_json::Error::custom 轉換錯誤。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Display 實作中 Flatpak 使用大寫 'Flatpak'，可能導致序列化不一致",
+    "body": "在 Display for BundleType 中，新增的 Flatpak 變體回傳 \"Flatpak\"，但其他變體皆回傳小寫字串（如 \"nsis\"、\"app\"、\"dmg\"）。這可能導致序列化時產生不一致的輸出，且與 Deserialize 中預期的小寫 \"flatpak\" 不符。建議改為 \"flatpak\"。",
+    "existing_code": "Self::Flatpak => \"Flatpak\",",
+    "evidence": "diff 中新增的 Display 分支使用大寫 'Flatpak'，而其他分支皆為小寫。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增 Flatpak 變體可能影響既有 API 相容性",
+    "body": "BundleType 為公開枚舉，新增變體可能導致下游程式碼在 exhaustive match 時編譯失敗。若此 crate 遵循 semver，可能需要標記為 breaking change 或使用 #[non_exhaustive]。",
+    "existing_code": "/// The Flatpak bundle (.flatpak).\n  Flatpak,",
+    "evidence": "diff 中新增了 Flatpak 變體，但未見 #[non_exhaustive] 屬性。"
+  }
+]

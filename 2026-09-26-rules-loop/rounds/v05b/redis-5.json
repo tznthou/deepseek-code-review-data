@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/object.c",
+    "line": 1239,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "quicklist 取樣計算使用 samples 而非 elecount 可能導致記憶體估算錯誤",
+    "body": "在 quicklist 的記憶體估算中，原本使用 `elesize/elecount*ql->count` 來根據平均元素大小推算總大小，但修改後改為 `elesize/samples*ql->count`。當 quicklist 節點中的元素數量（elecount）與取樣節點數（samples）不一致時，會導致估算偏差。例如，若每個節點包含多個元素，samples 會小於 elecount，導致平均大小被高估，進而使總記憶體估算過高。建議改回使用 elecount 作為分母，或明確計算每個元素的平均大小。",
+    "existing_code": "asize += (double)elesize/samples*ql->count;",
+    "evidence": "diff 中將原本的 `asize += (double)elesize/elecount*ql->count;` 改為 `asize += (double)elesize/samples*ql->count;`，但 samples 是節點數，elecount 是元素數，兩者意義不同。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1330,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "stream 記憶體估算中 lpsize 乘以 numele 可能重複計算最後一個 listpack",
+    "body": "在 stream 的記憶體估算中，原本使用 `lpsize * (s->rax->numele-1)` 來估算所有 listpack 的大小，但修改後改為 `lpsize * s->rax->numele`。這可能導致最後一個 listpack 被重複計算，因為在後續程式碼中，最後一個 listpack 的大小會單獨加入。建議確認 numele 的定義，若 numele 包含最後一個 listpack，則應維持減 1。",
+    "existing_code": "asize += lpsize * s->rax->numele;",
+    "evidence": "diff 中將 `asize += lpsize * (s->rax->numele-1);` 改為 `asize += lpsize * s->rax->numele;`，但後續程式碼有針對最後一個 listpack 的處理。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1205,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "函式註解與實際行為可能不符",
+    "body": "函式註解改為「Returns the size in bytes consumed by the object header, key and value in RAM」，但函式參數中仍包含 `key`，且實際計算中並未明確包含 key 的大小（除了透過 `malloc_usable_size((void *)o)` 可能包含嵌入的 key）。建議確認註解是否準確反映實際計算內容，或調整註解以避免誤導。",
+    "existing_code": "/* Returns the size in bytes consumed by the object header, key and value in RAM.",
+    "evidence": "diff 中修改了註解，但函式內部的計算邏輯是否真的包含 key 的大小需要進一步確認。"
+  },
+  {
+    "path": "tests/unit/type/string.tcl",
+    "line": 701,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中 max 計算可能過於寬鬆，無法有效驗證記憶體估算",
+    "body": "在新增的測試中，`max` 的計算方式為 `32 > $min ? 64 : [expr $min * 2]`，這可能導致測試過於寬鬆，無法有效驗證記憶體估算的準確性。建議根據實際記憶體配置設定更嚴格的界限，或使用更精確的預期值。",
+    "existing_code": "set max [expr {32 > $min ? 64 : [expr $min * 2]}]",
+    "evidence": "diff 中新增的測試程式碼，max 的計算方式可能無法有效捕捉記憶體估算的錯誤。"
+  }
+]

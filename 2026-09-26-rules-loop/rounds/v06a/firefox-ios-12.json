@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "expectation 使用錯誤可能導致測試誤判",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`decisionHandler` 內沒有呼叫 `expectation.fulfill()`，而是在 `wait(for:)` 之後才呼叫。這會造成即使 decision handler 從未被呼叫，測試仍可能通過（因為 expectation 在等待後被手動 fulfill）。建議將 `expectation.fulfill()` 移回 decision handler 內，並移除等待後的呼叫。",
+    "existing_code": "let decisionHandler = { (decision: WKPermissionDecision) in\n            XCTAssertEqual(decision, .prompt)\n        }\n\n        let expectation = expectation(description: \"Wait for the decision handler to be called\")\n        subject.webView(MockWKWebView(),\n                        requestMediaCapturePermissionFor: origin,\n                        initiatedByFrame: frame,\n                        type: .cameraAndMicrophone,\n                        decisionHandler: decisionHandler)\n        wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中 `testRequestMediaCaptureSuccess` 的 decisionHandler 內沒有 fulfill，且等待後才 fulfill。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴真實網路可能導致不穩定",
+    "body": "`captureFrameAndOrigin` 會實際載入 `https://example.com`，這需要網路連線且依賴外部服務。在 CI 或無網路環境下可能失敗或逾時，造成測試不穩定。建議改用本地測試伺服器或注入假的 navigation action 來取得 frame 與 origin。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 helper 直接呼叫 `webView.load` 載入外部 URL。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "XCTWaiter 等待結果未檢查",
+    "body": "`XCTWaiter.wait` 的回傳值未被檢查，若等待逾時，仍可能回傳 nil 並讓測試失敗，但錯誤訊息不夠明確。建議檢查 waiter 結果，並在逾時或失敗時提供更清楚的診斷。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中未使用 waiter 回傳值。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "FakeWKNavigationDelegate 未標示為 final",
+    "body": "此類別僅供測試使用，且無需繼承，建議加上 `final` 以符合專案慣例（R12）。",
+    "existing_code": "class FakeWKNavigationDelegate: NSObject, WKNavigationDelegate {",
+    "evidence": "diff 中新增的類別未標示 final。"
+  }
+]

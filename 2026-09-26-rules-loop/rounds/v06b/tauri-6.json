@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "使用已棄用的 onBackPressed() 可能導致行為不一致或遞迴",
+    "body": "在 `handleOnBackPressed` 中，當沒有監聽器且 WebView 無法返回時，程式碼呼叫 `this@AppPlugin.activity.onBackPressed()`。`Activity.onBackPressed()` 自 API 33 起已棄用，且在此情境下可能觸發系統預設行為（例如關閉 Activity），但由於此 callback 已攔截返回事件，可能造成非預期結果。建議改用 `onBackPressedDispatcher.onBackPressed()` 或直接呼叫 `activity.finish()`，並確保不會與 callback 邏輯衝突。",
+    "existing_code": "this@AppPlugin.activity.onBackPressed()",
+    "evidence": "diff 中新增的 `handleOnBackPressed` 方法內，在 `else` 分支呼叫 `activity.onBackPressed()`。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "webView 可能為 null 時使用 !! 導致 NPE",
+    "body": "在 `handleOnBackPressed` 中，`this@AppPlugin.webView!!.goBack()` 直接使用非空斷言。雖然 `load` 方法通常會在 callback 觸發前被呼叫，但若 WebView 尚未初始化或已被銷毀，可能拋出 NullPointerException。建議使用安全呼叫 `this@AppPlugin.webView?.goBack()` 並處理 null 情況。",
+    "existing_code": "this@AppPlugin.webView!!.goBack()",
+    "evidence": "diff 中 `handleOnBackPressed` 方法內，當 `canGoBack()` 為 true 時呼叫 `webView!!.goBack()`。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "OnBackPressedCallback 的 isEnabled 狀態管理可能造成事件遺漏",
+    "body": "在沒有監聽器且 WebView 無法返回時，程式碼先將 `isEnabled` 設為 false，呼叫 `onBackPressed()` 後再設回 true。若 `onBackPressed()` 內部觸發非同步操作或導致 Activity 重建，可能使 callback 狀態不一致。建議考慮使用 `OnBackPressedCallback` 的 `setEnabled` 方法更精確地控制，或避免在 callback 內直接呼叫 `onBackPressed()`。",
+    "existing_code": "this.isEnabled = false\nthis@AppPlugin.activity.onBackPressed()\nthis.isEnabled = true",
+    "evidence": "diff 中 `handleOnBackPressed` 方法內的三行程式碼。"
+  }
+]

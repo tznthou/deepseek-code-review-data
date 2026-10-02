@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較未處理符號連結，可能誤判 SSL_CERT_DIR 已包含憑證目錄",
+    "body": "在檢查 SSL_CERT_DIR 是否已包含憑證目錄時，使用 `Path.GetFullPath` 進行正規化，但未解析符號連結。若 SSL_CERT_DIR 中的路徑或 `prettyCertDir` 包含符號連結，可能導致路徑字串不同但實際指向相同目錄，造成誤判為未包含，進而重複輸出建議訊息或錯誤設定 `sawTrustFailure`。建議使用 `Path.GetFullPath` 後再透過 `Path.GetRelativePath` 或比較 `FileSystemInfo.ResolveLinkTarget` 來處理符號連結。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的 `isCertDirIncluded` 判斷邏輯使用 `Path.GetFullPath` 比較，未處理符號連結。"
+  },
+  {
+    "path": "src/Tools/dotnet-dev-certs/src/Program.cs",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "非 verbose 模式啟用 LogAlways 事件，可能輸出過多訊息",
+    "body": "在非 verbose 模式下，將事件監聽層級設為 `EventLevel.LogAlways`，這會讓所有標記為 `LogAlways` 的事件（包括新加入的 `UnixSuggestAppendingToEnvironmentVariable`）在一般執行時輸出。這可能導致使用者看到不必要的建議訊息，與原本「除非 --verbose 否則不顯示」的設計意圖相違背。建議改為 `EventLevel.Warning` 或僅在需要時啟用特定事件。",
+    "existing_code": "listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);",
+    "evidence": "diff 中新增的 else 分支將事件層級設為 LogAlways，且 CertificateManagerEventSource 中有多個 LogAlways 事件。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "路徑比較使用 OrdinalIgnoreCase，在 Linux 上可能誤判",
+    "body": "Linux 檔案系統通常區分大小寫，但此處使用 `StringComparison.OrdinalIgnoreCase` 比較路徑，可能將不同大小寫的目錄視為相同，導致誤判 SSL_CERT_DIR 已包含憑證目錄。建議在 Unix 平台上使用 `StringComparison.Ordinal`。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的比較使用 `OrdinalIgnoreCase`，未考慮平台差異。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/CertificateManager.cs",
+    "line": 1315,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "新增事件未遵循既有命名模式",
+    "body": "新增的事件方法 `UnixOpenSslCertificateDirectoryAlreadyConfigured` 和 `UnixSuggestAppendingToEnvironmentVariable` 命名與既有事件（如 `UnixSuggestSettingEnvironmentVariable`）不一致，缺少 `Unix` 前綴或動詞形式不統一。建議調整命名以維持一致性。",
+    "existing_code": "internal void UnixOpenSslCertificateDirectoryAlreadyConfigured(string certDir, string envVarName) => WriteEvent(113, certDir, envVarName);",
+    "evidence": "diff 中新增的事件方法命名與既有事件風格不符。"
+  }
+]

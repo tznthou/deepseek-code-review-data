@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "布林邏輯錯誤：移除 `!` 導致搜尋模式判斷相反",
+    "body": "在 `useMarketplaceSearchMode` 中，原本的條件是 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`，但此 PR 移除了 `!`，變成 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`。這會讓「當 activePluginType 屬於有 collections 的類別時，即使沒有搜尋文字或 tags，也會被視為搜尋模式」，反之亦然。這很可能導致 UI 顯示錯誤的搜尋模式，例如在一般瀏覽時顯示搜尋結果頁面。\n\n建議：確認此變更是否為預期行為。若原本的邏輯是正確的，請恢復 `!`；若是有意變更，請提供說明並更新相關測試。",
+    "existing_code": "|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))",
+    "evidence": "diff 中此行從 `|| (searchMode ?? (!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))` 改為 `|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))`，移除了 `!`。"
+  },
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 使用 `any` 型別作為 selector 參數，降低型別安全",
+    "body": "`usePluginPageContext` 的 selector 參數型別從 `(value: PluginPageContextValue) => any` 改為 `any`。這違反了 R09（避免使用 `any`），且會讓呼叫端可以傳入任意值，失去型別檢查。\n\n建議：保留原本的函式型別，或使用更精確的泛型來描述 selector。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中此行從 `export function usePluginPageContext(selector: (value: PluginPageContextValue) => any) {` 改為 `export function usePluginPageContext(selector: any) {`。"
+  }
+]

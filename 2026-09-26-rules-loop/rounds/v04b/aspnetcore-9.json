@@ -1,0 +1,46 @@
+[
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "macOS 映像升級至 macOS-15 可能導致建置失敗",
+    "body": "將 macOS 映像從 macOS-13 升級至 macOS-15 可能導致建置失敗，因為 macOS-15 可能不包含專案所需的特定工具或 SDK。建議先確認 macOS-15 映像是否包含所有必要元件，或考慮使用較舊的映像以維持穩定性。",
+    "existing_code": "vmImage: macOS-15",
+    "evidence": "diff 中將 vmImage 從 macOS-13 改為 macOS-15，但未提供任何驗證或說明。"
+  },
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Xcode 路徑未更新至 16.4.0",
+    "body": "雖然 displayName 改為 'Use XCode 16.4.0'，但實際的 xcode-select 路徑仍指向 Xcode_15.2.0.app。這可能導致使用錯誤的 Xcode 版本進行建置。請將路徑更新為 /Applications/Xcode_16.4.0.app/Contents/Developer。",
+    "existing_code": "sudo xcode-select -s /Applications/Xcode_15.2.0.app/Contents/Developer",
+    "evidence": "diff 中僅變更 displayName，未變更實際路徑。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R02] 使用檔案範圍命名空間宣告",
+    "body": "此檔案將命名空間從檔案範圍宣告改為區塊範圍宣告，違反專案規範 R02。請改回檔案範圍命名空間宣告。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中將原本的檔案範圍命名空間改為區塊範圍，並在檔案結尾新增對應的右大括號。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增 QuarantinedTest 屬性但未提供說明",
+    "body": "新增 [QuarantinedTest] 屬性將測試標記為隔離，但未在 PR 描述或程式碼註解中說明原因。建議補充相關 issue 連結或說明，以便未來追蹤。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/64305\")]",
+    "evidence": "diff 中新增此屬性，但未見其他說明。"
+  }
+]

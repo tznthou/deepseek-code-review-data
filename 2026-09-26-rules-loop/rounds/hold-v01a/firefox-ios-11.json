@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift",
+    "line": 329,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "updateAccessibility 中誤用 browserActionStack 取代 trailingPageActionStack",
+    "body": "在 updateAccessibility 方法中，原本應該加入 trailingPageActionStack 的 arrangedSubviews，但重構後誤改為 browserActionStack，導致 browserActionStack 的子視圖被重複加入，而 trailingPageActionStack 的子視圖未被處理。這可能造成無障礙元素重複或缺失，影響 VoiceOver 等輔助功能。\n\n建議修正為：\n```swift\nlet stacks = browserActionStack.arrangedSubviews +\n             navigationActionStack.arrangedSubviews +\n             leadingPageActionStack.arrangedSubviews +\n             trailingPageActionStack.arrangedSubviews\n```",
+    "existing_code": "let stacks = browserActionStack.arrangedSubviews +\n             navigationActionStack.arrangedSubviews +\n             leadingPageActionStack.arrangedSubviews +\n             browserActionStack.arrangedSubviews",
+    "evidence": "diff 中此行將原本的 pageActionStack 改為 browserActionStack，但根據上下文，此處應為 trailingPageActionStack。"
+  },
+  {
+    "path": "BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift",
+    "line": 419,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "updateToolbarLayout 中判斷頁面動作存在與否的 stack 錯誤",
+    "body": "在 updateToolbarLayout 中，原本使用 pageActionStack（即現在的 trailingPageActionStack）來判斷是否有頁面動作，但重構後改為 leadingPageActionStack。這可能導致當只有 trailing 頁面動作而沒有 leading 頁面動作時，分隔線寬度被設為 0，造成 UI 顯示不正確。\n\n建議改回使用 trailingPageActionStack：\n```swift\nlet hasPageActions = !trailingPageActionStack.arrangedSubviews.isEmpty\n```",
+    "existing_code": "let hasPageActions = !leadingPageActionStack.arrangedSubviews.isEmpty",
+    "evidence": "diff 中此行將 pageActionStack 改為 leadingPageActionStack，但根據變數名稱和上下文，此處應為 trailingPageActionStack。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift",
+    "line": 448,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "toolbar.leadingAnchor 約束對象可能錯誤",
+    "body": "在 setupToolbarLayout 中，原本 toolbar.leadingAnchor 是與 leftSkeletonAddressBar.trailingAnchor 對齊，但重構後改為與 rightSkeletonAddressBar.trailingAnchor 對齊。這可能導致工具欄在骨架畫面期間位置錯誤，特別是在滑動分頁時。\n\n建議確認此變更是否為預期行為，若不是，應改回 leftSkeletonAddressBar.trailingAnchor。",
+    "existing_code": "toolbar.leadingAnchor.constraint(equalTo: rightSkeletonAddressBar.trailingAnchor).isActive = true",
+    "evidence": "diff 中此行將 leftSkeletonAddressBar 改為 rightSkeletonAddressBar，但未見相應的佈局調整說明。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift",
+    "line": 465,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "未使用的變數 isLandscape",
+    "body": "在 setupSkeletonAddressBarsLayout 中新增了 isLandscape 變數，但並未在後續程式碼中使用。這可能是開發中的殘留，應移除或實際使用。",
+    "existing_code": "let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape",
+    "evidence": "diff 中新增此行，但後續約束未使用該變數。"
+  }
+]

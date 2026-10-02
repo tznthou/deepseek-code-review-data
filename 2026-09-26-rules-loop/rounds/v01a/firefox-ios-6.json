@@ -1,0 +1,68 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試斷言可能失效：使用 assert 而非 XCTAssert",
+    "body": "在測試方法中將原本的 `XCTAssertTrue` 改為 `assert`，這會導致在 Release 建置（或啟用最佳化）時斷言被移除，測試將無法驗證行為。此外，`assert` 失敗時會直接終止程式，而非記錄測試失敗，這會使測試結果不準確。建議改回使用 `XCTAssertTrue` 或 `XCTAssertEqual`。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\nassert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將原本的 `XCTAssertTrue(granted)` 和 `XCTAssertTrue(self.center.requestAuthorizationWasCalled)` 改為 `assert`，這會使測試在 Release 模式下失去驗證能力。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "捕獲列表使用 [center] 可能造成強引用循環",
+    "body": "閉包捕獲列表使用 `[center]`，但 `center` 是 `self.center` 的屬性，若 `self` 持有該閉包，可能形成強引用循環。建議使用 `[weak self]` 並在閉包內安全解包，或直接使用 `self?.center`。",
+    "existing_code": "notificationManager.requestAuthorization { [center] (granted, error) in",
+    "evidence": "diff 中將原本的 `{ (granted, error) in` 改為 `{ [center] (granted, error) in`，捕獲了 `center` 屬性，但未見弱化處理。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/StoriesFeed/StoriesFeedDiffableDataSourceTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "setUp 中呼叫 super 的順序可能導致問題",
+    "body": "在 `setUp() async throws` 中，先呼叫 `try await super.setUp()` 再進行其他設定。若 super 的實作依賴於某些狀態，或後續設定可能拋出錯誤，建議將 super 呼叫放在最後，以確保測試環境完全準備好。",
+    "existing_code": "override func setUp() async throws {\n    try await super.setUp()\n    collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())",
+    "evidence": "diff 中顯示 `super.setUp()` 被移至方法開頭，但其他測試類別（如 RatingPromptManagerTests）則將 super 呼叫放在最後，順序不一致。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/Bookmarks/EditBookmarkViewModelTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 @MainActor 可能導致並發問題",
+    "body": "原本類別標註了 `@MainActor`，但此次移除。若該類別或其方法涉及 UI 操作，移除後可能導致背景執行緒更新 UI 的風險。請確認此測試類別是否真的不需要 @MainActor。",
+    "existing_code": "class EditBookmarkViewModelTests: XCTestCase {",
+    "evidence": "diff 中刪除了 `@MainActor` 標註，但未提供理由。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Mocks/MockProfile.swift",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "completion handler 標註 @Sendable 可能導致不必要的限制",
+    "body": "將 `completion` 參數標註為 `@Sendable`，這會要求閉包必須是 Sendable，可能導致呼叫端需要額外處理。若此閉包僅在主執行緒呼叫，可能不需要 @Sendable。請確認此變更是否必要。",
+    "existing_code": "func getQueuedTabs(completion: @MainActor @Sendable @escaping ([ShareItem]) -> Void) {",
+    "evidence": "diff 中新增了 `@Sendable` 標註。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Mocks/MockUserNotificationCenter.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "標註 @unchecked Sendable 可能隱藏並發問題",
+    "body": "將類別標註為 `@unchecked Sendable` 會跳過編譯器的並發安全檢查，若此類別實際上非執行緒安全，可能導致資料競爭。建議確認其內部狀態是否真的安全，或改用更精確的並發控制。",
+    "existing_code": "class MockUserNotificationCenter: UserNotificationCenterProtocol, @unchecked Sendable {",
+    "evidence": "diff 中新增了 `@unchecked Sendable`。"
+  }
+]

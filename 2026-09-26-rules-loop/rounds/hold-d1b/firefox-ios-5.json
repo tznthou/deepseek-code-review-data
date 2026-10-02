@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/Action/TabPanelAction.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R01] 移除 MPL 授權標頭",
+    "body": "此檔案原本有 Mozilla Public License 標頭，但在此 PR 中被移除。根據規範 R01，所有 Swift 檔案必須包含 MPL 標頭。請確認是否為意外移除，並恢復標頭。",
+    "existing_code": "import Redux\nimport Common",
+    "evidence": "diff 顯示刪除了以下三行：\n- // This Source Code Form is subject to the terms of the Mozilla Public\n- // License, v. 2.0. If a copy of the MPL was not distributed with this\n- // file, You can obtain one at http://mozilla.org/MPL/2.0/"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/State/TabsPanelState.swift",
+    "line": 143,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "scrollToTab 索引計算可能錯誤",
+    "body": "在 `createTabScrollBehavior` 中，當找不到選取的 tab 且 tabs 不為空時，原本回傳 `state.tabs.count - 1`，但修改後變成 `state.tabs.count`。這可能導致索引超出範圍，因為陣列索引是從 0 開始。請確認此變更是否正確，或應維持 `count - 1`。",
+    "existing_code": "return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)",
+    "evidence": "diff 顯示：\n-                return ScrollState(toIndex: state.tabs.count - 1, isInactiveTabSection: false, withAnimation: shouldAnimate)\n+                return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/Views/TabDisplayView.swift",
+    "line": 172,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "硬編碼 section 索引",
+    "body": "在 `scrollToTab` 中，section 索引被硬編碼為 1。由於移除了 inactive tabs section，現在只有一個 section，索引應為 0。請確認此處是否應改為 0，或使用更明確的方式取得 section 索引。",
+    "existing_code": "let indexPath = IndexPath(row: scrollState.toIndex, section: 1)",
+    "evidence": "diff 顯示：\n-        let section: Int = scrollState.isInactiveTabSection ? 0 : 1\n-        let indexPath = IndexPath(row: scrollState.toIndex, section: section)\n+        let indexPath = IndexPath(row: scrollState.toIndex, section: 1)"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 8461,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增 v147 struct 但未使用",
+    "body": "新增了 `struct v147` 並包含 Inactive Tabs 相關字串，但這些字串似乎已不再使用（因為功能已移除）。請確認是否應一併刪除，或保留以供未來使用。",
+    "existing_code": "struct v147 {",
+    "evidence": "diff 顯示新增了整個 v147 struct，包含多個 Inactive Tabs 相關的 MZLocalizedString。"
+  }
+]

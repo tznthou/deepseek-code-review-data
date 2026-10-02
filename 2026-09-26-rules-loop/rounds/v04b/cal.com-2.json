@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.ts",
+    "line": 588,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "hasPendingInviteByUserId 查詢條件錯誤：accepted 應為 false",
+    "body": "此方法目的是檢查使用者是否有 pending invite（未接受的邀請），但查詢條件寫成 `accepted: true`，只會找到已接受的 membership，導致永遠回傳 false（除非使用者有已接受的 membership，但這與方法名稱和用途相反）。\n\n**失敗情境**：使用者透過邀請連結註冊，系統建立一筆 `accepted: false` 的 membership，呼叫此方法應回傳 true 以觸發 redirect，但實際回傳 false，使用者不會被導向 personal onboarding。\n\n**建議修法**：將 `accepted: true` 改為 `accepted: false`。",
+    "existing_code": "accepted: true,",
+    "evidence": "diff 中新增的 `hasPendingInviteByUserId` 方法內，`where` 條件為 `accepted: true`，與方法名稱及註解「pending invite」矛盾。"
+  },
+  {
+    "path": "packages/features/auth/lib/onboardingUtils.ts",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "checkOnboardingRedirect 條件變更可能導致非預期 redirect",
+    "body": "原本邏輯為 `pendingInvite && onboardingV3Enabled`，只有當使用者有 pending invite 且 onboarding-v3 feature flag 開啟時才導向 personal settings。現在改為 `hasPendingInvite || onboardingV3Enabled`，只要 onboarding-v3 開啟，所有使用者都會被導向 personal settings，即使沒有 pending invite。\n\n**失敗情境**：若 onboarding-v3 已全面啟用，所有新使用者（無 pending invite）都會被強制導向 personal settings，可能跳過原本的 getting-started 流程。\n\n**建議修法**：確認此行為變更是否為預期。若不是，應保留 `&&` 條件；若是，請在 PR 描述中說明。",
+    "existing_code": "if (hasPendingInvite || onboardingV3Enabled) {",
+    "evidence": "diff 中將 `if (pendingInvite && onboardingV3Enabled)` 改為 `if (hasPendingInvite || onboardingV3Enabled)`。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試檔案違反 R08：未設定 UTC 時區",
+    "body": "此測試檔案未設定 `process.env.TZ = 'UTC'` 或使用其他方式確保 UTC 時區。雖然目前測試內容未直接涉及時間，但根據規範 R08，所有測試必須使用 UTC 時區，以避免未來新增時間相關測試時出現問題。\n\n**建議修法**：在測試檔案頂部加入 `process.env.TZ = 'UTC'` 或使用 Vitest 的 `setupFiles` 全域設定。",
+    "existing_code": "import { describe, it, expect, beforeAll, afterAll, afterEach } from \"vitest\";",
+    "evidence": "diff 新增的測試檔案中未見任何時區設定。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試資料清理不完整，可能殘留 user 資料",
+    "body": "多個測試案例在建立 user 後，若測試失敗或例外拋出，`prisma.user.delete` 可能不會被執行，導致測試資料殘留。此外，`createdMembershipIds` 陣列在部分測試中手動清空，但若測試中途失敗，後續 `afterEach` 可能無法正確清理。\n\n**失敗情境**：測試因 assertion 失敗而中斷，user 和 membership 資料留在資料庫中，影響後續測試或汙染開發環境。\n\n**建議修法**：使用 `try/finally` 確保清理，或將 user 建立與刪除也納入 `afterEach` 統一管理。",
+    "existing_code": "await prisma.user.delete({ where: { id: newUser.id } });",
+    "evidence": "diff 中多處測試在建立 user 後直接刪除，但無例外保護。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試相依於既有資料，可能不穩定",
+    "body": "`beforeAll` 中先尋找任意 team（`slug: { not: null }`），若不存在才建立新 team。這使得測試相依於資料庫中是否已有 team，且若既有 team 被其他測試刪除或修改，可能導致測試失敗。\n\n**建議修法**：一律建立專屬測試 team，並在 `afterAll` 刪除，避免相依於既有資料。",
+    "existing_code": "let testTeam = await prisma.team.findFirst({\n      where: { slug: { not: null } },\n    });",
+    "evidence": "diff 中 `beforeAll` 使用 `findFirst` 取得任意 team。"
+  }
+]

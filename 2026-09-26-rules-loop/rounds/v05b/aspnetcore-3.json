@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較使用 OrdinalIgnoreCase 可能誤判",
+    "body": "在 Unix 系統上，路徑大小寫敏感。使用 `StringComparison.OrdinalIgnoreCase` 比較路徑可能將不同目錄視為相同，導致誤判憑證目錄已存在於 SSL_CERT_DIR 中，進而跳過必要的環境變數設定提示。建議改用 `StringComparison.Ordinal`（或 `StringComparison.OrdinalIgnoreCase` 僅在 Windows 上使用）。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的比較邏輯使用 OrdinalIgnoreCase，而此程式碼路徑主要針對 Unix（檔案位於 UnixCertificateManager.cs）。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 994,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R11] NssDb 類別未使用主要建構子",
+    "body": "此類別原本使用主要建構子（`private sealed class NssDb(string path, bool isFirefox)`），但被改寫為傳統建構子與欄位指派。根據規範 R11，簡單的建構子指派應使用主要建構子語法。建議改回主要建構子形式。",
+    "existing_code": "private sealed class NssDb\n{\n    private readonly string _path;\n    private readonly bool _isFirefox;\n\n    public NssDb(string path, bool isFirefox)\n    {\n        _path = path;\n        _isFirefox = isFirefox;\n    }\n\n    public string Path => _path;\n    public bool IsFirefox => _isFirefox;\n}",
+    "evidence": "diff 中將原本的主要建構子改為傳統建構子，違反 R11。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 377,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "catch 區塊吞掉所有例外，可能隱藏路徑處理錯誤",
+    "body": "`catch` 區塊未指定例外類型，會吞掉所有例外（包括非預期的 `OutOfMemoryException` 等）。雖然目的是忽略無效目錄，但過度寬鬆的例外處理可能掩蓋真正的錯誤。建議至少記錄或限定捕捉 `IOException`、`UnauthorizedAccessException` 等預期例外。",
+    "existing_code": "catch\n{\n    // Ignore invalid directory entries in SSL_CERT_DIR\n    return false;\n}",
+    "evidence": "diff 中新增的 try-catch 區塊，catch 未指定例外類型。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/CertificateManager.cs",
+    "line": 1314,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "EventSource 事件 ID 113 與 114 可能與既有事件衝突",
+    "body": "新增事件 ID 113 與 114，需確認未與其他事件 ID 重複。若重複可能導致事件追蹤混淆。建議檢查整個 EventSource 類別中所有事件 ID 的唯一性。",
+    "existing_code": "[Event(113, Level = EventLevel.Verbose, Message = \"The certificate directory '{0}' is already included in the {1} environment variable.\")]\ninternal void UnixOpenSslCertificateDirectoryAlreadyConfigured(string certDir, string envVarName) => WriteEvent(113, certDir, envVarName);\n\n[Event(114, Level = EventLevel.LogAlways, Message = \"For OpenSSL trust to take effect, '{0}' must be listed in the {1} environment variable. \" +\n    \"For example, `export {1}=\\\"{0}:${1}\\\"`. \" +\n    \"See https://aka.ms/dev-certs-trust for more information.\")]\ninternal void UnixSuggestAppendingToEnvironmentVariable(string certDir, string envVarName) => WriteEvent(114, certDir, envVarName);",
+    "evidence": "diff 中新增事件 ID 113 與 114，未提供全域唯一性檢查。"
+  }
+]

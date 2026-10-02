@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "WebView 可能為 null 時使用 `!!` 強制解參考，導致 NPE",
+    "body": "在 `handleOnBackPressed` 中，`this@AppPlugin.webView` 可能尚未被指派（例如 `load()` 尚未被呼叫），但程式碼使用 `this@AppPlugin.webView!!.goBack()` 強制解參考。若 WebView 為 null，將拋出 NullPointerException 並使應用程式崩潰。建議改用安全呼叫 `?.goBack()` 或先檢查 null。",
+    "existing_code": "this@AppPlugin.webView!!.goBack()",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 30 行使用 `!!` 強制解參考，而 `webView` 屬性宣告為 `private var webView: WebView? = null`，且僅在 `load()` 中指派。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`onBackPressed` 遞迴呼叫可能導致 StackOverflow",
+    "body": "當沒有 listener 且 WebView 無法返回時，程式碼呼叫 `this@AppPlugin.activity.onBackPressed()`。此呼叫會再次觸發 `OnBackPressedCallback`，若條件不變（例如 WebView 仍無法返回），將形成無限遞迴，最終導致 StackOverflowError。建議改用 `activity.finish()` 或先停用 callback 再呼叫。",
+    "existing_code": "this@AppPlugin.activity.onBackPressed()",
+    "evidence": "diff 中 AppPlugin.kt 第 33 行呼叫 `onBackPressed()`，而此 callback 已註冊於 `onBackPressedDispatcher`，會再次進入 `handleOnBackPressed`。"
+  },
+  {
+    "path": "packages/api/src/app.ts",
+    "line": 267,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R07] 新公開 API `onBackButtonPress` 缺少文件註解",
+    "body": "`onBackButtonPress` 是新增的公開 API，但僅有簡短註解，未說明參數、回傳值及使用範例。根據規範 R07，公開 API 應包含完整的文件註解。建議補充詳細說明。",
+    "existing_code": "async function onBackButtonPress(",
+    "evidence": "diff 中新增的 `onBackButtonPress` 函式僅有 `/** Listens to the backButton event on Android. */` 註解，未符合 R07 的完整文件要求。"
+  }
+]

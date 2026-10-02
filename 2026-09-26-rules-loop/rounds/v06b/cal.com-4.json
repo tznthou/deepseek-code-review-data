@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getDisplayEmail 正規表達式可能誤刪一般電子郵件中的加號部分",
+    "body": "`getDisplayEmail` 使用 `/\\+[a-zA-Z0-9]{25}/` 來移除後綴，但此模式會匹配任何加號後接 25 個英數字的字串。若使用者的電子郵件本身包含加號（例如 `user+tag@example.com`），且 `tag` 長度為 25 個英數字，則會被誤刪。建議改用更精確的模式，例如僅匹配已知的 CUID 格式（如 `/\\+[a-z0-9]{25}@/` 或使用 `cuid` 套件驗證），或先確認後綴是否為 CUID 再移除。",
+    "existing_code": "return email.replace(/\\+[a-zA-Z0-9]{25}/, \"\");",
+    "evidence": "diff 中新增的 `getDisplayEmail` 方法使用寬鬆的正規表達式，可能影響合法電子郵件。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除排序可能導致輸出順序不穩定",
+    "body": "原本 `getOutputRecurringSeatedBookings` 會依開始時間排序，但此 PR 移除了排序邏輯。若資料庫回傳的順序不保證按時間排序，API 回應的陣列順序可能不穩定，影響前端顯示或測試。建議保留排序，或確認資料庫查詢已保證順序。",
+    "existing_code": "return transformed;",
+    "evidence": "diff 中將 `return transformed.sort(...)` 改為 `return transformed;`，移除了排序。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/booking.output.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增必填欄位可能造成 API 相容性問題",
+    "body": "在 `BookingAttendee`、`BookingHost` 等 DTO 中新增 `displayEmail` 並標記為必填（`@IsString()` 且無 `@IsOptional()`），這會使 API 回應的 schema 變更。若既有用戶端依賴舊 schema，可能因缺少該欄位而解析失敗。建議評估是否應設為選用，或提供相容性策略。",
+    "existing_code": "displayEmail!: string;",
+    "evidence": "diff 中新增 `displayEmail` 欄位且未標記為可選。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "getDisplayEmail 未處理 null 或非字串輸入",
+    "body": "`getDisplayEmail` 假設輸入為字串，但呼叫處可能傳入 `undefined` 或 `null`（例如 `attendee.email` 可能為空）。若電子郵件缺失，會拋出錯誤。建議加入型別檢查或使用可選串連。",
+    "existing_code": "private getDisplayEmail(email: string): string {",
+    "evidence": "方法簽名未允許 null/undefined，但呼叫處可能傳入空值。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "BrowserKit/Sources/Common/Utilities/DispatchQueueHelper.swift",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ensureMainThread 泛型版本在非主執行緒時回傳 nil，可能導致呼叫端未處理而崩潰",
+    "body": "原本的 ensureMainThread<T> 在非主執行緒時會將 work 排入主佇列後直接返回（無回傳值），但修改後回傳 T?，且在非主執行緒時回傳 nil。這使得呼叫端必須處理 nil 的情況，否則可能發生 force unwrap 崩潰。建議提供明確的文件說明，或考慮使用不同的 API 設計（例如使用 async/await 或 completion handler）。",
+    "existing_code": "public func ensureMainThread<T>(execute work: @escaping @MainActor () -> T) -> T? {\n    if Thread.isMainThread {\n        return MainActor.assumeIsolated {\n            return work()\n        }\n    } else {\n        DispatchQueue.main.async {\n            _ = work()\n        }\n        return nil\n    }\n}",
+    "evidence": "diff 中顯示函式簽名從原本的無回傳改為 T?，且在 else 分支回傳 nil。"
+  },
+  {
+    "path": "firefox-ios/Client/Application/WebServer.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R12] WebServer 類別移除 final 修飾詞，可能違反專案規範",
+    "body": "根據專案規範 R12，不應被子類別化的類別應標記為 final。此處將 final class WebServer 改為 class WebServer，若無明確的子類別化需求，建議保留 final。",
+    "existing_code": "class WebServer: WebServerProtocol, @unchecked Sendable {",
+    "evidence": "diff 中顯示 final 關鍵字被移除。"
+  },
+  {
+    "path": "firefox-ios/Client/Utils/MainThreadThrottler.swift",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "MainThreadThrottler 中 lastExecutionTime 更新位置變更可能影響節流行為",
+    "body": "原本在 guard 條件判斷前更新 lastExecutionTime，現在移到 guard 之後。這可能導致在 threshold 內呼叫時，lastExecutionTime 不會更新，使得節流窗口延長。請確認此變更是否符合預期。",
+    "existing_code": "func throttle(completion: @escaping @MainActor () -> Void) {\n    lastExecutionTime = Date()\n    guard threshold <= 0 || lastExecutionTime.timeIntervalSinceNow < -threshold else { return }\n    DispatchQueue.main.async(execute: completion)\n}",
+    "evidence": "diff 中顯示 lastExecutionTime = Date() 從 guard 之前移到 guard 之後。"
+  }
+]

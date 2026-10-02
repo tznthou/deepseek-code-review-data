@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R04] 型別標註使用 typing.Set/Tuple 而非現代語法",
+    "body": "根據規則 R04，Python 3.12+ 應使用 `set` 和 `tuple` 而非 `typing.Set` 和 `typing.Tuple`。此處 `blocks_variable_output` 的參數型別使用了 `Set[Tuple[str, ...]]`，建議改為 `set[tuple[str, ...]]`。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的型別標註使用了 `Set` 和 `Tuple`，而專案規則 R04 要求使用現代語法。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試對事件順序的假設可能不穩定",
+    "body": "測試中透過 `result.events` 過濾出 `NodeRunStreamChunkEvent` 並檢查其 `chunk` 值，但未驗證事件順序。若未來事件順序改變，此測試可能無法捕捉到「變數更新前就輸出」的回歸。建議增加對事件順序的斷言，或使用更精確的測試工具。",
+    "existing_code": "conv_var_chunk_events = [\n        event\n        for event in events\n        if isinstance(event, NodeRunStreamChunkEvent) and event.selector == [\"conversation\", \"conv_var\"]\n    ]",
+    "evidence": "測試僅檢查事件存在與內容，未檢查事件發生的先後順序，可能無法完全驗證 PR 的目的。"
+  }
+]

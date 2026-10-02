@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "複寫指令向量可能使用未初始化的 shared.fields 或錯誤的 shared.integers[1]",
+    "body": "在 `rewriteClientCommandVector` 呼叫中，使用了 `shared.fields` 和 `shared.integers[1]`。`shared.fields` 已在 `createSharedObjects` 中初始化，但需確認其值為 \"FIELDS\"（大寫）。`shared.integers[1]` 是共用整數物件，其值為 1，但若未來共用整數陣列順序變更，可能導致錯誤。建議改用明確的整數物件或直接建立新物件，避免依賴共用物件的索引。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 rewriteClientCommandVector 呼叫使用了 shared.fields 和 shared.integers[1]。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "複寫指令參數順序可能與 HSETEX 語法不符",
+    "body": "HSETEX 語法為 `HSETEX key [NX|XX] [KEEPTTL] [FIELDS numfields field value ...]`。目前向量順序為 `shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj`，看起來正確，但需確認 `shared.keepttl` 的值為 \"KEEPTTL\"（大寫）。若大小寫錯誤，複本可能無法正確解析。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 rewriteClientCommandVector 呼叫。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1966,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試未涵蓋 HINCRBYFLOAT 在欄位不存在時的行為",
+    "body": "測試僅對已存在的欄位執行 HINCRBYFLOAT，未測試欄位不存在時是否會建立新欄位且不設定過期時間。若實作有誤，可能導致新欄位意外繼承過期時間。建議增加測試案例。",
+    "existing_code": "r hincrbyfloat h1 f1 1.1\n            r hincrbyfloat h1 f2 1.1",
+    "evidence": "diff 中測試僅對已存在的 f1 和 f2 執行 HINCRBYFLOAT。"
+  }
+]

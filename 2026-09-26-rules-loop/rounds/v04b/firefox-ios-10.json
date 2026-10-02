@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R01] 缺少 Mozilla Public License 標頭",
+    "body": "此檔案原本有 MPL 2.0 授權標頭，但在此 diff 中被移除。根據規範 R01，所有 Swift 檔案必須包含 MPL 標頭。請恢復授權標頭。",
+    "existing_code": "import ContentBlockingGenerator",
+    "evidence": "diff 顯示刪除了以下三行：\n- // This Source Code Form is subject to the terms of the Mozilla Public\n- // License, v. 2.0. If a copy of the MPL was not distributed with this\n- // file, You can obtain one at http://mozilla.org/MPL/2.0/"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 expectation 可能導致測試無法驗證非同步行為",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本的 expectation 被移除，且 `wait(for:)` 也被刪除。這使得測試在呼叫 `requestMediaCapturePermission` 後立即返回，無法確保 decision handler 被呼叫並驗證其內容。若 handler 未被呼叫，測試仍會通過，失去測試意義。建議保留 expectation 並使用 `wait(for:)` 等待。",
+    "existing_code": "let decisionHandler: @Sendable (WKPermissionDecision) -> Void = { (decision: WKPermissionDecision) in\n    XCTAssertEqual(decision, .prompt)\n}\n\nsubject.requestMediaCapturePermission(decisionHandler: decisionHandler)",
+    "evidence": "diff 顯示刪除了 `let expectation = expectation(description: ...)`、`expectation.fulfill()` 和 `wait(for: [expectation])`。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Home/Homepage/SectionHeader/LabelButtonHeaderView.swift",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "wrappedAction 閉包可能造成 retain cycle",
+    "body": "在 `configure` 方法中，`wrappedAction` 閉包捕獲了 `moreButtonAction`，而 `moreButtonAction` 是外部傳入的閉包。若該閉包持有 self（例如呼叫者傳入的閉包捕獲了 self），則可能形成 retain cycle。建議使用 `[weak self]` 或確保閉包不會持有 self。",
+    "existing_code": "let wrappedAction: (@MainActor (UIButton) -> Void)? = { button in\n    moreButtonAction?(button)\n}",
+    "evidence": "diff 新增了 wrappedAction 閉包，直接捕獲 moreButtonAction，未使用 weak 或 unowned。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 async 後測試可能提前結束",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase` 中，原本使用 `await fulfillment(of:)` 等待非同步下載完成，現在改為直接呼叫下載方法後立即返回，沒有等待機制。這可能導致測試在下載完成前結束，無法驗證結果。建議保留 expectation 並使用 `wait(for:)`。",
+    "existing_code": "let siteDownloader = DefaultSiteImageDownloader()\nsiteDownloader.downloadImage(with: mockedURL, options: [.processor(SVGImageProcessor())]) { result in\n    switch result {\n    case .success(let result):\n        XCTAssertEqual(result.originalData, imageData)\n        XCTAssertEqual(result.url, mockedURL)\n        XCTAssertEqual(result.image.size, expectedRasterSize)\n    case .failure(let error):\n        XCTFail(\"Should not have an error: \\(error) \\(error.errorDescription ?? \"\")\")\n    }\n}",
+    "evidence": "diff 顯示移除了 `let exp = expectation(description: ...)`、`exp.fulfill()` 和 `await fulfillment(of: [exp], timeout: 2.0)`。"
+  }
+]

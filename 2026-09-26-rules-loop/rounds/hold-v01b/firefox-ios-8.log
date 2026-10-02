@@ -1,0 +1,7 @@
+[info] repo 規範：repo=firefox-ios、15 條、10004 字元、placement=after_diff、sha256=031933b1d311
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 71923 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift:18 → 19（片段唯一命中）
+[info] 定位不到 firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift:28（片段跨 44 個檔案命中，不猜）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/DependencyInjection/DependencyHelperMock.swift:9 → 11（片段唯一命中）
+[info] 定位不到 firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/TestSetup.swift:1（片段與模型行號都定不到）
+[info] 完成於 10.1s ｜ findings=5 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 23648, "completion_tokens": 1224, "total_tokens": 24872, "prompt_tokens_details": {"cached_tokens": 23552}, "prompt_cache_hit_tokens": 23552, "prompt_cache_miss_tokens": 96}

@@ -1,0 +1,112 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "使用 assert 取代 XCTest 斷言，導致測試失效",
+    "body": "在測試方法 `testRequestAuthorization` 中，原本使用 `XCTAssertTrue` 的斷言被改為 Swift 標準庫的 `assert`。`assert` 在 release 建置（預設的測試建置）中會被編譯器移除，因此這些斷言不會被執行，測試將永遠通過，無法驗證行為。此外，`assert` 失敗時會直接 crash，而不是像 XCTest 斷言那樣記錄失敗並繼續執行。\n\n**失敗情境**：當 `requestAuthorization` 的實作錯誤，導致 completion 中的 `granted` 為 false 或 `center.requestAuthorizationWasCalled` 為 false 時，測試仍會通過，無法捕捉到回歸。\n\n**建議修法**：改回使用 XCTest 的斷言，例如 `XCTAssertTrue(granted)` 和 `XCTAssertTrue(center?.requestAuthorizationWasCalled ?? false)`。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\nassert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將 `XCTAssertTrue(granted)` 改為 `assert(granted, ...)`，並將 `XCTAssertTrue(self.center.requestAuthorizationWasCalled)` 改為 `assert(center?.requestAuthorizationWasCalled ?? false, ...)`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/FxAWebViewModelTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `FxAWebViewModelTests` 涉及 UI 相關的 ViewModel 測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API（例如 `FxAWebViewModel` 的初始化或方法）時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`，如同其他 UI 相關測試類別（例如 `StoriesFeedDiffableDataSourceTests`）的做法。",
+    "existing_code": "class FxAWebViewModelTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別（如 `StoriesFeedDiffableDataSourceTests`）已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/RatingPromptManagerTests.swift",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `RatingPromptManagerTests` 涉及 UI 相關的 RatingPromptManager 測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API 時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`。",
+    "existing_code": "class RatingPromptManagerTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/HistoryPanelTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `HistoryPanelTests` 涉及 UI 相關的 HistoryPanel 測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API 時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`。",
+    "existing_code": "class HistoryPanelTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/MainMenu/MainMenuConfigurationUtilityTests.swift",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `MainMenuConfigurationUtilityTests` 涉及 UI 相關的 MainMenu 配置測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API 時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`。",
+    "existing_code": "final class MainMenuConfigurationUtilityTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/MainMenu/MainMenuCoordinatorTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `MainMenuCoordinatorTests` 涉及 UI 相關的 Coordinator 測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API 時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`。",
+    "existing_code": "final class MainMenuCoordinatorTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/MainMenu/MainMenuMiddlewareTests.swift",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `MainMenuMiddlewareTests` 涉及 UI 相關的 Middleware 測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API 時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`。",
+    "existing_code": "final class MainMenuMiddlewareTests: XCTestCase, StoreTestUtility {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Microsurvey/MicrosurveyCoordinatorTests.swift",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `MicrosurveyCoordinatorTests` 涉及 UI 相關的 Coordinator 測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API 時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`。",
+    "existing_code": "final class MicrosurveyCoordinatorTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Microsurvey/MicrosurveyMiddlewareTests.swift",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `MicrosurveyMiddlewareIntegrationTests` 涉及 UI 相關的 Middleware 測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API 時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`。",
+    "existing_code": "final class MicrosurveyMiddlewareIntegrationTests: XCTestCase, StoreTestUtility {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/OnboardingTests/IntroViewControllerTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor，可能導致 UI 操作在背景執行",
+    "body": "此測試類別 `IntroViewControllerTests` 涉及 UI 相關的 ViewController 測試，但未加上 `@MainActor` 標註。在 Swift 6 的嚴格 concurrency 檢查下，若測試中觸及 UI 或 main actor 隔離的程式碼，可能會導致編譯錯誤或執行時 crash。\n\n**失敗情境**：當測試方法中呼叫需要 main actor 的 API 時，若測試類別未標註 `@MainActor`，編譯器可能報錯，或測試在背景執行緒執行導致非預期行為。\n\n**建議修法**：在類別宣告前加上 `@MainActor`。",
+    "existing_code": "class IntroViewControllerTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他類似測試類別已加上。"
+  }
+]

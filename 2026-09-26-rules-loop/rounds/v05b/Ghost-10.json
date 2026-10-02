@@ -1,0 +1,79 @@
+[
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 121,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "輪詢 effect 缺少 confirmBlueskyHandleMutation 依賴，可能使用過時閉包",
+    "body": "useEffect 的依賴陣列僅包含 `account?.blueskyEnabled`、`account?.blueskyHandleConfirmed` 和 `confirmHandle`，但 `confirmHandle` 內部呼叫了 `confirmBlueskyHandleMutation.mutateAsync()`。若 mutation 物件在元件生命週期中被重新建立（例如因 queryClient 或 options 變更），此 effect 不會重新執行，導致輪詢使用舊的 mutation 實例，可能造成請求失效或狀態不同步。\n\n建議將 `confirmBlueskyHandleMutation` 加入依賴陣列，或使用 `useRef` 保存最新的 mutation 實例。",
+    "existing_code": "}, [account?.blueskyEnabled, account?.blueskyHandleConfirmed, confirmHandle]); // disableBlueskyMutation is stable",
+    "evidence": "diff 中新增的 useEffect 依賴陣列未包含 `confirmBlueskyHandleMutation`，而 `confirmHandle` 使用該 mutation。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 119,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.85,
+    "title": "輪詢 interval 未在元件卸載時清理，可能造成記憶體洩漏與錯誤請求",
+    "body": "useEffect 的回傳清理函式僅在依賴變更時執行，但若元件在輪詢進行中卸載，React 會呼叫該清理函式，因此 interval 會被清除。然而，若 `confirmBlueskyHandleMutation` 的 promise 在清理後才 resolve，其 `.then` 中的 `setHandleConfirmed` 仍會執行，可能導致對已卸載元件的狀態更新。此外，若 `disableBlueskyMutation.mutateAsync()` 在清理後才執行，也可能造成非預期的 API 呼叫。\n\n建議在清理函式中加入取消機制（如 AbortController 或 flag），並在 promise 回呼中檢查元件是否仍掛載。",
+    "existing_code": "return () => clearInterval(confirmHandleInterval);",
+    "evidence": "diff 中新增的 useEffect 回傳清理函式僅清除 interval，未處理進行中的非同步操作。"
+  },
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R16] 關閉 TypeScript strict 模式，降低型別安全",
+    "body": "此 PR 將 `strict` 從 `true` 改為 `false`，違反專案規範 R16（TypeScript 檔案必須啟用嚴格型別檢查）。這會導致編譯器不再強制檢查 null/undefined、隱含 any 等問題，可能引入執行時期錯誤。\n\n建議恢復 `strict: true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.json 的 strict 設定被改為 false。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 109,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "輪詢重試次數上限後自動停用 Bluesky，可能造成非預期停用",
+    "body": "當 `retryCountRef.current >= MAX_CONFIRMATION_RETRIES` 時，程式會呼叫 `disableBlueskyMutation.mutateAsync()` 並顯示錯誤。若使用者只是暫時離開頁面或網路不穩，此邏輯會自動停用 Bluesky，可能造成使用者困惑。此外，`disableBlueskyMutation` 的 onSuccess 會更新快取，但此處未處理其可能的錯誤。\n\n建議改為僅停止輪詢並顯示錯誤，由使用者手動決定是否停用，或至少提供明確的提示與重試選項。",
+    "existing_code": "await disableBlueskyMutation.mutateAsync();",
+    "evidence": "diff 中新增的輪詢上限處理邏輯呼叫 disableBlueskyMutation。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2833,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "confirmBlueskyHandle 成功後未 invalidate accountFollows query",
+    "body": "程式碼註解指出「Missing invalidation of accountFollows query that should happen here」。啟用 Bluesky 後，帳號會自動追蹤 brid.gy 帳號，但此 mutation 成功後未 invalidate 相關的追蹤查詢，可能導致 UI 顯示過時的追蹤狀態。\n\n建議在 onSuccess 中加入對 accountFollows query 的 invalidate，或移除該註解並說明原因。",
+    "existing_code": "// Note: Missing invalidation of accountFollows query that should happen here",
+    "evidence": "diff 中新增的 useConfirmBlueskyHandleMutationForUser 函式內有此註解。"
+  },
+  {
+    "path": "apps/activitypub/src/api/activitypub.ts",
+    "line": 732,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "confirmBlueskyHandle 回傳型別可能與實際 API 不符",
+    "body": "函式回傳型別為 `Promise<string>`，但實作中若 `json.handle` 為 null 或 undefined，會回傳空字串。然而，若 API 回傳的 handle 為非字串型別（如數字），`String(json.handle)` 會將其轉為字串，可能掩蓋型別錯誤。此外，`Account` 介面中 `blueskyHandle` 已改為 `string | null`，但此函式仍回傳 `string`，可能造成型別不一致。\n\n建議確認 API 合約，並考慮回傳 `string | null` 或進行更嚴格的型別檢查。",
+    "existing_code": "return String(json.handle);",
+    "evidence": "diff 中 confirmBlueskyHandle 的實作仍使用 String() 轉換。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2725,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "updateAccountBlueskyCache 的型別定義可能過於寬鬆",
+    "body": "`BlueskyDetails` 型別要求 `blueskyEnabled` 和 `blueskyHandleConfirmed` 為 boolean，但 `setQueryData` 的回呼參數 `currentProfile` 可能包含其他欄位，且此處直接展開 `blueskyDetails` 可能覆蓋其他屬性。若未來 `Account` 介面新增欄位，此處可能遺漏。\n\n建議使用更精確的型別或使用 Partial 更新。",
+    "existing_code": "type BlueskyDetails = {\n    blueskyEnabled: boolean;\n    blueskyHandleConfirmed: boolean;\n    blueskyHandle: string | null;\n}",
+    "evidence": "diff 中新增的型別定義與 setQueryData 的使用。"
+  }
+]

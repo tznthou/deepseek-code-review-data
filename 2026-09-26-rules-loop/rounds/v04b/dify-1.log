@@ -1,0 +1,5 @@
+[info] repo 規範：repo=dify、25 條、5601 字元、placement=after_diff、sha256=4db74f7ca79e
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 7807 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py:72 → 75（片段唯一命中）
+[info] 完成於 5.4s ｜ findings=2 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 5928, "completion_tokens": 520, "total_tokens": 6448, "prompt_tokens_details": {"cached_tokens": 5888}, "prompt_cache_hit_tokens": 5888, "prompt_cache_miss_tokens": 40}

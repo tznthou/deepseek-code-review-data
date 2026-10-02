@@ -1,0 +1,57 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "XCTestExpectation 使用錯誤導致測試可能永遠等待或提前通過",
+    "body": "在 `captureFrameAndOrigin` 中，`XCTestExpectation` 被建立後傳入 delegate，但 delegate 在 `decidePolicyFor` 中呼叫 `expect.fulfill()`。然而，`XCTWaiter.wait(for:timeout:)` 是在建立 expectation 之後才呼叫，且 expectation 並未與任何測試案例綁定。這可能導致兩種問題：\n1. 如果 `decidePolicyFor` 在 `wait` 之前被呼叫（例如 WebKit 同步處理），則 `fulfill()` 會發生在 expectation 尚未被等待時，之後 `wait` 將永遠等待直到 timeout。\n2. 如果測試案例本身也有其他 expectation，此 expectation 未正確關聯可能導致測試提前結束或無法正確等待。\n建議改為在測試案例中建立 expectation，並將 fulfillment 邏輯直接放在測試的 decision handler 中，或使用 `XCTWaiter` 搭配 `expectation(description:)` 並確保在呼叫 `wait` 前 expectation 尚未被 fulfill。",
+    "existing_code": "let expect = XCTestExpectation(description: \"capture frame & origin\")\n\n        let delegate = FakeWKNavigationDelegate(expect: expect)\n        webView.navigationDelegate = delegate\n\n        // load a real https URL (use example.com to be safe)\n        webView.load(URLRequest(url: url))\n\n        let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 42 行附近，`XCTestExpectation` 的建立與 `XCTWaiter.wait` 的使用方式不符合 XCTest 的典型模式，且 delegate 中的 `fulfill()` 可能在 `wait` 之前被呼叫。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴真實網路與外部服務，可能導致不穩定或失敗",
+    "body": "`captureFrameAndOrigin` 使用 `webView.load(URLRequest(url: url))` 載入真實 URL（如 `https://example.com`）。這使得測試依賴網路連線與外部服務可用性，可能因網路延遲、防火牆或服務變更而失敗。建議改用 local HTML 字串或 data URL 來觸發 navigation，以確保測試的獨立性與穩定性。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 38 行，直接載入外部 URL。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中 expectation 的 fulfill 時機可能不正確",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本的 decision handler 內會呼叫 `expectation.fulfill()`，但修改後 decision handler 不再 fulfill，而是在呼叫 `subject.webView` 之後才呼叫 `expectation.fulfill()`。這可能導致測試在 decision handler 尚未被呼叫時就提前通過，或因為 expectation 未被正確等待而失敗。建議將 `expectation.fulfill()` 保留在 decision handler 內，以確保測試等待非同步回呼完成。",
+    "existing_code": "let decisionHandler = { (decision: WKPermissionDecision) in\n            XCTAssertEqual(decision, .prompt)\n        }\n\n        let expectation = expectation(description: \"Wait for the decision handler to be called\")\n        subject.webView(MockWKWebView(),\n                        requestMediaCapturePermissionFor: origin,\n                        initiatedByFrame: frame,\n                        type: .cameraAndMicrophone,\n                        decisionHandler: decisionHandler)\n        wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中 WKUIHandlerTests.swift 第 41 行附近，decision handler 不再 fulfill expectation，而是在 wait 之後才 fulfill。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "FakeWKNavigationDelegate 未標記為 final",
+    "body": "根據專案規範 R12，不應被繼承的類別應標記為 final。`FakeWKNavigationDelegate` 是一個測試輔助類別，沒有繼承需求，建議加上 `final` 修飾詞。",
+    "existing_code": "class FakeWKNavigationDelegate: NSObject, WKNavigationDelegate {",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 12 行，類別宣告缺少 final。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少 MARK 註解組織程式碼區段",
+    "body": "根據專案規範 R03，程式碼區段應使用 MARK 註解組織。此檔案包含多個邏輯區塊（helper class、delegate class），建議加上 MARK 註解以提升可讀性。",
+    "existing_code": "// This Source Code Form is subject to the terms of the Mozilla Public\n// License, v. 2.0. If a copy of the MPL was not distributed with this\n// file, You can obtain one at http://mozilla.org/MPL/2.0/\n\nimport WebKit\nimport XCTest",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 開頭，未見 MARK 註解。"
+  }
+]

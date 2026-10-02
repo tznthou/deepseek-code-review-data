@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錯誤處理不當：將 TOML 解析錯誤包裝為 FormatJson",
+    "body": "在 `do_parse_toml` 中，原本使用 `ConfigError::FormatToml` 來封裝 TOML 解析錯誤，但升級後改為 `ConfigError::FormatJson`，並將錯誤轉為 `serde_json::Error`。這會導致錯誤類型不正確，可能使呼叫端無法正確處理 TOML 格式錯誤，且錯誤訊息可能具有誤導性。建議保留 `FormatToml` 變體，或新增專用的 TOML 錯誤變體。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中將原本的 `ConfigError::FormatToml` 改為 `ConfigError::FormatJson`，並使用 `serde_json::Error::custom` 包裝錯誤。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增 BundleType::Flatpak 可能導致下游 match 不完整",
+    "body": "新增 `BundleType::Flatpak` 變體後，所有對 `BundleType` 進行 exhaustive match 的下游程式碼（包括使用者程式碼）都會因缺少分支而無法編譯。雖然這是預期的 API 變更，但需要確認是否已更新所有內部 match，並考慮是否應標記為 `#[non_exhaustive]` 以減少破壞性。",
+    "existing_code": "/// The Flatpak bundle (.flatpak).\n  Flatpak,",
+    "evidence": "diff 中新增了 `Flatpak` 變體，且未標記 `#[non_exhaustive]`。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "Display 實作中 Flatpak 的大小寫不一致",
+    "body": "在 `Display` 實作中，`Flatpak` 被輸出為 \"Flatpak\"（首字母大寫），而其他變體如 \"nsis\"、\"app\"、\"dmg\" 均為小寫。這可能導致序列化或顯示時的不一致，建議統一為小寫 \"flatpak\"。",
+    "existing_code": "Self::Flatpak => \"Flatpak\",",
+    "evidence": "diff 中新增的 Display 分支使用大寫開頭，與其他分支風格不符。"
+  }
+]

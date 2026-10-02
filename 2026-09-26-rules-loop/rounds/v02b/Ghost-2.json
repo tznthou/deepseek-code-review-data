@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "member 為 null 時編輯器可能被錯誤設為可編輯",
+    "body": "在 useEffect 中，`editor.setEditable(!!member?.expertise && progress !== 'sending')` 當 `member` 為 null 時，`member?.expertise` 為 undefined，導致 `!!undefined` 為 false，編輯器將被設為不可編輯。若使用者未登入（member 為 null），回覆表單可能無法輸入。建議改為 `editor.setEditable(progress !== 'sending')` 或明確處理 member 為 null 的情況。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中將原本的 `editor.setEditable(!!memberName && progress !== 'sending')` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending')`，且 dependency array 從 `[editor, memberName, progress]` 改為 `[editor, member, progress]`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 313,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "openForm 可能為 null 導致執行錯誤",
+    "body": "在 `FormWrapper` 中，`const isReplyToReply = !!openForm.in_reply_to_snippet;` 直接存取 `openForm.in_reply_to_snippet`，但 `openForm` 的型別可能允許 null（從原本的 `openForm?.in_reply_to_snippet` 改為 `openForm.in_reply_to_snippet`）。若 `openForm` 為 null，會拋出 TypeError。建議保留 optional chaining 或確保 openForm 不為 null。",
+    "existing_code": "const isReplyToReply = !!openForm.in_reply_to_snippet;",
+    "evidence": "diff 中將 `const isReplyToReply = !!openForm?.in_reply_to_snippet;` 改為 `const isReplyToReply = !!openForm.in_reply_to_snippet;`，移除了 optional chaining。"
+  },
+  {
+    "path": "apps/comments-ui/test/e2e/actions.test.ts",
+    "line": 678,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言可能不穩定：member-name 可能不存在",
+    "body": "在測試「Reply form does not inherit name from parent comment author」中，`await expect(memberName).not.toHaveText('Named Author');` 若 `member-name` 元素不存在，此斷言會失敗。但根據測試情境，登入會員的 name 為 null，可能導致該元素不渲染。建議先確認元素存在或改用其他方式驗證。",
+    "existing_code": "const memberName = replyForm.getByTestId('member-name');\n        await expect(memberName).not.toHaveText('Named Author');",
+    "evidence": "測試中設定 `mockedApi.setMember({name: null, expertise: 'Some Expertise'})`，若元件在 name 為 null 時不渲染 `member-name`，則 `getByTestId` 會拋出錯誤。"
+  }
+]

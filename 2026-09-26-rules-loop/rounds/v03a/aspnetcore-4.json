@@ -1,0 +1,101 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "DisplayName 元件未實作 IDisposable，可能導致記憶體洩漏",
+    "body": "DisplayName 元件在 Attach 時取得 RenderHandle，但未實作 IDisposable 來釋放資源。若元件在 RenderHandle 釋放後仍被保留（例如在動態渲染或元件移除時），可能導致記憶體洩漏。建議實作 IDisposable 並在 Dispose 中釋放 RenderHandle。",
+    "existing_code": "public class DisplayName<TValue> : IComponent",
+    "evidence": "DisplayName.cs 第 14 行宣告類別僅實作 IComponent，未實作 IDisposable。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Hot Reload 時未清除顯示名稱快取，可能導致顯示名稱過期",
+    "body": "在 Hot Reload 的 OnDeltaApplied 事件中，僅清除 _memberInfoCache，未清除 _displayNameCache。若屬性的 DisplayAttribute 或 DisplayNameAttribute 在 Hot Reload 中變更，顯示名稱快取仍保留舊值，導致 UI 顯示過期的名稱。建議同時清除 _displayNameCache。",
+    "existing_code": "HotReloadManager.Default.OnDeltaApplied += ClearCache;",
+    "evidence": "ExpressionMemberAccessor.cs 第 16 行註冊 ClearCache，但 ClearCache 方法僅清除 _memberInfoCache（第 84 行）。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 159,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法 SupportsLocalizationWithResourceType 缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 SupportsLocalizationWithResourceType 未包含明確的 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "public async Task SupportsLocalizationWithResourceType()",
+    "evidence": "DisplayNameTest.cs 第 116 行開始的測試方法缺少 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法 WorksWithDifferentPropertyTypes 缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 WorksWithDifferentPropertyTypes 未包含明確的 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "public async Task WorksWithDifferentPropertyTypes()",
+    "evidence": "DisplayNameTest.cs 第 132 行開始的測試方法缺少 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法 DisplayAttributeTakesPrecedenceOverDisplayNameAttribute 缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 DisplayAttributeTakesPrecedenceOverDisplayNameAttribute 未包含明確的 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "public async Task DisplayAttributeTakesPrecedenceOverDisplayNameAttribute()",
+    "evidence": "DisplayNameTest.cs 第 160 行開始的測試方法缺少 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 81,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法 DisplaysDisplayNameAttributeName 缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 DisplaysDisplayNameAttributeName 未包含明確的 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "public async Task DisplaysDisplayNameAttributeName()",
+    "evidence": "DisplayNameTest.cs 第 180 行開始的測試方法缺少 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法 DisplaysDisplayAttributeName 缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 DisplaysDisplayAttributeName 未包含明確的 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "public async Task DisplaysDisplayAttributeName()",
+    "evidence": "DisplayNameTest.cs 第 200 行開始的測試方法缺少 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法 DisplaysPropertyNameWhenNoAttributePresent 缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 DisplaysPropertyNameWhenNoAttributePresent 未包含明確的 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "public async Task DisplaysPropertyNameWhenNoAttributePresent()",
+    "evidence": "DisplayNameTest.cs 第 220 行開始的測試方法缺少 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法 ThrowsIfNoForParameterProvided 缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 ThrowsIfNoForParameterProvided 未包含明確的 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "public async Task ThrowsIfNoForParameterProvided()",
+    "evidence": "DisplayNameTest.cs 第 240 行開始的測試方法缺少 AAA 註解。"
+  }
+]

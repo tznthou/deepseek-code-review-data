@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "rewriteClientCommandVector 參數順序可能錯誤",
+    "body": "在 `rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj)` 中，參數順序可能不符合 HSETEX 命令的語法。HSETEX 的語法為 `HSETEX key [EX seconds | PX milliseconds | EXAT unix-time-seconds | PXAT unix-time-milliseconds | KEEPTTL] [NX | XX] [FIELDS numfields field value [field value ...]]`。目前傳入的參數順序是 `key, KEEPTTL, FIELDS, 1, field, value`，但正確順序應為 `key, KEEPTTL, FIELDS, 1, field, value`，看起來是正確的。然而，`shared.integers[1]` 是共享整數物件，其值為 1，但在此處作為 `numfields` 參數，可能與預期相符。不過，需確認 `rewriteClientCommandVector` 的參數數量是否正確：目前傳入 6 個參數（包含命令本身），但實際參數數量為 7（命令 + key + KEEPTTL + FIELDS + 1 + field + value），因此可能導致參數數量不符，進而產生錯誤的複製指令。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 rewriteClientCommandVector 呼叫，參數數量為 6，但實際需要的參數數量為 7（命令 + key + KEEPTTL + FIELDS + 1 + field + value），可能導致複製指令不完整或錯誤。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1988,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中對過期時間的斷言可能因時間誤差而不穩定",
+    "body": "在測試中，使用 `assert_range [r httl h1 FIELDS 1 f1] 90 100` 來斷言過期時間在 90 到 100 秒之間。然而，由於測試執行時間的延遲，實際的 TTL 可能略低於 90 秒，導致測試偶發性失敗。建議放寬範圍或使用更精確的同步機制。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "測試中對 TTL 的斷言範圍較窄，且未考慮測試執行時間的延遲，可能導致 flaky test。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 216,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄音端點權限從 BOOKING_READ 提升為 BOOKING_WRITE，可能造成授權不足",
+    "body": "此端點原本使用 BOOKING_READ 權限，現在改為 BOOKING_WRITE。若此端點僅供讀取錄音，使用 WRITE 權限可能導致僅有讀取權限的使用者無法存取，造成不必要的授權限制。建議確認此變更是否符合預期，或改回 BOOKING_READ。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中將原本的 @Permissions([BOOKING_READ]) 改為 @Permissions([BOOKING_WRITE])。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 227,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "getRecordings 呼叫缺少 await，可能回傳 Promise 而非實際資料",
+    "body": "原本的 `await this.calVideoService.getRecordings(bookingUid)` 被改為 `this.calVideoService.getRecordings(bookingUid)`，移除了 await。若該方法為非同步，則回傳的 `recordings` 會是 Promise，導致 API 回應中 data 欄位變成 Promise 而非實際資料。建議確認該方法是否為同步，若非同步則應保留 await。",
+    "existing_code": "const recordings = this.calVideoService.getRecordings(bookingUid);",
+    "evidence": "diff 中移除了 await。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-recordings.output.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增未使用的 import BookingRepository",
+    "body": "此檔案新增了 `import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";`，但檔案中並未使用該型別。這可能是誤加，建議移除以避免 lint 警告。",
+    "existing_code": "import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";",
+    "evidence": "diff 中新增此 import，但檔案內容未使用。"
+  }
+]

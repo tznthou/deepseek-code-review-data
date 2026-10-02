@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 199,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R25] 新增 console.log 違反前端規範",
+    "body": "在批次輸入驗證前新增了 `console.log('Checking batch inputs:', { dataLength: data.length, headerData })`。根據規範 R25，前端程式碼不應使用 console 語句，應移除或改用適當的日誌機制。",
+    "existing_code": "console.log('Checking batch inputs:', { dataLength: data.length, headerData })",
+    "evidence": "diff 中新增的 console.log 語句。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "批次輸入驗證在 max_length 未設定時失效",
+    "body": "原本使用 `varItem.max_length || DEFAULT_VALUE_MAX_LEN` 提供預設值，現在改為直接使用 `varItem.max_length`。若 `max_length` 為 undefined，則 `item[varIndex].length > varItem.max_length` 會變成與 undefined 比較，結果永遠為 false，導致長度驗證失效。建議保留預設值或明確處理 undefined 情況。",
+    "existing_code": "if (item[varIndex].length > varItem.max_length) {\n            moreThanMaxLengthVarName = varItem.name\n            maxLength = varItem.max_length",
+    "evidence": "diff 中移除了 `|| DEFAULT_VALUE_MAX_LEN`，且未對 undefined 做處理。"
+  }
+]

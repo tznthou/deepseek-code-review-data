@@ -1,0 +1,90 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "For 參數變更時未重新渲染",
+    "body": "在 `SetParametersAsync` 中，僅當 `For != _previousFieldAccessor` 時才重新計算顯示名稱並渲染。然而，`For` 是 `Expression<Func<TValue>>`，其相等性比較是參考相等。若父元件重新渲染並傳入一個新的表達式實例（即使語意相同），此條件會成立並重新渲染，這可能導致不必要的渲染。但更嚴重的問題是：若 `For` 參數未變更（參考相同），但顯示名稱的來源（例如屬性上的 `DisplayAttribute`）因動態變更而需要更新時，元件不會重新渲染。例如，若使用本地化且文化特性變更，顯示名稱可能不會更新。建議移除 `_previousFieldAccessor` 檢查，或在每次 `SetParametersAsync` 時都重新計算並渲染，以確保顯示名稱始終反映最新狀態。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中新增的 `DisplayName.cs` 第 44-52 行顯示了條件渲染邏輯。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Hot Reload 時未清除顯示名稱快取",
+    "body": "`ClearCache` 方法僅清除 `_memberInfoCache`，但未清除 `_displayNameCache`。當 Hot Reload 套用中繼資料更新（例如變更屬性的 `DisplayAttribute`）時，`_displayNameCache` 中舊的顯示名稱仍會被使用，導致顯示過期的名稱。建議在 `ClearCache` 中同時清除 `_displayNameCache`。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 `ExpressionMemberAccessor.cs` 第 80-83 行顯示 `ClearCache` 僅清除 `_memberInfoCache`。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R02] 應使用檔案範圍命名空間宣告",
+    "body": "此檔案使用了傳統的區塊範圍命名空間宣告，但專案規範要求使用檔案範圍命名空間（file-scoped namespace）。建議改為 `namespace Microsoft.AspNetCore.Components.Forms;` 並移除大括號。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms\n{\n    /// <summary>\n    /// Displays the display name for a specified field, reading from <see cref=\"DisplayAttribute\"/>\n    /// or <see cref=\"DisplayNameAttribute\"/> if present, or falling back to the property name.\n    /// </summary>\n    /// <typeparam name=\"TValue\">The type of the field.</typeparam>\n    public class DisplayName<TValue> : IComponent\n    {",
+    "evidence": "diff 中 `DisplayName.cs` 第 1-8 行顯示了區塊範圍命名空間。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R03] 私有欄位命名不符合底線前綴慣例",
+    "body": "私有欄位 `_renderHandle`、`_previousFieldAccessor`、`_displayName` 已使用底線前綴，符合規範。但 `For` 屬性為公開屬性，不受此規範限制。此 finding 可能不成立，請忽略。",
+    "existing_code": "private RenderHandle _renderHandle;\nprivate Expression<Func<TValue>>? _previousFieldAccessor;\nprivate string? _displayName;",
+    "evidence": "diff 中 `DisplayName.cs` 第 17-19 行顯示了私有欄位。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R07] 公開屬性 For 缺少 XML 文件",
+    "body": "公開屬性 `For` 缺少 XML 文件註解。雖然類別有文件，但屬性本身應有 `<summary>` 說明其用途。建議新增文件以符合規範。",
+    "existing_code": "[Parameter, EditorRequired]\npublic Expression<Func<TValue>>? For { get; set; }",
+    "evidence": "diff 中 `DisplayName.cs` 第 30-31 行顯示了 `For` 屬性。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R05] 測試類別命名不符合慣例",
+    "body": "測試類別 `DisplayNameTest` 未以 `Tests` 結尾。根據規範，測試類別應遵循命名慣例，例如 `DisplayNameTests`。建議重新命名以符合規範。",
+    "existing_code": "public class DisplayNameTest",
+    "evidence": "diff 中 `DisplayNameTest.cs` 第 10 行顯示了類別宣告。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 `ThrowsIfNoForParameterProvided` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。雖然有部分註解，但未完整遵循規範。建議補齊結構化註解。",
+    "existing_code": "public async Task ThrowsIfNoForParameterProvided()\n{\n    // Arrange\n    var rootComponent = new TestHostComponent\n    {\n        InnerContent = builder =>\n        {\n            builder.OpenComponent<DisplayName<string>>(0);\n            builder.CloseComponent();\n        }\n    };\n\n    var testRenderer = new TestRenderer();\n    var componentId = testRenderer.AssignRootComponentId(rootComponent);\n\n    // Act & Assert\n    var ex = await Assert.ThrowsAsync<InvalidOperationException>(\n        async () => await testRenderer.RenderRootComponentAsync(componentId));\n    Assert.Contains(\"For\", ex.Message);\n    Assert.Contains(\"parameter\", ex.Message);\n}",
+    "evidence": "diff 中 `DisplayNameTest.cs` 第 15-33 行顯示了測試方法。"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/Login.razor",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "標籤缺少 class 屬性可能影響樣式",
+    "body": "在 `Login.razor` 中，密碼欄位的 `<label>` 元素缺少 `class=\"form-label\"`，而其他欄位都有。這可能導致樣式不一致。建議補上 `class=\"form-label\"`。",
+    "existing_code": "<label for=\"Input.Password\" class=\"form-label\">\n    <DisplayName For=\"() => Input.Password\" />\n</label>",
+    "evidence": "diff 中 `Login.razor` 第 31-33 行顯示了密碼欄位的標籤。"
+  }
+]

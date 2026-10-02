@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1867,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "slotRangeArraySortAndMerge 未處理重疊範圍，可能導致資料損毀",
+    "body": "函式僅合併相鄰範圍（prev.end + 1 == next.start），但未檢查重疊範圍（例如 100-200 與 150-300）。若輸入包含重疊範圍，合併後會產生錯誤的範圍，且後續驗證可能無法偵測到重疊，導致 slot 被重複分配或遷移錯誤。\n\n建議在合併前先檢查重疊，或保留重疊範圍並在驗證階段回報錯誤。",
+    "existing_code": "if (slots->ranges[idx].end + 1 == slots->ranges[i].start)\n    slots->ranges[idx].end = slots->ranges[i].end;\nelse\n    slots->ranges[++idx] = slots->ranges[i];",
+    "evidence": "diff 中新增的 slotRangeArraySortAndMerge 函式，其合併條件僅為 end + 1 == start，未考慮重疊情況。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1866,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "slotRangeArraySortAndMerge 在更新 num_ranges 前可能越界讀取",
+    "body": "在合併迴圈中，當 i 遞增時，slots->ranges[i] 可能指向已合併的範圍，但 num_ranges 尚未更新，導致讀取到未初始化的記憶體或重複處理。\n\n建議先計算新的範圍數量，再進行合併，或使用獨立的輸出陣列。",
+    "existing_code": "for (int i = 1; i < slots->num_ranges; i++) {\n    if (slots->ranges[idx].end + 1 == slots->ranges[i].start)\n        slots->ranges[idx].end = slots->ranges[i].end;\n    else\n        slots->ranges[++idx] = slots->ranges[i];\n}\nslots->num_ranges = idx + 1;",
+    "evidence": "diff 中新增的 slotRangeArraySortAndMerge 函式，其迴圈條件使用 slots->num_ranges，但該值在迴圈結束後才更新。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.85,
+    "title": "asmCreateImportTask 轉移 slots 所有權可能導致 use-after-free 或 double-free",
+    "body": "原本 asmCreateImportTask 會複製 slots（slotRangeArrayDup），現在改為直接指派 task->slots = slots。這表示呼叫端（clusterMigrationCommandImport 或 clusterAsmProcess）不再擁有 slots 的所有權，但錯誤路徑中仍會釋放 slots（slotRangeArrayFree），可能造成 double-free。此外，若 task 建立後 slots 被修改或釋放，task 內部的指標可能失效。\n\n建議保留複製，或明確所有權轉移並移除呼叫端的釋放。",
+    "existing_code": "task->slots = slots;",
+    "evidence": "diff 中將 slotRangeArrayDup(slots) 改為 slots，且錯誤路徑新增 slotRangeArrayFree(slots)。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "parseSlotRangesOrReply 錯誤路徑可能洩漏記憶體",
+    "body": "在 slotRangeArrayNormalizeAndValidate 失敗時，程式碼執行 sdsfree(err) 後直接 slotRangeArrayFree(slots) 並回傳 NULL，但未釋放 err 指向的 sds（若 err 非 NULL）。這可能導致記憶體洩漏。\n\n建議在釋放 slots 前先處理 err，或使用 goto 統一清理。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n    sdsfree(err);\n    slotRangeArrayFree(slots);\n    return NULL;\n}",
+    "evidence": "diff 中 parseSlotRangesOrReply 的錯誤處理區塊。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1796,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "slotRangeArrayToString 對 NULL 指標的處理不一致",
+    "body": "新增的 NULL 檢查僅在 slots == NULL 或 num_ranges == 0 時回傳空字串，但未處理 slots->ranges 為 NULL 的情況。若呼叫端傳入未初始化的 slotRangeArray，可能導致崩潰。\n\n建議增加對 slots->ranges 的檢查，或確保所有呼叫端都正確初始化。",
+    "existing_code": "if (slots == NULL || slots->num_ranges == 0) return s;",
+    "evidence": "diff 中 slotRangeArrayToString 新增的 NULL 檢查。"
+  }
+]

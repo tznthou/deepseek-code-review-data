@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "local_hostname 可能傳入空字串而非 None",
+    "body": "在 `send` 方法中，`local_host = dify_config.SMTP_LOCAL_HOSTNAME or \"\"` 會將 None 轉為空字串。接著在建構 SMTP 物件時傳入 `local_hostname=local_host or None`，若 local_host 為空字串，則 `local_host or None` 會是 None，因此實際上不會傳入空字串。但後續的 `smtp.ehlo(local_host)` 在 opportunistic TLS 模式下會傳入空字串，可能導致 HELO/EHLO 命令使用空字串作為主機名稱，某些 SMTP 伺服器可能拒絕。建議將 local_host 保留為 None 或直接使用設定值，並在呼叫 ehlo 時傳入 None 或有效主機名稱。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中新增的程式碼：`local_host = dify_config.SMTP_LOCAL_HOSTNAME or \"\"` 和 `smtp.ehlo(local_host)`。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "assert smtp is not None 為多餘且可能造成意外錯誤",
+    "body": "在建構 SMTP 物件後，新增了 `assert smtp is not None`。由於 smtp 的型別已標註為 `smtplib.SMTP | None`，且建構子正常情況下不會回傳 None，此 assert 是多餘的。若未來建構子因某些原因回傳 None，assert 會拋出 AssertionError，但這並非預期的錯誤處理方式。建議移除 assert，或改為明確的錯誤處理。",
+    "existing_code": "assert smtp is not None",
+    "evidence": "diff 中新增的 `assert smtp is not None`。"
+  }
+]

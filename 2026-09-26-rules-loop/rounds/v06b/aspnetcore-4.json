@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "參數未變更時不會重新渲染，導致顯示名稱過期",
+    "body": "在 `SetParametersAsync` 中，只有當 `For` 表達式與 `_previousFieldAccessor` 不同時才會重新計算顯示名稱並呼叫 `_renderHandle.Render`。然而，即使表達式相同，顯示名稱仍可能因其他因素（例如資源檔變更、文化特性變更）而需要更新。這會導致元件在這些情況下顯示過期的名稱。\n\n建議：移除 `For != _previousFieldAccessor` 的條件，每次 `SetParametersAsync` 都重新計算並渲染，或至少加入對文化特性變更的偵測。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中新增的 DisplayName.cs 第 47-55 行顯示條件渲染邏輯。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Hot Reload 時未清除顯示名稱快取",
+    "body": "`ClearCache` 方法僅清除 `_memberInfoCache`，未清除 `_displayNameCache`。當 Hot Reload 套用中繼資料變更時，顯示名稱快取可能保留舊值，導致顯示名稱不正確。\n\n建議：在 `ClearCache` 中同時清除 `_displayNameCache`。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 ExpressionMemberAccessor.cs 第 78-81 行顯示 ClearCache 僅清除 _memberInfoCache。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R02] 應使用檔案範圍命名空間宣告",
+    "body": "此檔案使用傳統的區塊範圍命名空間宣告，但專案規範要求使用檔案範圍命名空間（C# 10+）。\n\n建議：將命名空間宣告改為 `namespace Microsoft.AspNetCore.Components.Forms;` 並移除大括號。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms\n{\n    /// <summary>\n    /// Displays the display name for a specified field, reading from <see cref=\"DisplayAttribute\"/>\n    /// or <see cref=\"DisplayNameAttribute\"/> if present, or falling back to the property name.\n    /// </summary>\n    /// <typeparam name=\"TValue\">The type of the field.</typeparam>\n    public class DisplayName<TValue> : IComponent\n    {",
+    "evidence": "diff 中 DisplayName.cs 第 8-13 行顯示區塊範圍命名空間。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R14] 內部類別應標記為 sealed",
+    "body": "`DisplayName<TValue>` 是公開類別，但未標記為 `sealed`。雖然它不是內部類別，但若無意供繼承，建議標記為 `sealed` 以提升效能並明確設計意圖。",
+    "existing_code": "public class DisplayName<TValue> : IComponent",
+    "evidence": "diff 中 DisplayName.cs 第 13 行。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R14] 內部類別應標記為 sealed",
+    "body": "`ExpressionMemberAccessor` 是內部靜態類別，但未標記為 `sealed`。靜態類別無法被繼承，但加上 `sealed` 可更明確表達設計意圖。",
+    "existing_code": "internal static class ExpressionMemberAccessor",
+    "evidence": "diff 中 ExpressionMemberAccessor.cs 第 12 行。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 159,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "`SupportsLocalizationWithResourceType` 測試方法缺少 `// Arrange`、`// Act`、`// Assert` 註解，違反專案規範。",
+    "existing_code": "public async Task SupportsLocalizationWithResourceType()\n{\n    var model = new TestModel();\n    var rootComponent = new TestHostComponent\n    {\n        InnerContent = builder =>\n        {\n            builder.OpenComponent<DisplayName<string>>(0);\n            builder.AddComponentParameter(1, \"For\", (System.Linq.Expressions.Expression<Func<string>>)(() => model.PropertyWithResourceBasedDisplay));\n            builder.CloseComponent();\n        }\n    };\n\n    var output = await RenderAndGetOutput(rootComponent);\n    Assert.Equal(\"Localized Display Name\", output);\n}",
+    "evidence": "diff 中 DisplayNameTest.cs 第 232 行開始的測試方法。"
+  }
+]

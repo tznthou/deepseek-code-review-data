@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "threshold 比較運算子從 <= 改為 < 可能造成倍率錯誤",
+    "body": "在 `getWarmupLimit` 中，原本使用 `lastCount <= threshold.limit` 來決定倍率，現在改為 `lastCount < threshold.limit`。這會導致當 `lastCount` 恰好等於某個 threshold 的 limit 時，會落入下一個更高的倍率區間。例如 `lastCount = 1000` 時，原本應使用 1.25 倍（因為 <= 1000），現在會使用 1.5 倍（因為 < 1000 不成立，進入下一個 threshold）。這可能造成實際發送量超出預期，影響 warmup 的漸進性。建議改回 `<=` 或明確處理等於邊界的情況。",
+    "existing_code": "if (lastCount < threshold.limit) {",
+    "evidence": "diff 中 `-            if (lastCount <= threshold.limit) {` 改為 `+            if (lastCount < threshold.limit) {`"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "高流量計算中 scaledIncrease 使用 maxScale 而非 1+maxScale",
+    "body": "在高流量區段（`lastCount >= 400000`）的計算中，`scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale)`，其中 `maxScale` 為 1.2。這表示 scaledIncrease 會是 `lastCount * 1.2`，但註解說明「cap the increase at 20%」，即應為 `lastCount * (1 + 0.2)`。目前程式碼會讓 scaledIncrease 永遠小於 absoluteIncrease（`lastCount + 75000`），因此實際回傳值會是 `lastCount * 1.2`，而非預期的 `lastCount * 1.2` 與 `lastCount + 75000` 的最小值。這可能導致高流量時成長幅度過小，甚至停滯。建議將 `maxScale` 改為 `1 + maxScale` 或調整計算方式。",
+    "existing_code": "const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);",
+    "evidence": "diff 中新增的程式碼，且 `highVolume.maxScale` 定義為 1.2"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "高流量 threshold 判斷使用 >= 可能包含等於 400000 的情況",
+    "body": "在高流量判斷中，使用 `lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold`，其中 threshold 為 400000。這表示當 `lastCount` 恰好等於 400000 時，會進入高流量邏輯。然而，在 thresholds 陣列中，最後一個 threshold 的 limit 也是 400000，且其 scale 為 2。原本的邏輯中，`lastCount <= 400000` 會使用 2 倍，但現在等於 400000 會先被高流量邏輯攔截，使用 1.2 倍或 +75k 的規則。這可能造成行為不一致。建議確認是否應使用 `>` 而非 `>=`，或調整 threshold 的 limit 以避免重疊。",
+    "existing_code": "if (lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold) {",
+    "evidence": "diff 中新增的程式碼，且 thresholds 最後一項 limit 為 400_000"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "findPage 查詢的 filter 使用 <= 可能包含當天資料",
+    "body": "原本的 `findOne` 使用 `created_at:<${date}`（嚴格小於），現在改為 `created_at:<=${date}`（小於等於）。這表示查詢會包含當天建立的 email，可能導致 `#getHighestCount` 取得今天的資料，進而影響 warmup 計算。若目的是排除今天，應維持 `<`。建議確認此變更是否為預期。",
+    "existing_code": "filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,",
+    "evidence": "diff 中 `-            filter: `created_at:<${new Date().toISOString().split('T')[0]}`,` 改為 `+            filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,"
+  }
+]

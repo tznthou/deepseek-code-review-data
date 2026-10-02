@@ -1,0 +1,68 @@
+[
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R16] TypeScript strict mode disabled",
+    "body": "將 `strict` 從 `true` 改為 `false` 違反專案規範 R16（TypeScript Files Must Enable Strict Type Checking）。這會降低型別安全，可能隱藏潛在的執行時期錯誤。請恢復為 `true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.json 的變更：`-    \"strict\": true,` 改為 `+    \"strict\": false,`"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "confirmHandle 未處理 mutation 錯誤，可能導致未捕獲的 rejection",
+    "body": "`confirmHandle` 呼叫 `confirmBlueskyHandleMutation.mutateAsync().then(...)` 但沒有 `.catch`。若 mutation 失敗（例如網路錯誤或 429），會產生未處理的 Promise rejection，可能導致瀏覽器顯示錯誤或影響其他邏輯。建議加上 `.catch` 處理錯誤，例如顯示 toast 或停止輪詢。",
+    "existing_code": "confirmBlueskyHandleMutation.mutateAsync().then((handle) => {\n            if (handle) {\n                setHandleConfirmed(true);\n            }\n        });",
+    "evidence": "在 `confirmHandle` 函式中，`mutateAsync()` 回傳的 Promise 僅有 `.then`，沒有 `.catch`。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "輪詢成功後未更新快取，可能導致重複輪詢",
+    "body": "在 `confirmHandle` 成功取得 handle 後，僅呼叫 `setHandleConfirmed(true)`，但未更新 React Query 快取中的 `blueskyHandleConfirmed`。因此 `account?.blueskyHandleConfirmed` 仍為 `false`，`useEffect` 的依賴項不會改變，可能導致輪詢繼續進行，直到達到最大重試次數。建議在成功後呼叫 `updateAccountBlueskyCache` 或 invalidate 相關查詢。",
+    "existing_code": "confirmBlueskyHandleMutation.mutateAsync().then((handle) => {\n            if (handle) {\n                setHandleConfirmed(true);\n            }\n        });",
+    "evidence": "`confirmHandle` 僅設定 local state，未更新全域快取；而 `useEffect` 依賴 `account?.blueskyHandleConfirmed`，若快取未更新，該值不會改變。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "輪詢間隔內可能重複呼叫 confirmHandle",
+    "body": "`useEffect` 設定 `setInterval` 每 5 秒呼叫 `confirmHandle`，但 `confirmHandle` 本身是 async 且可能耗時超過 5 秒。若前一次請求尚未完成，下一次 interval 又觸發，可能導致多個並行請求。建議在 `confirmHandle` 中加入防護，例如檢查是否已有進行中的請求，或使用 `setTimeout` 遞迴取代 `setInterval`。",
+    "existing_code": "const confirmHandleInterval = setInterval(async () => {\n            if (retryCountRef.current >= MAX_CONFIRMATION_RETRIES) {\n                clearInterval(confirmHandleInterval);\n\n                toast.error('Something went wrong, please try again.');\n\n                await disableBlueskyMutation.mutateAsync();\n                setLoading(false);\n\n                return;\n            }\n\n            retryCountRef.current += 1;\n            confirmHandle();\n        }, CONFIRMATION_INTERVAL);",
+    "evidence": "`setInterval` 固定間隔觸發，未考慮非同步操作的完成時間。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 109,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "達到最大重試次數後呼叫 disableBlueskyMutation 可能造成非預期狀態",
+    "body": "當輪詢達到最大次數時，程式會呼叫 `disableBlueskyMutation.mutateAsync()` 來停用 Bluesky。但若使用者已手動停用或狀態已變更，此舉可能造成不必要的 API 呼叫或狀態不一致。建議先檢查目前狀態再決定是否停用。",
+    "existing_code": "await disableBlueskyMutation.mutateAsync();",
+    "evidence": "在 `setInterval` 的 callback 中，當 `retryCountRef.current >= MAX_CONFIRMATION_RETRIES` 時執行停用。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "初始 loading 狀態依賴 account 資料，可能造成閃爍",
+    "body": "`useState` 的初始值使用 `account?.blueskyEnabled && !account?.blueskyHandleConfirmed`，但 `account` 在首次 render 時可能尚未載入（undefined），導致初始 loading 為 false。之後當 account 載入且符合條件時，`useEffect` 會設定 loading 為 true，可能造成 UI 閃爍。建議在 account 載入前顯示 loading 或延後判斷。",
+    "existing_code": "const [loading, setLoading] = useState(() => account?.blueskyEnabled && !account?.blueskyHandleConfirmed);",
+    "evidence": "初始 state 依賴非同步取得的 account 資料。"
+  }
+]

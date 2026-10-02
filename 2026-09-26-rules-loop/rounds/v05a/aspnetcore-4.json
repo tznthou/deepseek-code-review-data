@@ -1,0 +1,112 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "DisplayName 元件在參數未變更時不會重新渲染，可能導致顯示名稱過期",
+    "body": "在 SetParametersAsync 中，只有當 For 表達式與 _previousFieldAccessor 不同時才會重新計算顯示名稱並呼叫 Render。然而，顯示名稱可能依賴於其他因素（例如文化特性變更、資源檔更新），這些變更不會反映在 For 表達式中。因此，當這些因素改變時，元件不會重新渲染，導致顯示名稱過期。建議在每次 SetParametersAsync 呼叫時都重新計算並渲染，或提供一個機制來強制更新。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中新增的 DisplayName.cs 第 46-54 行顯示了條件渲染邏輯。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Hot Reload 時未清除顯示名稱快取，可能導致不一致",
+    "body": "在 Hot Reload 的 OnDeltaApplied 事件中，僅呼叫 _memberInfoCache.Clear()，但未清除 _displayNameCache。如果屬性的顯示名稱在 Hot Reload 期間發生變更（例如修改了 DisplayAttribute），則 _displayNameCache 中仍保留舊值，導致顯示名稱不正確。建議同時清除 _displayNameCache。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中新增的 ExpressionMemberAccessor.cs 第 80-83 行顯示 ClearCache 方法僅清除 _memberInfoCache。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R02] 使用檔案範圍命名空間宣告",
+    "body": "檔案 DisplayName.cs 使用了傳統的區塊範圍命名空間宣告（namespace Microsoft.AspNetCore.Components.Forms { ... }），而專案規範要求使用檔案範圍命名空間（namespace Microsoft.AspNetCore.Components.Forms;）。建議改為檔案範圍命名空間以符合規範。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms\n{",
+    "evidence": "diff 中新增的 DisplayName.cs 第 9 行顯示了區塊範圍命名空間宣告。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 私有欄位應使用底線前綴的 camelCase 命名",
+    "body": "私有欄位 _renderHandle、_previousFieldAccessor、_displayName 已符合底線前綴 camelCase 命名，但欄位 _previousFieldAccessor 的型別為 Expression<Func<TValue>>?，其名稱可能不夠清晰。不過，此處主要問題是欄位 _previousFieldAccessor 未使用底線前綴？實際上已使用底線前綴，因此可能不違反規範。請確認是否所有私有欄位均符合規範。",
+    "existing_code": "private RenderHandle _renderHandle;\nprivate Expression<Func<TValue>>? _previousFieldAccessor;\nprivate string? _displayName;",
+    "evidence": "diff 中新增的 DisplayName.cs 第 20-22 行顯示了私有欄位宣告。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R14] 內部類別應標記為 sealed",
+    "body": "ExpressionMemberAccessor 是內部靜態類別，根據規範 R14，內部實作類別應標記為 sealed。靜態類別本身不可繼承，但規範可能仍要求標記 sealed。建議加上 sealed 修飾詞以符合規範。",
+    "existing_code": "internal static class ExpressionMemberAccessor",
+    "evidence": "diff 中新增的 ExpressionMemberAccessor.cs 第 14 行顯示了類別宣告。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R01] 所有 C# 原始檔必須包含 MIT 授權標頭",
+    "body": "檔案 DisplayNameTest.cs 缺少 MIT 授權標頭。根據規範 R01，每個 .cs 檔案開頭必須包含標準的兩行註解。請在檔案開頭加入授權標頭。",
+    "existing_code": "// Licensed to the .NET Foundation under one or more agreements.\n// The .NET Foundation licenses this file to you under the MIT license.",
+    "evidence": "diff 中新增的 DisplayNameTest.cs 開頭缺少授權標頭（diff 中未顯示授權標頭，但其他檔案有）。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R02] 使用檔案範圍命名空間宣告",
+    "body": "檔案 DisplayNameTest.cs 使用了傳統的區塊範圍命名空間宣告（namespace Microsoft.AspNetCore.Components.Forms; 但實際上是區塊範圍？請確認）。根據規範 R02，應使用檔案範圍命名空間。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms;",
+    "evidence": "diff 中新增的 DisplayNameTest.cs 第 1 行顯示了命名空間宣告。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 159,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法應使用 Arrange-Act-Assert 模式並加上註解",
+    "body": "測試方法 SupportsLocalizationWithResourceType 缺少 Arrange、Act、Assert 註解。根據規範 R06，測試方法應包含明確的階段註解。請補上相應註解。",
+    "existing_code": "public async Task SupportsLocalizationWithResourceType()\n{\n    var model = new TestModel();\n    var rootComponent = new TestHostComponent\n    {\n        InnerContent = builder =>\n        {\n            builder.OpenComponent<DisplayName<string>>(0);\n            builder.AddComponentParameter(1, \"For\", (System.Linq.Expressions.Expression<Func<string>>)(() => model.PropertyWithResourceBasedDisplay));\n            builder.CloseComponent();\n        }\n    };\n\n    var output = await RenderAndGetOutput(rootComponent);\n    Assert.Equal(\"Localized Display Name\", output);\n}",
+    "evidence": "diff 中新增的 DisplayNameTest.cs 中 SupportsLocalizationWithResourceType 方法缺少階段註解。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R07] 公開 API 必須有 XML 文件註解",
+    "body": "公開類別 DisplayName<TValue> 的屬性 For 缺少 XML 文件註解。根據規範 R07，所有公開 API 都應有 XML 文件註解。請為 For 屬性加上 <summary> 等標籤。",
+    "existing_code": "[Parameter, EditorRequired]\npublic Expression<Func<TValue>>? For { get; set; }",
+    "evidence": "diff 中新增的 DisplayName.cs 第 27-28 行顯示了 For 屬性宣告，但缺少 XML 文件註解。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R18] 開頭大括號應在新行（Allman 風格）",
+    "body": "檔案 DisplayName.cs 中的類別宣告使用了開頭大括號在新行，但方法宣告的開頭大括號也在新行，符合 Allman 風格。然而，命名空間宣告的開頭大括號在新行，但根據規範 R18，所有開頭大括號都應在新行。此處可能符合，但請確認所有大括號位置是否一致。",
+    "existing_code": "public class DisplayName<TValue> : IComponent\n{",
+    "evidence": "diff 中新增的 DisplayName.cs 第 17 行顯示了類別宣告。"
+  }
+]

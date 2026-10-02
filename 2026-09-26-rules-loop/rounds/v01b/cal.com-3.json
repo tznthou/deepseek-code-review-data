@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/users/repositories/UserRepository.ts",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 userSelect 中的 locale 欄位可能導致取消流程缺少必要資訊",
+    "body": "在 `userSelect` 中移除了 `locale: true`，但取消流程中 `handler` 會使用 `organizer.locale` 來取得翻譯（`getTranslation(organizer.locale ?? \"en\", \"common\")`）。若 `UserRepository.findByIdOrThrow` 使用此 `userSelect`，則回傳的 organizer 物件將缺少 `locale` 屬性，導致翻譯永遠使用預設英文，或若型別未正確反映可能造成執行時期錯誤。\n\n建議確認 `findByIdOrThrow` 是否使用此 `userSelect`，若取消流程需要 locale，則應保留該欄位或提供替代方式取得。",
+    "existing_code": "createdDate: true,\n  trialEndsAt: true,\n  completedOnboarding: true,\n  timeFormat: true,",
+    "evidence": "diff 中移除了 `locale: true`，而 `handleCancelBooking.ts` 中仍使用 `organizer.locale`。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 347,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "BookingRepository 未完整實作 IBookingRepository 介面",
+    "body": "`BookingRepository` 宣稱 `implements IBookingRepository`，但介面中定義了 `update` 方法，而類別中僅有 `updateMany` 和 `updateIncludeWorkflowRemindersAndReferences`，未提供名為 `update` 的方法。這可能導致 TypeScript 編譯錯誤，或未來使用介面時出現不一致。\n\n建議補齊 `update` 方法或調整介面定義。",
+    "existing_code": "export class BookingRepository implements IBookingRepository {",
+    "evidence": "diff 中新增 `implements IBookingRepository`，但未見 `update` 方法實作。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 513,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "取消後續預約時查詢條件可能包含已取消的預約",
+    "body": "在 `cancelSubsequentBookings` 為 true 時，先執行 `bookingRepository.updateMany` 將符合條件的預約標記為取消，接著使用 `bookingRepository.findManyIncludeWorkflowRemindersAndReferences` 查詢相同條件（`startTime >= bookingToDelete.startTime`）的預約。由於查詢條件未排除已取消的預約，可能將剛取消的預約也包含在內，導致後續處理（如發送取消通知）重複執行。\n\n建議在查詢條件中加入狀態過濾（例如 `status: { not: BookingStatus.CANCELLED }`）或調整查詢時機。",
+    "existing_code": "const allUpdatedBookings = await bookingRepository.findManyIncludeWorkflowRemindersAndReferences({\n      where: {\n        recurringEventId: bookingToDelete.recurringEventId,\n        startTime: {\n          gte: bookingToDelete.startTime,\n        },\n      },\n    });",
+    "evidence": "diff 中 `updateMany` 與 `findMany` 使用相同 where 條件，且未排除已取消狀態。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking/test/handleCancelBooking.test.ts",
+    "line": 1056,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "新增測試僅驗證成功結果，未驗證資料庫狀態",
+    "body": "新增的四個測試均只檢查 `result.success` 和 `result.bookingId`，未驗證取消後資料庫中的實際狀態（例如預約狀態是否為 CANCELLED、attendee 是否刪除、booking reference 是否標記 deleted）。這使得測試無法有效捕捉 repository 實作中的錯誤。\n\n建議在測試中加入對資料庫的查詢斷言，確認預期副作用已發生。",
+    "existing_code": "expect(result.success).toBe(true);\n    expect(result.onlyRemovedAttendee).toBe(false);\n    expect(result.bookingId).toBe(idOfBookingToBeCancelled);",
+    "evidence": "測試中僅有對 result 物件的斷言，未見對 prisma mock 的驗證。"
+  }
+]

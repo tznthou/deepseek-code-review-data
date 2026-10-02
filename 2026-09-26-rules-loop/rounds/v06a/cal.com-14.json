@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "listFeaturesForUser 過濾條件寫反，回傳全域停用的功能",
+    "body": "在 `listFeaturesForUser` 中，原本的過濾條件是 `filter((state) => state.globalEnabled)`，但此 PR 改成了 `filter((state) => !state.globalEnabled)`。這會導致只回傳全域停用的功能，而全域啟用的功能反而被排除。這會讓使用者看不到應該可用的功能，嚴重影響功能開關的正確性。\n\n建議改回 `filter((state) => state.globalEnabled)`。",
+    "existing_code": "return featureIds.map((featureId) => resolvedStates[featureId]).filter((state) => !state.globalEnabled);",
+    "evidence": "diff 中此行由 `filter((state) => state.globalEnabled)` 改為 `filter((state) => !state.globalEnabled)`，且註解仍寫「Only returns features that are in the allowlist, globally enabled, and scoped to \"user\"」，明顯矛盾。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "setUserFeatureState 條件分支邏輯相反，非 inherit 狀態不會寫入",
+    "body": "原本的邏輯是 `if (state === \"inherit\")` 執行 inherit 分支，否則執行 enabled/disabled 分支。此 PR 改成 `if (state !== \"inherit\")`，導致 enabled/disabled 狀態會進入原本 inherit 的 else 分支，而 inherit 狀態反而進入 enabled/disabled 分支。這會造成狀態設定完全錯誤。\n\n建議改回 `if (state === \"inherit\")`。",
+    "existing_code": "if (state !== \"inherit\") {\n      await this.featuresRepository.setUserFeatureState({ userId, featureId, state });\n    } else {",
+    "evidence": "diff 顯示原本的 `if (state === \"inherit\")` 被改為 `if (state !== \"inherit\")`，且後續分支內容未變，邏輯顛倒。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/config.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R06] 未使用的常數 UNUSED_CONSTANT 會觸發 lint 警告",
+    "body": "新增的 `const UNUSED_CONSTANT = \"this-should-be-removed\";` 沒有被使用，且註解寫明「Unused import that should be caught by linting」。這會違反 R06（lint 警告視為錯誤），導致 CI 失敗。\n\n建議移除該常數。",
+    "existing_code": "// Unused import that should be caught by linting\nconst UNUSED_CONSTANT = \"this-should-be-removed\";",
+    "evidence": "diff 新增了未使用的常數，且註解表明這是故意留下的 lint 錯誤。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.test.ts",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中 mock 的 isFeatureAllowedForScope 可能導致測試無法驗證真實邏輯",
+    "body": "在 `FeatureOptInService.test.ts` 中，`vi.mock(\"../config\", ...)` 將 `isFeatureAllowedForScope` 替換為 `mockIsFeatureAllowedForScope`，並在 `beforeEach` 中設定為回傳 `true`。這使得所有測試都假設功能允許，無法驗證 scope 限制的實際行為。雖然有測試手動設定回傳 `false`，但整體測試覆蓋可能不足。\n\n建議增加更多測試案例，直接使用真實的 config 或更精確的 mock，以驗證 scope 過濾邏輯。",
+    "existing_code": "const mockIsFeatureAllowedForScope = vi.fn();\n\nvi.mock(\"../config\", () => {\n  const mockFeatures = [",
+    "evidence": "測試檔案中 mock 了 `isFeatureAllowedForScope`，且預設回傳 `true`，可能掩蓋真實的 scope 驗證錯誤。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "整合測試中 mock isFeatureAllowedForScope 可能隱藏 scope 相關的整合問題",
+    "body": "在整合測試中，`vi.mock(\"../config\", ...)` 將 `isFeatureAllowedForScope` 替換為永遠回傳 `true` 的函式。這表示整合測試不會驗證 scope 限制在實際資料庫操作中的行為。雖然整合測試的重點是資料庫行為，但 scope 驗證是服務層的重要邏輯，應該在整合測試中保留真實實作，或至少增加針對 scope 的整合測試。\n\n建議移除這個 mock，或增加測試案例來驗證 scope 限制在整合環境下的正確性。",
+    "existing_code": "vi.mock(\"../config\", async (importOriginal) => {\n  const actual = await importOriginal<typeof import(\"../config\")>();\n  return {\n    ...actual,\n    isFeatureAllowedForScope: () => true,\n  };\n});",
+    "evidence": "整合測試中 mock 了 `isFeatureAllowedForScope`，使其永遠回傳 `true`，可能導致 scope 驗證邏輯未在整合測試中覆蓋。"
+  }
+]

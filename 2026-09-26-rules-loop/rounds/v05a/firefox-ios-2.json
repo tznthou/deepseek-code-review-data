@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 508,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "IpadOnlyTestCase.setUp 呼叫 super.setUp() 缺少 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp` 中，`super.setUp()` 現在是 `async throws`，但呼叫時沒有加上 `try`，會導致編譯錯誤。\n\n```swift\noverride func setUp() async throws {\n    specificForPlatform = .pad\n    if iPad() {\n        await super.setUp()\n    }\n}\n```\n\n應改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中 BaseTestCase.swift 的 IpadOnlyTestCase.setUp 內，`super.setUp()` 前只有 `await` 而沒有 `try`，但父類別的 `setUp` 已改為 `async throws`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/A11yUtils.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R01] 移除 MPL 授權標頭",
+    "body": "此檔案原本有 Mozilla Public License 標頭，但在此 PR 中被移除。根據專案規範 R01，所有 Swift 檔案必須包含 MPL 標頭。請加回標準標頭：\n\n```swift\n// This Source Code Form is subject to the terms of the Mozilla Public\n// License, v. 2.0. If a copy of the MPL was not distributed with this\n// file, You can obtain one at http://mozilla.org/MPL/2.0/\n```",
+    "existing_code": "import XCTest\n\n@MainActor\nclass A11yUtils: XCTestCase {",
+    "evidence": "diff 顯示 A11yUtils.swift 開頭的 MPL 標頭被刪除，僅留下 import 與 class 宣告。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "setUp 中 setUpApp() 與 setUpExperimentVariables() 順序調換",
+    "body": "原本的順序是先 `setUpExperimentVariables()` 再 `setUpApp()`，但此 PR 將兩者調換。如果 `setUpApp()` 依賴實驗變數的設定（例如 launch arguments），可能導致測試行為改變。請確認此順序變更是否為預期，若非必要請恢復原順序。",
+    "existing_code": "setUpApp()\nsetUpExperimentVariables()",
+    "evidence": "diff 中 FeatureFlaggedTestBase.swift 的 setUp 內，原本的 `setUpExperimentVariables()` 被移到 `setUpApp()` 之後。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "@MainActor 標註位置不符合 Swift 慣例",
+    "body": "在 `BaseTestCase.swift` 中，`@MainActor` 被放在全域變數宣告之前，但 Swift 慣例是將屬性標註放在宣告的同一行或緊鄰其上方。例如：\n\n```swift\n@MainActor\nlet urlBarAddress = ...\n```\n\n建議改為：\n\n```swift\n@MainActor let urlBarAddress = ...\n```\n\n或維持分行但確保格式一致。",
+    "existing_code": "@MainActor\nlet urlBarAddress = XCUIApplication().textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]",
+    "evidence": "diff 中 BaseTestCase.swift 的 `@MainActor` 與 `let` 分行，但其他檔案（如 FxScreenGraph.swift）也是分行，此處僅為風格建議。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "全域變數 homepageSearchBar 未標註 @MainActor",
+    "body": "`homepageSearchBar` 也是 UI 相關的全域變數，但未加上 `@MainActor`。雖然可能因為其型別本身是 main actor isolated，但為求一致性與明確性，建議也加上標註。",
+    "existing_code": "let homepageSearchBar = XCUIApplication().cells[AccessibilityIdentifiers.FirefoxHomepage.SearchBar.itemCell]",
+    "evidence": "diff 中 `homepageSearchBar` 的宣告沒有 `@MainActor`，但同一檔案中的 `urlBarAddress` 有加上。"
+  }
+]

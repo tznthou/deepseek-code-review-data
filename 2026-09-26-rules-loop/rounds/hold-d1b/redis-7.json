@@ -1,0 +1,13 @@
+[
+  {
+    "path": "src/server.h",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R03] 違反 Header Files Must Use Double-Underscore Include Guards",
+    "body": "此變更將 include guard 從 `__REDIS_H` 改為 `_REDIS_H`，違反了專案規範 R03（必須使用雙底線）。請改回 `__REDIS_H`。",
+    "existing_code": "#ifndef _REDIS_H\n#define _REDIS_H",
+    "evidence": "diff 中顯示 `-#ifndef __REDIS_H` 改為 `+#ifndef _REDIS_H`，且規範 R03 明確要求雙底線。"
+  }
+]

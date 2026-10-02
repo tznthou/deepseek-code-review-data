@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/State/BrowserViewControllerState.swift",
+    "line": 566,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "displayView 值從 .readerMode 改為 .readerModeLongPressAction，與 QR code 移除無關",
+    "body": "此變更將 `displayView` 從 `.readerMode` 改為 `.readerModeLongPressAction`，但此 PR 目的為移除 QR code 相關程式碼，此變更與目的無關。若為誤植，可能導致 reader mode 顯示錯誤；若為有意修改，應在 PR 描述中說明。",
+    "existing_code": "displayView: .readerModeLongPressAction,",
+    "evidence": "diff 中此行由 `displayView: .readerMode` 改為 `displayView: .readerModeLongPressAction`，且前後文皆為 QR code 移除，無相關性。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "布林條件從 && 改為 ||，可能改變取消編輯時 URL 的處理邏輯",
+    "body": "此變更將 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)` 改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`，與 QR code 移除無關。此邏輯變更可能影響取消編輯時 URL 的保留與否，進而影響使用者體驗。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&& !` 改為 `||`，且前後文皆為 QR code 移除，無相關性。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "isReaderModeEnabled 的布林值反轉，可能導致 telemetry 記錄錯誤",
+    "body": "此變更將 `case .available: true` 改為 `false`，`default: false` 改為 `true`，與 QR code 移除無關。此變更可能導致 reader mode 按鈕的 telemetry 記錄錯誤，影響數據分析。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中此兩行由 `true` 改為 `false`、`false` 改為 `true`，且前後文皆為 QR code 移除，無相關性。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/ToolbarTelemetry.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "gleanWrapper 屬性從 private 改為 internal，可能違反封裝原則",
+    "body": "此變更將 `private let gleanWrapper` 改為 `let gleanWrapper`，使其成為 internal，可能違反 [R11] 的封裝原則。若無外部使用需求，應保持 private。",
+    "existing_code": "let gleanWrapper: GleanWrapper",
+    "evidence": "diff 中此行由 `private let gleanWrapper` 改為 `let gleanWrapper`，且無其他程式碼使用此屬性。"
+  },
+  {
+    "path": "firefox-ios/Client/Configuration/version.xcconfig",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "APP_VERSION 從 147.1 升為 147.2，與 QR code 移除無關",
+    "body": "此變更將版本號從 147.1 改為 147.2，但 PR 目的為移除 QR code 功能，版本號變更可能為誤植或應在獨立 PR 中處理。",
+    "existing_code": "APP_VERSION = 147.2",
+    "evidence": "diff 中此行由 `147.1` 改為 `147.2`，且無其他版本相關變更。"
+  }
+]

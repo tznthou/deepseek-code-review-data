@@ -1,0 +1,46 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "回傳值 True 應為 true（JavaScript 布林值）",
+    "body": "在 handleJSONSchemaChange 的 try 區塊中，成功解析後回傳了 `True`。在 JavaScript/TypeScript 中，`True` 不是保留字，會被視為未定義的變數，導致 ReferenceError（若在嚴格模式）或回傳 undefined（非嚴格模式）。這會使呼叫端無法正確判斷是否成功。應改為 `true`。",
+    "existing_code": "return True",
+    "evidence": "diff 中新增行 `+      return True`，位於 handleJSONSchemaChange 函式內。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 237,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "isJsonSchemaEmpty 的型別判斷可能失效",
+    "body": "函式 `isJsonSchemaEmpty` 接受參數型別為 `InputVar['json_schema']`，但若該型別實際上為 `string`（而非 `string | null | undefined`），則 `value === null` 的檢查永遠為 false，且 TypeScript 可能不會報錯。這會導致空字串以外的 null/undefined 無法被正確識別為空，進而在 handleConfirm 中無法正確移除 json_schema 欄位。建議確認型別定義，或改用更寬鬆的檢查（如 `!value`）。",
+    "existing_code": "const isJsonSchemaEmpty = (value: InputVar['json_schema']) => {\n    if (value === null || value === undefined) {\n      return true\n    }\n    if (typeof value !== 'string') {\n      return false\n    }\n    const trimmed = value.trim()\n    return trimmed === ''\n  }",
+    "evidence": "diff 中新增的函式，其型別註記為 `InputVar['json_schema']`，但未確認該型別是否包含 null/undefined。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 314,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "JSON Schema 驗證僅檢查 type 為 object，未驗證其他關鍵字",
+    "body": "在 handleConfirm 中，僅檢查 `schema?.type !== 'object'`，但未驗證 schema 是否符合 JSON Schema 規範（例如 properties 是否為物件、required 是否為陣列等）。這可能導致後端接收到無效的 schema，進而引發錯誤。建議使用 JSON Schema 驗證函式庫（如 ajv）進行完整驗證，或至少檢查必要欄位。",
+    "existing_code": "if (schema?.type !== 'object') {\n            Toast.notify({ type: 'error', message: t('variableConfig.errorMsg.jsonSchemaMustBeObject', { ns: 'appDebug' }) })\n            return\n          }",
+    "evidence": "diff 中新增的驗證邏輯，僅檢查 type 屬性。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "handleJSONSchemaChange 回傳值不一致",
+    "body": "函式在空值時回傳 `null`，解析失敗時回傳 `null`，成功時回傳 `True`（應為 `true`）。回傳型別不一致可能導致呼叫端難以處理。建議統一回傳布林值（成功 true，失敗 false），或改為 void 並在內部處理錯誤。",
+    "existing_code": "if (isEmpty) {\n      handlePayloadChange('json_schema')(undefined)\n      return null\n    }\n    try {\n      const v = JSON.parse(value)\n      handlePayloadChange('json_schema')(value)\n      return True\n    }\n    catch {\n      return null\n    }",
+    "evidence": "diff 中 handleJSONSchemaChange 的完整實作。"
+  }
+]

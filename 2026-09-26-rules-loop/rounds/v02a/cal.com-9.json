@@ -1,0 +1,68 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "sortHosts 函式移動後 priority 排序方向反轉",
+    "body": "在 HostEditDialogs.tsx 中的原始 sortHosts 函式，當 isRRWeightsEnabled 為 false 時回傳 `priorityB - priorityA`（降冪排序）。移動到 hostGroupUtils.ts 後，相同分支改為回傳 `priorityA - priorityB`（升冪排序）。這會改變排序結果，可能影響依賴此排序的 UI 或邏輯。請確認此變更是否為預期，若非預期請修正為原始行為。",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中 packages/lib/bookings/hostGroupUtils.ts 新增的 sortHosts 函式，在 else 分支回傳 priorityA - priorityB，而原始 HostEditDialogs.tsx 中相同分支回傳 priorityB - priorityA。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "[R02] 移動後 import 路徑違反依賴方向",
+    "body": "此檔案從 packages/platform/atoms 移至 apps/web/components/apps 後，import 路徑改為相對路徑 `../../../../packages/platform/atoms/src/components/atoms-wrapper` 和 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar`。這表示 apps/web 直接依賴 packages/platform/atoms 的內部檔案，可能違反 R02 的依賴階層（apps/web 不應直接依賴 packages/platform/atoms 的內部實作）。建議改為使用公開的 package export 或將相依元件一併移動。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 中此檔案的 import 路徑從原本的 package alias 改為相對路徑，指向 packages/platform/atoms 內部。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "[R02] 移動後 import 路徑違反依賴方向",
+    "body": "此檔案從 packages/platform/atoms 移至 apps/web/modules/event-types/components 後，仍從 `@calcom/atoms/event-types/hooks/...` import hooks。這表示 apps/web 依賴 packages/platform/atoms 的 hooks，可能違反 R02 的依賴階層。建議將這些 hooks 一併移動至 apps/web 或確認此依賴是否被允許。",
+    "existing_code": "import { useEventTypeForm } from \"@calcom/atoms/event-types/hooks/useEventTypeForm\";\nimport { useHandleRouteChange } from \"@calcom/atoms/event-types/hooks/useHandleRouteChange\";\nimport { useTabsNavigations } from \"@calcom/atoms/event-types/hooks/useTabsNavigations\";",
+    "evidence": "diff 中此檔案的 import 路徑仍使用 @calcom/atoms 的 hooks。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 檔案缺少結尾換行",
+    "body": "此檔案在最後一行 `export default EventLimitsTabWebWrapper;` 後缺少換行符號（`\\ No newline at end of file`）。這可能違反 Biome 的格式化規則，建議補上換行。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 中此檔案最後一行顯示 `\\ No newline at end of file`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 檔案缺少結尾換行",
+    "body": "此檔案在最後一行 `export default EventRecurringWebWrapper;` 後缺少換行符號（`\\ No newline at end of file`）。這可能違反 Biome 的格式化規則，建議補上換行。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 中此檔案最後一行顯示 `\\ No newline at end of file`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 236,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "縮排不一致可能違反格式化規則",
+    "body": "在 tabMap 的 setup 和 availability 區塊中，JSX 元素的縮排從原本的 6 空格改為 8 空格，與其他 tab 的縮排不一致。這可能違反 Biome 的格式化規則，建議統一縮排。",
+    "existing_code": "<EventSetupTab\n            eventType={eventType}\n            locationOptions={locationOptions}\n            team={team}\n            teamMembers={teamMembers}\n            destinationCalendar={destinationCalendar}\n        />",
+    "evidence": "diff 中此區塊的縮排從 6 空格改為 8 空格，而其他 tab 仍為 6 空格。"
+  }
+]

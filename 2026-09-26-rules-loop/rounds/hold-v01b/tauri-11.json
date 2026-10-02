@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/cargo_manifest.rs",
+    "line": 122,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "platform-certs 啟用時未設定 proxy，可能導致企業環境下無法連線",
+    "body": "在 `crate_latest_version` 中，當 `platform-certs` feature 啟用時，建立的 `ureq::Agent` 未呼叫 `.proxy(ureq::Proxy::try_from_env())`，而原本的 `ureq::get` 會自動使用環境變數中的 proxy。這可能導致在需要 proxy 的環境（如企業網路）中，crates.io 的請求失敗。建議在 agent builder 中加入 proxy 設定，與 `base_ureq_agent` 保持一致。",
+    "existing_code": "let agent = ureq::Agent::config_builder()\n      .tls_config(\n        ureq::tls::TlsConfig::builder()\n          .root_certs(ureq::tls::RootCerts::PlatformVerifier)\n          .build(),\n      )\n      .build()\n      .new_agent();",
+    "evidence": "diff 中新增的 agent 建立程式碼未包含 proxy 設定，而原本的 `ureq::get` 會自動處理 proxy。"
+  },
+  {
+    "path": "crates/tauri-bundler/Cargo.toml",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "platform-certs 設為預設 feature 可能改變憑證驗證行為",
+    "body": "將 `platform-certs` 加入 default features 會使所有使用者預設使用系統憑證驗證。這可能導致在某些系統上（尤其是 Linux）因系統憑證設定不完整而無法建立 TLS 連線，而原本使用 rustls 的 webpki-roots 則可正常運作。建議評估是否應預設啟用，或提供明確的選擇機制。",
+    "existing_code": "default = [\"rustls\", \"platform-certs\"]",
+    "evidence": "diff 中將 default features 從 `[\"rustls\"]` 改為 `[\"rustls\", \"platform-certs\"]`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "base_ureq_agent 函式缺少文件註解",
+    "body": "新增的 `pub(crate) fn base_ureq_agent()` 是 crate 內部公開函式，但未提供文件註解。雖然不是 public API，但為了可維護性，建議加上簡短說明其用途與行為。",
+    "existing_code": "pub(crate) fn base_ureq_agent() -> ureq::Agent {",
+    "evidence": "diff 中新增的函式沒有 doc comment。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/windows/util.rs",
+    "line": 65,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "download_webview2_offline_installer 改用 ureq::get 可能失去 proxy 支援",
+    "body": "原本使用 `download(url)` 函式（可能包含 proxy 設定），現在改為直接呼叫 `ureq::get(url)`，這可能導致在需要 proxy 的環境下無法下載。建議使用 `base_ureq_agent()` 來建立 agent 並發送請求，以保持 proxy 支援。",
+    "existing_code": "let response = ureq::get(url).call().map_err(Box::new)?;",
+    "evidence": "diff 中將 `download(url)` 替換為 `ureq::get(url)`，未使用 agent。"
+  }
+]

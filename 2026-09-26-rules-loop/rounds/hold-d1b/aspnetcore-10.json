@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Validation/src/ValidationOptions.cs",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R18] 方法開頭大括號應在新的一行",
+    "body": "方法 `TryGetValidatableParameterInfo` 的開頭大括號與方法簽名在同一行，違反 Allman 風格。請將大括號移至下一行。",
+    "existing_code": "public bool TryGetValidatableParameterInfo(ParameterInfo parameterInfo, [NotNullWhen(true)] out IValidatableInfo? validatableInfo) {",
+    "evidence": "diff 中該行顯示 `public bool TryGetValidatableParameterInfo(ParameterInfo parameterInfo, [NotNullWhen(true)] out IValidatableInfo? validatableInfo) {`，開頭大括號與簽名同一行。"
+  },
+  {
+    "path": "src/Validation/src/ValidationOptions.cs",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R17] 控制流程陳述式必須使用大括號",
+    "body": "`foreach` 迴圈內只有一行 `if` 陳述式，但沒有使用大括號。請為 `if` 主體加上大括號，即使只有一行。",
+    "existing_code": "if (resolver.TryGetValidatableParameterInfo(parameterInfo, out validatableInfo))",
+    "evidence": "diff 中該行顯示 `if (resolver.TryGetValidatableParameterInfo(parameterInfo, out validatableInfo))`，其後沒有大括號。"
+  }
+]

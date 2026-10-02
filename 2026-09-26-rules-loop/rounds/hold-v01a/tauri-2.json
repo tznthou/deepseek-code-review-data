@@ -1,0 +1,79 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "helpers_target_dir 路徑可能錯誤",
+    "body": "在設定 helpers_target_dir 時，路徑為 `$APPDIR/usr/lib/gstreamer\"$GSTREAMER_VERSION\"/gstreamer-\"$GSTREAMER_VERSION\"`，但後續 AppRun hook 中使用的路徑是 `$APPDIR/usr/lib/gstreamer1.0/gstreamer-1.0`。若 GSTREAMER_VERSION 非 1.0，則 helpers 會被複製到錯誤的位置，導致執行時找不到 gst-plugin-scanner 等工具。建議確認路徑是否應為 `$APPDIR/usr/lib/gstreamer-$GSTREAMER_VERSION/gstreamer-$GSTREAMER_VERSION` 或統一使用變數。",
+    "existing_code": "helpers_target_dir=\"$APPDIR\"/usr/lib/gstreamer\"$GSTREAMER_VERSION\"/gstreamer-\"$GSTREAMER_VERSION\"",
+    "evidence": "diff 中第 74 行設定 helpers_target_dir，而第 146 行 AppRun hook 中寫死 gstreamer1.0/gstreamer-1.0。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "AppRun hook 中 GST_PLUGIN_SCANNER 路徑可能錯誤",
+    "body": "在 AppRun hook 中，GST_PLUGIN_SCANNER_1_0 設定為 `${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner`，但實際複製 helpers 的目標路徑是 `$APPDIR/usr/lib/gstreamer$GSTREAMER_VERSION/gstreamer-$GSTREAMER_VERSION`。若 GSTREAMER_VERSION 為 1.0，則路徑為 `$APPDIR/usr/lib/gstreamer1.0/gstreamer-1.0`，與 hook 中一致；但若版本不同，則會找不到檔案。建議使用變數或確認版本固定為 1.0。",
+    "existing_code": "export GST_PLUGIN_SCANNER_1_0=\"${APPDIR}/usr/lib/gstreamer1.0/gstreamer-1.0/gst-plugin-scanner\"",
+    "evidence": "diff 中第 146 行設定 GST_PLUGIN_SCANNER_1_0，而第 74 行設定 helpers_target_dir 使用變數 GSTREAMER_VERSION。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 316,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "find 指令可能因權限或不存在檔案而失敗",
+    "body": "在複製 libgiognutls.so 時，使用 `find /usr/lib* -name libgiognutls.so -exec mkdir -p \"$APPDIR\"/\"$(dirname '{}')\" \\; -exec cp --parents '{}' \"$APPDIR/\" \\; || true`。此指令若遇到權限不足或檔案不存在，會因為 `|| true` 而忽略錯誤，可能導致後續 GIO_EXTRA_MODULES 設定錯誤。建議檢查 find 的輸出並處理錯誤，或改用更穩健的方式。",
+    "existing_code": "find /usr/lib* -name libgiognutls.so -exec mkdir -p \"$APPDIR\"/\"$(dirname '{}')\" \\; -exec cp --parents '{}' \"$APPDIR/\" \\; || true",
+    "evidence": "diff 中第 327 行，使用 || true 忽略所有錯誤。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "[R08] 自訂錯誤型別未使用 thiserror",
+    "body": "新增的 FileWriteError 型別手動實作了 Display 和 Error trait，但專案規範 R08 要求使用 thiserror 來定義錯誤型別。建議改用 `#[derive(thiserror::Error)]` 並使用 `#[error(...)]` 屬性來簡化程式碼並符合規範。",
+    "existing_code": "impl std::fmt::Display for FileWriteError {\n  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n    match self {\n      FileWriteError::Write(e) => write!(f, \"Failed to write file: {}\", e),\n      FileWriteError::Permissions(e) => write!(f, \"Failed to set permissions: {}\", e),\n    }\n  }\n}",
+    "evidence": "diff 中第 281-295 行手動實作 Display 和 Error。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 309,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R07] 公開函式缺少文件註解",
+    "body": "write_and_make_executable 函式是公開的（pub fn），但沒有文件註解。根據規範 R07，所有公開 API 都應該有 /// 文件說明其用途、參數和回傳值。建議補充文件。",
+    "existing_code": "fn write_and_make_executable(path: &Path, data: &[u8]) -> Result<(), FileWriteError> {",
+    "evidence": "diff 中第 297 行，函式為 pub fn 但無文件。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 312,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R16] 使用 expect 可能導致 panic",
+    "body": "在 write_and_make_executable 中，使用 fs::set_permissions 和 fs::write 並以 map_err 處理錯誤，但沒有使用 expect 或 unwrap。然而，函式簽名回傳 Result<(), FileWriteError>，但內部可能因為其他原因 panic？實際上沒有直接使用 expect，但建議確認所有可能的錯誤都被妥善處理。",
+    "existing_code": "fs::set_permissions(path, fs::Permissions::from_mode(0o770)).map_err(FileWriteError::Permissions)?;\n  fs::write(path, data).map_err(FileWriteError::Write)?;",
+    "evidence": "diff 中第 299-300 行，使用 ? 傳播錯誤，但未見 expect。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 326,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "sed 指令可能修改二進位檔案",
+    "body": "使用 `find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;` 來修改 libwebkit 檔案中的絕對路徑。sed 通常用於文字檔，若 libwebkit 是二進位檔，此操作可能損壞檔案。建議確認檔案類型或使用更安全的工具。",
+    "existing_code": "find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;",
+    "evidence": "diff 中第 327 行，對 libwebkit* 檔案執行 sed。"
+  }
+]

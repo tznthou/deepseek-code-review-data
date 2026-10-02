@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳值錯誤：應回傳 token 而非 identifier",
+    "body": "在 `createInvite` 方法中，原本回傳 `token`，但修改後回傳 `newToken.identifier`。`identifier` 是固定字串 `invite-link-for-teamId-${teamId}`，並非隨機產生的 token。這會導致每次呼叫都回傳相同的值，且該值並非實際的邀請 token，使得邀請連結失效。\n\n**失敗情境**：呼叫 `POST /v2/teams/:teamId/invite` 後，回應中的 `token` 欄位會是 `invite-link-for-teamId-123`，而非隨機 token。使用此 token 建構的邀請連結將無法驗證。\n\n**建議**：改回傳 `token` 變數，或若需要 identifier，應同時回傳兩者。",
+    "existing_code": "token: newToken.identifier,",
+    "evidence": "diff 中 `-      token,` 改為 `+      token: newToken.identifier,`，而 `newToken` 是 `prisma.verificationToken.create` 的結果，其 `identifier` 欄位在建立時設定為固定字串。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "條件判斷反轉：isOrgContext 的邏輯錯誤",
+    "body": "在 `buildInviteLink` 方法中，原本 `if (!isOrgContext)` 改為 `if (isOrgContext)`，導致非組織情境下會執行組織專屬的邏輯（取得 getting started 路徑），而組織情境下反而回傳基本連結。這會產生錯誤的邀請連結。\n\n**失敗情境**：當團隊不是組織或不在組織中時（`isOrgContext` 為 false），原本應回傳基本連結，但現在會嘗試取得 getting started 路徑，可能導致錯誤或非預期的行為。反之，組織情境下會回傳基本連結，缺少必要的 onboarding 路徑。\n\n**建議**：改回 `if (!isOrgContext)`。",
+    "existing_code": "if (isOrgContext) {",
+    "evidence": "diff 中 `-    if (!isOrgContext) {` 改為 `+    if (isOrgContext) {`。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "權限裝飾器與測試預期不符",
+    "body": "控制器使用 `@Roles(\"TEAM_MEMBER\")`，但測試中預期非管理員成員（MEMBER）應回傳 403。這表示權限邏輯可能不正確：若 `TEAM_MEMBER` 角色允許所有成員，則測試會失敗；若 `TEAM_MEMBER` 僅允許管理員，則角色名稱具有誤導性。\n\n**失敗情境**：以一般成員身分呼叫端點，預期應被拒絕（403），但若 `TEAM_MEMBER` 角色包含一般成員，則請求會成功，導致測試失敗。\n\n**建議**：確認角色定義，若僅管理員可建立邀請，應使用 `TEAM_ADMIN` 或類似角色。",
+    "existing_code": "@Roles(\"TEAM_MEMBER\")",
+    "evidence": "控制器中 `@Roles(\"TEAM_MEMBER\")`，而測試 `should fail to create invite as non-admin member` 預期 403。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "缺少請求主體驗證",
+    "body": "端點不需要任何請求主體，但未使用 DTO 進行驗證。雖然目前沒有輸入，但未來擴充時可能遺漏驗證。此外，Swagger 文件中未定義回應結構，可能導致文件不完整。\n\n**建議**：考慮使用 `@Body()` 搭配 DTO 進行驗證，並在 Swagger 中定義回應型別。",
+    "existing_code": "async createInvite(\n    @Param(\"teamId\", ParseIntPipe) teamId: number\n  ): Promise<CreateInviteOutputDto> {",
+    "evidence": "控制器方法僅有 `@Param`，沒有 `@Body` 或 `@Query` 驗證。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.e2e-spec.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試使用 Jest 而非 Vitest",
+    "body": "根據規範 R08，所有測試必須使用 Vitest 框架。此測試檔案使用 `describe`、`it`、`expect` 等 Jest 風格 API，但未使用 Vitest 特有的 `vi` 物件。若專案已全面遷移至 Vitest，此測試可能無法執行。\n\n**建議**：確認測試框架，若為 Vitest，應改用 `vi.fn()` 等 API，或調整配置。",
+    "existing_code": "describe(\"Teams Invite Endpoints\", () => {",
+    "evidence": "測試檔案使用 Jest 風格的 `describe` 和 `it`，未見 Vitest 的 `vi` 導入。"
+  }
+]

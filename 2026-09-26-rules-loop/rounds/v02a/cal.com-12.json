@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/platform/atoms/availability/AvailabilitySettings.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R02] atoms 套件直接匯入 features 套件，可能造成循環相依",
+    "body": "此檔案新增了 `import type { TravelScheduleRepository } from \"@calcom/features/travelSchedule/repositories/TravelScheduleRepository\";`。根據規範 R02，atoms 套件不應匯入 features 套件，這可能造成架構上的循環相依。建議改為由呼叫端傳入型別，或將此型別定義移至共享的 lib 套件。",
+    "existing_code": "import type { TravelScheduleRepository } from \"@calcom/features/travelSchedule/repositories/TravelScheduleRepository\";",
+    "evidence": "diff 中新增的 import 陳述式，且規範 R02 明確禁止此類跨套件匯入。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "改用 teamMembers 取代 filteredMembers 可能遺失篩選邏輯",
+    "body": "原本使用 `filteredMembers` 來渲染列表，現在改為 `teamMembers`。若 `filteredMembers` 是根據某種條件（例如搜尋或權重）篩選後的結果，此變更將導致所有成員都被顯示，可能不是預期行為。請確認此處是否應保留篩選邏輯，或 `teamMembers` 本身已包含篩選。",
+    "existing_code": "{teamMembers.map((member) => (\n  <TeamMemberItem key={member.value} member={member} onWeightChange={handleWeightChange} />\n))}",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且未見 `filteredMembers` 的定義被移除或調整。"
+  },
+  {
+    "path": "packages/platform/atoms/event-types/hooks/useTeamMembersWithSegmentPlatform.tsx",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾缺少換行符號",
+    "body": "檔案最後一行 `};\n` 之後沒有換行符號，可能違反格式規範（R03）。建議在檔案結尾加上換行。",
+    "existing_code": "};\n\\ No newline at end of file",
+    "evidence": "diff 顯示 `\\ No newline at end of file`。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "bootstrapDependencies() 為 async 但呼叫處未加 await",
+    "body": "在 async setUp 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 時未加上 `await`，而該方法已改為 async（標記 @MainActor 且無同步版本）。這會導致編譯錯誤：`async call in a function that does not support concurrency`。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但呼叫 bootstrapDependencies 時未加 await，與其他檔案（如 FormAutofillHelperTests.swift）的修改不一致。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "tearDown 中呼叫 reset() 未加 await",
+    "body": "`DependencyHelperMock().reset()` 可能也是 async 或需在主執行緒執行，但此處未加 await。若 reset 為同步方法則無問題，但需確認其簽名。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "其他檔案如 LaunchTypeTests.swift 在 tearDown 中呼叫 reset 時未加 await，但此處 tearDown 已改為 async throws，若 reset 為 async 則需 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DependencyInjection/DependencyHelperMock.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "bootstrapDependencies 標記 @MainActor 但未標示為 async",
+    "body": "方法標記為 @MainActor，但未明確標示為 async。在 Swift 中，@MainActor 方法若在非主執行緒呼叫，編譯器會要求 await。此處方法內有同步程式碼，但呼叫端需 await，因此方法應隱含 async。建議明確加上 `async` 關鍵字以提升可讀性。",
+    "existing_code": "@MainActor\n    func bootstrapDependencies(",
+    "evidence": "diff 中方法宣告為 `@MainActor func bootstrapDependencies(...)`，但呼叫端均使用 `await`，表示方法為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/TestSetup.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "刪除 TestSetup.swift 可能影響其他測試",
+    "body": "TestSetup.swift 被刪除，且從專案檔中移除。需確認沒有其他測試類別依賴此類別進行初始化。若無相依則安全，但建議搜尋引用。",
+    "existing_code": "class TestSetup: NSObject {\n    override init() {\n        DependencyHelperMock().bootstrapDependencies()\n    }\n}",
+    "evidence": "diff 顯示整個檔案被刪除，且專案檔中相關引用被移除。"
+  },
+  {
+    "path": "firefox-ios/Client.xcodeproj/project.pbxproj",
+    "line": 14847,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除 OnboardingMultipeChoiceButtonModel.swift 引用",
+    "body": "從專案檔中移除了 `OnboardingMultipeChoiceButtonModel.swift` 的檔案引用，但未看到對應的檔案刪除。若檔案仍存在但未加入 target，可能導致編譯失敗或資源遺漏。需確認此檔案是否已不再使用。",
+    "existing_code": "- 81055B552BAB7CE200E166B3 /* OnboardingMultipeChoiceButtonModel.swift */,",
+    "evidence": "diff 中刪除了該檔案的 PBXFileReference 和 PBXBuildFile 條目，但未見檔案刪除。"
+  }
+]

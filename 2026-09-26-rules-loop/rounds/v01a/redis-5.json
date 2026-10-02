@@ -1,0 +1,57 @@
+[
+  {
+    "path": "tests/unit/type/string.tcl",
+    "line": 708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試中變數名稱錯誤：使用未定義的 min 變數",
+    "body": "在測試中，`set min [expr $hdrsize + $ksize]` 使用了未定義的變數 `min`，應為 `min` 但實際上變數名為 `min`，但此處可能為筆誤，應為 `min` 或 `min_size`。這會導致 Tcl 錯誤，使測試失敗。",
+    "existing_code": "set min [expr $hdrsize + $ksize]",
+    "evidence": "diff 中新增的測試程式碼包含此行，且未定義 `min` 變數。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1217,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "記憶體計算可能重複計算 key 的大小",
+    "body": "在 `kvobjComputeSize` 中，`asize` 初始化為 `malloc_usable_size((void *)o)`，這包含了 kvobj 結構體本身以及可能嵌入的 key。但後續在處理不同類型時，並未明確排除 key 的大小，可能導致 key 被重複計算。例如，對於 OBJ_STRING 的 RAW 編碼，`asize += sdsZmallocSize(o->ptr)` 只計算 value 的大小，但 key 可能已包含在 `malloc_usable_size` 中，若 key 是單獨分配則可能重複計算。需要確認 kvobj 的記憶體佈局。",
+    "existing_code": "size_t asize = malloc_usable_size((void *)o);",
+    "evidence": "diff 中新增此行，且後續計算未扣除 key 大小。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1239,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "取樣計算中除以 samples 可能導致高估",
+    "body": "在 quicklist 的計算中，原本使用 `elesize/elecount*ql->count`，現在改為 `elesize/samples*ql->count`。若 samples 小於 elecount，則平均每個元素的大小會被高估，導致整體估算偏大。建議確認此變更的意圖。",
+    "existing_code": "asize += (double)elesize/samples*ql->count;",
+    "evidence": "diff 中此行由 `elesize/elecount` 改為 `elesize/samples`。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1330,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Stream 記憶體計算中乘以 numele 可能包含未取樣的最後一個元素",
+    "body": "在 stream 的計算中，原本使用 `lpsize * (s->rax->numele-1)`，現在改為 `lpsize * s->rax->numele`。這可能導致最後一個 listpack 被重複計算，因為後續有單獨處理最後一個 listpack 的程式碼。需要確認是否會造成高估。",
+    "existing_code": "asize += lpsize * s->rax->numele;",
+    "evidence": "diff 中此行由 `numele-1` 改為 `numele`。"
+  },
+  {
+    "path": "tests/unit/type/string.tcl",
+    "line": 702,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言可能過於寬鬆",
+    "body": "測試中 `assert_morethan_equal $max $memory_used` 使用 `max` 為 `min * 2` 或 64，可能無法有效驗證記憶體計算的準確性。建議使用更嚴格的範圍或與預期值比較。",
+    "existing_code": "assert_morethan_equal $max $memory_used",
+    "evidence": "diff 中新增的測試斷言。"
+  }
+]

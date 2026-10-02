@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "排程條件邏輯反轉導致歡迎郵件排程永遠不會被建立",
+    "body": "原本的條件是 `if (!hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test'))`，現在改成了 `if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test'))`。`hasScheduled.processOutbox` 初始值為 false，且在此函式中沒有被設為 true 的地方，因此這個條件永遠為 false，`jobsService.addJob` 永遠不會被執行，歡迎郵件排程功能將完全失效。建議改回 `!hasScheduled.processOutbox`，或在建立排程後將 `hasScheduled.processOutbox` 設為 true。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中將 `!hasScheduled.processOutbox` 改為 `hasScheduled.processOutbox`，且 `hasScheduled` 物件在檔案開頭定義為 `{ processOutbox: false }`，沒有其他賦值。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R20] 使用 var 宣告變數",
+    "body": "此處將原本的 `let member;` 改為 `var member;`，違反了專案規範 R20（必須使用 let 或 const）。請改回 `let member;`。",
+    "existing_code": "var member;",
+    "evidence": "diff 中 `-        let member;` 被改為 `+        var member;`"
+  }
+]

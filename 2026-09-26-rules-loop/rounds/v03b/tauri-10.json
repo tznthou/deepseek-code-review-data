@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1315,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "window_features 方法中 size 與 position 設定順序對調可能導致視窗位置或大小設定被覆蓋",
+    "body": "在 `window_features` 方法中，原本先設定 position 再設定 size，現在改為先設定 size 再設定 position。如果底層的 window builder 在設定 position 時會根據 size 進行某些計算（例如置中或邊界調整），則順序變更可能導致最終視窗位置或大小不符合預期。建議確認此順序變更的必要性，或恢復原本順序以避免潛在回歸。",
+    "existing_code": "pub fn window_features(mut self, features: NewWindowFeatures) -> Self {\n    if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 顯示原本先處理 position 再處理 size，現在順序對調。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1317,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 程式碼格式不符合 rustfmt 規範",
+    "body": "此行 `self.window_builder = self.window_builder.inner_size(size.width,    size.height);` 在 `size.width,` 後有多餘空格，且下一行 `position.x,position.y` 缺少逗號後的空格。請執行 `cargo fmt` 修正。",
+    "existing_code": "self.window_builder = self.window_builder.inner_size(size.width,    size.height);",
+    "evidence": "diff 中該行顯示多餘空格。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1321,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 程式碼格式不符合 rustfmt 規範",
+    "body": "此行 `self.window_builder = self.window_builder.position(position.x,position.y);` 在逗號後缺少空格。請執行 `cargo fmt` 修正。",
+    "existing_code": "self.window_builder = self.window_builder.position(position.x,position.y);",
+    "evidence": "diff 中該行顯示缺少空格。"
+  },
+  {
+    "path": "crates/tauri/src/webview/mod.rs",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R07] 公開 re-export 缺少文件註解",
+    "body": "新增的 `pub use tauri_runtime::Cookie;` 沒有文件註解。雖然是 re-export，但作為公開 API 的一部分，建議加上 `///` 說明，或考慮使用 `#[doc(inline)]` 等屬性。",
+    "existing_code": "pub use tauri_runtime::Cookie;",
+    "evidence": "diff 中新增此行，且無文件註解。"
+  },
+  {
+    "path": "examples/api/src-tauri/src/lib.rs",
+    "line": 74,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 on_new_window 於非桌面平台的註冊可能改變行為",
+    "body": "原本 `on_new_window` 的設定在所有平台都會執行，現在被移入 `#[cfg(all(desktop, not(test)))]` 區塊。若在非桌面平台（如行動裝置）上觸發新視窗事件，將不再有對應的處理邏輯。請確認此變更是否符合預期，或是否應保留跨平台的行為。",
+    "existing_code": "#[cfg(all(desktop, not(test)))]\n      {\n        let app_ = app.handle().clone();\n        let mut created_window_count = std::sync::atomic::AtomicUsize::new(0);\n\n        window_builder = window_builder\n          .title(\"Tauri API Validation\")\n          .inner_size(1000., 800.)\n          .min_inner_size(600., 400.)\n          .menu(tauri::menu::Menu::default(app.handle())?)\n          .on_new_window(move |url, features| {",
+    "evidence": "diff 顯示 on_new_window 被移入條件編譯區塊。"
+  }
+]

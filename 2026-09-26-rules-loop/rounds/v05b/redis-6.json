@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1962,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "恢復 active defrag 設定時硬編碼為 1，可能覆蓋使用者設定",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，暫時停用 active defrag 後，恢復時直接設定 `server.active_defrag_enabled = 1`，但原始值可能為 0（使用者停用）。這會導致複製同步後 active defrag 被意外啟用，違反使用者設定。\n\n**失敗情境**：使用者設定 `activedefrag no`，當複製觸發資料庫清空時，此函式會將 `active_defrag_enabled` 設為 1，之後 active defrag 便會開始運作，可能造成不必要的效能影響。\n\n**建議**：使用先前儲存的 `orig_active_defrag` 變數來恢復設定：\n```c\nserver.active_defrag_enabled = orig_active_defrag;\n```",
+    "existing_code": "server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```c\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n...\n+    server.active_defrag_enabled = 1;\n```\n變數 `orig_active_defrag` 已儲存原始值，但恢復時未使用。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "streamEntryIsReferenced 在無 cgroups_ref 時回傳 1，可能導致資料無法刪除",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 會在 stream 沒有 consumer group 參考時直接回傳 1（表示已參考），這會阻止某些刪除操作（例如 XDEL 或 MAXLEN 修剪）。然而，若沒有 consumer group，該 entry 應被視為未參考，回傳 0 才合理。\n\n**失敗情境**：在沒有 consumer group 的 stream 上執行 XDEL 或 XADD with MAXLEN，可能無法刪除 entry，導致記憶體無法釋放。\n\n**建議**：確認此處邏輯是否應回傳 0。若此修正的目的是處理 DEBUG RELOAD 後 cgroups_ref 為 NULL 的情況，則應回傳 0 表示未參考，而非 1。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 新增行：`+    if (!s->cgroups_ref) return 1;`\n函式名稱 `streamEntryIsReferenced` 語意上應回傳是否被參考，若無 cgroups_ref 則不可能被參考。"
+  },
+  {
+    "path": "src/replication.c",
+    "line": 1953,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "註解與程式碼行為不一致",
+    "body": "註解寫「Temporarily disable active defragmentation during database flush」，但實際上是將 `server.active_defrag_enabled` 設為 0，這確實停用 defrag。然而，恢復時使用硬編碼 1，與「restore the original setting」的註解不符。建議修正恢復邏輯後，此問題自然解決。",
+    "existing_code": "/* Temporarily disable active defragmentation during database flush.\n     * This prevents defrag from being triggered in replicationEmptyDbCallback()\n     * which could modify the database while it's being emptied. */",
+    "evidence": "diff 中新增的註解與後續恢復程式碼不一致。"
+  }
+]

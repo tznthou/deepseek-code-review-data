@@ -1,0 +1,46 @@
+[
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R12] SettingsTextFormatter 應標記為 final",
+    "body": "SettingsTextFormatter 類別未被設計為可繼承，應加上 `final` 修飾詞以符合專案規範 R12，並可獲得編譯器最佳化。",
+    "existing_code": "class SettingsTextFormatter {",
+    "evidence": "新增的類別宣告沒有 final 修飾詞，違反 R12。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 419,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R14] 公開 API 缺少文件註解",
+    "body": "SettingsTextFormatter 的 `shared` 屬性與 `formatStudiesText`、`formatRolloutsText` 方法為公開 API，但未提供文件註解，違反 R14。建議加上說明用途、參數與回傳值的註解。",
+    "existing_code": "static let shared = SettingsTextFormatter()",
+    "evidence": "新增的公開成員沒有文件註解。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R09] UI 相關程式碼應標註 @MainActor",
+    "body": "SettingsTextFormatter 的方法用於格式化 UI 顯示文字，應標註 @MainActor 以確保執行緒安全，符合 R09。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {",
+    "evidence": "方法未標註 @MainActor，且用於 UI 文字格式化。"
+  },
+  {
+    "path": "firefox-ios/Shared/Supporting Files/en-GB.lproj/Settings.strings",
+    "line": 311,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾刪除換行符號可能造成合併衝突",
+    "body": "在 en-GB.lproj/Settings.strings 的結尾刪除了一個換行符號，這可能導致與其他分支的合併衝突，且不符合常見的檔案結尾換行慣例。建議保留結尾換行。",
+    "existing_code": "\"Settings.Translation.ToggleTitle.v145\" = \"Enable Translations\";",
+    "evidence": "diff 顯示最後一行之後的換行被移除。"
+  }
+]

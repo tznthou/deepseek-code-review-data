@@ -1,0 +1,112 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 84,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 缺少分號",
+    "body": "在 `getWarmupLimit` 方法中，`const day = await this.#getDaysSinceFirstEmail()` 與 `return Infinity` 兩行結尾缺少分號，違反 R19。",
+    "existing_code": "const day = await this.#getDaysSinceFirstEmail()\nif (day > this.#warmupConfig.totalDays) {\n    return Infinity\n}",
+    "evidence": "diff 中新增的程式碼行末未加分號，與專案規範 R19 衝突。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 89,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 缺少分號",
+    "body": "`const limit = Math.floor(...)` 陳述句結尾缺少分號，違反 R19。",
+    "existing_code": "const limit = Math.floor(\n    this.#warmupConfig.start *\n    Math.pow(\n        this.#warmupConfig.end / this.#warmupConfig.start,\n        day / (this.#warmupConfig.totalDays - 1)\n    )\n)",
+    "evidence": "diff 中新增的程式碼行末未加分號，與專案規範 R19 衝突。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 缺少分號",
+    "body": "`return Math.min(emailCount, limit)` 陳述句結尾缺少分號，違反 R19。",
+    "existing_code": "return Math.min(emailCount, limit)",
+    "evidence": "diff 中新增的程式碼行末未加分號，與專案規範 R19 衝突。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 201,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 缺少分號",
+    "body": "`const expectedLimit = Math.min(email2Count, 237);` 這一行結尾缺少分號，違反 R19。",
+    "existing_code": "const expectedLimit = Math.min(email2Count, 237);",
+    "evidence": "diff 中新增的程式碼行末未加分號，與專案規範 R19 衝突。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 203,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 缺少分號",
+    "body": "`assert.equal(csdCount2, expectedLimit, 'Day 2 should use time-based warmup limit');` 這一行結尾缺少分號，違反 R19。",
+    "existing_code": "assert.equal(csdCount2, expectedLimit, 'Day 2 should use time-based warmup limit');",
+    "evidence": "diff 中新增的程式碼行末未加分號，與專案規範 R19 衝突。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 315,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 缺少分號",
+    "body": "`const expectedLimit = Math.min(totalCount, getExpectedLimit(day));` 這一行結尾缺少分號，違反 R19。",
+    "existing_code": "const expectedLimit = Math.min(totalCount, getExpectedLimit(day));",
+    "evidence": "diff 中新增的程式碼行末未加分號，與專案規範 R19 衝突。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 316,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 缺少分號",
+    "body": "`assert.equal(csdCount, expectedLimit, `Day ${day}: Should match time-based warmup limit`);` 這一行結尾缺少分號，違反 R19。",
+    "existing_code": "assert.equal(csdCount, expectedLimit, `Day ${day}: Should match time-based warmup limit`);",
+    "evidence": "diff 中新增的程式碼行末未加分號，與專案規範 R19 衝突。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R18] 使用雙引號",
+    "body": "`const date = new Date('2024-01-15T12:00:00Z');` 使用雙引號包覆字串，違反 R18（應使用單引號）。",
+    "existing_code": "const date = new Date('2024-01-15T12:00:00Z');",
+    "evidence": "diff 中新增的程式碼使用雙引號，與專案規範 R18 衝突。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R18] 使用雙引號",
+    "body": "`date.setDate(date.getDate() - days);` 使用雙引號包覆字串，違反 R18（應使用單引號）。",
+    "existing_code": "date.setDate(date.getDate() - days);",
+    "evidence": "diff 中新增的程式碼使用雙引號，與專案規範 R18 衝突。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 114,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R18] 使用雙引號",
+    "body": "`return date.toISOString();` 使用雙引號包覆字串，違反 R18（應使用單引號）。",
+    "existing_code": "return date.toISOString();",
+    "evidence": "diff 中新增的程式碼使用雙引號，與專案規範 R18 衝突。"
+  }
+]

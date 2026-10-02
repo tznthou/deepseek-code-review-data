@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "條件判斷錯誤導致 CFBundleTypeExtensions 被省略",
+    "body": "在 `create_info_plist` 中，原本無條件插入 `CFBundleTypeExtensions`，但修改後被包在 `if association.ext.is_empty()` 內。這導致當 `ext` 非空時（最常見的情況），`CFBundleTypeExtensions` 不會被加入，造成 macOS 無法正確關聯檔案類型。\n\n**失敗情境**：任何設定了 `ext` 的 file association（例如 `[\"png\"]`）在產生的 Info.plist 中將缺少 `CFBundleTypeExtensions`，導致應用程式無法開啟該類型的檔案。\n\n**建議**：將條件改為 `if !association.ext.is_empty()`，或直接移除條件，恢復原本的無條件插入。",
+    "existing_code": "if association.ext.is_empty() {\n  dict.insert(\n    \"CFBundleTypeExtensions\".into(),\n    plist::Value::Array(\n      association\n        .ext\n        .iter()\n        .map(|ext| ext.to_string().into())\n        .collect(),\n    ),\n  );\n}",
+    "evidence": "diff 中原本的 `dict.insert(\"CFBundleTypeExtensions\"...)` 被包進 `if association.ext.is_empty()`，但邏輯上應該是非空時才插入。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 353,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "使用 expect 可能導致 panic",
+    "body": "將原本的 `unwrap_or(&association.ext[0].0)` 改為 `expect(\"File association must have a name\")`。若 `name` 為 `None` 且 `ext` 為空，程式會 panic。雖然 `ext` 為空的情況可能不常見，但這是一個潛在的崩潰點。\n\n**失敗情境**：使用者設定了一個 file association 但未提供 `name` 且 `ext` 為空陣列，打包時會 panic。\n\n**建議**：改用更安全的處理方式，例如使用 `unwrap_or_default()` 或提供預設值，或明確驗證 `ext` 非空。",
+    "existing_code": ".expect(\"File association must have a name\")",
+    "evidence": "diff 中原本的 `unwrap_or(&association.ext[0].0)` 被替換為 `expect`，而 `ext` 可能為空。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 1185,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "新增欄位缺少 serde default 可能破壞向後相容性",
+    "body": "`FileAssociation` 新增了 `content_types` 和 `exported_type` 欄位，但沒有加上 `#[serde(default)]`。這會導致舊的設定檔（沒有這些欄位）在反序列化時失敗。\n\n**失敗情境**：使用者使用舊版 `tauri.conf.json`，其中 file association 沒有 `contentTypes` 或 `exportedType`，升級後會出現反序列化錯誤。\n\n**建議**：為這兩個欄位加上 `#[serde(default)]`，使其成為可選欄位。",
+    "existing_code": "pub content_types: Option<Vec<String>>,\n...\npub exported_type: Option<ExportedFileAssociation>,",
+    "evidence": "diff 中新增的欄位沒有 `#[serde(default)]`，而其他可選欄位（如 `name`）都有。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 1216,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "ExportedFileAssociation 的 conforms_to 欄位缺少 serde default",
+    "body": "`ExportedFileAssociation` 的 `conforms_to` 欄位為 `Option<Vec<String>>`，但沒有 `#[serde(default)]`。如果 JSON 中省略該欄位，反序列化會失敗。\n\n**失敗情境**：使用者在 `exportedType` 中只提供 `identifier`，未提供 `conformsTo`，會導致設定檔解析錯誤。\n\n**建議**：加上 `#[serde(default)]`。",
+    "existing_code": "pub conforms_to: Option<Vec<String>>,",
+    "evidence": "diff 中新增的欄位沒有 `#[serde(default)]`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "UTExportedTypeDeclarations 可能包含不完整的條目",
+    "body": "在建立 `exported_associations` 時，只對有 `exported_type` 的 association 進行處理，但未檢查 `ext` 是否為空。若 `ext` 為空，`UTTypeTagSpecification` 中的 `public.filename-extension` 會是空陣列，可能導致無效的類型宣告。\n\n**失敗情境**：使用者定義了 `exportedType` 但未提供 `ext`，生成的 Info.plist 中會有一個空的 `public.filename-extension` 陣列。\n\n**建議**：在處理 exported type 時，驗證 `ext` 非空，或提供合理的預設值。",
+    "existing_code": "let exported_associations = associations\n  .iter()\n  .filter_map(|association| {\n    association.exported_type.as_ref().map(|exported_type| {",
+    "evidence": "diff 中未對 `ext` 進行檢查。"
+  }
+]

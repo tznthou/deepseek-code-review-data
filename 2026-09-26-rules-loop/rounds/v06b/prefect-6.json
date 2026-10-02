@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "同步呼叫 run_deployment 時可能建立錯誤的 client 類型",
+    "body": "`arun_deployment` 使用 `get_or_create_client(client)` 取得 client，但未傳入 `_sync` 參數。若 `run_deployment` 在同步環境中被呼叫（例如測試中的 `_sync=True`），`get_or_create_client` 可能建立非同步 client，導致後續 await 失敗或行為異常。建議檢查 `get_or_create_client` 的實作，確認其是否能根據呼叫環境自動選擇 client 類型，或在此處明確傳遞同步旗標。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中新增 `client, _ = get_or_create_client(client)`，且 `run_deployment` 被 alias 為 `arun_deployment`，但測試 `TestRunDeploymentSyncContext` 使用 `_sync=True` 呼叫 `run_deployment`，暗示同步路徑存在。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "collect_task_run_inputs 可能被錯誤地同步呼叫",
+    "body": "原本 `await collect_task_run_inputs(v)` 被改為 `collect_task_run_inputs(v)`，移除了 await。若 `collect_task_run_inputs` 是 async 函式，這將導致回傳 coroutine 而非實際值，造成後續錯誤。請確認該函式的定義，若為 async 則需保留 await。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中將 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`，但未提供該函式定義，無法確認其同步性。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 212,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 deployment_id 而非 deployment.id 可能造成不一致",
+    "body": "在 `create_flow_run_from_deployment` 呼叫中，將 `deployment.id` 改為 `deployment_id`。若 `deployment_id` 是從名稱解析而來，且 `deployment` 物件是從 API 讀取，兩者應相同；但若 `deployment_id` 為 None（例如名稱解析失敗），此處可能傳遞 None 導致錯誤。建議確認此處邏輯。",
+    "existing_code": "deployment_id,",
+    "evidence": "diff 中將 `deployment.id` 改為 `deployment_id`，但 `deployment_id` 可能為 None。"
+  }
+]

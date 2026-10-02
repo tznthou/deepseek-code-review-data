@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-cli/metadata-v2.json",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "版本更新不一致：metadata-v2.json 中的 cli.js 版本與 package.json 不一致",
+    "body": "在 `crates/tauri-cli/metadata-v2.json` 中，`cli.js` 的版本從 `2.8.1` 更新為 `2.8.2`，但 `packages/cli/package.json` 中的版本也從 `2.8.1` 更新為 `2.8.2`。然而，`metadata-v2.json` 中的 `tauri` 欄位仍為 `2.8.2`，而 `crates/tauri/Cargo.toml` 已更新為 `2.8.3`。這可能導致 metadata 與實際版本不符。建議檢查 `metadata-v2.json` 中的 `tauri` 欄位是否應同步更新為 `2.8.3`。",
+    "existing_code": "\"version\": \"2.8.2\",",
+    "evidence": "diff 顯示 `crates/tauri-cli/metadata-v2.json` 中 `cli.js` 的版本從 `2.8.1` 改為 `2.8.2`，但同一檔案中的 `tauri` 欄位仍為 `2.8.2`，而 `crates/tauri/Cargo.toml` 已更新為 `2.8.3`。"
+  },
+  {
+    "path": "crates/tauri-bundler/Cargo.toml",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R17] 新增 homepage 欄位可能違反 workspace metadata 繼承規範",
+    "body": "在 `crates/tauri-bundler/Cargo.toml` 中新增了 `homepage = \"https://tauri.app/\"`。根據規範 R17，workspace 成員應繼承 workspace.package 中的 metadata，除非有特殊原因。若 workspace 已定義 homepage，此處重複定義可能導致不一致。建議確認 workspace 是否已定義 homepage，若已定義則移除此處的欄位。",
+    "existing_code": "homepage = \"https://tauri.app/\"",
+    "evidence": "diff 顯示在 `crates/tauri-bundler/Cargo.toml` 中新增了 `homepage = \"https://tauri.app/\"`，但未提供其他 workspace 成員的對應變更。"
+  }
+]

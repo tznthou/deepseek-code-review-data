@@ -1,0 +1,68 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "移除 require 陳述式的分號",
+    "body": "在此檔案的開頭，多個 require 陳述式原本以分號結尾，但在此變更中被移除了分號（例如 `const {Router} = require('express')`）。這違反了專案規範 R19（Code Must Always Use Semicolons），且與檔案中其他仍保留分號的 require 陳述式不一致。建議恢復這些分號以維持一致性。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中顯示原本的 `const {Router} = require('express');` 被改為 `const {Router} = require('express')`，且後續數行也有相同情況。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "移除 require 陳述式的分號",
+    "body": "在此檔案的後續 require 陳述式中，同樣移除了分號（例如 `const PaymentsService = require('./services/payments-service')`）。這違反了專案規範 R19，且與檔案中其他仍保留分號的 require 陳述式不一致。建議恢復這些分號。",
+    "existing_code": "const PaymentsService = require('./services/payments-service')\nconst TokenService = require('./services/token-service')\nconst GeolocationService = require('./services/geolocation-service')\nconst MemberBREADService = require('./services/member-bread-service')\nconst MemberRepository = require('./repositories/member-repository')",
+    "evidence": "diff 中顯示原本的 `const PaymentsService = require('./services/PaymentsService');` 被改為 `const PaymentsService = require('./services/payments-service')`，且後續數行也有相同情況。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "移除 require 陳述式的分號",
+    "body": "在此檔案的後續 require 陳述式中，同樣移除了分號（例如 `const EventRepository = require('./repositories/event-repository');` 被改為 `const EventRepository = require('./repositories/event-repository');`）。這違反了專案規範 R19，且與檔案中其他仍保留分號的 require 陳述式不一致。建議恢復這些分號。",
+    "existing_code": "const EventRepository = require('./repositories/event-repository');\nconst ProductRepository = require('./repositories/product-repository');\nconst RouterController = require('./controllers/router-controller');\nconst MemberController = require('./controllers/member-controller');\nconst WellKnownController = require('./controllers/well-known-controller');",
+    "evidence": "diff 中顯示原本的 `const EventRepository = require('./repositories/EventRepository');` 被改為 `const EventRepository = require('./repositories/event-repository');`，但分號被移除。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "移除 require 陳述式的分號",
+    "body": "在此檔案的後續 require 陳述式中，同樣移除了分號（例如 `const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');` 被改為 `const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');`）。這違反了專案規範 R19，且與檔案中其他仍保留分號的 require 陳述式不一致。建議恢復這些分號。",
+    "existing_code": "const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');\nconst MagicLink = require('../../lib/magic-link/magic-link');",
+    "evidence": "diff 中顯示原本的 `const {EmailSuppressedEvent} = require('../../email-suppression-list/EmailSuppressionList');` 被改為 `const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');`，但分號被移除。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "移除 require 陳述式的分號",
+    "body": "在此檔案的後續 require 陳述式中，同樣移除了分號（例如 `const DomainEvents = require('@tryghost/domain-events');` 被改為 `const DomainEvents = require('@tryghost/domain-events');`）。這違反了專案規範 R19，且與檔案中其他仍保留分號的 require 陳述式不一致。建議恢復這些分號。",
+    "existing_code": "const DomainEvents = require('@tryghost/domain-events');",
+    "evidence": "diff 中顯示原本的 `const DomainEvents = require('@tryghost/domain-events');` 被改為 `const DomainEvents = require('@tryghost/domain-events');`，但分號被移除。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "移除 require 陳述式的分號",
+    "body": "在此檔案的後續 require 陳述式中，同樣移除了分號（例如 `module.exports = function MembersAPI({` 被改為 `module.exports = function MembersAPI({`）。這違反了專案規範 R19，且與檔案中其他仍保留分號的 require 陳述式不一致。建議恢復這些分號。",
+    "existing_code": "module.exports = function MembersAPI({",
+    "evidence": "diff 中顯示原本的 `module.exports = function MembersAPI({` 被改為 `module.exports = function MembersAPI({`，但分號被移除。"
+  }
+]

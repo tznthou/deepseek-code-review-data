@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R03] 部分程式碼行可能超過 110 字元限制",
+    "body": "在 LimitedBadges.tsx 中，部分 JSX 屬性與 import 陳述式可能超過 110 字元，例如 `import { Popover, PopoverContent, PopoverTrigger } from \"@calcom/ui/components/popover\";` 或 `aria-label={`Show ${hiddenItems.length} more items`}` 等。建議執行 Biome 格式化以確保符合規範。",
+    "existing_code": "import { Popover, PopoverContent, PopoverTrigger } from \"@calcom/ui/components/popover\";",
+    "evidence": "diff 中新增的 import 行長度可能超過 110 字元，且未見自動格式化調整。"
+  },
+  {
+    "path": "apps/web/modules/users/components/UserTable/UserListTable.tsx",
+    "line": 285,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "[R03] JSX 屬性換行風格不一致",
+    "body": "在 UserListTable.tsx 中，部分 JSX 屬性（如 `onCheckedChange`）的換行方式與既有風格不同，可能導致 Biome 格式化警告。建議執行 Biome 格式化以統一風格。",
+    "existing_code": "onCheckedChange={(value: boolean | \"indeterminate\") => table.toggleAllPageRowsSelected(!!value)}",
+    "evidence": "diff 中該行屬性換行方式與其他屬性不一致，可能違反格式化規則。"
+  }
+]

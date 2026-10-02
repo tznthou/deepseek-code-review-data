@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "複寫指令使用 shared.fields 與 shared.integers[1]，需確認初始化與值正確",
+    "body": "在 hincrbyfloatCommand 中，複寫指令改為使用 rewriteClientCommandVector 並傳入 shared.fields 與 shared.integers[1]。shared.fields 已在 createSharedObjects 中初始化，但 shared.integers[1] 的值需確認是否為 1。若 shared.integers[1] 不是 1，複寫的指令將包含錯誤的欄位數量，可能導致 replica 執行錯誤。建議確認 shared.integers 的初始化順序，或改用明確的整數物件。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 rewriteClientCommandVector 呼叫使用了 shared.integers[1] 作為 FIELDS 數量，但未在 diff 中看到 shared.integers 的初始化內容，需確認其值為 1。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "複寫指令使用 KEEPTTL 但未處理無 TTL 欄位的情況",
+    "body": "複寫指令使用 HSETEX 搭配 KEEPTTL，但若原始欄位沒有 TTL，KEEPTTL 的行為需確認。在測試中，f2 原本無 TTL，複寫後 replica 的 TTL 應為 -1，測試已涵蓋此情境，但需確保 KEEPTTL 對無 TTL 欄位不會設定錯誤的過期時間。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "測試中對 f2 的 TTL 斷言為 -1，但複寫指令使用 KEEPTTL，需確認 KEEPTTL 對無 TTL 欄位的處理。"
+  }
+]

@@ -1,0 +1,114 @@
+pair,label,note
+P0001,same,同一處 type=number 改 text 失去數值輸入
+P0002,no,finding 講 RequestBody.Description 順序；GT 是 propertyName vs metadata.Name
+P0003,no,finding 講回傳 Infinity；GT 是 Math.ceil 應為 floor
+P0004,same,argv[2] 未 decrRefCount 洩漏
+P0005,no,finding 講 truncate 失敗未設 ret；GT 是 size_t 相減回繞
+P0006,same,<= 0 改 < 0 允許 0
+P0007,no,finding 講 console.error 規則；GT 是硬編碼字串未 i18n
+P0008,same,同為缺 await；finding 說編譯錯誤 GT 說 race 但修法相同
+P0009,same,getUrlHistory 可能回傳 undefined
+P0010,no,finding 講 argv[5] 越界；GT 是 argv[2] 洩漏 兩個獨立缺陷
+P0011,no,finding 講 created_at 為 null；GT 是 Math.floor 應為 round
+P0012,no,finding 講回傳 Infinity；GT 是 Math.floor 應為 round
+P0013,no,同一方法兩條獨立規則（AAA 註解 vs Async 後綴）
+P0014,partial,finding 標題與片段其實是 TanStack 的 catch（無 console.error）且建議加 log；與 GT 禁用 console 方向相反 只有回報位置與主題重疊
+P0015,same,同一行同一根因（移除預設後 max_length 為 undefined）；GT 說 TypeError finding 說變成不限長 後果不同但補回預設值可同時修掉
+P0016,partial,同一 Suspense 元件；finding 講缺 error boundary 不是缺 fallback
+P0017,partial,同一段 valid_up_to 檢查；finding 講 -1 情況 不是 size_t 回繞
+P0018,partial,指到同一行 label 串接；finding 主軸是視覺回歸與 i18n 多餘空白歸因於 value 含空格 機制不同
+P0019,no,finding 講泛型型別斷言錯誤；GT 是 Async 後綴
+P0020,no,finding 講 sortableKeys 含 prefix items；GT 是 moveItem 參數順序顛倒
+P0021,same,同為 gtk.exists() 條件反轉 修法同為 !gtk.exists()；finding 只講到覆寫那一半
+P0022,no,同一行兩個獨立缺陷（缺變數 vs 縮排）
+P0023,same,翻譯遺漏 {newsletterName}
+P0024,same,minimal 模式移除 setLoading(false)
+P0025,same,同一行 console.log 修法同為移除；finding 另從洩漏角度切入
+P0026,no,finding 講 v147 重複或未使用；GT 是缺存取修飾詞
+P0027,same,j <= numkeys off-by-one
+P0028,partial,主題同為 prefix items 在拖放中未排除；但 finding 指 handleDragEnd 索引換算 不是 sortableKeys 少了 slice
+P0029,no,finding 講 getUrlHistory 回傳 undefined；GT 是雙引號規則
+P0030,no,finding 講 json.dumps 可能失敗；GT 是 log 計數用錯變數
+P0031,same,minimal 模式移除 setLoading(false)
+P0032,no,finding 講 popover 只靠 hover；GT 是隱藏項目少了 onClick
+P0033,same,Light 模式斷言誤用 darkThemeView
+P0034,same,argv[5] 越界寫入
+P0035,no,finding 講 NQL filter；GT 是 Math.ceil
+P0036,partial,同一處 public 變更；finding 講封裝（不該 public）GT 講缺 /// 文件 問題不同
+P0037,same,argv[5] 越界寫入
+P0038,same,版本前後綴順序與後端相反
+P0039,same,propertyName 取代 metadata.Name
+P0040,same,results[tenant_id] = None 違反型別
+P0041,same,set_permissions 在 write 之前
+P0042,no,finding 講日期計算時區進位；GT 是缺分號規則
+P0043,no,finding 講 orgId 為 0 且在另一段查詢；GT 是缺 child.parentId 條件
+P0044,no,finding 講鍵盤無法開 popover；GT 是隱藏項目少了 onClick
+P0045,no,同一段兩個獨立缺陷（迴圈越界 vs malloc 規則）
+P0046,same,未使用的 isLandscape
+P0047,same,指到同一條件反轉但措辭保留（說可能是正確修正）；依嚴重度講錯但修法相同算 same
+P0048,no,同一段兩個獨立缺陷（迴圈越界 vs malloc 規則）
+P0049,no,finding 講 json.dumps 例外；GT 是 log 計數用錯變數
+P0050,no,finding 講 Schedule 型別缺欄位；GT 是丟 generic Error
+P0051,no,finding 講 lseek 失敗；GT 是 size_t 回繞
+P0052,same,includes 造成權限繞過；finding 雖要求確認但機制與後果都講對
+P0053,same,Slot.userIds number[] 改 string[]
+P0054,no,finding 講 popover hover 閃爍；GT 是未使用參數 index
+P0055,no,finding 講泛型型別斷言錯誤；GT 是 Async 後綴
+P0056,same,divider 判斷誤用 leadingPageActionStack
+P0057,same,strict 關閉
+P0058,same,指到同一條件反轉只要求確認；依嚴重度講錯但修法相同算 same
+P0059,no,finding 是 tearDown 的 reset() 另一個呼叫點；GT 是 setUp 的 bootstrapDependencies
+P0060,no,同一段獨立缺陷（配置效能 vs 迴圈越界）
+P0061,same,strict 關閉
+P0062,partial,同一行；finding 講 statusBarOrientation 已棄用 GT 講直接用 UIApplication.shared 未走協定
+P0063,no,finding 講 mget 長度檢查；GT 是 None 寫入 results
+P0064,no,同一函式獨立缺陷（OnceLock 快取 vs panic/unwrap）
+P0065,no,同一結構獨立缺陷（&'static 生命週期 vs 缺 rustdoc）
+P0066,no,同一行獨立缺陷（Badge onClick vs 未使用 index）
+P0067,same,Slot.userIds number[] 改 string[]
+P0068,same,finding 情境較窄（清空時得到只含空字串的陣列）但建議的 filter 正是 GT 修法
+P0069,no,finding 講 Badge onClick；GT 是 hiddenItems 未使用 index
+P0070,no,finding 講缺測試檔；GT 是未使用的 Skeleton import
+P0071,no,同一段獨立缺陷（argv[2] 洩漏 vs argv[5] 越界）
+P0072,same,鏡像 URL 少了 set_path
+P0073,no,同一段獨立缺陷（argv[2] 洩漏 vs argv[5] 越界）
+P0074,same,argv[2] 未 decrRefCount 洩漏
+P0075,partial,指到同兩行但機制錯（說 expect 會 panic 又自承沒用 expect）；沒講出先設權限後寫檔的順序問題
+P0076,same,parseInt 清空得 NaN 與截斷小數
+P0077,no,finding 講 getUrlHistory 回傳 null；GT 是雙引號規則
+P0078,partial,finding 描述了 router context 與 provider 用不同 QueryClient 但結論是跨 story 快取污染 建議的修法也沒有統一實例
+P0079,no,finding 講輸入驗證不足；GT 是 days 型別改 string[]
+P0080,no,finding 講回傳 Infinity；GT 是 Math.floor 應為 round
+P0081,same,argv[2] 未 decrRefCount 洩漏
+P0082,partial,同一段斷言；finding 講未驗證 descriptor 沒看出 GenericComponent<string> 型別錯誤
+P0083,same,propertyName 取代 metadata.Name
+P0084,no,finding 講 Schedule 未 export；GT 是丟 generic Error
+P0085,no,finding 講 FileWriteError 未用 thiserror；GT 是權限與寫檔順序
+P0086,same,TanStack lazy import catch 未記錄錯誤
+P0087,same,argv[5] 越界寫入
+P0088,same,includes 造成權限繞過
+P0089,partial,同一行 malloc；finding 講 buffer 不必要 GT 講應改用 zmalloc 問題不同
+P0090,partial,同一迴圈且都涉及把 None 寫進快取；但 finding 明說即使修正變數名稱仍有問題 根因不同
+P0091,same,scroll index 用 count 而非 count - 1
+P0092,no,finding 是 tearDown 的 reset() 另一個呼叫點；GT 是 setUp 的 bootstrapDependencies
+P0093,no,同一段獨立缺陷（slot_buffer 未初始化 vs 迴圈越界）
+P0094,no,finding 在另一段查詢且講多層階層；GT 是缺 child.parentId 條件
+P0095,same,同一行缺 await；finding 以 actor 隔離框架描述但有指出未加 await 修法相同
+P0096,no,finding 講 metadata 為 null 時跳過；GT 是 propertyName vs metadata.Name
+P0097,same,鏡像 URL 少了 set_path
+P0098,same,leadingAnchor 誤接 rightSkeletonAddressBar
+P0099,no,同一段獨立缺陷（malloc 回傳 NULL 未檢查 vs 迴圈越界）
+P0100,same,RequestBody.Description 移到後面 例外時不會設定
+P0101,no,同一段獨立缺陷（argv[2] 洩漏 vs argv[5] 越界）
+P0102,same,翻譯遺漏 {newsletterName}
+P0103,same,同一順序錯誤且修法相同（先寫後設權限）；finding 機制講錯（說權限被覆蓋）
+P0104,no,finding 講 popover 狀態未重置；GT 是未使用 index
+P0105,no,finding 講另一個 threshold 欄位 NaN；GT 是 textarea 空行
+P0106,no,同一行兩個獨立缺陷（缺變數 vs 縮排）
+P0107,no,finding 講缺文件註解；GT 是手寫 error trait
+P0108,no,finding 講無效快取未刪除；GT 是 None 寫入 results
+P0109,partial,同一根因（st_size - valid_up_to 可為負）但指的是 8 行外的 log 訊息 沒講比較式回繞導致無法自動修復
+P0110,no,同一段獨立缺陷（print vs 執行順序）
+P0111,same,移除 source 參數傳遞
+P0112,no,finding 講 created_at 為 null；GT 是缺分號規則
+P0113,same,同為改用 ureq::get 繞過共用 agent 修法同為 base_ureq_agent；finding 說 proxy GT 說憑證

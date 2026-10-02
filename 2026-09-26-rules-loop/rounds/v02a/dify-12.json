@@ -1,0 +1,79 @@
+[
+  {
+    "path": "api/libs/helper.py",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "escape_like_pattern 跳脫順序錯誤，反斜線處理不正確",
+    "body": "函式先將 `\\` 取代為 `\\\\`，再將 `%` 取代為 `\\%`、`_` 取代為 `\\_`。這會導致原本的反斜線被重複跳脫。例如輸入 `path\\to\\file` 會變成 `path\\\\to\\\\file`，但正確應為 `path\\to\\file`（每個反斜線前加一個反斜線）。正確順序應先跳脫 `%` 和 `_`，最後才跳脫 `\\`，或使用單次取代。",
+    "existing_code": "escapedPattern = pattern.replace(\"\\\\\", \"\\\\\\\\\").replace(\"%\", \"\\\\%\").replace(\"_\", \"\\\\_\")",
+    "evidence": "diff 中新增的函式實作，行號 64。"
+  },
+  {
+    "path": "api/core/rag/retrieval/dataset_retrieval.py",
+    "line": 1207,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "notlike 未傳入 escape 參數，跳脫失效",
+    "body": "在 `not contains` 分支中，`json_field.notlike(f\"%{escaped_value}%\")` 沒有傳入 `escape=\"\\\\\"`，因此跳脫字元不會被視為跳脫，`%` 和 `_` 仍會被當作萬用字元。這會導致搜尋結果不正確，且可能造成安全風險。",
+    "existing_code": "filters.append(json_field.notlike(f\"%{escaped_value}%\"))",
+    "evidence": "diff 中該行未加入 escape 參數，與其他分支不一致。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/clickzetta/clickzetta_vector.py",
+    "line": 991,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "LIKE 查詢使用字串拼接，且跳脫字元可能與資料庫預設不符",
+    "body": "此處使用 f-string 拼接 SQL，雖然已對單引號做跳脫，但仍存在 SQL 注入風險。此外，`ESCAPE '\\\\\\\\'` 指定跳脫字元為反斜線，但若資料庫預設跳脫字元不同，可能導致行為不一致。建議改用參數化查詢，並確認資料庫的跳脫字元設定。",
+    "existing_code": "filter_clauses.append(f\"{Field.CONTENT_KEY} LIKE '%{escaped_query}%' ESCAPE '\\\\\\\\'\")",
+    "evidence": "diff 中該行仍使用字串拼接，且跳脫字元可能與資料庫預設衝突。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/iris/iris_vector.py",
+    "line": 298,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "LIKE 查詢使用參數化，但跳脫字元可能與資料庫預設不符",
+    "body": "此處使用參數化查詢，但 `ESCAPE '|'` 指定跳脫字元為 `|`，而 `escape_like_pattern` 產生的跳脫字元是反斜線 `\\`。這會導致跳脫失效，因為資料庫不會將反斜線視為跳脫字元。應統一使用反斜線作為跳脫字元，或修改 `escape_like_pattern` 以支援自訂跳脫字元。",
+    "existing_code": "WHERE text LIKE ? ESCAPE '|'",
+    "evidence": "diff 中該行指定 ESCAPE '|'，但跳脫函式使用反斜線。"
+  },
+  {
+    "path": "api/services/workflow_app_service.py",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 unicode_escape 處理可能改變搜尋行為",
+    "body": "原本的程式碼使用 `keyword[:30].encode('unicode_escape').decode('utf-8')` 來處理關鍵字，這可能是為了處理非 ASCII 字元或特殊編碼。新程式碼直接使用 `escape_like_pattern`，可能導致對某些字元的處理不同，影響搜尋結果。需確認此變更是否會破壞現有功能。",
+    "existing_code": "keyword_trimmed = keyword[:30]\nescaped_keyword = escape_like_pattern(keyword_trimmed)\nkeyword_like_val = f\"%{escaped_keyword}%\"",
+    "evidence": "diff 中移除了原本的 unicode_escape 處理，可能改變行為。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_app_service.py",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "大量重複的延遲 import 可能暗示循環依賴問題",
+    "body": "在測試檔案中，原本的 `from services.app_service import AppService` 被註解掉，改為在每個測試方法內延遲 import。這可能是為了避免循環依賴，但這種做法會降低程式碼可讀性，且可能掩蓋真正的架構問題。建議檢查並解決循環依賴，而不是用延遲 import 規避。",
+    "existing_code": "# Delay import of AppService to avoid circular dependency\n# from services.app_service import AppService",
+    "evidence": "diff 中多處出現相同的延遲 import 註解。"
+  },
+  {
+    "path": "api/libs/helper.py",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "變數命名不符合 snake_case 慣例",
+    "body": "變數 `escapedPattern` 使用 camelCase，違反專案的 snake_case 命名慣例（R16）。應改為 `escaped_pattern`。",
+    "existing_code": "escapedPattern = pattern.replace(\"\\\\\", \"\\\\\\\\\").replace(\"%\", \"\\\\%\").replace(\"_\", \"\\\\_\")",
+    "evidence": "diff 中該行變數命名為 camelCase。"
+  }
+]

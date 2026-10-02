@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "helpers_target_dir 路徑缺少斜線",
+    "body": "在 `helpers_target_dir` 的設定中，`gstreamer\"$GSTREAMER_VERSION\"` 與後續的 `/gstreamer-` 之間缺少斜線，導致路徑錯誤。例如當 `GSTREAMER_VERSION=1.0` 時，會產生 `.../gstreamer1.0/gstreamer-1.0`，但正確應為 `.../gstreamer-1.0/gstreamer-1.0`。這會使後續的 `mkdir -p` 建立錯誤的目錄結構，且複製的 helper 檔案會放在錯誤位置，導致 AppRun hook 中的 `GST_PLUGIN_SCANNER_1_0` 等路徑無法找到檔案。",
+    "existing_code": "helpers_target_dir=\"$APPDIR\"/usr/lib/gstreamer\"$GSTREAMER_VERSION\"/gstreamer-\"$GSTREAMER_VERSION\"",
+    "evidence": "diff 中第 85 行（新增檔案）的該行，與正確路徑格式比較，缺少斜線。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 316,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "find 命令可能因權限不足而失敗",
+    "body": "`find /usr/lib* -name libgiognutls.so -exec mkdir -p \"$APPDIR\"/\"$(dirname '{}')\" \\; -exec cp --parents '{}' \"$APPDIR/\" \\; || true` 中的 `find` 若遇到無法讀取的目錄（例如權限不足），會輸出錯誤訊息但不會中斷（因為 `|| true`），但可能導致部分檔案未被複製。建議改用 `find` 的 `-readable` 或先檢查目錄權限，或改用 `rsync` 等更可靠的方式。",
+    "existing_code": "find /usr/lib* -name libgiognutls.so -exec mkdir -p \"$APPDIR\"/\"$(dirname '{}')\" \\; -exec cp --parents '{}' \"$APPDIR/\" \\; || true",
+    "evidence": "diff 中第 327 行（新增檔案）的該行。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 312,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "write_and_make_executable 先設定權限再寫入檔案",
+    "body": "函式 `write_and_make_executable` 先呼叫 `fs::set_permissions` 設定權限，再呼叫 `fs::write` 寫入檔案。若檔案不存在，`set_permissions` 會失敗並回傳錯誤，導致無法建立檔案。應先寫入檔案再設定權限，或使用 `OpenOptions` 建立檔案後設定權限。",
+    "existing_code": "fs::set_permissions(path, fs::Permissions::from_mode(0o770)).map_err(FileWriteError::Permissions)?;\n  fs::write(path, data).map_err(FileWriteError::Write)?;",
+    "evidence": "diff 中 mod.rs 第 281 行附近的變更，顯示順序顛倒。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "自訂錯誤型別未使用 thiserror",
+    "body": "新增的 `FileWriteError` 手動實作 `Display` 和 `Error`，但專案規範 [R08] 要求使用 `thiserror`。建議改用 `#[derive(thiserror::Error)]` 來簡化程式碼並保持一致。",
+    "existing_code": "impl std::fmt::Display for FileWriteError {\n  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n    match self {\n      FileWriteError::Write(e) => write!(f, \"Failed to write file: {}\", e),\n      FileWriteError::Permissions(e) => write!(f, \"Failed to set permissions: {}\", e),\n    }\n  }\n}",
+    "evidence": "diff 中 mod.rs 新增的錯誤型別實作。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 326,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "使用 sed 修改二進位檔案可能損壞檔案",
+    "body": "`find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;` 對二進位檔案執行 `sed` 替換字串，可能破壞檔案內容。建議改用 `patchelf` 或 `chrpath` 等工具來修改 rpath，或確認此操作的必要性。",
+    "existing_code": "find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;",
+    "evidence": "diff 中 gtk.sh 第 327 行（新增檔案）的該行。"
+  }
+]

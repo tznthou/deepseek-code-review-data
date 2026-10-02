@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "sortHosts 函式邏輯在移動時被修改",
+    "body": "在將 `sortHosts` 從 `HostEditDialogs.tsx` 移至 `hostGroupUtils.ts` 時，當 `isRRWeightsEnabled` 為 true 且權重相同時，回傳值從 `priorityB - priorityA` 改為 `priorityA - priorityB`，導致排序方向相反。這會影響依賴此函式的排序結果（例如主持人清單的顯示順序）。請確認此變更是否為預期，若非預期請修正為原始邏輯。",
+    "existing_code": "if (weightA === weightB) {\n      return priorityA - priorityB;\n    } else {",
+    "evidence": "diff 中原始程式碼為 `return priorityB - priorityA;`，新程式碼為 `return priorityA - priorityB;`。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用相對路徑 import packages/platform 可能造成反向依賴",
+    "body": "此檔案從 `packages/platform/atoms` 移至 `apps/web/components/apps` 後，import 路徑改為 `../../../../packages/platform/atoms/src/components/atoms-wrapper` 和 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar`。這代表 `apps/web` 直接依賴 `packages/platform` 的內部檔案，可能違反架構分層（apps 應依賴 packages 的公開 API，而非內部路徑）。建議改為使用 `@calcom/atoms` 套件的公開 export，或將相關元件一併移至 `apps/web`。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 顯示 import 路徑從 `../../src/components/atoms-wrapper` 改為 `../../../../packages/platform/atoms/src/components/atoms-wrapper`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "import 路徑混用相對與絕對路徑，可能造成混淆",
+    "body": "此檔案中同時使用相對路徑（如 `./EventType`）與絕對路徑（如 `@calcom/atoms/event-types/hooks/useEventTypeForm`）來 import 鄰近模組。雖然功能上可能正常，但風格不一致可能增加維護困難。建議統一使用相對路徑或絕對路徑（視專案慣例）。",
+    "existing_code": "import { EventType as EventTypeComponent } from \"./EventType\";\nimport { useEventTypeForm } from \"@calcom/atoms/event-types/hooks/useEventTypeForm\";",
+    "evidence": "diff 顯示新增了 `./EventType` 的相對 import，同時保留了 `@calcom/atoms/...` 的絕對 import。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾缺少換行符號",
+    "body": "檔案最後一行 `export default EventLimitsTabWebWrapper;` 沒有換行符號，可能導致某些工具或 diff 顯示異常。建議在檔案結尾加上換行。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 顯示 `\\ No newline at end of file`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾缺少換行符號",
+    "body": "檔案最後一行 `export default EventRecurringWebWrapper;` 沒有換行符號，可能導致某些工具或 diff 顯示異常。建議在檔案結尾加上換行。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 顯示 `\\ No newline at end of file`。"
+  }
+]

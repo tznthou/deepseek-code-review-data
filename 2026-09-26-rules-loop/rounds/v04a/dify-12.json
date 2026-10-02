@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/core/rag/retrieval/dataset_retrieval.py",
+    "line": 1207,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "not contains 分支未傳入 escape 參數，跳脫失效",
+    "body": "在 `case \"not contains\"` 分支中，呼叫 `json_field.notlike(f\"%{escaped_value}%\")` 時未傳入 `escape=\"\\\\\"` 參數。這會導致跳脫字元被視為一般字元，使用者輸入的 `%` 或 `_` 仍會被當作萬用字元，造成查詢結果不正確。\n\n建議：將該行改為 `json_field.notlike(f\"%{escaped_value}%\", escape=\"\\\\\")`。",
+    "existing_code": "filters.append(json_field.notlike(f\"%{escaped_value}%\"))",
+    "evidence": "diff 中該行新增，但未包含 escape 參數，與其他分支不一致。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/clickzetta/clickzetta_vector.py",
+    "line": 991,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "ESCAPE 子句的跳脫字元可能不正確",
+    "body": "在 ClickZetta 向量資料庫的 LIKE 查詢中，使用了 `ESCAPE '\\\\\\\\'`。但 `escape_like_pattern` 函式是使用反斜線 `\\` 作為跳脫字元，因此 ESCAPE 子句應指定 `'\\\\'`（在 SQL 字串中表示單一反斜線）。目前程式碼中的 `'\\\\\\\\'` 在 SQL 中可能代表兩個反斜線，導致跳脫行為不符合預期。\n\n建議：確認 ClickZetta 的 SQL 方言，並將 ESCAPE 子句改為 `ESCAPE '\\\\'`。",
+    "existing_code": "filter_clauses.append(f\"{Field.CONTENT_KEY} LIKE '%{escaped_query}%' ESCAPE '\\\\\\\\'\")",
+    "evidence": "diff 中新增的 ESCAPE 子句使用了四個反斜線，而 escape_like_pattern 使用單一反斜線跳脫。"
+  },
+  {
+    "path": "api/services/workflow_app_service.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 unicode_escape 處理可能改變搜尋行為",
+    "body": "原本的程式碼對 keyword 進行了 `encode('unicode_escape').decode('utf-8')` 處理，並將 `\\u` 替換為 `\\\\u`，這可能是為了處理 JSON 欄位中的 Unicode 跳脫序列。新的程式碼直接使用 `escape_like_pattern`，移除了這項處理，可能導致搜尋包含 Unicode 跳脫序列的 JSON 欄位時無法匹配。\n\n建議：確認此處的 unicode_escape 處理是否必要，若必要則應保留並與 escape_like_pattern 結合。",
+    "existing_code": "keyword_like_val = f\"%{escaped_keyword}%\"",
+    "evidence": "diff 中刪除了原本的 unicode_escape 處理，改為直接使用 escape_like_pattern。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_app_service.py",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R18] 延遲匯入 AppService 可能違反架構規範",
+    "body": "測試檔案中將原本的頂層匯入 `from services.app_service import AppService` 改為在每個測試方法內延遲匯入，以避免循環依賴。這可能違反專案的 import-linter 規則（R18），且可能掩蓋了實際的循環依賴問題。\n\n建議：調查循環依賴的根本原因，並考慮調整架構以允許頂層匯入。",
+    "existing_code": "# Delay import of AppService to avoid circular dependency\n# from services.app_service import AppService",
+    "evidence": "diff 中註解掉了頂層匯入，並在每個測試方法內新增延遲匯入。"
+  }
+]

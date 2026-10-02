@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/admin-x-framework/src/utils/stats-config.ts",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "版本前綴組合方式與後端不一致，導致端點名稱錯誤",
+    "body": "此處將 `config.version` 直接加在 `endpointName` 前面，形成 `v2_api_kpis`；但後端 `tinybird.js` 是將版本加在後面，形成 `api_kpis_v2`。當前端設定 `version: 'v2'` 時，會呼叫不存在的端點 `v2_api_kpis`，造成 404。\n\n建議改為與後端一致的後綴方式：\n```ts\nconst finalEndpointName = config.version ? `${endpointName}_${config.version}` : endpointName;\n```",
+    "existing_code": "const finalEndpointName = config.version ? `${config.version}_${endpointName}` : endpointName;",
+    "evidence": "diff 中新增的這一行使用 `${config.version}_${endpointName}`，而 `tinybird.js` 使用 `${pipeName}_${version}`。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/pipes/filtered_sessions_v2.pipe",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Pipe 缺少 TYPE 宣告，可能導致部署失敗",
+    "body": "此 pipe 檔案結尾沒有 `TYPE` 宣告（例如 `TYPE endpoint` 或 `TYPE materialized`）。Tinybird 通常要求 pipe 檔案明確指定類型，否則部署可能失敗或行為不正確。\n\n請在檔案最後加上適當的 `TYPE` 宣告，例如 `TYPE endpoint`。",
+    "existing_code": "{% if defined(utm_content) %} and utm_content = {{ String(utm_content, description=\"UTM content to filter on\", required=False) }} {% end %}",
+    "evidence": "diff 顯示此檔案最後一行是 utm_content 的條件，沒有 `TYPE` 行。"
+  }
+]

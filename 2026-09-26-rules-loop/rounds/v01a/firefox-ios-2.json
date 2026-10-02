@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] IpadOnlyTestCase.setUp 呼叫 async super.setUp() 缺少 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp()` 中，`super.setUp()` 現在是 async throws 方法，但呼叫時沒有加上 `try`。這會導致編譯錯誤：`call can throw but is not marked with 'try'`。\n\n建議改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中 `IpadOnlyTestCase` 的 `setUp` 內：`-            super.setUp()` 改為 `+            await super.setUp()`，但未加 `try`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/A11yUtils.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R01] 移除 Mozilla Public License 標頭",
+    "body": "此檔案原本有 Mozilla Public License 標頭，但在此 PR 中被移除。根據專案規範 R01，所有 Swift 檔案必須包含此標頭。\n\n建議恢復標頭。",
+    "existing_code": "import XCTest",
+    "evidence": "diff 顯示刪除了三行 MPL 標頭，且未在檔案開頭重新加入。"
+  }
+]

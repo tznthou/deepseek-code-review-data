@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "JWT token 儲存型別錯誤導致回傳值不一致",
+    "body": "在 `getServerToken` 方法中，原本 `this._serverToken = tokenData.token` 儲存的是 token 字串，但現在改為 `this._serverToken = tokenData` 儲存整個物件。然而，回傳時仍使用 `token: this._serverToken`，這會導致回傳的 token 變成物件而非字串，造成呼叫端無法使用。\n\n**失敗情境**：任何呼叫 `getServerToken` 的程式碼會收到 `{ token: { token: '...', exp: ... }, exp: ... }` 而非預期的 token 字串，可能導致認證失敗。\n\n**建議**：改回 `this._serverToken = tokenData.token`，或調整回傳邏輯以正確提取 token 字串。",
+    "existing_code": "this._serverToken = tokenData;",
+    "evidence": "diff 中第 98 行將 `this._serverToken = tokenData.token` 改為 `this._serverToken = tokenData`，但回傳物件仍使用 `token: this._serverToken`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 164,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "使用 jwt.decode 取代 jwt.verify 跳過簽章驗證",
+    "body": "在 `_isJWTExpired` 方法中，原本使用 `jwt.verify` 來驗證 token 的簽章和有效性，但現在改為 `jwt.decode`，這只解碼 payload 而不驗證簽章。這會導致攻擊者可以偽造 token 來繞過過期檢查，進而使用無效或惡意的 token。\n\n**失敗情境**：攻擊者可以構造一個帶有任意 `exp` 的 JWT，即使簽章無效，`_isJWTExpired` 仍會回傳 false，使系統接受該 token。\n\n**建議**：改回 `jwt.verify`，或使用其他方式驗證簽章。",
+    "existing_code": "const decoded = jwt.decode(token);",
+    "evidence": "diff 中第 164 行將 `jwt.verify` 改為 `jwt.decode`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "移除 noTimestamp 選項可能導致 JWT 簽章失敗",
+    "body": "原本 `jwt.sign` 使用 `{noTimestamp: true}` 來避免自動加入 `iat` 欄位，但現在移除了該選項。這會導致 JWT 中包含 `iat`（簽發時間），而 payload 中已有自訂的 `exp` 欄位。若 Tinybird 端預期 token 中沒有 `iat`，可能導致驗證失敗。\n\n**失敗情境**：Tinybird 驗證 JWT 時若檢查 `iat` 欄位，可能因格式或存在性不符而拒絕 token。\n\n**建議**：確認 Tinybird 端是否接受 `iat`，若否，請保留 `noTimestamp: true`。",
+    "existing_code": "const token = jwt.sign(payload, this.tinybirdConfig.adminToken);",
+    "evidence": "diff 中第 147 行移除了 `{noTimestamp: true}` 選項。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/tests/api_top_locations.yaml",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試參數變更可能導致預期結果不正確",
+    "body": "在「Test with multiple filters combined」測試中，參數從 `device=desktop&browser=firefox` 改為 `source=bing.com&pathname=%2Fabout%2F`，但預期結果只包含兩筆資料。需要確認新的過濾條件是否正確對應到預期結果，否則測試可能無法通過或失去意義。\n\n**失敗情境**：若 `source=bing.com` 和 `pathname=%2Fabout%2F` 的組合在測試資料中沒有對應的記錄，測試會失敗。\n\n**建議**：驗證測試資料是否包含符合新條件的記錄，並確認預期結果正確。",
+    "existing_code": "parameters: site_uuid=mock_site_uuid&date_from=2100-01-01&date_to=2100-01-07&timezone=Etc/UTC&source=bing.com&pathname=%2Fabout%2F",
+    "evidence": "diff 中該行參數被修改，但預期結果僅有兩筆，需確認資料一致性。"
+  }
+]

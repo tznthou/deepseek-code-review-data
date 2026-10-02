@@ -1,0 +1,5 @@
+[info] repo 規範：repo=Ghost、24 條、10047 字元、placement=before_diff、sha256=b100898f200a
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 7196 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 apps/comments-ui/src/components/content/forms/form.tsx:308 → 313（片段唯一命中）
+[info] 重新定位 apps/comments-ui/test/e2e/actions.test.ts:648 → 678（片段唯一命中）
+[info] 完成於 8.1s ｜ findings=3 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 5888, "completion_tokens": 942, "total_tokens": 6830, "prompt_tokens_details": {"cached_tokens": 5760}, "prompt_cache_hit_tokens": 5760, "prompt_cache_miss_tokens": 128}

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/State/TabsPanelState.swift",
+    "line": 143,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "滾動索引可能越界：`toIndex` 應為 `state.tabs.count - 1`",
+    "body": "在 `createTabScrollBehavior` 中，當沒有選取的 tab 時，原本回傳 `state.tabs.count - 1`，但此 PR 改為 `state.tabs.count`。若 `state.tabs` 非空，`state.tabs.count` 會超出陣列最後一個元素的索引，導致後續使用 `IndexPath(row:section:)` 時可能觸發越界例外或滾動到不存在的 cell。\n\n**失敗情境**：使用者開啟 tab 面板，沒有任何 tab 被選取（例如剛刪除選取的 tab），且 `state.tabs` 有 3 個元素。此時 `toIndex` 會被設為 3，但有效索引範圍是 0...2。\n\n**建議修法**：改回 `state.tabs.count - 1`。",
+    "existing_code": "return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)",
+    "evidence": "diff 中此行由 `return ScrollState(toIndex: state.tabs.count - 1, isInactiveTabSection: false, withAnimation: shouldAnimate)` 改為 `return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)`，且 `state.tabs` 在此分支中保證非空（前一行有 `else if !state.tabs.isEmpty`）。"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 8461,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "新增的 `v147` 結構未標記為 `public`，且可能包含無效的本地化鍵",
+    "body": "此 PR 刪除了 `String.TabsTray.InactiveTabs` 中的本地化字串，但在 `String.TabsTray` 下新增了一個 `v147` 結構，內容與被刪除的字串完全相同。然而，該結構沒有 `public` 修飾詞，且其名稱 `v147` 似乎只是版本標記，並非有意義的命名空間。這可能導致其他模組無法存取這些字串，且若這些鍵已不再使用，保留它們會造成混淆。\n\n**失敗情境**：若有其他程式碼嘗試透過 `String.TabsTray.v147.TabsTrayInactiveTabsSectionClosedAccessibilityTitle` 存取，會因為 `v147` 不是 `public` 而編譯失敗。\n\n**建議修法**：確認這些字串是否仍被使用。若已不再使用，應完全刪除；若仍需保留，應將其放在適當的 `public` 結構中，並使用有意義的名稱。",
+    "existing_code": "struct v147 {\n            public static let TabsTrayInactiveTabsSectionClosedAccessibilityTitle = MZLocalizedString(\n                key: \"TabsTray.InactiveTabs.SectionTitle.Closed.Accessibility.v103\",\n                tableName: nil,\n                value: \"View Inactive Tabs\",\n                comment: \"Accessibility title for the inactive tabs section button when section is closed. This section groups all tabs that haven't been used in a while.\")",
+    "evidence": "diff 中新增了 `struct v147 { ... }`，但未加上 `public` 修飾詞，且其內容與被刪除的 `InactiveTabs` 結構相同。"
+  }
+]

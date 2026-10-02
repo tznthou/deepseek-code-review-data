@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 509,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`source_static_path` 在 `create_ui_static_subpath` 中未定義",
+    "body": "在 `create_ui_static_subpath` 函式中，`copy_directory(str(source_static_path), str(static_dir))` 使用了 `source_static_path`，但該變數是在 `create_ui_app` 中定義的區域變數，並未傳入此函式。當 `v2_enabled` 為 `True` 且 `PREFECT_UI_STATIC_DIRECTORY` 未設定時，會拋出 `NameError`，導致伺服器無法啟動。\n\n建議將 `source_static_path` 作為參數傳入 `create_ui_static_subpath`，或改為從設定中重新取得。",
+    "existing_code": "copy_directory(str(source_static_path), str(static_dir))",
+    "evidence": "diff 中新增的 `source_static_path` 變數僅在 `create_ui_app` 內定義，但 `create_ui_static_subpath` 函式內直接使用，且該函式簽名未變更。"
+  },
+  {
+    "path": "src/prefect/settings/models/server/ui.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`v2_enabled` 預設為 `True` 可能造成非預期的行為變更",
+    "body": "新增的 `v2_enabled` 設定預設為 `True`，這表示所有現有使用者在升級後將預設使用實驗性的 V2 UI，而非原本的 V1 UI。若 V2 UI 尚未穩定，可能導致使用者遇到未預期的問題。建議將預設值改為 `False`，並在正式發布時再切換。",
+    "existing_code": "v2_enabled: bool = Field(\n        default=True,\n        description=\"Whether to serve the experimental V2 UI instead of the default V1 UI.\",\n    )",
+    "evidence": "diff 中新增的設定欄位預設值為 `True`，且描述中標明為 experimental。"
+  },
+  {
+    "path": ".github/workflows/python-package.yaml",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少 `timeout-minutes`",
+    "body": "新增的 `Build UI v2` step 沒有設定 `timeout-minutes`，若建置過程卡住可能導致 workflow 長時間執行。建議為每個 job 或 step 設定合理的 timeout。",
+    "existing_code": "- name: Build UI v2\n        working-directory: ui-v2\n        run: |\n          npm ci\n          npm run build\n          cp -r dist ../src/prefect/server/ui-v2",
+    "evidence": "diff 中新增的 step 未包含 timeout-minutes 設定。"
+  },
+  {
+    "path": "Dockerfile",
+    "line": 65,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "未 pin 第三方 action 到完整 commit SHA",
+    "body": "在 Dockerfile 中使用了 `node:${NODE_V2_VERSION}-bullseye-slim` 作為基礎映像，但未固定到特定 digest。這可能導致建置時使用到不同的映像版本，影響可重現性。建議使用 digest 或至少固定 minor 版本。",
+    "existing_code": "FROM --platform=$BUILDPLATFORM node:${NODE_V2_VERSION}-bullseye-slim AS ui-v2-builder",
+    "evidence": "diff 中新增的 FROM 指令使用 tag 而非 digest。"
+  }
+]

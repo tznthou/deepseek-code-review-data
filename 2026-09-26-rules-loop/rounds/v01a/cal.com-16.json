@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 227,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "getRecordings 呼叫缺少 await，導致回傳 Promise 而非資料",
+    "body": "在 `getBookingRecordings` 方法中，`this.calVideoService.getRecordings(bookingUid)` 的呼叫移除了 `await`。若 `getRecordings` 是非同步方法（從先前程式碼與測試中的 mock 可推斷），則 `recordings` 會是 Promise 物件，而非實際的錄音資料。這將導致 API 回應的 `data` 欄位變成 Promise，序列化後可能變成空物件或錯誤。\n\n**失敗情境**：當客戶端呼叫此端點時，回應中的 `data` 不會是錄音陣列，而是 Promise 的 JSON 表示（通常為 `{}`），造成資料遺失。\n\n**建議修法**：恢復 `await`，改為 `const recordings = await this.calVideoService.getRecordings(bookingUid);`",
+    "existing_code": "const recordings = this.calVideoService.getRecordings(bookingUid);",
+    "evidence": "diff 中此行由 `const recordings = await this.calVideoService.getRecordings(bookingUid);` 改為 `const recordings = this.calVideoService.getRecordings(bookingUid);`，移除了 await。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 216,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄音端點權限從 BOOKING_READ 提升為 BOOKING_WRITE，可能破壞現有整合",
+    "body": "`getBookingRecordings` 端點的 `@Permissions` 從 `BOOKING_READ` 改為 `BOOKING_WRITE`。這表示僅具有讀取權限的 API 金鑰或使用者將無法存取錄音，可能導致現有整合失效。\n\n**失敗情境**：一個僅被授予 `BOOKING_READ` 權限的 API 金鑰，原本可以讀取錄音，升級後將收到 403 Forbidden。\n\n**建議修法**：確認此權限變更是否為預期行為。若錄音屬於讀取操作，應維持 `BOOKING_READ`；若確實需要寫入權限，請在 PR 描述中說明原因並通知受影響的使用者。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中此行由 `@Permissions([BOOKING_READ])` 改為 `@Permissions([BOOKING_WRITE])`。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-recordings.output.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "未使用的 import BookingRepository",
+    "body": "新增了 `import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";`，但在檔案中並未使用。這可能違反 lint 規則（如 no-unused-vars），且增加不必要的相依性。\n\n**建議修法**：移除此 import。",
+    "existing_code": "import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";",
+    "evidence": "diff 中新增此 import，但後續程式碼未使用 BookingRepository。"
+  }
+]

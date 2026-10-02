@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1315,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "window_features 方法中 size 與 position 處理順序對調可能影響視窗建立",
+    "body": "在 `window_features` 方法中，原本先處理 `position` 再處理 `size`，現在改為先處理 `size` 再處理 `position`。雖然兩者設定的是不同的視窗屬性，但若 `features` 同時包含兩者，順序的改變可能導致最終視窗狀態與預期不同（例如在某些平台上，設定順序可能影響視窗初始位置或大小）。建議確認此順序變更是否為刻意，並考慮恢復原順序或補充說明。",
+    "existing_code": "pub fn window_features(mut self, features: NewWindowFeatures) -> Self {\n    if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 中顯示原本的順序為先 position 後 size，現在改為先 size 後 position。"
+  },
+  {
+    "path": "crates/tauri/src/webview/mod.rs",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "重新匯出 tauri_runtime::Cookie 可能造成 API 相容性問題",
+    "body": "移除了 `use cookie::Cookie;` 並新增 `pub use tauri_runtime::Cookie;`。這會改變 `tauri::webview::Cookie` 的來源，可能導致下游程式碼在型別推斷或特徵實作上出現不相容。若 `tauri_runtime::Cookie` 與 `cookie::Cookie` 不是同一型別，則此變更為破壞性變更。建議確認兩者是否為相同型別，並考慮在 v3 前保留相容性。",
+    "existing_code": "// Remove this re-export in v3\npub use tauri_runtime::Cookie;",
+    "evidence": "diff 中移除了 `use cookie::Cookie;`，並新增 `pub use tauri_runtime::Cookie;`。"
+  },
+  {
+    "path": "crates/tauri-runtime-wry/src/lib.rs",
+    "line": 1718,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "DeleteCookie 改為 SetCookie 可能為誤植",
+    "body": "在 `delete_cookie` 方法中，原本傳送 `WebviewMessage::DeleteCookie`，現在改為 `WebviewMessage::SetCookie`。這可能導致刪除 cookie 的請求實際執行設定 cookie 的動作，造成功能錯誤。請確認此變更是否為誤植，若為刻意，請補充說明。",
+    "existing_code": "WebviewMessage::SetCookie(cookie.into_owned()),",
+    "evidence": "diff 中將 `WebviewMessage::DeleteCookie` 改為 `WebviewMessage::SetCookie`。"
+  },
+  {
+    "path": "examples/api/src-tauri/src/lib.rs",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除 use std::sync::atomic::AtomicUsize 可能導致編譯錯誤",
+    "body": "移除了 `use std::sync::atomic::AtomicUsize;`，但在後續程式碼中仍使用 `std::sync::atomic::AtomicUsize::new(0)`，雖然使用了完整路徑，但若其他程式碼依賴此匯入，可能造成編譯錯誤。建議確認是否所有使用處均已改為完整路徑。",
+    "existing_code": "use std::sync::atomic::AtomicUsize;",
+    "evidence": "diff 中移除了該 use 陳述式，但後續仍使用 `std::sync::atomic::AtomicUsize::new(0)`。"
+  }
+]

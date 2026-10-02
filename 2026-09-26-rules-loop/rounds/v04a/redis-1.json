@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 914,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "dictSetKeyAtLink 中搜尋 addedKey 可能失敗",
+    "body": "在 dictSetKeyAtLink 中，當 link 為 NULL 時，程式碼使用 `dictFindLink(d, addedKey, NULL)` 來尋找現有 entry。然而，`addedKey` 是經過 `keyDup` 處理後的 key，而 `dictFindLink` 內部會使用 `dictStoredKey2Key` 將 stored key 轉換為 lookup key。如果 `keyDup` 回傳的 key 與原始 key 不同（例如複製了 sds），則 `dictStoredKey2Key` 可能無法正確轉換，導致找不到對應的 entry，進而觸發 assert 失敗或錯誤的行為。\n\n建議：在呼叫 `dictFindLink` 前，先將 `addedKey` 轉換為 lookup key，或直接使用原始的 `key` 進行搜尋。",
+    "existing_code": "*link = dictFindLink(d, addedKey, NULL);",
+    "evidence": "diff 中新增的這一行，位於 dictSetKeyAtLink 函式內，且 addedKey 是 keyDup 的結果。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "validateStoredKeyConversion 函式未被使用",
+    "body": "新增的 `validateStoredKeyConversion` 函式在 dict.c 中定義，但沒有被任何地方呼叫。這可能導致編譯器警告（特別是在 -Werror 下），且該函式目前沒有實際作用。\n\n建議：移除該函式，或將其用於除錯或斷言中。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增的函式定義，且未在其他地方看到呼叫。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 3503,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "hashTypeDelete 呼叫點可能傳入錯誤的 key 類型",
+    "body": "hashTypeDelete 的簽名從 `(robj *o, void *key, int isSdsField)` 改為 `(robj *o, void *key)`，移除了 isSdsField 參數。然而，在 onFieldExpire 函式中，原本的呼叫是 `hashTypeDelete(expCtx->hashObj, field, 0)`，其中 field 是 Entry* 類型（stored key），但現在直接傳入 field，而 hashTypeDelete 內部會假設 key 是 sds 並呼叫 sdslen。這可能導致對 Entry* 指標呼叫 sdslen 而崩潰。\n\n建議：檢查 onFieldExpire 中 field 的實際類型，若為 Entry*，則需先轉換為 sds 再呼叫。",
+    "existing_code": "serverAssert(hashTypeDelete(expCtx->hashObj, field) == 1);",
+    "evidence": "diff 中此行的變更，且 onFieldExpire 的 field 參數類型為 eItem，可能不是 sds。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "__stored_key 巨集定義為空，降低型別安全",
+    "body": "`__stored_key` 巨集被定義為空，因此它不會在編譯時期提供任何型別檢查。這使得 stored key 和 lookup key 的區別僅存在於註解中，容易導致誤用。\n\n建議：考慮使用不同的指標型別（例如 typedef）來區分，或至少使用屬性標記（如 `__attribute__((address_space(1)))`）來增加編譯器檢查。",
+    "existing_code": "#define __stored_key",
+    "evidence": "diff 中新增的巨集定義。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "dictStoredKey2Key 可能回傳 NULL，但呼叫者未檢查",
+    "body": "`dictStoredKey2Key` 在 `keyFromStoredKey` 存在時直接呼叫該回呼，但未檢查回傳值是否為 NULL。如果回呼實作可能回傳 NULL（例如錯誤情況），則後續的 hash 或比較操作可能會對 NULL 指標進行操作而導致崩潰。\n\n建議：在 dictStoredKey2Key 中增加 NULL 檢查，或確保所有 keyFromStoredKey 實作不會回傳 NULL。",
+    "existing_code": "return (d->type->keyFromStoredKey) ? d->type->keyFromStoredKey(key) : key;",
+    "evidence": "diff 中新增的函式實作。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "排程條件反轉導致 job 永不執行或重複排程",
+    "body": "原本的條件 `!hasScheduled.processOutbox` 確保 job 只會被排程一次；改成 `hasScheduled.processOutbox` 後，當 `hasScheduled.processOutbox` 為 true 時才會排程，但初始值為 false，因此 job 永遠不會被排程。若後續有其他程式碼將 `hasScheduled.processOutbox` 設為 true，則可能造成重複排程。\n\n建議改回 `!hasScheduled.processOutbox`，或使用其他冪等機制。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中此行由 `if (!hasScheduled.processOutbox && ...)` 改為 `if (hasScheduled.processOutbox && ...)`，且 `hasScheduled.processOutbox` 初始值為 false（見檔案上方 `let hasScheduled = { processOutbox: false }`）。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 342,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "條件判斷邏輯變更可能導致歡迎郵件發送給所有來源",
+    "body": "原本條件為 `this._labsService.isSet('welcomeEmails') && WELCOME_EMAIL_SOURCES.includes(source)`，表示必須同時滿足 labs flag 開啟且來源在允許清單中。新條件為 `welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)`，只要 config 有值或來源在清單中就會觸發。這表示即使 config 未設定，只要來源是允許的（例如 'member'），仍會建立 outbox entry，與測試中「config 未設定時不建立 outbox entry」的預期不符。\n\n建議改為 `welcomeEmailConfig && WELCOME_EMAIL_SOURCES.includes(source)`，或明確區分測試模式與正式模式。",
+    "existing_code": "if (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)) {",
+    "evidence": "diff 中此行由 `if (this._labsService.isSet('welcomeEmails') && WELCOME_EMAIL_SOURCES.includes(source))` 改為 `if (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source))`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R20] 使用 var 宣告變數",
+    "body": "專案規範 R20 要求使用 let 或 const，禁止 var。此處將原本的 `let member;` 改為 `var member;`，違反規範。\n\n建議改回 `let member;`。",
+    "existing_code": "var member;",
+    "evidence": "diff 中此行由 `let member;` 改為 `var member;`。"
+  }
+]

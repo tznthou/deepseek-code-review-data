@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "sortHosts 在權重相等時優先權排序方向反轉",
+    "body": "在 `isRRWeightsEnabled` 為 true 且 `weightA === weightB` 時，原本的排序是 `priorityB - priorityA`（優先權高者在前），但移動後的程式碼變成 `priorityA - priorityB`，導致排序方向相反。這會影響依賴此函式的主機排序邏輯，可能造成錯誤的主機指派順序。\n\n建議修正為：\n```ts\nif (weightA === weightB) {\n  return priorityB - priorityA;\n}\n```",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中新增的 sortHosts 函式，在 weightA === weightB 時回傳 priorityA - priorityB，而原始 HostEditDialogs.tsx 中的實作為 priorityB - priorityA。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 57,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除公開匯出路徑可能造成外部相依性中斷",
+    "body": "從 package.json 的 exports 中移除了多個路徑（如 `./add-members-switch/AddMembersWithSwitchWebWrapper`、`./connect/conferencing-apps/ConferencingAppsViewWebWrapper`、`./destination-calendar/wrappers/DestinationCalendarSettingsWebWrapper`、`./event-types/wrappers/EventTypeWebWrapper`、`./selected-calendars/wrappers/SelectedCalendarsSettingsWebWrapper`）。如果其他套件或外部專案依賴這些路徑，升級後會導致匯入失敗。建議確認這些路徑是否已完全不再被使用，或保留相容性匯出。",
+    "existing_code": "\"./add-members-switch/AddMembersWithSwitchWebWrapper\": \"./add-members-switch/AddMembersWithSwitchWebWrapper.tsx\",",
+    "evidence": "diff 顯示多個 exports 條目被刪除。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 檔案缺少結尾換行",
+    "body": "檔案結尾缺少換行符號，違反 Biome 格式規範（LF line endings）。請在最後一行加上換行。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 顯示最後一行 `export default EventLimitsTabWebWrapper;` 沒有換行符號。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 檔案缺少結尾換行",
+    "body": "檔案結尾缺少換行符號，違反 Biome 格式規範（LF line endings）。請在最後一行加上換行。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 顯示最後一行 `export default EventRecurringWebWrapper;` 沒有換行符號。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用相對路徑匯入跨套件模組",
+    "body": "此檔案從 apps/web/components/apps 使用相對路徑 `../../../../packages/platform/atoms/...` 匯入套件內的模組，這可能違反專案對匯入路徑的慣例（通常使用別名如 @calcom/...）。建議改用套件匯出路徑或別名，以維持可維護性。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";",
+    "evidence": "diff 中新增的相對路徑匯入，跨越了多個目錄層級。"
+  }
+]

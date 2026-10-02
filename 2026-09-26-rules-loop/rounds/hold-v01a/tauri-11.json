@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/cargo_manifest.rs",
+    "line": 122,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "platform-certs 啟用時未設定 proxy，可能導致網路請求失敗",
+    "body": "在 `crate_latest_version` 中，當啟用 `platform-certs` feature 時，建立的 `ureq::Agent` 未設定 proxy（`ureq::Proxy::try_from_env()`）。這與 `base_ureq_agent` 中的實作不一致，可能導致在需要 proxy 的環境中無法連線。建議使用 `base_ureq_agent` 或補上 proxy 設定。",
+    "existing_code": "let agent = ureq::Agent::config_builder()\n      .tls_config(\n        ureq::tls::TlsConfig::builder()\n          .root_certs(ureq::tls::RootCerts::PlatformVerifier)\n          .build(),\n      )\n      .build()\n      .new_agent();",
+    "evidence": "diff 中新增的程式碼片段（第 121-130 行）顯示 agent 建立時僅設定 TLS，未呼叫 `.proxy(...)`。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/cargo_manifest.rs",
+    "line": 194,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "crate_version 邏輯修正可能改變既有行為",
+    "body": "將 `if lock.is_some() && crate_lock_packages.is_empty()` 改為 `if lock.is_some() && !crate_lock_packages.is_empty()`。這會使得原本在 lock 存在但 crate_lock_packages 為空時不執行的程式碼，現在會執行；反之亦然。需確認此修正是否為預期，並評估對版本解析的影響。",
+    "existing_code": "if lock.is_some() && !crate_lock_packages.is_empty() {",
+    "evidence": "diff 中此行由 `is_empty()` 改為 `!is_empty()`，邏輯相反。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R07] 新增的 base_ureq_agent 函式缺少文件註解",
+    "body": "新增的 `pub(crate) fn base_ureq_agent()` 是公開 API（crate 內可見），但缺少 `///` 文件註解。根據專案規範 R07，所有公開 API 都應有文件說明。建議補充說明此函式的用途與回傳值。",
+    "existing_code": "pub(crate) fn base_ureq_agent() -> ureq::Agent {",
+    "evidence": "diff 中新增此函式，但無文件註解。"
+  }
+]

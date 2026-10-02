@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "generate_github_alternative_url 忽略替代 URL，可能破壞下載功能",
+    "body": "在 `generate_github_alternative_url` 中，原本使用 `alt_url` 作為下載 URL，但變更後改為使用原始的 `url`。這可能導致當原始 URL 無法訪問時，原本設計的替代 URL（例如 GitHub 鏡像）不再被使用，造成下載失敗。\n\n建議確認此變更的意圖：若是有意為之，請在程式碼中加上註解說明原因；否則應保留使用 `alt_url` 的邏輯。",
+    "existing_code": "url.to_owned()",
+    "evidence": "diff 中 `-        alt_url,` 改為 `+        url.to_owned(),`，且參數名稱從 `alt_url` 改為 `_alt_url`，顯示替代 URL 被刻意忽略。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 120,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 Sha256 的 cfg 限制可能導致非 Windows 平台編譯錯誤",
+    "body": "原本 `HashAlgorithm::Sha256` 帶有 `#[cfg(target_os = \"windows\")]`，現在被移除。若 `Sha256` 變體在其他平台未被使用，可能觸發 dead_code 警告（若啟用 `-D warnings` 則會編譯失敗）。此外，若 `Sha256` 的實作依賴 Windows 特定功能，移除 cfg 可能導致其他平台編譯錯誤。\n\n建議確認 `Sha256` 在所有平台上的可用性，或保留 cfg 限制。",
+    "existing_code": "Sha256,",
+    "evidence": "diff 中刪除了 `#[cfg(target_os = \"windows\")]` 行，且 `Sha256` 變體現在無條件編譯。"
+  }
+]

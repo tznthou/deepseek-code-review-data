@@ -1,0 +1,3 @@
+[info] repo 規範：repo=firefox-ios、15 條、10004 字元、placement=before_diff、sha256=031933b1d311
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 24121 字元、thinking=disabled、max_tokens=8192）
+[info] 完成於 9.3s ｜ findings=3 ｜ relocated=0 ｜ verdict=comment ｜ usage={"prompt_tokens": 10693, "completion_tokens": 912, "total_tokens": 11605, "prompt_tokens_details": {"cached_tokens": 10624}, "prompt_cache_hit_tokens": 10624, "prompt_cache_miss_tokens": 69}

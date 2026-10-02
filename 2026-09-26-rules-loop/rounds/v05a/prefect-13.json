@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "concurrency limit 輸入處理可能產生 NaN 或非預期的 null",
+    "body": "在 `onChange` 中，當輸入為空字串時設定為 `null`，否則使用 `Number(value)`。但 `Number('')` 為 0，而 `Number('abc')` 為 NaN。若使用者輸入非數字字元（例如 'e' 或 '-'），可能得到 NaN，且表單驗證可能無法攔截，導致提交 NaN 給 API。此外，若輸入為 '0'，會得到 0，但後端可能將 0 視為無限制或錯誤。建議使用更嚴格的解析方式，例如 `parseInt` 並檢查 `Number.isNaN`，或使用 zod schema 進行驗證。",
+    "existing_code": "onChange={(e) => {\n\t\t\t\t\t\t\t\t\t\t\t\tconst value = e.target.value;\n\t\t\t\t\t\t\t\t\t\t\t\tfield.onChange(value === \"\" ? null : Number(value));\n\t\t\t\t\t\t\t\t\t\t\t}}",
+    "evidence": "diff 中新增的 `onChange` 處理邏輯直接使用 `Number(value)`，未檢查 NaN 或非數字輸入。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "mock 的 useUpdateWorkPool 型別與實際 hook 回傳不一致",
+    "body": "測試中 mock 的 `useUpdateWorkPool` 回傳物件包含 `updateWorkPool` 和 `isPending`，但實際 hook 可能回傳更多屬性（如 `isError`、`error` 等）。這可能導致測試通過但實際使用時型別錯誤。建議使用 `vi.mocked` 或從實際模組取得型別來確保一致性。",
+    "existing_code": "vi.mock(\"@/api/work-pools\", async () => {\n\tconst actual = await vi.importActual(\"@/api/work-pools\");\n\treturn {\n\t\t...actual,\n\t\tuseUpdateWorkPool: () => ({\n\t\t\tupdateWorkPool: mockUpdateWorkPool,\n\t\t\tisPending: false,\n\t\t}),\n\t};\n});",
+    "evidence": "mock 回傳物件僅包含兩個屬性，可能與實際 hook 的完整回傳型別不符。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 162,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言依賴於實作細節，可能造成誤報",
+    "body": "在「handles empty concurrency limit as null」測試中，直接檢查 `mockUpdateWorkPool` 的呼叫參數，這與元件內部實作耦合。若未來重構參數結構，測試將失敗。建議改為驗證使用者可見的行為（例如成功 toast 或導航），或使用更穩定的 mock 驗證方式。",
+    "existing_code": "expect(callArgs[0].workPool.concurrency_limit).toBeNull();",
+    "evidence": "測試直接檢查 mock 函式的呼叫參數，而非驗證最終結果。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R16] 關閉 TypeScript 嚴格模式",
+    "body": "此變更將 `strict` 設為 `false`，違反規範 R16（TypeScript 檔案必須啟用嚴格型別檢查）。這會降低型別安全，可能隱藏潛在的執行時期錯誤。請恢復為 `true` 並修正任何型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.json 的變更：`-    \"strict\": true,` 改為 `+    \"strict\": false,`"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "輪詢可能重複觸發 confirmBlueskyHandleMutation",
+    "body": "在 `useEffect` 中設定 `setInterval` 每 5 秒呼叫 `confirmHandle`，但 `confirmHandle` 內部呼叫 `confirmBlueskyHandleMutation.mutateAsync()`。若前一次請求尚未完成，下一次 interval 仍會觸發，可能導致多個併發請求。建議在 `confirmHandle` 中檢查 mutation 是否正在進行（例如使用 `isPending` 狀態），或使用 `setTimeout` 遞迴方式確保前一次完成後再排下一次。",
+    "existing_code": "const confirmHandleInterval = setInterval(async () => {\n            if (retryCountRef.current >= MAX_CONFIRMATION_RETRIES) {\n                clearInterval(confirmHandleInterval);\n\n                toast.error('Something went wrong, please try again.');\n\n                await disableBlueskyMutation.mutateAsync();\n                setLoading(false);\n\n                return;\n            }\n\n            retryCountRef.current += 1;\n            confirmHandle();\n        }, CONFIRMATION_INTERVAL);",
+    "evidence": "diff 中新增的 `useEffect` 區塊，包含 `setInterval` 與 `confirmHandle` 呼叫。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "輪詢失敗時未處理錯誤，可能導致無限重試",
+    "body": "`confirmHandle` 中呼叫 `confirmBlueskyHandleMutation.mutateAsync()` 但未捕捉錯誤。若請求失敗（例如網路錯誤），promise 會被拒絕，但 interval 仍會繼續觸發，直到達到最大重試次數。建議在 `confirmHandle` 中加入 `.catch()` 處理錯誤，或讓 `useEffect` 監聽 mutation 的錯誤狀態。",
+    "existing_code": "const confirmHandle = useCallback(() => {\n        confirmBlueskyHandleMutation.mutateAsync().then((handle) => {\n            if (handle) {\n                setHandleConfirmed(true);\n            }\n        });\n        // eslint-disable-next-line react-hooks/exhaustive-deps\n    }, []); // Empty deps - mutations are stable in practice",
+    "evidence": "diff 中新增的 `confirmHandle` 函式，未處理 `mutateAsync` 的 rejection。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 119,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "輪詢期間元件 unmount 時未清除 interval",
+    "body": "`useEffect` 的回傳函式會清除 interval，但若元件在 interval 觸發前 unmount，`clearInterval` 仍會執行，這沒有問題。然而，若 `confirmBlueskyHandleMutation` 正在進行中，unmount 後其回呼仍可能執行並呼叫 `setHandleConfirmed`，導致對已 unmount 元件的狀態更新。建議使用 `useRef` 追蹤 mounted 狀態，或在 mutation 的 `onSuccess` 中檢查。",
+    "existing_code": "return () => clearInterval(confirmHandleInterval);",
+    "evidence": "diff 中 `useEffect` 的回傳函式，僅清除 interval，未處理進行中的 mutation。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2833,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "缺少 accountFollows 查詢的失效處理",
+    "body": "在 `useConfirmBlueskyHandleMutationForUser` 的 `onSuccess` 中，註解提到「Missing invalidation of accountFollows query that should happen here」。確認 handle 後，帳號的 following 狀態可能改變，應使相關查詢失效以更新 UI。建議加入對應的 `queryClient.invalidateQueries`。",
+    "existing_code": "// Note: Missing invalidation of accountFollows query that should happen here",
+    "evidence": "diff 中新增的 `useConfirmBlueskyHandleMutationForUser` 函式，內含該註解。"
+  }
+]

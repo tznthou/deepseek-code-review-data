@@ -1,0 +1,8 @@
+[info] repo 規範：repo=prefect、15 條、6831 字元、placement=after_diff、sha256=b4fd8ec4abc5
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 10971 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/prefect/server/events/models/composite_trigger_child_firing.py:31 → 42（片段唯一命中）
+[info] 重新定位 src/prefect/server/events/triggers.py:70 → 73（片段唯一命中）
+[info] 重新定位 src/prefect/server/events/models/composite_trigger_child_firing.py:32 → 38（片段唯一命中）
+[info] 重新定位 src/prefect/server/events/triggers.py:390 → 396（片段唯一命中）
+[info] 完成於 13.0s ｜ findings=5 ｜ relocated=4 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 6568, "completion_tokens": 1619, "total_tokens": 8187, "prompt_tokens_details": {"cached_tokens": 4224}, "prompt_cache_hit_tokens": 4224, "prompt_cache_miss_tokens": 2344}

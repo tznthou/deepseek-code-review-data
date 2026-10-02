@@ -1,0 +1,68 @@
+[
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "權限控制不足：任何團隊成員都能建立邀請連結",
+    "body": "控制器使用 @Roles(\"TEAM_MEMBER\")，但測試中明確預期非管理員成員會被拒絕（403）。這表示角色檢查可能只驗證使用者是否為團隊成員，而未驗證是否為管理員。邀請連結通常應僅限管理員建立，否則任何成員都能邀請外部人員加入團隊，造成安全風險。\n\n建議：將角色改為 @Roles(\"TEAM_ADMIN\") 或類似角色，並確認 RolesGuard 能正確檢查團隊層級的管理員權限。",
+    "existing_code": "@Roles(\"TEAM_MEMBER\")",
+    "evidence": "測試檔案 teams-invite.controller.e2e-spec.ts 中，非管理員成員的測試預期 403，但控制器只要求 TEAM_MEMBER 角色。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "回傳的 token 可能不是實際的邀請 token",
+    "body": "原本回傳的 token 是隨機產生的 token，但現在改為 newToken.identifier。identifier 欄位在建立時設定為 `invite-link-for-teamId-${teamId}`，這不是隨機 token，而是固定的識別字串。這可能導致回傳給客戶端的 token 不是實際用於驗證的 token，造成邀請連結失效或安全問題。\n\n建議：確認 verificationToken 的結構，回傳正確的 token 欄位（應為 newToken.token），而不是 identifier。",
+    "existing_code": "token: newToken.identifier,",
+    "evidence": "diff 中原本是 token，現在改為 newToken.identifier，而 identifier 在建立時是固定字串。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "buildInviteLink 的條件判斷可能相反",
+    "body": "原本的條件是 if (!isOrgContext) 回傳 teamInviteLink，現在改為 if (isOrgContext) 回傳 teamInviteLink。這可能導致非組織情境下反而回傳了組織專用的連結，或反之。需要確認 isOrgContext 的語意與預期行為。",
+    "existing_code": "if (isOrgContext) {",
+    "evidence": "diff 中條件從 !isOrgContext 改為 isOrgContext，但未提供說明。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.e2e-spec.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R08] 測試未使用 Vitest 框架",
+    "body": "測試檔案使用 Jest 風格的 describe/it/expect，但專案規範 R08 要求所有測試使用 Vitest。這可能導致測試無法在 CI 中正確執行。建議改用 Vitest 的 API（例如從 'vitest' 匯入 describe, it, expect）。",
+    "existing_code": "import { bootstrap } from \"@/bootstrap\";",
+    "evidence": "整個測試檔案使用 Jest 語法，且未匯入 Vitest。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 567,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾缺少換行符，可能違反專案的格式化規範（R03）。建議在最後一行加上換行。",
+    "existing_code": "}",
+    "evidence": "diff 顯示最後一行沒有換行符（\\ No newline at end of file）。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.e2e-spec.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試未設定 UTC 時區",
+    "body": "專案規範 R08 要求測試命令設定 TZ=UTC，但此測試檔案未明確設定時區。若測試涉及時間相關邏輯，可能在不同時區下失敗。建議在測試配置中設定 TZ=UTC。",
+    "existing_code": "import { bootstrap } from \"@/bootstrap\";",
+    "evidence": "測試檔案中沒有設定時區的程式碼。"
+  }
+]

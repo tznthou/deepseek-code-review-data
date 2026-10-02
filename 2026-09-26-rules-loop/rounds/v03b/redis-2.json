@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1867,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "slotRangeArraySortAndMerge 合併邏輯可能造成資料遺失",
+    "body": "在 slotRangeArraySortAndMerge 中，合併條件僅檢查 `slots->ranges[idx].end + 1 == slots->ranges[i].start`，但未檢查重疊區間。若輸入包含重疊區間（例如 `0-10 5-15`），排序後會將第二個區間直接覆蓋到第一個區間上，導致第一個區間的部分資料遺失。此外，若區間非相鄰但重疊（例如 `0-10 5-6`），也會錯誤合併。建議在合併前先檢查重疊，若重疊則回傳錯誤或保留原始區間。",
+    "existing_code": "if (slots->ranges[idx].end + 1 == slots->ranges[i].start)\n    slots->ranges[idx].end = slots->ranges[i].end;\nelse\n    slots->ranges[++idx] = slots->ranges[i];",
+    "evidence": "diff 中新增的 slotRangeArraySortAndMerge 函式，合併條件僅考慮相鄰，未處理重疊。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.85,
+    "title": "asmCreateImportTask 記憶體所有權轉移可能導致 double-free 或 use-after-free",
+    "body": "在 asmCreateImportTask 中，原本使用 `slotRangeArrayDup(slots)` 複製一份 slots，現在改為直接指派 `task->slots = slots`，將所有權轉移給 task。但呼叫端 clusterMigrationCommandImport 在呼叫後不再釋放 slots，而 clusterAsmProcess 中則會先複製一份再傳入，因此可能造成記憶體洩漏或 double-free。建議明確所有權轉移規則，並在錯誤路徑中正確釋放。",
+    "existing_code": "task->slots = slots;",
+    "evidence": "diff 中將 `slotRangeArrayDup(slots)` 改為 `task->slots = slots`，且呼叫端釋放邏輯不一致。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "parseSlotRangesOrReply 錯誤路徑可能造成記憶體洩漏",
+    "body": "在 parseSlotRangesOrReply 中，當 slotRangeArrayNormalizeAndValidate 回傳錯誤時，程式碼執行 `sdsfree(err)` 後直接 `slotRangeArrayFree(slots)` 並回傳 NULL，但未將 err 設為 NULL，可能造成後續使用已釋放的 err。此外，若 slotRangeArrayNormalizeAndValidate 內部已釋放 err，則此處 double-free。建議確認 err 的所有權，並在釋放後設為 NULL。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n    sdsfree(err);\n    slotRangeArrayFree(slots);\n    return NULL;\n}",
+    "evidence": "diff 中錯誤處理路徑，sdsfree(err) 後未將 err 設為 NULL，且可能與內部釋放衝突。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1796,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "slotRangeArrayToString 未檢查 slots 指標是否為 NULL",
+    "body": "slotRangeArrayToString 新增了 `if (slots == NULL || slots->num_ranges == 0) return s;`，但若 slots 為 NULL，則 `slots->num_ranges` 會造成 NULL pointer dereference。建議改為 `if (slots == NULL) return s;` 或使用 `if (!slots || slots->num_ranges == 0)`。",
+    "existing_code": "if (slots == NULL || slots->num_ranges == 0) return s;",
+    "evidence": "diff 中新增的檢查，slots 為 NULL 時仍會存取 slots->num_ranges。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 1013,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "asmCountKeysInSlots 未檢查 slots 指標是否為 NULL",
+    "body": "asmCountKeysInSlots 函式開頭有 `if (!slots) return 0;`，但後續直接使用 `slots->num_ranges`，若 slots 為 NULL 則會 crash。建議改為 `if (!slots || slots->num_ranges == 0) return 0;`。",
+    "existing_code": "if (!slots) return 0;\n\nunsigned long long key_count = 0;\nint total_ranges = slots->num_ranges;",
+    "evidence": "diff 中新增的函式，未檢查 slots->num_ranges 是否為 0。"
+  }
+]

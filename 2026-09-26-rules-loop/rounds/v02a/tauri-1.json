@@ -1,0 +1,68 @@
+[
+  {
+    "path": "crates/tauri-cli/src/mobile/android/build.rs",
+    "line": 181,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 unwrap 可能導致 panic",
+    "body": "在呼叫 generate_tauri_properties 時，tauri_config.lock().unwrap().as_ref().unwrap() 使用了兩次 unwrap。如果 Mutex 被 poison（例如另一個執行緒在持有鎖時 panic）或 tauri_config 為 None，程式會直接 panic。建議使用更安全的錯誤處理，例如將鎖定結果轉換為 Result 並使用 ? 運算子，或提供明確的錯誤訊息。",
+    "existing_code": "generate_tauri_properties(\n    &config,\n    tauri_config.lock().unwrap().as_ref().unwrap(),\n    false,\n  )?;",
+    "evidence": "diff 中新增的呼叫使用了 unwrap，違反了 R16（應使用 Result 處理可失敗操作）。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/dev.rs",
+    "line": 274,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 unwrap 可能導致 panic",
+    "body": "在呼叫 generate_tauri_properties 時，tauri_config.lock().unwrap().as_ref().unwrap() 使用了兩次 unwrap。如果 Mutex 被 poison 或 tauri_config 為 None，程式會直接 panic。建議使用更安全的錯誤處理，例如將鎖定結果轉換為 Result 並使用 ? 運算子，或提供明確的錯誤訊息。",
+    "existing_code": "generate_tauri_properties(config, tauri_config.lock().unwrap().as_ref().unwrap(), true)?;",
+    "evidence": "diff 中新增的呼叫使用了 unwrap，違反了 R16。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 636,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "自動遞增 versionCode 存在並行衝突風險",
+    "body": "當 auto_increment_version_code 為 true 時，程式會讀取現有的 tauri.properties 中的 versionCode 並加 1。如果多個建置同時執行（例如 CI 中的平行工作），它們可能會讀到相同的舊值並產生相同的 versionCode，導致版本衝突。此外，如果 tauri.properties 未被提交到版本控制（如描述中建議的），在不同環境中可能無法正確遞增。建議考慮使用檔案鎖或原子操作來確保遞增的原子性，或明確說明此功能僅適用於序列化建置。",
+    "existing_code": "let last_version_code = std::fs::read_to_string(&app_tauri_properties_path)\n        .ok()\n        .and_then(|content| {\n          content\n            .lines()\n            .find(|line| line.starts_with(\"tauri.android.versionCode=\"))\n            .and_then(|line| line.split('=').nth(1))\n            .and_then(|s| s.trim().parse::<u32>().ok())\n        });\n      let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "讀取與寫入之間沒有鎖定，可能導致 race condition。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 645,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "自動遞增可能跳過版本或重複",
+    "body": "如果 tauri.properties 檔案不存在或格式不正確，last_version_code 會是 None，導致 new_version_code 設為 1。這可能導致版本代碼重置，特別是在檔案被意外刪除或未提交時。建議在這種情況下提供警告或錯誤，或使用其他方式（如從 Git 歷史取得）來確定起始值。",
+    "existing_code": "let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "當 last_version_code 為 None 時，直接使用 1 作為起始值，可能導致版本代碼衝突。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 625,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "缺少單元測試",
+    "body": "新增的 generate_tauri_properties 函式包含多個分支（自動遞增、手動 version_code、semver 推導、dev 模式），但沒有看到對應的單元測試。建議在 mod tests 中加入測試，涵蓋各種情況，以確保邏輯正確。",
+    "existing_code": "pub fn generate_tauri_properties(\n  config: &AndroidConfig,\n  tauri_config: &TauriConfig,\n  dev: bool,\n) -> Result<()> {",
+    "evidence": "diff 中沒有新增測試，違反了 R12（測試應組織在 cfg(test) 模組中）。"
+  },
+  {
+    "path": ".changes/auto-increment-android-version-code.md",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "變更檔案格式可能不符合 covector 規範",
+    "body": "變更檔案使用了 'minor:feat' 作為版本類型，但 covector 通常使用 'minor' 或 'patch' 等標準類型。請確認此格式是否正確，並參考其他變更檔案。",
+    "existing_code": "---\n\"tauri-cli\": minor:feat\n\"@tauri-apps/cli\": minor:feat\n\"tauri-build\": minor:feat\n\"tauri-utils\": minor:feat\n---",
+    "evidence": "diff 中新增的變更檔案使用了非標準的版本類型。"
+  }
+]

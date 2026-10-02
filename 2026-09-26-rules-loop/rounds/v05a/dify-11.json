@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "organize_agent_history 中 tool_call_response 的 content 誤用 tool_inputs",
+    "body": "在建立 ToolPromptMessage 時，content 使用了 `tool_inputs.get(tool, agent_thought.observation)`，但此處應為工具回應內容，應使用 `tool_responses.get(tool, observation_payload)`。這會導致回傳給模型的工具回應內容錯誤，可能造成模型產生錯誤的後續行為。",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中新增行 `content=str(tool_inputs.get(tool, agent_thought.observation)),`，而前文已解析 `tool_responses`，此處應使用 `tool_responses`。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R14] AgentThoughtValidation 使用 Pydantic v1 語法且未實際使用",
+    "body": "新增的 `AgentThoughtValidation` 類別使用了 Pydantic v1 的 `class Config` 語法，違反專案規範 R14（應使用 Pydantic v2 的 `ConfigDict`）。此外，此類別在 diff 中並未被任何程式碼使用，可能為冗餘程式碼。",
+    "existing_code": "class Config:\n        extra = \"allow\"  # Pydantic v1 syntax - should use ConfigDict(extra='forbid')",
+    "evidence": "diff 新增 `class AgentThoughtValidation(BaseModel):` 及其內部 `class Config`，且未見其他引用。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1838,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "MessageAgentThought 改為繼承 TypeBase 可能影響既有行為",
+    "body": "將 `MessageAgentThought` 的基底類別從 `Base` 改為 `TypeBase`。若 `TypeBase` 有額外的行為（如自動設定 `id` 或時間戳），可能影響既有資料建立流程。需確認此變更不會破壞現有功能。",
+    "existing_code": "class MessageAgentThought(TypeBase):",
+    "evidence": "diff 中 `-class MessageAgentThought(Base):` 改為 `+class MessageAgentThought(TypeBase):`。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 320,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "create_agent_thought 中 message_price_unit 設為 Decimal(\"0.001\") 可能不符預期",
+    "body": "原本 `message_price_unit=0`，現改為 `Decimal(\"0.001\")`。若此欄位代表每單位價格，預設值變更可能影響計費邏輯。需確認此變更是否為刻意調整。",
+    "existing_code": "message_price_unit=Decimal(\"0.001\"),",
+    "evidence": "diff 中 `-message_price_unit=0,` 改為 `+message_price_unit=Decimal(\"0.001\"),`。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R16] 關閉 TypeScript strict 模式",
+    "body": "將 `strict` 從 `true` 改為 `false` 違反專案規範 R16，且會降低型別安全，可能隱藏潛在錯誤。請恢復 `strict: true` 並修正相關型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 `\"strict\": true` 改為 `\"strict\": false`，違反 R16。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "輪詢邏輯可能造成多個並行 interval 與記憶體洩漏",
+    "body": "在 `useEffect` 中，依賴陣列包含 `account?.blueskyEnabled` 和 `account?.blueskyHandleConfirmed`。當 `confirmBlueskyHandleMutation` 成功更新快取後，`account` 物件會改變，導致 effect 重新執行。但舊的 interval 可能尚未清除，造成多個 interval 同時輪詢。此外，`confirmHandle` 使用 `useCallback` 且依賴為空，但內部呼叫的 `confirmBlueskyHandleMutation` 可能因重新渲染而改變，但由於依賴為空，可能使用到舊的 mutation 函式。建議使用 `useRef` 管理 interval，並在 effect 中明確清除，或改用 `setTimeout` 遞迴。",
+    "existing_code": "const confirmHandleInterval = setInterval(async () => {\n            if (retryCountRef.current >= MAX_CONFIRMATION_RETRIES) {\n                clearInterval(confirmHandleInterval);\n\n                toast.error('Something went wrong, please try again.');\n\n                await disableBlueskyMutation.mutateAsync();\n                setLoading(false);\n\n                return;\n            }\n\n            retryCountRef.current += 1;\n            confirmHandle();\n        }, CONFIRMATION_INTERVAL);",
+    "evidence": "effect 依賴 `account?.blueskyEnabled` 和 `account?.blueskyHandleConfirmed`，當 mutation 成功後，account 更新，effect 重新執行，但舊 interval 可能未清除。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2833,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "缺少 accountFollows 查詢的失效處理",
+    "body": "在 `useConfirmBlueskyHandleMutationForUser` 的 `onSuccess` 中，註解指出缺少 `accountFollows` 查詢的失效。這可能導致啟用後追蹤列表未更新。請加入相應的 `queryClient.invalidateQueries`。",
+    "existing_code": "// Note: Missing invalidation of accountFollows query that should happen here",
+    "evidence": "程式碼中明確註解缺少 invalidation。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "輪詢期間可能重複觸發 mutation",
+    "body": "在 `confirmHandle` 中，每次呼叫都會執行 `confirmBlueskyHandleMutation.mutateAsync()`，但沒有檢查是否已有進行中的 mutation。若前一次請求尚未完成，可能導致重複請求。建議加入 `isPending` 檢查或使用 `mutate` 並依賴 mutation 狀態。",
+    "existing_code": "const confirmHandle = useCallback(() => {\n        confirmBlueskyHandleMutation.mutateAsync().then((handle) => {\n            if (handle) {\n                setHandleConfirmed(true);\n            }\n        });\n        // eslint-disable-next-line react-hooks/exhaustive-deps\n    }, []); // Empty deps - mutations are stable in practice",
+    "evidence": "`confirmHandle` 無條件呼叫 mutation，未檢查 `isPending`。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 109,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "輪詢失敗後自動停用 Bluesky 可能非預期",
+    "body": "當達到最大重試次數時，程式碼自動呼叫 `disableBlueskyMutation.mutateAsync()`。這可能導致使用者僅因暫時性錯誤就被停用，且沒有提供手動重試選項。建議改為顯示錯誤並允許使用者手動重試或停用。",
+    "existing_code": "await disableBlueskyMutation.mutateAsync();",
+    "evidence": "在達到最大重試次數後自動停用。"
+  }
+]

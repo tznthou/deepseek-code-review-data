@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "搜尋功能失效：改用 teamMembers 取代 filteredMembers",
+    "body": "原本使用 `filteredMembers` 來顯示搜尋結果，現在改為 `teamMembers`，導致搜尋輸入框的過濾功能完全失效。使用者輸入搜尋關鍵字後，列表不會更新，仍顯示所有成員。\n\n建議：保留 `filteredMembers` 的計算邏輯，並在渲染時使用 `filteredMembers`。",
+    "existing_code": "{teamMembers.map((member) => (",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且 `filteredMembers` 變數仍存在於檔案中（未在 diff 中刪除），但不再被使用。"
+  },
+  {
+    "path": "apps/web/modules/event-types/hooks/useTeamMembersWithSegment.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "傳給 useProcessTeamMembersData 的 matchingTeamMembersWithResult 型別可能不符",
+    "body": "`useProcessTeamMembersData` 預期 `matchingTeamMembersWithResult` 的型別為 `RouterOutputs['viewer']['attributes']['findTeamMembersMatchingAttributeLogic']`，但此處傳入的物件可能缺少 `result` 屬性以外的其他欄位，或型別不完全相符。\n\n建議：確認 `useProcessTeamMembersData` 的型別定義，並確保傳入的資料結構完全符合。",
+    "existing_code": "matchingTeamMembersWithResult: matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult,",
+    "evidence": "diff 中新增的 hook 中，將 `matchingTeamMembersWithResult` 包裝成 `{ result: ... }` 後傳入，但 `useProcessTeamMembersData` 的型別可能要求完整的 trpc 回應型別。"
+  },
+  {
+    "path": "packages/platform/atoms/event-types/hooks/useTeamMembersWithSegmentPlatform.tsx",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案最後一行沒有換行符，可能導致某些工具或 diff 顯示異常。\n\n建議：在檔案結尾加上換行符。",
+    "existing_code": "};",
+    "evidence": "diff 顯示檔案結尾為 `};` 且沒有換行符（`\\ No newline at end of file`）。"
+  }
+]

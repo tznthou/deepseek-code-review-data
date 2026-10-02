@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Navigate 呼叫順序變更可能導致測試不穩定",
+    "body": "原本先 `Navigate` 再取得 `_originalH1Element`，現在改為先取得元素再導航。若 `Navigate` 會觸發頁面重新載入或 DOM 重建，先取得的元素參考可能失效，導致後續 `Browser.Equal` 失敗。建議確認 `Navigate` 的實作是否會使元素失效，或改回原本順序。",
+    "existing_code": "_originalH1Element = Browser.Exists(By.TagName(\"h1\"));\n        Navigate($\"{ServerPathBase}/redirect\");",
+    "evidence": "diff 顯示原本 `Navigate` 在前，`_originalH1Element` 在後；現在順序對調。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Browser.Navigate().Forward() 與註解語意不符",
+    "body": "註解寫「See that 'back' takes you to the place from before the redirection」，但程式碼從 `Back()` 改為 `Forward()`。若測試目的是驗證返回行為，使用 `Forward()` 可能無法達成預期，甚至導致測試失敗。請確認此變更是否為筆誤，或更新註解以符合實際行為。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 顯示原本為 `Browser.Navigate().Back();`，現改為 `Forward()`，但上方註解未變更。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 [QuarantinedTest] 可能掩蓋真實問題",
+    "body": "新增 `[QuarantinedTest]` 屬性並將 `AppContext.SetSwitch` 的參數從 `false` 改為 `true`。若此測試因已知問題被隔離，應確保有追蹤 issue 且未來會修復；若只是暫時規避，可能降低測試涵蓋率。建議確認此變更的必要性。",
+    "existing_code": "[TestMethod]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]",
+    "evidence": "diff 顯示新增 `[QuarantinedTest]` 屬性，且 `SetSwitch` 參數由 `false` 改為 `true`。"
+  }
+]

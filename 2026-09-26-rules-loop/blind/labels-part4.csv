@@ -1,0 +1,114 @@
+pair,label,note
+P0340,same,"finding 指出驗證用未 trim 的值、提交用 trim 後的值會不一致，修法相同"
+P0341,no,"GT 是缺 rustdoc；finding 是 &'static Path 懸垂指標疑慮，同一 struct 上兩個獨立問題"
+P0342,same,
+P0343,no,"GT 是 start_execution 與 enqueue_node 順序；finding 是 print 改 logging，同段獨立缺陷"
+P0344,same,
+P0345,same,
+P0346,no,"GT 是缺 From<FileWriteError> 導致編譯失敗；finding 是未用 thiserror，改用 thiserror 也補不上轉換"
+P0347,no,"GT 是 RequestBody.Description 設定順序；finding 是參數比對改用 propertyName，不同缺陷"
+P0348,no,"GT 是缺 co-located 測試檔；finding 是 posture 切換遺失值"
+P0349,no,"GT 是 popover 內 hidden items 沒接 onClick；finding 是 hover 間隙讓 popover 關閉，症狀『點不到』只是表面相似，機制與修法各自獨立"
+P0350,partial,"GT 是 Skeleton import 未使用；finding 是 Suspense 缺 fallback 並建議用 Skeleton，補 fallback 會順帶用到 import，但講的是另一個問題"
+P0351,same,"finding 指出手寫驗證沒檢查 schedule 結構並建議改用 Zod"
+P0352,same,"標題寫會顯示 None 有誤，但指出的 || 問題與修法（改 ??）相同"
+P0353,no,"GT 是先設權限後寫檔；finding 是未用 thiserror"
+P0354,same,
+P0355,no,"GT 是 argv[5] 越界；finding 是 argv[2] 記憶體洩漏，同段兩個獨立缺陷"
+P0356,same,
+P0357,no,"GT 是 RequestBody.Description 設定順序；finding 是參數比對改用 propertyName（雖提到描述可能落到 RequestBody），機制不同"
+P0358,no,
+P0359,no,"GT 是缺 rustdoc；finding 是 unwrap"
+P0360,no,
+P0361,same,
+P0362,no,"GT 是翻譯漏了 {newsletterName} 佔位符；finding 是用語習慣，同一行獨立缺陷"
+P0363,same,
+P0364,same,
+P0365,partial,"都指向 Proactive 時改用 trigger.after；GT 認為此欄位對 deployment trigger 根本不該用，finding 把它當合法欄位、只要求預設值或驗證，機制與修法不同"
+P0366,no,"GT 是 isCurrentUser 改成 includes 造成繞過；finding 是 PBAC 團隊權限範圍，不同段落不同機制"
+P0367,partial,"GT 是驗證邏輯放在 schema 檔（規範）；finding 是驗證不足並建議 Zod，同一函式、方向相關但不是同一問題"
+P0368,same,
+P0369,same,
+P0370,same,"finding 指出 ?? true 與他處 ?? false 不一致並可能讓下游誤判，自然修法相同"
+P0371,no,"GT 是 mark_edge_skipped 在遞迴之後；finding 是 print"
+P0372,no,"GT 是 Suspense 缺 fallback；finding 是函式名大小寫"
+P0373,no,"GT 是缺存取修飾詞；finding 是命名重複疑慮"
+P0374,same,"GT 著重 strict TS 型別、finding 著重執行期比較失效，加 null 檢查可同時修掉"
+P0375,no,"GT 是缺 From 轉換；finding 是先設權限後寫檔"
+P0376,no,"GT 是 throw 泛用 Error；finding 是驗證不足，互相獨立"
+P0377,same,
+P0378,partial,"都指向 posture 欄位切換；finding 講切換後殘留舊欄位值，GT 講此 trigger 根本不該切換欄位"
+P0379,partial,"同一行、同樣是 off-by-one，但 finding 歸因於時區與 DST，沒有指出 ceil 進位"
+P0380,same,"finding 指出 ?? true 與他處 ?? false 不一致、下游會誤判取消類型，自然修法相同"
+P0381,same,"GT 說會 TypeError、finding 說比較恆為 false，機制描述不同但修法（null 檢查或預設值）相同"
+P0382,no,
+P0383,no,"GT 是 setUp 缺 await；finding 是 tearDown 的 @MainActor 隔離"
+P0384,same,"標題歸因時區或時鐘偏移，但範例（相差 2 分鐘算成 1 天、未滿 24 小時）正是 ceil 進位問題"
+P0385,same,"finding 認為只影響可讀性，但同樣建議移回迴圈後，修法相同"
+P0386,same,
+P0387,same,
+P0388,same,
+P0389,same,
+P0390,no,"GT 是引號格式；finding 是驗證不足"
+P0391,no,"GT 是限額計算 floor 對 round；finding 是天數計算，不同函式"
+P0392,same,
+P0393,partial,"同一行 Convert.ToInt64；GT 說應改 ToInt32，finding 說會隱藏原始型別、建議先斷言型別，修法不同"
+P0394,same,
+P0395,same,
+P0396,no,
+P0397,no,"GT 是驗證邏輯放 schema 檔；finding 是 Schedule 型別欄位不全"
+P0398,partial,"都指出空陣列時 AND 變 undefined；GT 講語意改變、應移除 length 判斷，finding 講 Prisma 型別錯誤、建議條件展開（保留 length 判斷），機制與修法不同"
+P0399,same,
+P0400,partial,"同一函式；GT 是納入未啟用的 provider（應改用 getProviders），finding 是跨 provider 合併後混用，後果有重疊但不是同一缺陷"
+P0401,same,
+P0402,no,"GT 是 weight 空字串串接；finding 是 (group) 未 i18n"
+P0403,same,
+P0404,same,"finding 指出 portal.json 的『名称』用詞不當、建議改回『名字』，改了即與 ghost.json 一致；沒提跨檔不一致，算抓到一半"
+P0405,same,
+P0406,no,"finding 內容自相矛盾且與 thiserror 規範無關"
+P0407,no,"GT 是 size_t 溢位；finding 是截斷後狀態未更新"
+P0408,no,"GT 是引號格式；finding 是驗證不足"
+P0409,no,"GT 是 log 計數用錯變數；finding 是 None 被序列化成 null"
+P0410,no,"GT 是 ceil；finding 是回傳 Infinity"
+P0411,partial,"都涉及 AOF_BROKEN_RECOVERED 進 cleanup 的條件；finding 講非最後檔案的重複處理，沒發現最後檔案成功修復後被提前退出"
+P0412,same,
+P0413,same,
+P0414,no,"GT 是子團隊缺 parentId 條件；finding 是 ::bigint 轉型效能"
+P0415,no,"GT 是缺分號；finding 是回傳 Infinity"
+P0416,partial,"GT 是 __str__ 缺對應的 __repr__；finding 是不必要的 __str__ 覆寫，同一方法、相關但不同規範"
+P0417,no,
+P0418,same,
+P0419,no,"GT 是 hidden items 沒接 onClick；finding 是 hover 開關讓 popover 意外關閉"
+P0420,partial,"同一個 size_t 轉型條件；GT 是 valid_up_to 大於 st_size 時溢位，finding 講 valid_up_to 為 -1（且誤讀控制流程）"
+P0421,same,"後果描述不同（重複處理 vs trailing 沒動畫），修法同為改成 trailingPageActionStack"
+P0422,no,"GT 是 moveItem 參數順序；finding 是 useMemo"
+P0423,same,
+P0424,no,"GT 是缺分號；finding 是回傳 Infinity"
+P0425,no,
+P0426,no,"GT 是 > 應為 >=；finding 是 Date.now 不可注入"
+P0427,no,"GT 是 log 計數用錯變數；finding 是 TypedDict 序列化"
+P0428,same,"finding 明確指出呼叫 async @MainActor 方法沒加 await，主建議雖是標 @MainActor，也要求修正呼叫方式"
+P0429,same,"finding 只抓到全空輸入變成含空字串陣列的情況，GT 的過濾空行修法可同時修掉"
+P0430,no,"GT 是 size_t 溢位；finding 是截斷後 sb.st_size 未更新"
+P0431,no,"GT 是 RequestBody.Description 設定順序；finding 是參數比對改用 propertyName"
+P0432,same,
+P0433,same,
+P0434,no,
+P0435,no,"GT 是空 merge 提前 return；finding 是 unwrap"
+P0436,same,
+P0437,no,"GT 是缺測試檔；finding 是空輸入處理"
+P0438,partial,"GT 是驗證邏輯放在 schema 檔（規範）；finding 是驗證不足並建議 Zod，同一函式、方向相關但不是同一問題"
+P0439,no,"同一行；GT 是 > 應為 >=，finding 是回傳 Infinity，兩個獨立缺陷"
+P0440,same,
+P0441,partial,"GT 是驗證邏輯放在 schema 檔（規範）；finding 是驗證不足並建議 Zod，同一函式、方向相關但不是同一問題"
+P0442,no,"GT 是 print；finding 是 mark_edge_skipped 順序"
+P0443,no,"GT 是 Suspense 缺 fallback；finding 是連結無障礙標籤"
+P0444,same,"finding 指出條件反轉並質疑，修法同為改回"
+P0445,no,
+P0446,same,
+P0447,same,
+P0448,same,
+P0449,no,"GT 是 Skeleton import 未使用；finding 是缺測試檔"
+P0450,same,"finding 質疑同一個 null 指定的位置搬移，修法同為移回"
+P0451,no,"同一行；GT 是 > 應為 >=，finding 是回傳 Infinity，兩個獨立缺陷"
+P0452,no,"GT 是 argv[5] 越界；finding 是 argv[2] 記憶體洩漏，同段兩個獨立缺陷"

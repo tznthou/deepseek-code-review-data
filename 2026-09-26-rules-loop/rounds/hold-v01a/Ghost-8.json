@@ -1,0 +1,112 @@
+[
+  {
+    "path": "ghost/i18n/locales/zh/comments.json",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除 comments.json 可能導致翻譯缺失",
+    "body": "此 PR 刪除了整個 comments.json 檔案，其中包含大量評論功能的翻譯字串。如果這些翻譯沒有在其他地方提供，使用者將看到英文原文或缺失的字串。請確認是否已將這些翻譯移至其他檔案，或確認刪除是有意為之。",
+    "existing_code": "{\n    \"{amount} characters left\": \"还剩{amount}字\",",
+    "evidence": "diff 顯示整個檔案被刪除，且沒有新增對應的翻譯檔案。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "翻譯變更可能遺失變數",
+    "body": "原文為「{memberEmail} will no longer receive {newsletterName} newsletter.」，新翻譯為「{memberEmail}将不会再收到新闻信。」，遺漏了 {newsletterName} 變數。這可能導致使用者無法得知具體是哪個新聞信。建議保留變數，例如「{memberEmail}将不会再收到{newsletterName}新闻信。」",
+    "existing_code": "\"{memberEmail} will no longer receive {newsletterName} newsletter.\": \"{memberEmail}将不会再收到新闻信。\",",
+    "evidence": "diff 中此行將原本包含 {newsletterName} 的翻譯改為不包含變數的版本。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "翻譯用語可能不符合繁體中文習慣",
+    "body": "將「偏好設定」改為「偏好设置」，但「设置」是簡體中文用語，繁體中文通常使用「設定」。建議維持「偏好設定」或改為「偏好設置」需確認目標受眾。",
+    "existing_code": "\"Didn't mean to do this? Manage your preferences <button>here</button>.\": \"操作有误？可以在<button>这里</button>修改您的偏好设置。\",",
+    "evidence": "diff 中將「偏好設定」改為「偏好设置」。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "翻譯用語可能不符合繁體中文習慣",
+    "body": "將「設定」改為「设置」，但「设置」是簡體中文用語。建議維持「設定」。",
+    "existing_code": "\"Email newsletter settings updated\": \"新闻信设置已更新\",",
+    "evidence": "diff 中將「設定」改為「设置」。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "翻譯用語可能不符合繁體中文習慣",
+    "body": "將「会籍」改為「订阅」，但「订阅」是簡體中文用語，繁體中文通常使用「訂閱」。建議使用「訂閱」。",
+    "existing_code": "\"Failed to update subscription, please try again\": \"更新订阅失败，请重试\",",
+    "evidence": "diff 中將「会籍」改為「订阅」。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 117,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "翻譯用語可能不符合繁體中文習慣",
+    "body": "將「名字」改為「名称」，但「名称」通常用於事物而非人。建議維持「名字」。",
+    "existing_code": "\"Name\": \"名称\",",
+    "evidence": "diff 中將「名字」改為「名称」。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 124,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "翻譯用語可能不符合繁體中文習慣",
+    "body": "將「新闻信」改為「邮件通讯」，但「邮件通讯」較少使用，且可能與其他翻譯不一致。建議維持「新闻信」或統一用語。",
+    "existing_code": "\"Once resubscribed, if you still don't see emails in your inbox, check your spam folder. Some inbox providers keep a record of previous spam complaints and will continue to flag emails. If this happens, mark the latest newsletter as 'Not spam' to move it back to your primary inbox.\": \"重新订阅后，如果收件箱中仍然没有看到邮件，请检查垃圾邮件文件夹。一些邮件服务商会保留以往的垃圾邮件投诉记录，并继续对邮件进行标记。如果出现这种情况，请将最新的邮件通讯标记为“非垃圾邮件”，并移回主收件箱。\",",
+    "evidence": "diff 中將「新闻信」改為「邮件通讯」。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 176,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "翻譯用語可能不符合繁體中文習慣",
+    "body": "將「仅限邀请」改為「仅限受邀访问」，但「受邀访问」較為冗長。建議維持「仅限邀请」或改為「仅限受邀」。",
+    "existing_code": "\"This site is invite-only, contact the owner for access.\": \"此网站仅限受邀访问，请联系网站所有者以获取权限。\",",
+    "evidence": "diff 中將「仅限邀请」改為「仅限受邀访问」。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 192,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "翻譯用語可能不符合繁體中文習慣",
+    "body": "將「新闻信」改為「邮件」，但「邮件」範圍較廣，可能失去特定性。建議維持「新闻信」或改為「電子報」。",
+    "existing_code": "\"Unsubscribe from all emails\": \"取消接收所有邮件\",",
+    "evidence": "diff 中將「新闻信」改為「邮件」。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 212,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "翻譯用語可能不符合繁體中文習慣",
+    "body": "將「电子邮件」改為「邮件」，但「邮件」較為口語。建議維持「电子邮件」或統一用語。",
+    "existing_code": "\"You're currently not receiving emails\": \"您当前不会收到邮件。\",",
+    "evidence": "diff 中將「电子邮件」改為「邮件」。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 使用 assert 取代 XCTAssert 導致測試失效",
+    "body": "在測試方法中，將原本的 `XCTAssertTrue` 改為 Swift 標準庫的 `assert`。`assert` 在 Release 建置中會被編譯器移除，且即使觸發也只會 crash 而不會被 XCTest 視為測試失敗。這會導致測試永遠通過，失去驗證功能。請改回使用 `XCTAssertTrue` 或 `XCTAssert`。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\nassert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將 `XCTAssertTrue(granted)` 改為 `assert(granted, ...)`，違反 R06 規範中「使用 XCTAssert family of assertions」的要求。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/FxAWebViewModelTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor",
+    "body": "此測試類別涉及 UI 相關的 ViewModel（FxAWebViewModel），但未加上 `@MainActor`。在 Swift 6 嚴格 concurrency 下，若 ViewModel 或相關 API 被標註為 @MainActor，測試方法可能需要在主執行緒執行。建議加上 `@MainActor` 以確保執行緒安全。",
+    "existing_code": "class FxAWebViewModelTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 @MainActor，而其他 UI 相關測試類別（如 StoriesFeedDiffableDataSourceTests）已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 測試類別未標註 @MainActor",
+    "body": "此測試類別涉及 NotificationManager，可能與 UI 或 main actor 相關，但未加上 `@MainActor`。建議確認是否需要加上以避免 concurrency 問題。",
+    "existing_code": "class NotificationManagerTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 @MainActor，而其他 UI 相關測試類別已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Mocks/MockProfile.swift",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R11] 屬性缺少明確的 access control",
+    "body": "`getQueuedTabsCalled` 屬性在 MockTabQueue 中似乎沒有明確的 access control 修飾詞。根據 R11，所有屬性應有明確的修飾詞（如 private、internal）。請確認此屬性是否需要加上 `private(set)` 或 `internal`。",
+    "existing_code": "getQueuedTabsCalled += 1",
+    "evidence": "diff 中顯示 `getQueuedTabsCalled` 被使用，但未見其宣告，可能缺少修飾詞。"
+  }
+]

@@ -1,0 +1,7 @@
+[info] repo 規範：repo=Ghost、24 條、5306 字元、placement=after_diff、sha256=3fe6949660d9
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 15963 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 apps/shade/src/components/ui/filters.tsx:1122 → 1125（片段唯一命中）
+[info] 定位不到 apps/shade/src/components/ui/filters.tsx:1134（片段多重命中（2 處），不猜）
+[info] 定位不到 apps/shade/src/components/ui/filters.tsx:1271（片段多重命中（2 處），不猜）
+[info] 重新定位 apps/stats/src/views/Stats/components/stats-filter.tsx:497 → 498（片段唯一命中）
+[info] 完成於 11.6s ｜ findings=5 ｜ relocated=2 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 6260, "completion_tokens": 1266, "total_tokens": 7526, "prompt_tokens_details": {"cached_tokens": 4992}, "prompt_cache_hit_tokens": 4992, "prompt_cache_miss_tokens": 1268}

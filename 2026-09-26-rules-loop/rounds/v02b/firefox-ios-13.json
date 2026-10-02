@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 測試方法缺少 'test' 前綴，將不會被 XCTest 執行",
+    "body": "方法 `verifyBookmarksShareNormalWebsiteReminders()` 被改名，但沒有以 `test` 開頭。XCTest 只會自動執行以 `test` 開頭的實例方法，因此這個測試將被靜默跳過，導致測試涵蓋率下降。建議改回 `testBookmarksShareNormalWebsiteReminders()` 或加上 `test` 前綴。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中將 `func testBookmarksShareNormalWebsiteReminders()` 改為 `func verifyBookmarksShareNormalWebsiteReminders()`，違反 XCTest 命名慣例。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中提前 return 可能略過 app.terminate() 與 super.tearDown()",
+    "body": "在 `tearDown()` 中，當 `self.name.contains(\"testSelectBottomPlacement\") || iPad()` 時直接 `return`，這會跳過後續的 `app.terminate()` 和 `try await super.tearDown()`。這可能導致應用程式未正確終止，影響後續測試的隔離性，甚至造成測試不穩定。建議改用 `if` 條件包住 theme 切換，而不是直接 return，確保清理邏輯總會執行。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 顯示在 tearDown 中新增了提前 return 的邏輯，且 return 位於 app.terminate() 之前。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 349,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "XCTSkipIf 的使用方式可簡化",
+    "body": "程式碼使用 `let shouldSkipTest = true` 再傳入 `XCTSkipIf`，但可以直接寫 `try XCTSkipIf(iPad(), \"Toolbar option not available for iPad\")`，更為簡潔。此外，原本的 `guard !iPad() else { throw XCTSkip(...) }` 寫法也同樣有效，此改動並未帶來明顯好處。",
+    "existing_code": "if iPad() {\n    let shouldSkipTest = true\n    try XCTSkipIf(shouldSkipTest, \"Toolbar option not available for iPad\")\n}",
+    "evidence": "diff 顯示新增了 `let shouldSkipTest = true` 並用於 XCTSkipIf，但條件本身即為布林值。"
+  }
+]

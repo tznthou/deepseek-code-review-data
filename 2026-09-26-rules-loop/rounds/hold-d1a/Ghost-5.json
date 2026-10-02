@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R18] 使用雙引號字串",
+    "body": "違反 R18：字串應使用單引號。此處將原本的單引號改為雙引號，不符合專案規範。建議改回單引號。",
+    "existing_code": "const STORAGE_KEY = \"ghost-history\";",
+    "evidence": "diff 中將 `'ghost-history'` 改為 `\"ghost-history\"`，違反 R18。"
+  },
+  {
+    "path": "ghost/core/core/shared/config/defaults.json",
+    "line": 305,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R17] JSON 縮排不一致",
+    "body": "違反 R17：JSON 檔案應使用 2 空格縮排。此處將 `\"memberWelcomeEmailTestInbox\" : \"\"` 改為 `\"memberWelcomeEmailTestInbox\": \"\"`，但未調整縮排，導致該行縮排可能與其他行不一致（其他行可能為 4 空格）。建議確認縮排並統一為 2 空格。",
+    "existing_code": "\"memberWelcomeEmailTestInbox\": \"\"",
+    "evidence": "diff 中該行縮排未變更，但冒號前空格移除，可能造成縮排不一致。"
+  }
+]

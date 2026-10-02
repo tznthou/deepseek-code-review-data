@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "moduleLoader token 設定錯誤，導致 getFeaturesRepository() 無法取得實例",
+    "body": "在 `FeaturesRepository.ts` 中，`moduleLoader` 的 `token` 屬性被設定為 `moduleToken`（`FLAGS_DI_TOKENS.FEATURES_REPOSITORY_MODULE`），但 `getFeaturesRepository()` 使用 `featuresRepositoryModuleLoader.token` 來取得實例。這會導致 `container.get()` 使用錯誤的 token，無法取得綁定的 `FeaturesRepository` 實例，造成 runtime error。\n\n建議將 `moduleLoader` 的 `token` 改為 `token`（即 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY`），與其他 module 的慣例一致。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeaturesRepository.ts` 第 20-23 行，`token: moduleToken`；而 `packages/features/di/containers/FeaturesRepository.ts` 第 7 行使用 `featuresRepositoryModuleLoader.token` 來取得實例。"
+  },
+  {
+    "path": "packages/features/di/containers/FeatureOptInService.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "每次呼叫 getFeatureOptInService() 都建立新的 DI 容器，可能造成資源浪費與狀態不一致",
+    "body": "`getFeatureOptInService()` 每次呼叫都會建立新的 `createContainer()` 並載入模組。若此函式被頻繁呼叫（例如每個 request），會重複建立容器與實例，可能導致效能問題，且若模組內有狀態（如快取），狀態不會共享。\n\n建議將容器建立改為 singleton 模式，或使用全域共用的容器。",
+    "existing_code": "export function getFeatureOptInService(): IFeatureOptInService {\n  const featureOptInServiceContainer = createContainer();\n  featureOptInServiceModuleLoader.loadModule(featureOptInServiceContainer);\n  return featureOptInServiceContainer.get<IFeatureOptInService>(featureOptInServiceModuleLoader.token);\n}",
+    "evidence": "diff 中新增的 `packages/features/di/containers/FeatureOptInService.ts` 第 6-9 行。"
+  },
+  {
+    "path": "packages/features/di/containers/FeaturesRepository.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "每次呼叫 getFeaturesRepository() 都建立新的 DI 容器，可能造成資源浪費與狀態不一致",
+    "body": "`getFeaturesRepository()` 每次呼叫都會建立新的 `createContainer()` 並載入模組。若此函式被頻繁呼叫，會重複建立容器與實例，可能導致效能問題，且若模組內有狀態（如快取），狀態不會共享。\n\n建議將容器建立改為 singleton 模式，或使用全域共用的容器。",
+    "existing_code": "export function getFeaturesRepository(): FeaturesRepository {\n  const featuresRepositoryContainer = createContainer();\n  featuresRepositoryModuleLoader.loadModule(featuresRepositoryContainer);\n  return featuresRepositoryContainer.get<FeaturesRepository>(featuresRepositoryModuleLoader.token);\n}",
+    "evidence": "diff 中新增的 `packages/features/di/containers/FeaturesRepository.ts` 第 5-8 行。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 82,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "整合測試未使用 DI 容器，而是直接呼叫 getFeatureOptInService() 與 getFeaturesRepository()",
+    "body": "測試中直接呼叫 `getFeatureOptInService()` 與 `getFeaturesRepository()`，這會建立新的 DI 容器，而非使用測試環境中可能已設定的容器。這可能導致測試與實際應用程式使用不同的依賴設定，降低測試的可靠性。\n\n建議在測試中注入 mock 或使用測試專用的 DI 容器。",
+    "existing_code": "const featuresRepository = getFeaturesRepository();\n  const service = getFeatureOptInService();",
+    "evidence": "diff 中 `packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts` 第 82-83 行。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/IFeatureOptInService.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "介面檔案匯入型別不一致：FeatureState 從 config 匯入，但 FeatureId 從 config 匯入",
+    "body": "在 `IFeatureOptInService.ts` 中，`FeatureState` 從 `@calcom/features/flags/config` 匯入，但 `FeatureId` 也從同一處匯入。然而，在 `FeatureOptInService.ts` 中，`FeatureId` 是從 `@calcom/features/flags/config` 匯入，而 `FeatureState` 是從 `@calcom/features/flags/config` 匯入。這可能導致型別不一致或循環依賴。\n\n建議確認型別來源，並統一匯入路徑。",
+    "existing_code": "import type { FeatureId, FeatureState } from \"@calcom/features/flags/config\";",
+    "evidence": "diff 中新增的 `packages/features/feature-opt-in/services/IFeatureOptInService.ts` 第 1 行。"
+  }
+]

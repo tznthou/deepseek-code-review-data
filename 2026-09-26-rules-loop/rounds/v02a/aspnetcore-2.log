@@ -1,0 +1,5 @@
+[info] repo 規範：repo=aspnetcore、20 條、10438 字元、placement=before_diff、sha256=3feef6acc67f
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 15808 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 eng/common/tools.ps1:552 → 564（片段唯一命中）
+[info] 定位不到 src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs:107（片段多重命中（2 處），不猜）
+[info] 完成於 8.1s ｜ findings=2 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 8709, "completion_tokens": 912, "total_tokens": 9621, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 7173}

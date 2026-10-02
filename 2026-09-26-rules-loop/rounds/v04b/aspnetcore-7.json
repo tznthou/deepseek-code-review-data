@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "enableJSRootComponents 的條件判斷可能導致多 host 情境下錯誤拋出例外",
+    "body": "原邏輯僅檢查 manager 是否存在，現在改為同時檢查 currentRendererId === rendererId。若不同 renderer type（例如 Server 與 WebAssembly）同時存在，且第一個 renderer 已初始化，第二個 renderer 呼叫時會因 manager 存在但 rendererId 不同而拋出例外。但註解說明此為不支援的多 host 情境，因此行為可能符合預期。然而，若同一 renderer type 但不同 rendererId（例如多個 circuit）同時存在，此條件會允許覆寫 manager，可能導致舊 circuit 的 manager 被覆蓋，造成後續操作錯誤。建議確認是否應改為僅在 manager 存在且 rendererId 不同時拋出例外，或明確限制單一 renderer type。",
+    "existing_code": "if (manager && currentRendererId === rendererId) {",
+    "evidence": "diff 中第 121 行新增條件 currentRendererId === rendererId，且後續指派 currentRendererId = rendererId; 與 manager = managerInstance; 可能覆寫既有 manager。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "hasInitializedJsComponents 全域旗標可能導致初始化遺漏",
+    "body": "新增 hasInitializedJsComponents 旗標，僅在第一次啟用時執行初始化。若同一頁面有多個 renderer type（例如 Server 與 WebAssembly），且第一個 renderer 初始化後，第二個 renderer 啟用時將不會執行初始化，即使其 jsComponentInitializers 不同。這可能導致第二個 renderer 的 JS 元件未正確初始化。建議將旗標改為以 rendererId 為鍵的集合，或確認此情境不支援。",
+    "existing_code": "if (!hasInitializedJsComponents) {",
+    "evidence": "diff 中第 135 行新增條件，且 hasInitializedJsComponents 為模組層級變數，未依 rendererId 區分。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 145,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "迴圈內未使用大括號可能違反專案規範 R17",
+    "body": "在 for 迴圈內，單行陳述式未使用大括號。雖然 TypeScript 語法允許，但專案規範 R17 要求所有控制流程陳述式使用大括號，以預防潛在錯誤。建議加上大括號。",
+    "existing_code": "for (const componentIdentifier of componentIdentifiers)\n        initializerFunc(componentIdentifier, jsComponentParameters[componentIdentifier]);",
+    "evidence": "diff 中第 139-140 行顯示 for 迴圈內單行陳述式未使用大括號。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/Tests/StatePersistenceTest.cs",
+    "line": 282,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試方法未遵循 Arrange-Act-Assert 模式（R06）",
+    "body": "新增的測試方法 PersistentStateIsSupportedInDynamicJSRoots 未使用 Arrange-Act-Assert 註解分隔測試階段。雖然專案規範 R06 要求測試方法使用此模式，但此測試為 E2E 測試，可能不適用。建議確認是否需遵循。",
+    "existing_code": "public void PersistentStateIsSupportedInDynamicJSRoots(string renderMode)\n    {\n        Navigate($\"subdir/WasmMinimal/dynamic-js-root.html?renderMode={renderMode}\");\n\n        Browser.Equal(\"Counter\", () => Browser.Exists(By.TagName(\"h1\")).Text);\n        Browser.Equal(\"Current count: 0\", () => Browser.Exists(By.CssSelector(\"p[role='status']\")).Text);\n\n        Browser.Click(By.CssSelector(\"button.btn-primary\"));\n        Browser.Equal(\"Current count: 1\", () => Browser.Exists(By.CssSelector(\"p[role='status']\")).Text);\n    }",
+    "evidence": "diff 中新增的測試方法未包含 Arrange/Act/Assert 註解。"
+  }
+]

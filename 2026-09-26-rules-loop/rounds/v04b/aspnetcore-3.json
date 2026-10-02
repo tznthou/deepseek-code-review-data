@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較使用 OrdinalIgnoreCase 在 Linux 上可能導致誤判",
+    "body": "在 Linux 上檔案路徑是區分大小寫的，使用 `StringComparison.OrdinalIgnoreCase` 比較路徑可能錯誤地認為兩個不同大小寫的目錄是相同的。例如 `/home/user/.dotnet/corefx/cryptography/x509stores/my` 和 `/home/user/.dotnet/corefx/cryptography/x509stores/My` 會被視為相同，但實際上是不同目錄。建議使用 `StringComparison.Ordinal`（或 `StringComparison.OrdinalIgnoreCase` 僅在 Windows 上）。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的這一行使用了 OrdinalIgnoreCase，而此程式碼在 Unix 平台上執行。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/CertificateManager.cs",
+    "line": 1314,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R07] 新增的 public 事件方法缺少 XML 文件註解",
+    "body": "新增的 `UnixOpenSslCertificateDirectoryAlreadyConfigured` 和 `UnixSuggestAppendingToEnvironmentVariable` 是 public 方法，但沒有 XML 文件註解。根據規範 R07，所有 public API 都應該有 XML 文件註解。",
+    "existing_code": "[Event(113, Level = EventLevel.Verbose, Message = \"The certificate directory '{0}' is already included in the {1} environment variable.\")]\ninternal void UnixOpenSslCertificateDirectoryAlreadyConfigured(string certDir, string envVarName) => WriteEvent(113, certDir, envVarName);",
+    "evidence": "diff 中新增的這兩個方法沒有 XML 文件註解。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "過於寬泛的例外處理可能隱藏錯誤",
+    "body": "在解析 SSL_CERT_DIR 中的每個目錄時，使用 `catch` 捕獲所有例外並忽略。這可能隱藏了非預期的錯誤，例如 `Path.GetFullPath` 可能拋出的 `ArgumentException`、`NotSupportedException`、`PathTooLongException` 等。建議至少記錄這些例外，或僅捕獲預期的例外類型。",
+    "existing_code": "catch\n{\n    // Ignore invalid directory entries in SSL_CERT_DIR\n    return false;\n}",
+    "evidence": "diff 中新增的 catch 區塊沒有指定例外類型，且註解表明忽略所有例外。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 994,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R11] NssDb 類別應使用 primary constructor",
+    "body": "NssDb 類別從 primary constructor 改為傳統建構函式，但根據規範 R11，簡單的依賴注入場景應使用 primary constructor。此類別只有兩個唯讀屬性，適合使用 primary constructor。",
+    "existing_code": "private sealed class NssDb\n{\n    private readonly string _path;\n    private readonly bool _isFirefox;\n\n    public NssDb(string path, bool isFirefox)\n    {\n        _path = path;\n        _isFirefox = isFirefox;\n    }\n\n    public string Path => _path;\n    public bool IsFirefox => _isFirefox;\n}",
+    "evidence": "diff 中將原本的 primary constructor 改為傳統建構函式，違反 R11。"
+  }
+]

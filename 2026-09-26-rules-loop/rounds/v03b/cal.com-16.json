@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 227,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "getRecordings 呼叫缺少 await，可能回傳 Promise 而非資料",
+    "body": "在 `getBookingRecordings` 方法中，`this.calVideoService.getRecordings(bookingUid)` 的呼叫移除了 `await`。若 `getRecordings` 是非同步方法（回傳 Promise），則 `recordings` 會是 Promise 物件，而非實際的錄音資料陣列。這會導致 API 回傳錯誤的資料型別，前端可能無法正確處理。\n\n**失敗情境**：當客戶端呼叫此端點時，回應中的 `data` 欄位會是 Promise 物件（序列化後可能變成空物件或錯誤），而非錄音清單。\n\n**建議**：恢復 `await`，確保取得實際資料。",
+    "existing_code": "const recordings = this.calVideoService.getRecordings(bookingUid);",
+    "evidence": "diff 中此行由 `const recordings = await this.calVideoService.getRecordings(bookingUid);` 改為 `const recordings = this.calVideoService.getRecordings(bookingUid);`，移除了 await。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 216,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄音端點權限從 BOOKING_READ 改為 BOOKING_WRITE，可能導致授權不足",
+    "body": "錄音端點原本使用 `@Permissions([BOOKING_READ])`，現在改為 `@Permissions([BOOKING_WRITE])`。這表示只有具備寫入權限的 API 金鑰才能存取錄音，而一般唯讀金鑰將無法使用此端點。若此變更非刻意為之，可能造成現有整合失效。\n\n**失敗情境**：使用僅有讀取權限的 API 金鑰呼叫此端點時，會收到 403 Forbidden。\n\n**建議**：確認此權限變更是否符合預期。若錄音僅需讀取權限，應維持 `BOOKING_READ`。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中此行由 `@Permissions([BOOKING_READ])` 改為 `@Permissions([BOOKING_WRITE])`。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "逐字稿端點守衛順序可能影響錯誤回應",
+    "body": "逐字稿端點的 `@UseGuards` 順序從原本的 `BookingUidGuard` 改為 `BookingPbacGuard, ApiAuthGuard, BookingUidGuard`。守衛執行順序可能影響錯誤回應的優先權。例如，若 `BookingPbacGuard` 在 `ApiAuthGuard` 之前執行，未驗證的請求可能先觸發 Pbac 檢查而回傳 403，而非預期的 401。\n\n**失敗情境**：未帶憑證的請求可能收到 403 而非 401，影響客戶端錯誤處理。\n\n**建議**：確認守衛順序是否符合預期，通常應先執行驗證守衛（ApiAuthGuard）再執行授權守衛（BookingPbacGuard）。",
+    "existing_code": "@UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)",
+    "evidence": "diff 中此行由 `@UseGuards(BookingUidGuard)` 改為 `@UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)`。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-recordings.output.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "未使用的 import BookingRepository",
+    "body": "新增了 `import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";`，但在檔案中並未使用。這可能是誤加的 import，會觸發 lint 警告。\n\n**建議**：移除此未使用的 import。",
+    "existing_code": "import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";",
+    "evidence": "diff 中新增此 import，但檔案內容未見使用 BookingRepository。"
+  }
+]

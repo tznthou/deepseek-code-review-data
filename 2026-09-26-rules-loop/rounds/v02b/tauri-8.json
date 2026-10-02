@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "滑鼠按鍵狀態對應反轉",
+    "body": "在 `From<tray_icon::MouseButtonState>` 的實作中，`Up` 被對應到 `MouseButtonState::Down`，而 `Down` 被對應到 `MouseButtonState::Up`，這與原本的語意相反。這會導致所有依賴此轉換的程式碼（例如處理 tray icon 點擊事件）得到錯誤的按鍵狀態，可能造成功能異常。\n\n建議修正為：\n```rust\nmatch value {\n    tray_icon::MouseButtonState::Up => MouseButtonState::Up,\n    tray_icon::MouseButtonState::Down => MouseButtonState::Down,\n}\n```",
+    "existing_code": "tray_icon::MouseButtonState::Up => MouseButtonState::Down,\n      tray_icon::MouseButtonState::Down => MouseButtonState::Up,",
+    "evidence": "diff 中顯示原本的對應是 `Up => Up` 和 `Down => Down`，但修改後變成了 `Up => Down` 和 `Down => Up`，明顯是錯誤的。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/error.rs",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "條件編譯屬性變更可能影響錯誤訊息",
+    "body": "原本使用 `#[cfg(target_os = \"linux\")]` 和 `#[cfg(not(target_os = \"linux\"))]` 來為 `MissingBundleTypeVar` 變體提供不同的錯誤訊息。現在改為使用 `#[cfg_attr]` 來附加 `error` 屬性，但 `cfg_attr` 的條件是基於 `target_os`，這在語意上應該等價。然而，需要確認 `thiserror` 的 `error` 屬性是否能在 `cfg_attr` 中正確運作，以及是否會影響錯誤訊息的產生。建議驗證在 Linux 和非 Linux 平台上編譯時，錯誤訊息是否如預期。",
+    "existing_code": "#[cfg_attr(\n    target_os = \"linux\",\n    error(\"__TAURI_BUNDLE_TYPE variable not found in binary. Make sure tauri crate and tauri-cli are up to date and that symbol stripping is disabled (https://doc.rust-lang.org/cargo/reference/profiles.html#strip)\")\n  )]\n  #[cfg_attr(\n    not(target_os = \"linux\"),\n    error(\"__TAURI_BUNDLE_TYPE variable not found in binary. Make sure tauri crate and tauri-cli are up to date\")\n  )]",
+    "evidence": "diff 中顯示原本的 `#[cfg]` 和 `#[error]` 被合併為 `#[cfg_attr]`，但需要確保 `cfg_attr` 能正確處理 `error` 屬性。"
+  }
+]

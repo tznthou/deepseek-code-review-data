@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/app_paths.rs",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Dirs 結構體持有 &'static Path 可能導致生命週期問題",
+    "body": "`Dirs` 結構體中的 `tauri` 和 `frontend` 欄位型別為 `&'static Path`，但 `resolve_dirs` 函式是從 `OnceLock<PathBuf>` 取得參考。`OnceLock` 的 `get_or_init` 回傳的參考生命週期是 `'static`，因此型別上可行，但若未來實作變更（例如改為每次呼叫都建立新的 `PathBuf`），此設計會造成生命週期錯誤。建議改為持有 `PathBuf` 或使用 `Cow<'static, Path>` 以增加彈性。",
+    "existing_code": "pub struct Dirs {\n  pub tauri: &'static Path,\n  pub frontend: &'static Path,\n}",
+    "evidence": "diff 中新增的 `Dirs` 結構體定義，以及 `resolve_dirs` 函式使用 `OnceLock` 的實作。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 247,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "reload_config 函式可能未正確更新所有使用 config 的地方",
+    "body": "`reload_config` 現在接受 `&mut ConfigMetadata` 並直接修改其內容，但呼叫端可能仍持有舊的參考或複製，導致不一致。例如在 `dev.rs` 中，`setup` 函式接收 `&mut ConfigMetadata`，但之後又將其包裝成 `Mutex`，若其他執行緒仍使用舊的參考，可能造成資料競爭。建議確認所有呼叫點都正確處理可變參考，並考慮使用 `Arc<RwLock<ConfigMetadata>>` 來共享。",
+    "existing_code": "pub fn reload_config(\n  config: &mut ConfigMetadata,\n  merge_configs: &[&serde_json::Value],\n  tauri_dir: &Path,\n) -> crate::Result<()> {\n  let target = config.target;\n  *config = load_config(merge_configs, true, target, tauri_dir)?;\n  Ok(())\n}",
+    "evidence": "diff 中 `reload_config` 的實作，以及 `dev.rs` 中 `setup` 函式接收 `&mut ConfigMetadata` 後又建立 `Mutex` 的程式碼。"
+  },
+  {
+    "path": "crates/tauri-cli/src/interface/rust.rs",
+    "line": 595,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "run_dev_watcher 中 reload_config 的錯誤處理可能導致 panic",
+    "body": "在 `run_dev_watcher` 中，`reload_config(&mut config.lock().unwrap(), merge_configs, dirs.tauri).is_ok()` 若回傳 `Err`，則會忽略錯誤並繼續執行，但後續 `rewrite_manifest(&config.lock().unwrap(), dirs.tauri)?` 可能因為 config 未更新而產生不一致。此外，`config.lock().unwrap()` 若發生 poison 會 panic。建議使用 `if let Ok(mut guard) = config.lock() { ... }` 並妥善處理錯誤。",
+    "existing_code": "if is_configuration_file(self.app_settings.target_platform, event_path)\n  && reload_config(&mut config.lock().unwrap(), merge_configs, dirs.tauri).is_ok()\n{\n  let (manifest, modified) = rewrite_manifest(&config.lock().unwrap(), dirs.tauri)?;",
+    "evidence": "diff 中 `run_dev_watcher` 的片段，顯示 `reload_config` 的錯誤被忽略，且使用 `unwrap` 可能 panic。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/ios/mod.rs",
+    "line": 272,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "get_config 中 features 欄位改為 Some(ios_options.features) 可能改變行為",
+    "body": "原本當 `ios_options.features` 為空時，`features` 欄位設為 `None`，現在改為 `Some(ios_options.features)`，即使為空也會是 `Some(vec![])`。這可能影響下游邏輯，例如判斷是否有 features 時，`Some(empty)` 與 `None` 的語意不同。建議確認此變更是否為預期，或保留原本的條件判斷。",
+    "existing_code": "features: Some(ios_options.features),",
+    "evidence": "diff 中 `get_config` 函式內 `features` 欄位的變更。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/mod.rs",
+    "line": 476,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "get_app 中 tauri_dir 參數可能造成不必要的複製",
+    "body": "`get_app` 函式新增 `tauri_dir: &Path` 參數，但在函式內先 `let tauri_dir = tauri_dir.to_path_buf();` 再於閉包中使用 `tauri_dir.to_path_buf()`，造成兩次複製。建議直接使用 `tauri_dir.to_path_buf()` 一次，或將閉包改為捕獲 `PathBuf` 的參考。",
+    "existing_code": "let tauri_dir = tauri_dir.to_path_buf();\nApp::from_raw(tauri_dir.to_path_buf(), raw)",
+    "evidence": "diff 中 `get_app` 函式的實作。"
+  }
+]

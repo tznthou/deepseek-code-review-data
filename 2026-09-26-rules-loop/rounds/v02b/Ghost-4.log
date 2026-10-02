@@ -1,0 +1,11 @@
+[info] repo 規範：repo=Ghost、24 條、10047 字元、placement=before_diff、sha256=b100898f200a
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 35955 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:84 → 92（片段唯一命中）
+[info] 定位不到 apps/posts/src/views/comments/components/comments-list.tsx:102（片段多重命中（33 處），不猜）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:110 → 107（片段唯一命中）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:111 → 108（片段唯一命中）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:113 → 112（片段唯一命中）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:116 → 88（片段唯一命中）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:118 → 92（片段唯一命中）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:120 → 107（片段唯一命中）
+[info] 完成於 18.2s ｜ findings=10 ｜ relocated=7 ｜ verdict=comment ｜ usage={"prompt_tokens": 11304, "completion_tokens": 2540, "total_tokens": 13844, "prompt_tokens_details": {"cached_tokens": 11264}, "prompt_cache_hit_tokens": 11264, "prompt_cache_miss_tokens": 40}

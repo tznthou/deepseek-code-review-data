@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "concurrency limit 輸入可能產生 NaN 並提交至 API",
+    "body": "在 `onChange` 處理中，當輸入為空字串時設為 `null`，否則使用 `Number(value)`。若使用者輸入非數字字元（例如 'e'、'-'、'.'），`Number(value)` 會回傳 `NaN`。`NaN` 會被存入表單狀態，且 zod schema 未驗證此欄位（可能僅為 nullable number），因此 `NaN` 可能被提交至 API，導致後端驗證錯誤或資料不一致。\n\n建議在 schema 中增加 `.refine((val) => val === null || !Number.isNaN(val), { message: \"必須是有效數字\" })`，或在 `onChange` 中檢查 `Number.isNaN` 並設為 `null`。",
+    "existing_code": "onChange={(e) => {\n\t\t\t\t\t\t\t\t\t\t\t\tconst value = e.target.value;\n\t\t\t\t\t\t\t\t\t\t\t\tfield.onChange(value === \"\" ? null : Number(value));\n\t\t\t\t\t\t\t\t\t\t\t}}",
+    "evidence": "diff 中新增的 `onChange` 處理直接將 `Number(value)` 的結果傳給 `field.onChange`，未檢查 `NaN`。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 158,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中 mock 呼叫參數的型別斷言可能不準確",
+    "body": "在 `handles empty concurrency limit as null` 測試中，使用 `as` 斷言將 `mockUpdateWorkPool.mock.calls[0]` 轉型為特定型別，但實際呼叫參數可能包含其他欄位（如 `description`），此斷言可能過於嚴格或誤導。建議使用更精確的型別或直接檢查所需屬性。",
+    "existing_code": "const callArgs = mockUpdateWorkPool.mock.calls[0] as [\n\t\t\t\t{ name: string; workPool: { concurrency_limit: number | null } },\n\t\t\t\tUpdateWorkPoolOptions,\n\t\t\t];",
+    "evidence": "diff 中新增的測試使用了型別斷言，但未驗證實際物件結構是否完全符合。"
+  }
+]

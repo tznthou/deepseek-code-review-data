@@ -1,0 +1,68 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試斷言從 XCTAssertTrue 改為 assert 可能導致測試失效",
+    "body": "在測試方法 `testRequestAuthorization` 中，原本使用 `XCTAssertTrue` 進行斷言，現在改為 Swift 標準庫的 `assert`。`assert` 在 Release 建置中會被編譯器移除，且 XCTest 不會將其視為測試斷言，因此此測試將永遠通過，無法驗證授權結果。應改回 `XCTAssertTrue` 或使用 `XCTAssert` 系列斷言。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\nassert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將原本的 `XCTAssertTrue(granted)` 和 `XCTAssertTrue(self.center.requestAuthorizationWasCalled)` 改為 `assert(granted, ...)` 和 `assert(center?.requestAuthorizationWasCalled ?? false, ...)`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "閉包捕獲 center 可能造成 retain cycle",
+    "body": "閉包中捕獲了 `center`（可能是 `self.center` 的隱式解包），但未使用 `[weak self]` 或 `[unowned self]`。若 `center` 持有閉包，可能造成 retain cycle。建議使用 `[weak self]` 並在閉包內使用 `self?.center`。",
+    "existing_code": "notificationManager.requestAuthorization { [center] (granted, error) in",
+    "evidence": "diff 中將閉包捕獲列表改為 `[center]`，但未見 `[weak self]` 或 `[unowned self]`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Mocks/MockProfile.swift",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "completion handler 標註 @Sendable 可能導致不必要的限制",
+    "body": "`getQueuedTabs` 的 completion handler 新增了 `@Sendable` 標註，但此 handler 僅在主執行緒上被呼叫，且未跨並發域傳遞。加上 `@Sendable` 可能導致呼叫端必須使用 `@Sendable` closure，增加不必要的限制。若無跨執行緒傳遞需求，可考慮移除 `@Sendable`。",
+    "existing_code": "func getQueuedTabs(completion: @MainActor @Sendable @escaping ([ShareItem]) -> Void) {",
+    "evidence": "diff 中將 `completion: @escaping @MainActor ([ShareItem]) -> Void` 改為 `completion: @MainActor @Sendable @escaping ([ShareItem]) -> Void`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/StoriesFeed/StoriesFeedDiffableDataSourceTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "setUp 改為 async 但未處理可能的錯誤",
+    "body": "`setUp` 改為 `async throws`，但內部呼叫 `try await super.setUp()` 後未進行任何錯誤處理。若 `super.setUp()` 拋出錯誤，測試將直接失敗，可能掩蓋實際測試意圖。建議考慮是否需要在 setUp 中處理錯誤，或確保 super.setUp() 不會拋出。",
+    "existing_code": "override func setUp() async throws {\n    try await super.setUp()",
+    "evidence": "diff 中將 `override func setUpWithError() throws` 改為 `override func setUp() async throws`，並在內部呼叫 `try await super.setUp()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/StoriesFeed/StoriesFeedDiffableDataSourceTests.swift",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "tearDown 改為 async 但呼叫順序可能影響狀態重置",
+    "body": "`tearDown` 改為 `async throws`，並在最後呼叫 `try await super.tearDown()`。若 `super.tearDown()` 依賴於子類別已重置的狀態，此順序可能導致問題。建議確認 super.tearDown() 的實作是否需要在子類別清理後執行。",
+    "existing_code": "override func tearDown() async throws {\n    try await super.tearDown()\n    diffableDataSource = nil\n    collectionView = nil\n    DependencyHelperMock().reset()\n}",
+    "evidence": "diff 中將 `override func tearDown()` 改為 `override func tearDown() async throws`，並將 `super.tearDown()` 移至方法開頭。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/StoriesFeed/StoriesFeedDiffableDataSourceTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "缺少 @MainActor 標註可能導致並發問題",
+    "body": "此測試類別操作 UICollectionView，但未加上 `@MainActor`。雖然 setUp 和 tearDown 改為 async，但測試方法本身可能需要在主執行緒上執行。建議在類別層級加上 `@MainActor` 以確保所有 UI 操作都在主執行緒。",
+    "existing_code": "final class StoriesFeedDiffableDataSourceTests: XCTestCase {",
+    "evidence": "diff 中未見 `@MainActor` 標註，但此類別使用 UICollectionView。"
+  }
+]

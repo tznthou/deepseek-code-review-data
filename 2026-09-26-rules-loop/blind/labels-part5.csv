@@ -1,0 +1,114 @@
+pair,label,note
+P0453,same,同一處：移除 if (history) 後可能回傳 null/undefined；修法同為保留判斷
+P0454,same,同一個 GenericComponent<string> 應為 <int> 的斷言錯誤
+P0455,same,同一個遺漏 {newsletterName}
+P0456,no,GT 是 print；finding 講 start_execution/enqueue_node 呼叫順序
+P0457,partial,相鄰行：GT 是未使用的 index 參數；finding 講 key 用 label 可能重複並建議改用 index——修法會順帶用到 index 但問題本身不同
+P0458,no,同一行兩個獨立缺陷：GT 是未使用變數；finding 是 statusBarOrientation 已棄用
+P0459,same,同一個 <= 0 改成 < 0 而允許 0
+P0460,no,不同 key：finding 講 设置/設定 用語
+P0461,same,指同一個改動並建議改回原位置；finding 認為只影響可讀性（嚴重度講輕）但修法相同
+P0462,partial,同一個 catch 的錯誤回報；GT 要移除 console.error；finding 嫌錯誤太安靜要更顯眼
+P0463,no,同一迴圈但 finding 講 json.dumps 例外未捕捉；不是迭代錯 dict
+P0464,no,同區塊兩個獨立缺陷：GT 是 argv[2] 洩漏；finding 是 argv[5] 越界
+P0465,no,GT 是丟泛用 Error；finding 講驗證欄位不足
+P0466,no,不同位置：finding 講 getDaysSinceFirstEmail 的時區/DST 誤差；GT 是 > 應為 >=
+P0467,no,GT 是手寫 Error trait；finding 講權限與寫入順序
+P0468,no,GT 是缺 rustdoc；finding 講 reload_config 覆寫
+P0469,no,GT 是 floor 應為 round；finding 講回傳 Infinity
+P0470,partial,同一行 Convert.ToInt64；GT 說應為 ToInt32；finding 說值可能是 JsonElement 會轉換失敗——機制不同
+P0471,no,GT 是缺 From<FileWriteError> 編譯失敗；finding 講權限與寫入順序
+P0472,no,GT 是 size_t 轉型溢位；finding 講 log 格式字串與 off_t
+P0473,no,GT 是隱藏項目失去 onClick；finding 講鍵盤無障礙
+P0474,no,不同欄位：finding 講 retry_jitter_factor 為 0；GT 是 retries 型別
+P0475,no,不同位置不同順序問題：finding 講 mark_edge_skipped 順序
+P0476,partial,同一行 malloc；GT 要求改 zmalloc；finding 只要求檢查 NULL（zmalloc 本身處理 OOM 故相關但修法不同）
+P0477,no,同一迴圈但 finding 講 json.dumps 序列化失敗
+P0478,same,同一段重複 browserActionStack；finding 方法名寫錯但程式碼與修法相同
+P0479,same,同一個 max_length 未定義缺判斷；finding 機制（比較恆為 false）與 GT（TypeError）說法不同但修法相同
+P0480,no,GT 是 Zod 被手寫驗證取代；finding 講 Schedule 型別缺欄位
+P0481,no,同函式兩個獨立問題：GT 是 panic/unwrap；finding 是 OnceLock 全域快取
+P0482,no,GT 是 block-scoped namespace；finding 講 class 大括號位置（且與片段不符）
+P0483,no,同一段但 finding 講 Redis 故障仍寫入；不是迭代錯 dict
+P0484,same,同一個 Remarks 改指派到 Summary
+P0485,same,finding 主述 malloc 未檢查 NULL 但修法明列改用 zmalloc；改 zmalloc/zfree 可同時修掉
+P0486,same,同一個缺 child.parentId = orgId
+P0487,no,同一段但 GT 是例外型別；finding 質疑長度檢查本身
+P0488,partial,同一段 length 檢查導致 AND undefined；finding 視為效能/可讀性並建議條件展開——機制與修法方向不同
+P0489,no,GT 是 after/expect 欄位切換；finding 講 within 未清除
+P0490,no,GT 是缺 From<FileWriteError>；finding 講權限與寫入順序
+P0491,no,GT 是 size_t 溢位；finding 講 truncate 失敗仍繼續
+P0492,no,同區塊獨立缺陷：GT 是迴圈 <= 越界；finding 是 malloc 未檢查
+P0493,same,finding 內文指出 tauri 欄位應更新為 2.8.3（標題誤導）
+P0494,no,GT 是改用 zmalloc；finding 質疑配置本身的效能
+P0495,no,GT 是單引號；finding 講 as 斷言未驗證
+P0496,same,同一個 Description 移到範例處理後可能未設定
+P0497,no,GT 是缺 Async 後綴；finding 講泛型型別不一致
+P0498,same,finding 主述縮排不一致但指出 block-scoped namespace 並建議改回 file-scoped——修法相同
+P0499,no,不同 key：finding 講偏好设置用語
+P0500,no,GT 是未使用 index；finding 講 Popover 鍵盤操作
+P0501,no,GT 是 Zod 被取代；finding 講 Schedule 型別缺欄位
+P0502,same,同一個 j <= numkeys 越界
+P0503,no,GT 是 moveItem 參數顛倒；finding 講 SortableContext 含 prefix items
+P0504,same,同一個遍歷 bulk_plans 而非 plans_to_cache
+P0505,no,GT 是 hiddenItems.map 未使用 index；finding 錨在 23 行外的 Badge key 重複問題（內文雖提到 hiddenItems 但講的是 key 衝突）
+P0506,no,同一段兩個獨立問題：GT 是 length 檢查；finding 是 endsWith 誤排除
+P0507,same,同一段重複 browserActionStack；finding 方法名與後果描述不同但修法相同
+P0508,no,GT 是 > 應為 >=；finding 講 NQL filter
+P0509,no,同一段兩個獨立問題：GT 是邊界條件；finding 是回傳 Infinity
+P0510,no,GT 是 Description 設定時機；finding 講 propertyName 參數比對
+P0511,same,同一個 print
+P0512,same,同一個缺 AAA 註解
+P0513,same,同一個直接存取 process.env
+P0514,same,同一個 minimal 模式缺 setLoading(false)
+P0515,same,同一個 || 應改 ??
+P0516,no,GT 是未使用 import；finding 講 useMemo 依賴
+P0517,partial,同一段 weight 串進 label；GT 是權重停用時多空白；finding 講合併後可讀性
+P0518,same,同一個 requestReschedule 預設 true
+P0519,no,同一行兩個獨立問題：GT 是 prefix items 被納入；finding 是未 useMemo
+P0520,same,同一個 leadingAnchor 誤接 rightSkeletonAddressBar
+P0521,partial,同 P0517：同一段 weight 串接；finding 講可讀性而非多空白
+P0522,partial,同一段 malloc/free；GT 要求 zmalloc/zfree；finding 主張檢查 malloc NULL
+P0523,no,GT 是 Sequence 應為 1；finding 講 ToInt64 轉換
+P0524,no,GT 是缺 Async 後綴；finding 講泛型型別不一致
+P0525,no,GT 是缺 From<FileWriteError>；finding 內容空泛且不是此問題
+P0526,no,GT 是 floor 應為 round；finding 講 Date.now 不可注入
+P0527,same,同一個 num_keys == 0 時 slot 未設定
+P0528,no,同一行兩個獨立問題：GT 是 JSON 縮排；finding 是翻譯用語
+P0529,no,GT 是 days 型別改成 string[]；finding 講 Schedule 缺欄位
+P0530,same,同一個 catch 吞掉錯誤無 log
+P0531,no,GT 是迴圈越界；finding 講 zmalloc 規範
+P0532,no,GT 是泛用 Error；finding 講 Schedule 缺欄位
+P0533,no,同一 struct 兩個獨立問題：GT 是缺存取修飾詞；finding 是可能為死碼
+P0534,same,同一個允許 0 值
+P0535,same,finding 指出同一個 __REDIS_H 改 _REDIS_H 並建議確認必要性；理由不同但修法（改回雙底線）相同
+P0536,same,同一個依 posture 切換欄位；finding 機制講切換時值遺失但修法之一是用同一欄位名
+P0537,no,不同方法：finding 講大括號位置
+P0538,no,GT 是缺分號；finding 講 Date.now
+P0539,same,同一個 console.log
+P0540,partial,同一檔 QueryClient 實例問題；finding 注意到 router 另建實例但判為未使用並聚焦跨 story 汙染
+P0541,no,同區塊獨立缺陷：GT 是 argv[5] 越界；finding 是 argv[2] 洩漏
+P0542,same,同一個 leadingAnchor 誤接
+P0543,same,同一個 results[tenant_id] = None
+P0544,same,同一個 slot 未初始化
+P0545,same,同一個 ureq::get 繞過平台憑證
+P0546,no,同一迴圈但 finding 講 json.dumps 序列化
+P0547,same,同一個 propertyName 取代 metadata.Name
+P0548,no,GT 是驗證邏輯放錯檔案；finding 講 as 斷言未驗證
+P0549,no,GT 是 mark_edge_skipped 順序；finding 講 start_execution/enqueue_node 順序
+P0550,no,GT 是單引號；finding 講 Schedule 未 export
+P0551,no,GT 是單引號；finding 講 Schedule 缺欄位
+P0552,same,同一個 getUrlHistory 可能回傳 undefined
+P0553,no,GT 是 gtk.exists() 條件反轉；finding 講 linuxdeploy_arch
+P0554,same,同一個 threshold 的 parseInt；finding 講的「解析到非數字就停」即 GT 的小數截斷；改用 Number 可同時修掉
+P0555,same,同一個 >= 0 條件；finding 低估嚴重度但建議改回 > 0
+P0556,same,finding 明確指出 v147 缺 public
+P0557,same,同一個未使用 Skeleton import
+P0558,no,GT 是 size_t 溢位；finding 講 truncate 後狀態未更新
+P0559,same,同一個 Description 設定位置後移導致 continue 時未設定
+P0560,no,GT 是隱藏項目失去 onClick；finding 講 hover 閃爍（不同位置不同機制）
+P0561,same,同一個 || 混淆 0 與 null；兩者都改用 ??
+P0562,no,GT 是缺測試檔；finding 講 within 未清除
+P0563,no,GT 是 floor 應為 round；finding 講 Date.now
+P0564,same,同一個手寫驗證不足應改用 Zod
+P0565,no,GT 是呼叫順序；finding 講 print

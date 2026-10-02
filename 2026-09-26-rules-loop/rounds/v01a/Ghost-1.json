@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 368,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "scheduling.init() 呼叫方式變更可能導致 API URL 設定遺失",
+    "body": "原本 `scheduling.init()` 會傳入 `{apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true)}`，但修改後改為不帶參數呼叫。若 `scheduling.init()` 依賴此參數來設定內部 API 端點，移除後可能導致排程服務無法正確呼叫 API，進而影響排程任務（例如發佈文章）的執行。建議確認 `scheduling.init()` 的實作是否已改為從其他來源取得 API URL，或此參數已不再需要。",
+    "existing_code": "scheduling.init(),",
+    "evidence": "diff 中 `-        scheduling.init({\n-            apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true)\n-        }),\n+        scheduling.init(),`"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 351,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 slack.listen() 可能導致 Slack 通知功能失效",
+    "body": "原本在 `Promise.all` 中有 `slack.listen()`，但修改後被移除。若 Slack 服務需要透過 `listen()` 來註冊事件監聽器以發送通知，移除後將導致 Slack 整合功能無法運作。建議確認 Slack 服務是否已改為其他初始化方式，或此功能已不再需要。",
+    "existing_code": "slack.listen(),",
+    "evidence": "diff 中 `-        slack.listen(),` 被移除"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 352,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "emailAddressService.init() 移至 Promise.all 可能改變初始化時序",
+    "body": "原本 `emailAddressService.init()` 是單獨 await，現在被移入 `Promise.all` 中。若其他服務依賴 emailAddressService 初始化完成後才能執行，此變更可能導致競態條件。建議確認 emailAddressService 的初始化是否為其他服務的前置條件。",
+    "existing_code": "emailAddressService.init(),",
+    "evidence": "diff 中 `-    await emailAddressService.init(),\n \n     await Promise.all([\n+        emailAddressService.init(),`"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Semaphore 未初始化時拋出 RuntimeError 可能中斷啟動流程",
+    "body": "在 `_replicate_pod_event` 中，若 `_startup_event_semaphore` 為 None，會直接拋出 `RuntimeError`。這可能發生在 `initialize_clients` 尚未被呼叫或執行失敗時，導致 observer 啟動失敗。建議改為在 semaphore 未初始化時跳過限制（直接執行 API 呼叫）或記錄警告後繼續，避免啟動流程中斷。",
+    "existing_code": "if _startup_event_semaphore is None:\n    raise RuntimeError(\"Startup event semaphore not initialized\")",
+    "evidence": "diff 中新增了對 `_startup_event_semaphore` 的檢查並拋出例外，但未處理初始化失敗的情境。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/tests/test_observer.py",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試檔案被刪除，可能遺失既有測試覆蓋",
+    "body": "此 PR 刪除了 `test_observer.py`，其中包含多個針對 `_replicate_pod_event` 和 observer 啟動/停止的測試。若無替代測試，可能降低回歸測試覆蓋率。建議確認是否有新的測試檔案或計畫補充測試。",
+    "existing_code": "deleted file mode 100644",
+    "evidence": "diff 顯示整個測試檔案被刪除。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 137,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Semaphore 可能被多個事件處理器共用而導致非預期限制",
+    "body": "`_startup_event_semaphore` 是全域變數，若多個 kopf handler 同時執行 `_replicate_pod_event`，它們會共用同一個 semaphore。這可能導致非啟動期間的事件處理也受到並發限制，影響效能。建議確認 semaphore 僅在啟動階段使用，或改用更精確的範圍限制。",
+    "existing_code": "async with _startup_event_semaphore:",
+    "evidence": "diff 中 semaphore 被用於 `_replicate_pod_event` 內，但該函式可能被多個事件觸發。"
+  }
+]

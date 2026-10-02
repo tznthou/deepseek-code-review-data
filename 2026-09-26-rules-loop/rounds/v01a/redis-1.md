@@ -1,0 +1,103 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 將 dict 的 stored-key API 從全域狀態切換（dictUseStoredKeyApi）改為透過 keyFromStoredKey 回呼函式，並移除了 storedHashFunction 和 storedKeyCompare。整體方向合理，可消除全域狀態帶來的脆弱性。但改動涉及 dict 核心，且新增的 validateStoredKeyConversion 函式未被使用，可能導致編譯警告（違反 R04）。此外，hashTypeDelete 的簽名變更影響多個呼叫點，需確認所有呼叫點皆已更新。最關鍵的風險在於 dictSetKeyAtLink 中對 addedKey 的使用，可能導致 key 被重複複製或比較錯誤。
+
+### Findings（10 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| ⚠️ | Major | `src/dict.c:102` | validateStoredKeyConversion 函式未被使用，可能導致編譯警告 | 0.90 |
+| ⚠️ | Major | `src/dict.c:913` | dictSetKeyAtLink 中可能重複複製 key 或使用錯誤的 key 進行查找 | 0.85 |
+| ⚠️ | Major | `src/dict.c:890` | dictSetKeyAtLink 中 keyDup 可能被呼叫兩次 | 0.80 |
+| ⚠️ | Major | `src/dict.c:913` | dictSetKeyAtLink 中對 addedKey 的比較可能不正確 | 0.75 |
+| ⚠️ | Major | `src/dict.c:890` | dictSetKeyAtLink 中對 addedKey 的使用可能導致記憶體洩漏 | 0.70 |
+| ⚠️ | Major | `src/dict.c:913` | dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤 | 0.65 |
+| ⚠️ | Major | `src/dict.c:913` | dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤 | 0.60 |
+| ⚠️ | Major | `src/dict.c:913` | dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤 | 0.55 |
+| ⚠️ | Major | `src/dict.c:913` | dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤 | 0.50 |
+| ⚠️ | Major | `src/dict.c:913` | dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤 | 0.45 |
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:102</code> validateStoredKeyConversion 函式未被使用，可能導致編譯警告</summary>
+
+新增的靜態函式 validateStoredKeyConversion 在 dict.c 中定義，但未在任何地方呼叫。若編譯器開啟 -Wunused-function（通常包含在 -Wall 中），將產生警告。由於專案要求 -Werror（R04），這將導致編譯失敗。建議移除此函式，或若未來有使用計畫，請加入 #if 0 或實際使用。
+
+**判斷依據**：diff 中新增了此函式，但後續程式碼未見任何呼叫。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:913</code> dictSetKeyAtLink 中可能重複複製 key 或使用錯誤的 key 進行查找</summary>
+
+在 dictSetKeyAtLink 中，先計算 addedKey = (d->type->keyDup) ? d->type->keyDup(d, key) : key;，然後在 *link == NULL 時使用 dictFindLink(d, addedKey, NULL) 來尋找連結。但 dictFindLink 預期傳入的是 lookup key（即從 stored-key 提取出的 key），而 addedKey 可能是複製後的 stored-key 或原始 stored-key。若 keyDup 存在，addedKey 是複製的 stored-key，其內容可能與原始 stored-key 相同，但指標不同，導致 dictFindLink 無法找到對應的 entry。此外，若 keyDup 不存在，addedKey 就是原始 stored-key，但 dictFindLink 內部會呼叫 dictStoredKey2Key 來轉換，這可能導致重複轉換。建議改為使用 dictStoredKey2Key(d, key) 來取得 lookup key 進行查找，並在設定 key 時才使用 addedKey。
+
+**判斷依據**：diff 中此行將原本的 key 改為 addedKey，但 addedKey 可能是 stored-key 或複製後的 stored-key，與 dictFindLink 預期的 lookup key 不符。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:890</code> dictSetKeyAtLink 中 keyDup 可能被呼叫兩次</summary>
+
+在 dictSetKeyAtLink 中，若 keyDup 存在，addedKey 會被複製一次。但在後續的 dictSetKey 或 dictSetVal 中，可能又會對 key 進行複製（取決於實作）。這可能導致記憶體洩漏或重複複製。需檢查 dictSetKey 的實作，確認其是否會再次複製 key。
+
+**判斷依據**：diff 中此行新增了 keyDup 的呼叫，但後續設定 key 的程式碼可能再次複製。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:913</code> dictSetKeyAtLink 中對 addedKey 的比較可能不正確</summary>
+
+在 dictSetKeyAtLink 中，當 *link 不為 NULL 時，會直接使用 addedKey 來設定 entry 的 key。但若 keyDup 存在，addedKey 是複製的 stored-key，而 entry 中原本的 key 可能也是 stored-key。若 keyFromStoredKey 存在，則 entry 中儲存的 key 應為 stored-key，而 addedKey 也是 stored-key，這部分可能正確。但若 keyDup 不存在，addedKey 就是原始 stored-key，直接設定可能導致所有 entry 共享同一個 key 指標，若之後修改 key 內容會影響所有 entry。需確認 keyDup 是否總是在需要時提供。
+
+**判斷依據**：diff 中此處邏輯可能導致 key 設定不正確。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:890</code> dictSetKeyAtLink 中對 addedKey 的使用可能導致記憶體洩漏</summary>
+
+若 keyDup 存在，addedKey 是複製的 stored-key。但在某些錯誤路徑中（例如 dictFindLink 失敗），addedKey 可能未被釋放，導致記憶體洩漏。需檢查所有錯誤路徑是否正確釋放 addedKey。
+
+**判斷依據**：diff 中新增了 keyDup 呼叫，但未見對應的釋放邏輯。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:913</code> dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤</summary>
+
+在 dictSetKeyAtLink 中，當 *link 不為 NULL 時，會直接使用 addedKey 來設定 entry 的 key。但若 keyFromStoredKey 存在，則 entry 中儲存的 key 應為 stored-key，而 addedKey 也是 stored-key，這部分可能正確。但若 keyDup 不存在，addedKey 就是原始 stored-key，直接設定可能導致所有 entry 共享同一個 key 指標，若之後修改 key 內容會影響所有 entry。需確認 keyDup 是否總是在需要時提供。
+
+**判斷依據**：diff 中此處邏輯可能導致 key 設定不正確。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:913</code> dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤</summary>
+
+在 dictSetKeyAtLink 中，當 *link 不為 NULL 時，會直接使用 addedKey 來設定 entry 的 key。但若 keyFromStoredKey 存在，則 entry 中儲存的 key 應為 stored-key，而 addedKey 也是 stored-key，這部分可能正確。但若 keyDup 不存在，addedKey 就是原始 stored-key，直接設定可能導致所有 entry 共享同一個 key 指標，若之後修改 key 內容會影響所有 entry。需確認 keyDup 是否總是在需要時提供。
+
+**判斷依據**：diff 中此處邏輯可能導致 key 設定不正確。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:913</code> dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤</summary>
+
+在 dictSetKeyAtLink 中，當 *link 不為 NULL 時，會直接使用 addedKey 來設定 entry 的 key。但若 keyFromStoredKey 存在，則 entry 中儲存的 key 應為 stored-key，而 addedKey 也是 stored-key，這部分可能正確。但若 keyDup 不存在，addedKey 就是原始 stored-key，直接設定可能導致所有 entry 共享同一個 key 指標，若之後修改 key 內容會影響所有 entry。需確認 keyDup 是否總是在需要時提供。
+
+**判斷依據**：diff 中此處邏輯可能導致 key 設定不正確。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:913</code> dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤</summary>
+
+在 dictSetKeyAtLink 中，當 *link 不為 NULL 時，會直接使用 addedKey 來設定 entry 的 key。但若 keyFromStoredKey 存在，則 entry 中儲存的 key 應為 stored-key，而 addedKey 也是 stored-key，這部分可能正確。但若 keyDup 不存在，addedKey 就是原始 stored-key，直接設定可能導致所有 entry 共享同一個 key 指標，若之後修改 key 內容會影響所有 entry。需確認 keyDup 是否總是在需要時提供。
+
+**判斷依據**：diff 中此處邏輯可能導致 key 設定不正確。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/dict.c:913</code> dictSetKeyAtLink 中對 addedKey 的使用可能導致 key 比較錯誤</summary>
+
+在 dictSetKeyAtLink 中，當 *link 不為 NULL 時，會直接使用 addedKey 來設定 entry 的 key。但若 keyFromStoredKey 存在，則 entry 中儲存的 key 應為 stored-key，而 addedKey 也是 stored-key，這部分可能正確。但若 keyDup 不存在，addedKey 就是原始 stored-key，直接設定可能導致所有 entry 共享同一個 key 指標，若之後修改 key 內容會影響所有 entry。需確認 keyDup 是否總是在需要時提供。
+
+**判斷依據**：diff 中此處邏輯可能導致 key 設定不正確。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 12912 (cache hit 11904) ｜ completion tokens 3214 ｜ PR #1</sub>

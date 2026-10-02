@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 3503,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "hashTypeDelete 參數語意變更導致傳入 Entry* 而非 sds",
+    "body": "hashTypeDelete 的簽章從 `int hashTypeDelete(robj *o, void *key, int isSdsField)` 改為 `int hashTypeDelete(robj *o, void *key)`，且註解說明 `field` 應為 sds。但在 `onFieldExpire` 中，原本呼叫 `hashTypeDelete(expCtx->hashObj, field, 0)`，其中 `field` 是 `eItem` 結構中的 `field` 成員，型別為 `Entry*`（或類似結構），並非 sds。修改後呼叫 `hashTypeDelete(expCtx->hashObj, field)`，會將 Entry* 當作 sds 使用，導致 `sdslen((sds)field)` 讀取錯誤記憶體，可能造成 crash 或未定義行為。\n\n**失敗情境**：當 hash 欄位過期時，`onFieldExpire` 被呼叫，傳入的 `field` 是 Entry 指標，但函式內會對其呼叫 `sdslen`，讀取 Entry 結構的前幾個位元組當作 sds header，可能得到錯誤長度或越界存取。\n\n**建議**：在 `onFieldExpire` 中，先從 Entry 取得 sds 欄位名稱（例如使用 `entryGetKey(entry)` 或類似函式），再傳入 `hashTypeDelete`。或者保留 `isSdsField` 參數以區分輸入型別。",
+    "existing_code": "serverAssert(hashTypeDelete(expCtx->hashObj, field) == 1);",
+    "evidence": "diff 中 `onFieldExpire` 的呼叫從 `hashTypeDelete(expCtx->hashObj, field, 0)` 改為 `hashTypeDelete(expCtx->hashObj, field)`，且 `hashTypeDelete` 的實作中直接使用 `sdslen((sds)field)`。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "dictStoredKey2Key 在無 keyFromStoredKey 時回傳型別不符",
+    "body": "`dictStoredKey2Key` 的實作：\n```c\nstatic const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {\n    return (d->type->keyFromStoredKey) ? d->type->keyFromStoredKey(key) : key;\n}\n```\n當 `keyFromStoredKey` 為 NULL 時，回傳 `key`，但 `key` 的型別是 `const void *`，而函式回傳型別也是 `const void *`，看似正確。然而，在呼叫端，例如 `dictAddRaw` 中：\n```c\nvoid *position = dictFindLinkForInsert(d, dictStoredKey2Key(d, key), existing);\n```\n`dictFindLinkForInsert` 的參數型別是 `const void *key`，所以沒有型別問題。但若 `keyFromStoredKey` 為 NULL，則 `dictStoredKey2Key` 回傳的指標與原始 `key` 相同，這在語意上是對的。真正的問題在於 `validateStoredKeyConversion` 函式：\n```c\nstatic int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}\n```\n此函式未被使用，且其邏輯可能不正確：當 `keyFromStoredKey` 存在時，僅檢查 `extracted != NULL`，但未驗證 extracted 是否為有效 key。不過此函式目前未被呼叫，影響有限。\n\n**建議**：移除未使用的 `validateStoredKeyConversion`，或修正其邏輯並在適當處呼叫。",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {\n    return (d->type->keyFromStoredKey) ? d->type->keyFromStoredKey(key) : key;\n}",
+    "evidence": "diff 中新增的 `dictStoredKey2Key` 和 `validateStoredKeyConversion` 函式。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 321,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 dictCompareKV 可能導致效能回歸",
+    "body": "原本 `dictCompareKV` 使用快取機制（`cache->useCache`）來避免在比較時重複取得 key 和長度。現在改為 `dictSdsCompareKV`，直接比較兩個 sds，但移除了快取邏輯。在 dict 查找過程中，比較函式會被多次呼叫，若每次都要計算 `sdslen` 和 `memcmp`，可能增加 CPU 負擔，尤其在 hash 衝突較多時。\n\n**失敗情境**：在高負載下，大量 key 比較可能導致效能下降。\n\n**建議**：評估是否需要在新的比較函式中加入類似的快取機制，或確認效能影響可接受。",
+    "existing_code": "int dictSdsCompareKV(dictCmpCache *cache, const void *sdsKey1, const void *sdsKey2)\n{\n    /* is first cmp call of a new lookup */\n    if (cache->useCache == 0) {\n        cache->useCache = 1;\n        cache->data[0].sz = sdslen((sds) sdsKey1);\n    }\n\n    size_t l1 = cache->data[0].sz;\n    size_t l2 = sdslen((sds)sdsKey2);\n    if (l1 != l2) return 0;\n    return memcmp(sdsKey1, sdsKey2, l1) == 0;\n}",
+    "evidence": "diff 中刪除了 `dictCompareKV` 函式，並修改 `dictSdsCompareKV` 的實作。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "pauseAutoResize 型別變更可能影響 ABI 相容性",
+    "body": "`pauseAutoResize` 從 bitfield `signed pauseAutoResize: 15;` 改為 `int16_t pauseAutoResize;`。雖然大小可能相同（皆為 2 bytes），但 bitfield 的符號性和位元排列可能與 `int16_t` 不同，若 dict 結構被外部模組直接存取，可能造成 ABI 不相容。Redis 的 dict 結構通常不視為公開 API，但模組可能透過指標操作。\n\n**建議**：確認此變更不會影響外部模組，或保留 bitfield 宣告。",
+    "existing_code": "int16_t pauseAutoResize;  /* If >0 automatic resizing is disallowed (<0 indicates coding error) */",
+    "evidence": "diff 中 struct dict 的欄位變更。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "validateStoredKeyConversion 函式未使用且邏輯可能錯誤",
+    "body": "新增的 `validateStoredKeyConversion` 函式目前沒有被任何地方呼叫，且其邏輯僅檢查 extracted 是否為 NULL 或是否等於原始 key，並未真正驗證轉換的正確性。這可能是開發中的殘留程式碼。\n\n**建議**：移除或實作完整的驗證邏輯並在適當處呼叫。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}",
+    "evidence": "diff 中新增的函式，且未見呼叫。"
+  }
+]

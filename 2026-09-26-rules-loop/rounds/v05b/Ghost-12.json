@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "JWT token 物件被存入 _serverToken，可能導致後續使用型別錯誤",
+    "body": "在 `getServerToken` 方法中，原本 `this._serverToken = tokenData.token;` 被改為 `this._serverToken = tokenData;`，這使得 `_serverToken` 現在儲存的是整個 token 物件（包含 `token` 和 `exp` 屬性），而不是 token 字串。後續程式碼若將 `_serverToken` 當作字串使用（例如在 HTTP header 中），可能會產生錯誤。建議改回儲存 `tokenData.token`，或確認所有使用 `_serverToken` 的地方都能正確處理物件。",
+    "existing_code": "this._serverToken = tokenData;",
+    "evidence": "diff 中此行由 `this._serverToken = tokenData.token;` 改為 `this._serverToken = tokenData;`"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 164,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "使用 jwt.decode 取代 jwt.verify 可能接受未簽名或偽造的 token",
+    "body": "在 `_isJWTExpired` 方法中，原本使用 `jwt.verify` 來驗證 token 的簽章並解碼，現在改為 `jwt.decode`，這只解碼而不驗證簽章。這意味著攻擊者可以偽造一個具有未來 `exp` 的 token，並被系統接受為有效。建議改回 `jwt.verify`，或明確說明為何此處不需要驗證簽章（例如 token 僅用於內部且來源可信）。",
+    "existing_code": "const decoded = jwt.decode(token);",
+    "evidence": "diff 中此行由 `const decoded = jwt.verify(token, this.tinybirdConfig.adminToken);` 改為 `const decoded = jwt.decode(token);`"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 noTimestamp 選項可能改變 JWT 內容",
+    "body": "在 `_generateToken` 方法中，`jwt.sign` 的選項從 `{noTimestamp: true}` 改為無選項，這會導致 JWT 中包含標準的 `iat`（issued at）時間戳。如果 Tinybird 端依賴於無 `iat` 的 token，或者 token 的驗證邏輯對 `iat` 有特殊處理，這可能導致驗證失敗。建議確認 Tinybird 對 token 的要求，或保留 `noTimestamp: true`。",
+    "existing_code": "const token = jwt.sign(payload, this.tinybirdConfig.adminToken);",
+    "evidence": "diff 中此行由 `const token = jwt.sign(payload, this.tinybirdConfig.adminToken, {noTimestamp: true});` 改為無選項"
+  }
+]

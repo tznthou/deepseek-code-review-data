@@ -1,0 +1,13 @@
+[
+  {
+    "path": "ui-v2/tsconfig.app.json",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R11] TypeScript 嚴格模式被關閉",
+    "body": "將 `strict` 從 `true` 改為 `false` 違反了 R11 規範，該規範要求啟用嚴格模式以確保型別安全。關閉嚴格模式可能導致未捕獲的型別錯誤，增加執行階段風險。建議恢復 `strict: true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.app.json 的變更將 `\"strict\": true` 改為 `\"strict\": false`，直接違反 R11。"
+  }
+]

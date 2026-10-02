@@ -1,0 +1,11 @@
+[info] repo 規範：repo=aspnetcore、20 條、10378 字元、placement=after_diff、sha256=22242f311811
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 34991 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/Components/Web/src/Forms/ExpressionMemberAccessor.cs:80 → 83（片段唯一命中）
+[info] 重新定位 src/Components/Web/src/Forms/DisplayName.cs:17 → 9（片段唯一命中）
+[info] 重新定位 src/Components/Web/src/Forms/DisplayName.cs:20 → 19（片段唯一命中）
+[info] 重新定位 src/Components/Web/src/Forms/ExpressionMemberAccessor.cs:14 → 13（片段唯一命中）
+[info] 重新定位 src/Components/Web/test/Forms/DisplayNameTest.cs:1 → 9（片段唯一命中）
+[info] 重新定位 src/Components/Web/test/Forms/DisplayNameTest.cs:1 → 159（片段唯一命中）
+[info] 重新定位 src/Components/Web/src/Forms/DisplayName.cs:1 → 26（片段命中其他檔案（原報 src/Components/Web/test/Forms/DisplayNameTest.cs））
+[info] 重新定位 src/Components/Web/src/Forms/DisplayName.cs:1 → 16（片段唯一命中）
+[info] 完成於 17.3s ｜ findings=10 ｜ relocated=8 ｜ verdict=comment ｜ usage={"prompt_tokens": 12440, "completion_tokens": 2350, "total_tokens": 14790, "prompt_tokens_details": {"cached_tokens": 10240}, "prompt_cache_hit_tokens": 10240, "prompt_cache_miss_tokens": 2200}

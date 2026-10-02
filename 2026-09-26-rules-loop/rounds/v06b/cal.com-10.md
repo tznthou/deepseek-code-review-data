@@ -1,0 +1,87 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 將 booking audit 整合至確認/拒絕流程，新增 actor 與 actionSource 參數，並擴充測試。主要風險在於 handleConfirmation 中 acceptedBookings 的 oldStatus 可能不正確（單筆時硬編碼為 ACCEPTED），以及 RejectedAuditActionService 的 schema 變更可能造成資料相容性問題。另需確認 getAppActor 的 apps 解析與 handlePaymentSuccess 的參數變更在所有呼叫點皆正確。
+
+### Findings（6 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `packages/features/bookings/lib/handleConfirmation.ts:411` | 單筆確認時 acceptedBookings 的 oldStatus 硬編碼為 ACCEPTED，導致 audit log 記錄錯誤 | 0.90 |
+| ⚠️ | Major | `packages/features/booking-audit/lib/actions/RejectedAuditActionService.ts:19` | RejectedAuditActionService 的 schema 變更可能導致既有資料無法解析 | 0.80 |
+| ⚠️ | Major | `packages/features/bookings/lib/handleConfirmation.ts:263` | recurring 確認時 acceptedBookings 的 oldStatus 可能不正確 | 0.75 |
+| ⚠️ | Major | `packages/app-store/_utils/getAppActor.ts:32` | getAppActor 中 apps 可能為 undefined，導致 fallback 邏輯無法正確運作 | 0.70 |
+| 🔸 | Minor | `packages/features/bookings/lib/handleConfirmation.ts:249` | acceptedBookings 變數可能未初始化 | 0.60 |
+| 🔸 | Minor | `packages/trpc/server/routers/viewer/bookings/_router.tsx:62` | 缺少逗號可能導致語法錯誤 | 0.50 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>packages/features/bookings/lib/handleConfirmation.ts:411</code> 單筆確認時 acceptedBookings 的 oldStatus 硬編碼為 ACCEPTED，導致 audit log 記錄錯誤</summary>
+
+在非 recurring 的確認流程中，`acceptedBookings` 被設定為 `[{ oldStatus: BookingStatus.ACCEPTED, uid: booking.uid }]`。但此時 booking 的實際狀態可能是 PENDING 或其他非 ACCEPTED 狀態（例如從 PENDING 確認）。這會導致 audit log 中的 `status.old` 永遠是 ACCEPTED，而非實際的舊狀態。
+
+**失敗情境**：當一個 PENDING 的 booking 被確認時，audit log 會記錄 `{ old: ACCEPTED, new: ACCEPTED }`，而不是 `{ old: PENDING, new: ACCEPTED }`。
+
+**建議**：在呼叫 `fireBookingAcceptedEvent` 之前，先取得 booking 的目前狀態（例如從 `updatedBooking` 或先前的查詢中取得），並使用該狀態作為 `oldStatus`。
+
+**判斷依據**：diff 中新增的程式碼片段，位於 handleConfirmation.ts 的 411 行附近，將 oldStatus 直接設為 BookingStatus.ACCEPTED。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/features/booking-audit/lib/actions/RejectedAuditActionService.ts:19</code> RejectedAuditActionService 的 schema 變更可能導致既有資料無法解析</summary>
+
+原本 `rejectionReason` 使用 `StringChangeSchema`（具有 old/new 結構），現在改為 `z.string().nullable()`。這會使得已儲存的 audit log 資料（包含 `{ old, new }` 的 rejectionReason）在 `parseStored` 時驗證失敗，因為 schema 不再接受物件。
+
+**失敗情境**：升級後，任何嘗試讀取舊的 REJECTED audit log 的操作都會拋出 Zod 驗證錯誤，導致 audit log 頁面無法顯示。
+
+**建議**：保留對舊格式的相容性，例如使用 union 或自訂 schema 同時接受字串和物件，並在 migrateToLatest 中處理轉換。
+
+**判斷依據**：diff 中將 `rejectionReason: StringChangeSchema` 改為 `rejectionReason: z.string().nullable()`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/features/bookings/lib/handleConfirmation.ts:263</code> recurring 確認時 acceptedBookings 的 oldStatus 可能不正確</summary>
+
+在 recurring 確認流程中，`acceptedBookings` 是從 `unconfirmedRecurringBookings` 映射而來，使用 `booking.status` 作為 oldStatus。但 `unconfirmedRecurringBookings` 是透過 `prisma.booking.findMany` 查詢 `status: PENDING` 的 bookings，因此 `booking.status` 應該都是 PENDING。然而，在後續的 `prisma.booking.updateMany` 更新後，這些 bookings 的狀態已變為 ACCEPTED，但 `acceptedBookings` 仍保留舊的 PENDING 狀態，這在 audit log 中是正確的。
+
+**潛在問題**：如果 `unconfirmedRecurringBookings` 的查詢條件不是 PENDING（例如未來變更），或者有其他狀態的 bookings 被包含，oldStatus 可能不準確。目前程式碼看起來正確，但建議在映射時明確使用 `BookingStatus.PENDING` 或從查詢結果中取得實際狀態。
+
+**建議**：確認查詢條件是否永遠為 PENDING，或考慮在更新前先儲存狀態。
+
+**判斷依據**：diff 中新增的程式碼片段，位於 handleConfirmation.ts 的 260 行附近。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/app-store/_utils/getAppActor.ts:32</code> getAppActor 中 apps 可能為 undefined，導致 fallback 邏輯無法正確運作</summary>
+
+`getAppActor` 接收 `apps` 參數，型別為 `z.infer<typeof eventTypeAppMetadataOptionalSchema>`，但呼叫端可能傳入 `undefined`（例如 `eventType?.metadata?.apps` 可能不存在）。在函式內，`const appData = apps?.[appSlug as keyof typeof apps];` 使用了 optional chaining，但 `apps` 本身可能為 undefined，此時 `appData` 會是 undefined，進而觸發 fallback 邏輯。這可能導致即使有 credentialId，也因為 apps 為 undefined 而無法取得，最終使用 appSlug 建立 actor。
+
+**失敗情境**：當 eventType 的 metadata 中沒有 apps 屬性時，即使該 app 有 credentialId，也會被記錄為使用 appSlug 的 actor，可能影響 audit log 的精確性。
+
+**建議**：確認呼叫端是否保證 apps 不為 undefined，或調整函式簽名以接受 undefined 並明確處理。
+
+**判斷依據**：diff 中新增的 getAppActor.ts 檔案，第 31 行。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>packages/features/bookings/lib/handleConfirmation.ts:249</code> acceptedBookings 變數可能未初始化</summary>
+
+`acceptedBookings` 在宣告時沒有初始化，而是在 `if (recurringEventId)` 和 `else` 分支中分別賦值。如果未來程式碼路徑改變，可能導致 `acceptedBookings` 為 undefined，並在 `fireBookingAcceptedEvent` 中引發錯誤。
+
+**建議**：初始化為空陣列 `let acceptedBookings: { oldStatus: BookingStatus; uid: string }[] = [];`，並在呼叫前檢查長度。
+
+**判斷依據**：diff 中新增的變數宣告，位於 handleConfirmation.ts 的 246 行附近。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>packages/trpc/server/routers/viewer/bookings/_router.tsx:62</code> 缺少逗號可能導致語法錯誤</summary>
+
+在 `_router.tsx` 的 `confirm` 路由中，`input` 物件的最後一個屬性 `actionSource: "WEBAPP"` 後面缺少逗號。雖然 JavaScript 允許物件最後一個屬性不加逗號，但根據專案的格式化規則（R03），應該使用 ES5 trailing commas。這可能導致 lint 警告。
+
+**建議**：在 `actionSource: "WEBAPP"` 後面加上逗號。
+
+**判斷依據**：diff 中新增的程式碼片段，位於 _router.tsx 的 62 行附近。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 31437 (cache hit 31360) ｜ completion tokens 2080 ｜ PR #10</sub>

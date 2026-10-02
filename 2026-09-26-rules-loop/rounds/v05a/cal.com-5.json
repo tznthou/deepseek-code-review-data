@@ -1,0 +1,68 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的顯示前綴",
+    "body": "在 `BasicsTab` 中，程式碼嘗試從 `bookingUrl` 解析出 domain 與 path 前綴，但邏輯有誤：\n- 若 `bookingUrl` 為 `https://cal.com/username/30min`，`pathParts` 為 `['username', '30min']`，移除 slug 後為 `['username']`，回傳 `https://cal.com/username/`，正確。\n- 但若 `bookingUrl` 為 `https://i.cal.com/keith/30min`，`pathParts` 為 `['keith', '30min']`，移除 slug 後為 `['keith']`，回傳 `https://i.cal.com/keith/`，但實際上 `i.cal.com` 是短網域，booking URL 可能不含 username，此時應回傳 `https://i.cal.com/`。\n- 此外，若 `bookingUrl` 為 `https://cal.com/username/30min?metadata[foo]=bar`，`pathname` 不含 query，但 `URL` 物件會正確解析，此處無問題。\n建議：不要自行解析，而是直接使用 `bookingUrl` 的前綴（例如移除最後一個 path segment），或由 API 提供明確的 `bookingUrlPrefix` 欄位。",
+    "existing_code": "const url = new URL(props.bookingUrl);\nconst pathParts = url.pathname.split(\"/\").filter(Boolean);\npathParts.pop(); // Remove slug\nlet prefix = \"/\";\nif (pathParts.length > 0) {\n  prefix = `/${pathParts.join(\"/\")}/`;\n}\nreturn `${url.protocol}//${url.hostname}${prefix}`;",
+    "evidence": "diff 中新增的 URL 解析邏輯，在處理短網域（如 i.cal.com）時會錯誤地包含 username 路徑段。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 949,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "bookingUrl 可能為空，導致預覽與複製功能失效",
+    "body": "`handlePreview` 與 `handleCopyLink` 現在直接使用 `bookingUrl` state，但該 state 的初始值為空字串，且未見何處被設定。若使用者尚未儲存 event type 或 API 未回傳 bookingUrl，則點擊預覽或複製只會顯示錯誤訊息，功能完全無法使用。\n建議：確認 `bookingUrl` 的來源與更新時機，若可能為空，應提供 fallback（例如使用舊的 `buildEventTypeLink` 邏輯）或在使用前先檢查並提示。",
+    "existing_code": "if (!bookingUrl) {\n  showErrorAlert(\"Error\", \"Booking URL not available. Please save the event type first.\");\n  return;\n}",
+    "evidence": "diff 中 `handlePreview` 與 `handleCopyLink` 的修改，直接依賴 `bookingUrl` state，但未見其被賦值。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/index.ios.tsx",
+    "line": 114,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "bookingUrl 可能為空，導致複製/分享/預覽功能失效",
+    "body": "在 `EventTypesIOS` 中，`handleCopyLink`、`_handleShare`、`handlePreview` 都新增了 `if (!eventType.bookingUrl)` 的檢查，若 `bookingUrl` 不存在則直接顯示錯誤並返回。這可能導致使用者無法使用這些功能，尤其是當 API 未回傳該欄位時。\n建議：確認 API 是否保證 `bookingUrl` 一定存在，若否，應提供 fallback 或在使用前先嘗試取得。",
+    "existing_code": "if (!eventType.bookingUrl) {\n  showErrorAlert(\"Error\", \"Booking URL not available for this event type.\");\n  return;\n}",
+    "evidence": "diff 中新增的檢查邏輯，若 `bookingUrl` 為空則功能完全無法使用。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/index.tsx",
+    "line": 136,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "bookingUrl 可能為空，導致複製/分享/預覽功能失效",
+    "body": "在 `EventTypes` 中，`handleCopyLink`、`_handleShare`、`handlePreview` 同樣新增了 `if (!eventType.bookingUrl)` 的檢查，若 `bookingUrl` 不存在則直接顯示錯誤並返回。這可能導致使用者無法使用這些功能，尤其是當 API 未回傳該欄位時。\n建議：確認 API 是否保證 `bookingUrl` 一定存在，若否，應提供 fallback 或在使用前先嘗試取得。",
+    "existing_code": "if (!eventType.bookingUrl) {\n  showErrorAlert(\"Error\", \"Booking URL not available for this event type.\");\n  return;\n}",
+    "evidence": "diff 中新增的檢查邏輯，若 `bookingUrl` 為空則功能完全無法使用。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "copyBtn 的 bookingUrl 未使用 eventType.bookingUrl",
+    "body": "在 `content.ts` 的 `copyBtn` 事件處理中，建構 `bookingUrl` 時仍使用舊的 `https://cal.com/${username}/${slug}` 邏輯，未使用 `eventType.bookingUrl`。這可能導致複製的連結與實際 booking URL 不一致（例如使用短網域或自訂網域時）。\n建議：與其他按鈕一致，使用 `eventType.bookingUrl || fallback`。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中此處未修改，但其他按鈕已改用 `eventType.bookingUrl`。"
+  },
+  {
+    "path": "companion/components/event-type-list-item/EventTypeListItemParts.tsx",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "getDisplayUrl 可能顯示不完整的 URL",
+    "body": "`getDisplayUrl` 函式在 `bookingUrl` 存在時回傳 `url.hostname + url.pathname`，但若 `bookingUrl` 包含 port 或 protocol 不同（如 `http://`），顯示時會遺漏 protocol 與 port，可能造成使用者混淆。\n建議：考慮顯示完整的 URL，或至少包含 protocol。",
+    "existing_code": "return url.hostname + url.pathname;",
+    "evidence": "diff 中新增的函式，回傳值缺少 protocol。"
+  }
+]

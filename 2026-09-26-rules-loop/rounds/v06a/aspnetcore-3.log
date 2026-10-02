@@ -1,0 +1,8 @@
+[info] repo 規範：repo=aspnetcore、20 條、10486 字元、placement=after_diff、sha256=26b18144ff11
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 7730 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/Shared/CertificateGeneration/UnixCertificateManager.cs:365 → 375（片段唯一命中）
+[info] 重新定位 src/Tools/dotnet-dev-certs/src/Program.cs:127 → 134（片段唯一命中）
+[info] 重新定位 src/Shared/CertificateGeneration/UnixCertificateManager.cs:365 → 375（片段唯一命中）
+[info] 重新定位 src/Shared/CertificateGeneration/CertificateManager.cs:1313 → 1314（片段唯一命中）
+[info] 定位不到 src/Shared/CertificateGeneration/UnixCertificateManager.cs:365（片段多重命中（2 處），不猜）
+[info] 完成於 10.8s ｜ findings=5 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 5635, "completion_tokens": 1307, "total_tokens": 6942, "prompt_tokens_details": {"cached_tokens": 3456}, "prompt_cache_hit_tokens": 3456, "prompt_cache_miss_tokens": 2179}

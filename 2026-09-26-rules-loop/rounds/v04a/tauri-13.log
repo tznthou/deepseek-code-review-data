@@ -1,0 +1,5 @@
+[info] repo 規範：repo=tauri、17 條、4988 字元、placement=after_diff、sha256=c63fb6bebf4d
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 25561 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 crates/tauri-macos-sign/src/lib.rs:20 → 21（片段唯一命中）
+[info] 定位不到 crates/tauri-macos-sign/src/lib.rs:173（片段多重命中（2 處），不猜）
+[info] 完成於 8.5s ｜ findings=3 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 11660, "completion_tokens": 812, "total_tokens": 12472, "prompt_tokens_details": {"cached_tokens": 10496}, "prompt_cache_hit_tokens": 10496, "prompt_cache_miss_tokens": 1164}

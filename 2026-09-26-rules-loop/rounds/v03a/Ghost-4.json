@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "使用 dangerouslySetInnerHTML 渲染未消毒的 HTML 可能導致 XSS",
+    "body": "`dangerouslySetInnerHTML={{__html: item.html || ''}}` 直接將評論內容的 HTML 注入 DOM。若評論內容未經伺服器端消毒，攻擊者可提交包含 `<script>` 或事件處理器的惡意 HTML，當管理員查看評論列表時觸發 XSS。\n\n建議：使用 DOMPurify 等函式庫在渲染前消毒 HTML，或確認後端已對 `item.html` 進行嚴格的白名單消毒。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 `CommentContent` 元件直接使用 `dangerouslySetInnerHTML` 渲染 `item.html`，且未見任何消毒處理。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "clamp 偵測僅在掛載時執行，內容動態載入時可能失效",
+    "body": "`useEffect` 僅在元件掛載時執行一次 `checkIfClamped`，並監聽 window resize。但評論內容可能因虛擬滾動或非同步載入而在掛載後才更新，導致 `scrollHeight` 與 `clientHeight` 的比較不準確，`isClamped` 狀態可能錯誤，使「Show more」按鈕不出現或在不該出現時出現。\n\n建議：使用 `ResizeObserver` 監聽 `contentRef` 的大小變化，或在內容更新時重新檢查。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "依賴陣列為空 `[]`，僅在掛載時執行；且未監聽內容變化。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R19] 缺少分號",
+    "body": "`const contentRef = useRef<HTMLDivElement>(null)` 和 `const [isClamped, setIsClamped] = useState(false)` 等陳述句結尾缺少分號，違反專案規範 R19。",
+    "existing_code": "const contentRef = useRef<HTMLDivElement>(null)\n    const [isClamped, setIsClamped] = useState(false)\n    const [isExpanded, setIsExpanded] = useState(false)",
+    "evidence": "diff 中新增的程式碼行末未加分號。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R12] JSX props 順序不符合標準",
+    "body": "`dangerouslySetInnerHTML` 應置於 `ref` 之前，且 `className` 應在 `dangerouslySetInnerHTML` 之前。目前順序為 `dangerouslySetInnerHTML`、`ref`、`className`，違反專案規範 R12。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}\n                    ref={contentRef}\n                    className={`prose flex-1 text-base leading-[1.45em] ${isExpanded ? '-mb-1 [&_p]:mb-[0.85em]' : 'line-clamp-2 [&_*]:m-0 [&_*]:inline'} ${item.status === 'hidden' && 'text-muted-foreground'}`}",
+    "evidence": "diff 中該元素的 props 順序與規範要求的字母順序不符。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "formatDate 的正規表達式可能誤刪日期中的逗號",
+    "body": "`formatted.replace(/(\\d+),(\\s+\\d{4})/, '$1$2')` 意圖移除「Dec 17, 2025」中的逗號，但若日期格式因 locale 或瀏覽器差異而不同（例如「17 Dec, 2025」或「Dec 17, 2025, 10:30 AM」），可能無法正確匹配或誤刪其他逗號。\n\n建議：使用更精確的格式化方式，例如 `Intl.DateTimeFormat` 的選項組合，或直接使用 `formatTimestamp` 函式。",
+    "existing_code": "return formatted.replace(/(\\d+),(\\s+\\d{4})/, '$1$2');",
+    "evidence": "正規表達式假設數字後緊接逗號和四位數年份，但實際格式可能因 locale 而異。"
+  }
+]

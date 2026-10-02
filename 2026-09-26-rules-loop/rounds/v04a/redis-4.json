@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc 而非 zmalloc 分配 cluster_slot_stats",
+    "body": "在 clusterCommonInit 中使用 `malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat))` 分配記憶體，違反專案規範 R02（必須使用 zmalloc 系列函數）。這會導致記憶體使用量無法被 Redis 的記憶體追蹤機制統計，且可能造成記憶體洩漏偵測失效。\n\n建議改為 `zmalloc(CLUSTER_SLOTS*sizeof(clusterSlotStat))`。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的 clusterCommonInit 函式內使用 malloc，而原程式碼在 server.c 中使用 zmalloc。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "clusterDeleteKeysInUnownedSlots 刪除 key 後未保存配置",
+    "body": "在 clusterDeleteKeysInUnownedSlots 中，當發現不屬於自己的 slot 中有 key 時，會呼叫 `clusterDelKeysInSlot(i, 0)` 刪除 key，但之後沒有呼叫 `clusterSaveConfigOrDie(1)` 保存配置。這可能導致節點重啟後，這些 key 仍然存在（因為配置未更新），再次觸發刪除流程，造成不必要的延遲或資料不一致。\n\n建議在刪除 key 後保存配置，或至少記錄需要保存的標誌。",
+    "existing_code": "clusterDelKeysInSlot(i, 0);",
+    "evidence": "原 verifyClusterConfigWithData 中在處理完所有 slot 後會呼叫 clusterSaveConfigOrDie(1)，但新函式 clusterDeleteKeysInUnownedSlots 沒有此步驟。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "clusterDeleteKeysInUnownedSlots 中 slave 檢查重複",
+    "body": "clusterDeleteKeysInUnownedSlots 開頭檢查 `clusterNodeIsSlave(getMyClusterNode())`，但呼叫它的 verifyClusterConfigWithData 已經做過相同檢查。雖然不影響正確性，但重複檢查可能造成混淆。\n\n建議移除其中一個檢查，或保留但加上註解說明為何需要重複。",
+    "existing_code": "if (clusterNodeIsSlave(getMyClusterNode())) return;",
+    "evidence": "verifyClusterConfigWithData 中已有 `if (clusterNodeIsSlave(getMyClusterNode())) return C_OK;`，而 clusterDeleteKeysInUnownedSlots 又重複檢查。"
+  }
+]

@@ -1,0 +1,79 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1744,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "slotRangeArrayNormalizeAndValidate 在驗證前修改輸入陣列，可能造成呼叫端資料損毀或 use-after-free",
+    "body": "此函式在進行任何驗證之前呼叫 `slotRangeArraySortAndMerge(slots)`，這會就地排序並合併相鄰範圍，改變 `slots` 的內容與 `num_ranges`。若呼叫端在呼叫後仍持有原始指標或假設範圍不變，可能導致資料不一致或記憶體問題。例如 `slotRangeArrayFromString` 在解析後呼叫此函式，若解析出的陣列後續被其他程式碼使用，其內容已被修改。建議改為先驗證原始範圍，再決定是否正規化，或提供一個明確的「正規化並驗證」的獨立函式，並在文件與呼叫端明確所有權與可變性。",
+    "existing_code": "/* Sort and merge adjacent slot ranges. */\n    slotRangeArraySortAndMerge(slots);",
+    "evidence": "diff 中新增的兩行：`/* Sort and merge adjacent slot ranges. */` 與 `slotRangeArraySortAndMerge(slots);` 位於 `slotRangeArrayNormalizeAndValidate` 函式內，且在驗證迴圈之前。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.85,
+    "title": "asmCreateImportTask 直接取得 slots 所有權，但呼叫端可能仍持有指標，導致 double-free 或 use-after-free",
+    "body": "原本 `task->slots = slotRangeArrayDup(slots);` 會複製一份，現在改為 `task->slots = slots;` 直接取得所有權。然而呼叫端 `clusterMigrationCommandImport` 在呼叫後不再 free，但其他呼叫端（如 `clusterAsmProcess`）在呼叫前會先 `slotRangeArrayDup` 並在錯誤時 free，但成功時卻未釋放原始指標，造成記憶體洩漏。此外，若 `asmCreateImportTask` 內部在取得所有權後發生錯誤並 `goto err`，會 free `slots`，但呼叫端可能仍持有指標，導致 double-free。建議明確所有權轉移規則：要嘛一律由呼叫端保留所有權並傳遞 const 指標，要嘛一律轉移所有權並在文件註明，且所有錯誤路徑都必須一致。",
+    "existing_code": "task->slots = slots;",
+    "evidence": "diff 中 `-    task->slots = slotRangeArrayDup(slots);` 改為 `+    task->slots = slots;`，且 `clusterMigrationCommandImport` 移除了 `slotRangeArrayFree(slots)`，但 `clusterAsmProcess` 中仍存在 `slotRangeArrayDup` 與條件式 free。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 804,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "asmCreateImportTask 錯誤路徑可能未釋放 slots 或造成 double-free",
+    "body": "在 `asmCreateImportTask` 中，多個錯誤路徑改為 `goto err`，而 `err` 標籤會執行 `slotRangeArrayFree(slots)`。但若呼叫端在傳入前已複製（如 `clusterAsmProcess`），則原始指標仍由呼叫端持有，此處 free 會造成 double-free；若呼叫端未複製（如 `clusterMigrationCommandImport`），則 free 是正確的。所有權不一致導致記憶體管理混亂。建議統一所有權模型，並在每個呼叫端明確註釋。",
+    "existing_code": "source = validateImportSlotRanges(slots, err, NULL);\n    if (!source)\n        goto err;",
+    "evidence": "diff 中將原本的 `return NULL;` 改為 `goto err;`，且 `err` 標籤包含 `slotRangeArrayFree(slots);`。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1796,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "slotRangeArrayToString 對 NULL 指標的處理不一致",
+    "body": "新增了 `if (slots == NULL || slots->num_ranges == 0) return s;`，但函式開頭已經建立 `sds s = sdsempty();`，若 `slots` 為 NULL，會先建立空 sds 再返回，呼叫端可能預期 NULL 或空字串，造成不一致。此外，若 `slots` 為 NULL，後續的 `slotRangeArrayToString` 呼叫（如 `asmLogTaskEvent`）可能未檢查返回值，導致空字串被記錄。建議明確函式對 NULL 的契約，並檢查所有呼叫端。",
+    "existing_code": "if (slots == NULL || slots->num_ranges == 0) return s;",
+    "evidence": "diff 中新增的這一行位於 `slotRangeArrayToString` 函式內，且在 `sds s = sdsempty();` 之後。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "parseSlotRangesOrReply 錯誤處理不當：未回覆錯誤且可能洩漏記憶體",
+    "body": "原本在 `validateSlotRanges` 失敗時會 `addReplyErrorSds(c, err)` 將錯誤訊息回覆給客戶端，現在改為 `sdsfree(err)` 後直接返回 NULL，但未呼叫 `addReplyError`，導致客戶端收到空回覆或連線中斷。此外，`slotRangeArrayFree(slots)` 在錯誤時被呼叫，但 `slots` 可能為 NULL（若 `slotRangeArrayCreate` 失敗），需檢查。建議保留錯誤回覆，並確保所有錯誤路徑都釋放資源。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n        sdsfree(err);\n        slotRangeArrayFree(slots);\n        return NULL;\n    }",
+    "evidence": "diff 中將 `addReplyErrorSds(c, err);` 移除，改為 `sdsfree(err);`，且未新增任何回覆。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 1012,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "asmCountKeysInSlots 未檢查 slots 指標是否為 NULL",
+    "body": "函式開頭有 `if (!slots) return 0;`，但後續直接存取 `slots->num_ranges` 與 `slots->ranges`，若 `slots` 為 NULL 會 crash。雖然目前呼叫端可能保證非 NULL，但防禦性不足。建議保留 NULL 檢查，或明確函式契約。",
+    "existing_code": "unsigned long long asmCountKeysInSlots(slotRangeArray *slots) {\n    if (!slots) return 0;\n\n    unsigned long long key_count = 0;\n    int total_ranges = slots->num_ranges;",
+    "evidence": "diff 中新增的函式，開頭有 NULL 檢查，但後續未再檢查。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 2871,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "clusterAsmProcess 中 slotRangeArrayDup 後未在成功路徑釋放原始指標",
+    "body": "在 `ASM_EVENT_IMPORT_START` 分支中，先 `slotRangeArray *slots = slotRangeArrayDup(arg);`，然後驗證並傳給 `asmCreateImportTask`。若成功，`asmCreateImportTask` 取得 `slots` 的所有權，但 `arg` 指向的原始陣列未被釋放，造成記憶體洩漏。建議在成功後由呼叫端釋放 `arg`，或改為直接傳遞 `arg` 並由 `asmCreateImportTask` 負責複製。",
+    "existing_code": "slotRangeArray *slots = slotRangeArrayDup(arg);\n            if (slotRangeArrayNormalizeAndValidate(slots, &errsds) != C_OK) {\n                slotRangeArrayFree(slots);\n                ret = C_ERR;\n                break;\n            }\n            ret = asmCreateImportTask(task_id, slots, &errsds) ? C_OK : C_ERR;",
+    "evidence": "diff 中新增的程式碼，未見對 `arg` 的釋放。"
+  }
+]

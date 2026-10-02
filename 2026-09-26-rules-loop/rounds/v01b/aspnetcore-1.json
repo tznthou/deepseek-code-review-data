@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R19] 測試方法使用 MSTest 屬性而非 xUnit",
+    "body": "此測試方法將原本的 `[Fact]` 改為 `[TestMethod]`，並新增 `[QuarantinedTest]` 屬性。根據專案規範 R19，所有測試專案應使用 xUnit 框架，此變更違反該規範，可能導致測試無法被 xUnit 執行器正確識別。建議改回 `[Fact]` 並移除 MSTest 相關 using。",
+    "existing_code": "[TestMethod]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]\n    public void NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException()",
+    "evidence": "diff 中將 `[Fact]` 改為 `[TestMethod]`，並新增 `[QuarantinedTest]`，違反 R19。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試邏輯變更：Back 改為 Forward 可能導致測試失敗",
+    "body": "原本測試使用 `Browser.Navigate().Back()` 來驗證返回行為，現在改為 `Forward()`。這可能改變測試的預期行為，若瀏覽器歷史記錄中沒有 forward 項目，此操作可能無效或拋出例外。請確認此變更是否為修正既有測試錯誤，並確保測試仍能正確驗證預期行為。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 `Browser.Navigate().Back();` 改為 `Browser.Navigate().Forward();`。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Navigate 呼叫順序變更可能影響測試初始狀態",
+    "body": "原本在 `InitializeAsync` 中先呼叫 `Navigate` 再取得 `_originalH1Element`，現在順序對調。這可能導致 `_originalH1Element` 在導航前取得，若頁面尚未載入可能找不到元素。請確認此變更是否為修正測試不穩定問題，並確保測試仍能正確初始化。",
+    "existing_code": "_originalH1Element = Browser.Exists(By.TagName(\"h1\"));\n        Navigate($\"{ServerPathBase}/redirect\");",
+    "evidence": "diff 中將 `Navigate` 呼叫移至 `_originalH1Element` 取得之後。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "AppContext.SetSwitch 參數值反轉可能改變測試行為",
+    "body": "原本設定 `DisableThrowNavigationException` 為 `false`，現在改為 `true`。這可能改變測試的預期行為，若測試目的為驗證例外拋出，此變更可能導致測試不再觸發例外。請確認此變更是否為修正測試邏輯，並確保測試仍能驗證預期行為。",
+    "existing_code": "AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中將 `false` 改為 `true`。"
+  }
+]

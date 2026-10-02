@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 錯誤類型未使用 thiserror，違反專案規範",
+    "body": "此變更將原本使用 `#[derive(Debug, thiserror::Error)]` 的 `Error` 枚舉改為手動實作 `Display` 與 `Error` trait。專案規範 R08 要求所有自訂錯誤類型必須使用 thiserror 以維持一致性與可維護性。手動實作容易出錯（例如 `source()` 方法可能遺漏某些變體），且增加維護負擔。建議改回使用 thiserror，並保留原有的 `#[error(...)]` 屬性。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中移除了 `#[derive(Debug, thiserror::Error)]`，並新增了手動的 `impl std::fmt::Display for Error` 與 `impl std::error::Error for Error`。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R09] 公開錯誤枚舉未標記 #[non_exhaustive]",
+    "body": "`Error` 是公開 API 的一部分，且此 PR 的變更說明中標註為「Potentially breaking change」。根據專案規範 R09，公開錯誤枚舉應標記 `#[non_exhaustive]` 以允許未來新增變體而不造成破壞性變更。目前此枚舉未加上該屬性，未來新增錯誤變體將導致下游編譯失敗。建議在 `pub enum Error` 上方加上 `#[non_exhaustive]`。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中 `Error` 枚舉為公開且未標記 `#[non_exhaustive]`，且變更日誌中明確指出此為潛在破壞性變更。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "notarize_inner 條件判斷邏輯可能反轉",
+    "body": "原本的條件 `submit_output.status.map_or(!wait, |s| s == \"Accepted\")` 改為 `submit_output.status.map_or(wait, |s| s == \"Accepted\")`。此變更將 `map_or` 的預設值從 `!wait` 改為 `wait`，可能改變行為：當 `status` 為 `None` 時，原本在 `wait == false` 時會進入分支，現在則在 `wait == true` 時進入。需確認此變更是否為預期修正，否則可能導致非等待模式下跳過必要的處理。",
+    "existing_code": "if submit_output.status.map_or(wait, |s| s == \"Accepted\") {",
+    "evidence": "diff 中明確顯示此行由 `map_or(!wait, ...)` 改為 `map_or(wait, ...)`。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 173,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "參數順序變更可能影響命令列行為",
+    "body": "在 `notarize_inner` 中，`app_bundle_path` 與 `zip_path` 的參數順序被調換。雖然這可能只是為了修正命令列參數的順序，但需確認此變更不會影響實際的 notarization 流程。建議驗證相關測試或手動測試以確保正確性。",
+    "existing_code": "zip_path\n      .to_str()\n      .expect(\"failed to convert zip_path to string\"),\n    app_bundle_path\n      .to_str()\n      .expect(\"failed to convert bundle_path to string\"),",
+    "evidence": "diff 中顯示 `app_bundle_path` 與 `zip_path` 的順序被交換。"
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "For 參數變更時未重新渲染",
+    "body": "在 `SetParametersAsync` 中，只有當 `For` 表達式與 `_previousFieldAccessor` 不同時才重新計算顯示名稱並渲染。然而，即使表達式相同，其引用的成員屬性值可能已變更（例如模型屬性名稱變更），但顯示名稱不會更新。建議移除 `_previousFieldAccessor` 檢查，或在每次 `SetParametersAsync` 時都重新計算並渲染。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中第 44-52 行顯示僅在表達式變更時才渲染，未考慮屬性值變更。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Hot Reload 時未清除顯示名稱快取",
+    "body": "`ClearCache` 方法僅清除 `_memberInfoCache`，未清除 `_displayNameCache`。若 Hot Reload 變更了屬性的顯示名稱（例如修改 DisplayAttribute），顯示名稱快取將保留舊值，導致顯示不正確。建議同時清除兩個快取。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中第 79-82 行顯示僅清除成員快取。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R07] 缺少 XML 文件註解",
+    "body": "公開類別 `DisplayName<TValue>` 的 `For` 屬性缺少 XML 文件註解。根據規範 R07，所有公開成員都應有文件。建議為 `For` 屬性添加 `<summary>` 說明。",
+    "existing_code": "[Parameter, EditorRequired]\npublic Expression<Func<TValue>>? For { get; set; }",
+    "evidence": "diff 中第 25-26 行顯示 `For` 屬性沒有 XML 文件。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R02] 應使用檔案範圍命名空間",
+    "body": "檔案 `DisplayName.cs` 使用區塊範圍命名空間，但規範 R02 要求使用檔案範圍命名空間。建議改為 `namespace Microsoft.AspNetCore.Components.Forms;` 並移除大括號。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms\n{",
+    "evidence": "diff 中第 12 行顯示區塊範圍命名空間。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 159,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 `SupportsLocalizationWithResourceType` 缺少 Arrange-Act-Assert 結構註解。根據規範 R06，測試方法應包含明確的結構註解。建議添加 `// Arrange`、`// Act`、`// Assert` 註解。",
+    "existing_code": "public async Task SupportsLocalizationWithResourceType()\n{\n    var model = new TestModel();",
+    "evidence": "diff 中第 15-16 行顯示該方法沒有結構註解。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 188,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試輔助方法可能因多個文字框架而失敗",
+    "body": "`RenderAndGetOutput` 方法使用 `First(f => f.FrameType == RenderTree.RenderTreeFrameType.Text)` 取得文字框架，但若元件渲染多個文字框架（例如包含多個 DisplayName 元件），可能取到錯誤的文字。建議改用更精確的定位方式，例如透過元件參考或框架索引。",
+    "existing_code": "var textFrame = batch.ReferenceFrames\n    .First(f => f.FrameType == RenderTree.RenderTreeFrameType.Text);",
+    "evidence": "diff 中第 196-197 行顯示使用 `First` 取得文字框架。"
+  }
+]

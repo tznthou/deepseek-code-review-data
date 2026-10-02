@@ -1,0 +1,79 @@
+[
+  {
+    "path": "packages/features/users/repositories/UserRepository.ts",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "移除 userSelect 中的 locale 欄位將導致 organizer.locale 為 undefined",
+    "body": "在 `UserRepository` 的 `userSelect` 中移除了 `locale: true`，但 `handleCancelBooking.ts` 中仍使用 `organizer.locale` 來取得翻譯：`const tOrganizer = await getTranslation(organizer.locale ?? \"en\", \"common\");`。由於 `findByIdOrThrow` 使用此 select，回傳的 organizer 物件將缺少 `locale` 屬性，導致 `organizer.locale` 為 undefined，最終 fallback 到 \"en\"，可能造成非英語使用者的通知或錯誤訊息語言錯誤。\n\n建議：在 `userSelect` 中保留 `locale: true`，或確保 `findByIdOrThrow` 使用包含 locale 的 select。",
+    "existing_code": "createdDate: true,\n  trialEndsAt: true,\n  completedOnboarding: true,\n-  locale: true,\n  timeFormat: true,",
+    "evidence": "diff 中 `packages/features/users/repositories/UserRepository.ts` 的 `userSelect` 移除了 `locale: true`，而 `handleCancelBooking.ts` 第 336 行使用 `organizer.locale`。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "updateMany 方法缺少回傳型別",
+    "body": "`updateMany` 方法沒有標註回傳型別，雖然 TypeScript 可以推斷，但明確標註有助於維護與介面一致性。建議加上 `Promise<{ count: number }>`。",
+    "existing_code": "async updateMany({ where, data }: { where: BookingWhereInput; data: BookingUpdateData }) {\n    await this.prismaClient.booking.updateMany({\n      where: where,\n      data,\n    });\n  }",
+    "evidence": "diff 中新增的 `updateMany` 方法缺少回傳型別，而介面 `IBookingRepository` 中定義為 `Promise<{ count: number }>`。"
+  },
+  {
+    "path": "packages/lib/server/repository/dto/IBookingRepository.ts",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "介面 IBookingRepository 未包含 updateIncludeWorkflowRemindersAndReferences 方法",
+    "body": "`BookingRepository` 實作了 `updateIncludeWorkflowRemindersAndReferences` 方法，但 `IBookingRepository` 介面中未宣告此方法，導致型別契約不完整。建議在介面中補上此方法的簽名。",
+    "existing_code": "export interface IBookingRepository {\n  // ... Add existing methods as well here\n  updateMany(params: { where: BookingWhereInput; data: BookingUpdateData }): Promise<{ count: number }>;\n\n  update(params: { where: BookingWhereUniqueInput; data: BookingUpdateData }): Promise<Booking>;\n\n  findManyIncludeWorkflowRemindersAndReferences(params: {\n    where: BookingWhereInput;\n  }): Promise<BookingWithWorkflowReminders[]>;\n}",
+    "evidence": "diff 中 `BookingRepository` 新增了 `updateIncludeWorkflowRemindersAndReferences`，但 `IBookingRepository` 未列出。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 513,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "取消後續預約時查詢條件可能遺漏部分預約",
+    "body": "在取消後續預約的邏輯中，原本的 `findMany` 查詢使用 `startTime: { gte: new Date() }`，但重構後改為 `gte: bookingToDelete.startTime`。這可能導致如果 `bookingToDelete.startTime` 早於當前時間，會包含已過去的預約；反之若晚於當前時間，則可能遺漏應取消的預約。請確認此變更是否符合預期。",
+    "existing_code": "const allUpdatedBookings = await bookingRepository.findManyIncludeWorkflowRemindersAndReferences({\n      where: {\n        recurringEventId: bookingToDelete.recurringEventId,\n        startTime: {\n          gte: bookingToDelete.startTime,\n        },\n      },\n    });",
+    "evidence": "diff 中原本的 `gte: new Date()` 被改為 `gte: bookingToDelete.startTime`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 546,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "取消單一預約時改用 uid 作為唯一條件，可能忽略 id",
+    "body": "原本的 `where` 條件是 `uid ? { uid } : { id }`，但重構後固定使用 `uid: bookingToDelete.uid`。如果 `bookingToDelete.uid` 為 undefined 或空字串，將導致查詢失敗或找不到記錄。請確認 `bookingToDelete.uid` 在此情境下一定存在。",
+    "existing_code": "const updatedBooking = await bookingRepository.updateIncludeWorkflowRemindersAndReferences({\n      where: {\n        uid: bookingToDelete.uid,\n      },",
+    "evidence": "diff 中原本的條件判斷被移除，改為直接使用 `uid`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking/test/handleCancelBooking.test.ts",
+    "line": 1053,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增測試未驗證資料庫狀態，僅檢查回傳值",
+    "body": "新增的四個測試都只檢查 `result.success`、`result.onlyRemovedAttendee` 和 `result.bookingId`，沒有驗證資料庫中的預約狀態、出席者是否刪除、參考是否標記刪除等。這可能無法捕捉到實際的資料變更錯誤。建議加入對資料庫狀態的斷言。",
+    "existing_code": "expect(result.success).toBe(true);\n    expect(result.onlyRemovedAttendee).toBe(false);\n    expect(result.bookingId).toBe(idOfBookingToBeCancelled);",
+    "evidence": "diff 中新增的測試僅有回傳值斷言，未查詢資料庫驗證。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案格式不符合 Biome 規範（單引號、無分號）",
+    "body": "此新檔案使用單引號且缺少分號，與專案其他檔案的雙引號和分號風格不一致，可能違反 R03。建議執行 Biome 格式化。",
+    "existing_code": "import type { PrismaClient } from '@calcom/prisma/client'\n\nimport type { IBookingAttendeeRepository } from '../lib/dto/IBookingAttendeeRepository'\n\nexport class PrismaBookingAttendeeRepository implements IBookingAttendeeRepository {\n  constructor(private prismaClient: PrismaClient) {}\n\n  async deleteManyByBookingId(bookingId: number): Promise<void> {\n    await this.prismaClient.attendee.deleteMany({\n      where: {\n        bookingId,\n      },\n    })\n  }\n}",
+    "evidence": "diff 中新增的檔案使用單引號且無分號，與其他檔案風格不同。"
+  }
+]

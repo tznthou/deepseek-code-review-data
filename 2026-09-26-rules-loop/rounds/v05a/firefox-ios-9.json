@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/State/BrowserViewControllerState.swift",
+    "line": 566,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "[R02] 錯誤的 displayView 變更可能導致錯誤的畫面顯示",
+    "body": "此變更將 `displayView` 從 `.readerMode` 改為 `.readerModeLongPressAction`，但該方法（`handleShowReaderModeAction`）的意圖是顯示 Reader Mode，而非長按動作。這可能導致使用者點擊 Reader Mode 按鈕時，畫面顯示錯誤的視圖。建議確認此變更是否為誤植，若非誤植則需補充說明與測試。",
+    "existing_code": "displayView: .readerModeLongPressAction,",
+    "evidence": "diff 中此行由 `displayView: .readerMode` 改為 `displayView: .readerModeLongPressAction`，且該方法名稱與上下文均指向 Reader Mode 顯示。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R02] 布林邏輯反轉可能導致取消編輯時 URL 處理錯誤",
+    "body": "原本條件為 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，現在改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會使得當 URL 是 Reader Mode 頁面時，`url` 不會被設為 nil，可能導致取消編輯後工具列仍顯示 Reader Mode URL，或影響後續行為。請確認此變更的意圖，並補充測試。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&& !` 改為 `||`，邏輯完全相反。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R02] 布林邏輯反轉可能導致 Reader Mode 遙測事件錯誤",
+    "body": "原本 `case .available: true` 改為 `false`，`default: false` 改為 `true`。這會使得當 Reader Mode 狀態為 `.available` 時，遙測事件記錄為未啟用，反之亦然。這可能導致遙測數據不準確，影響產品決策。請確認此變更的意圖，並補充測試。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中兩行布林值被反轉。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/ToolbarTelemetry.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R11] gleanWrapper 屬性存取控制從 private 改為 internal",
+    "body": "`gleanWrapper` 屬性從 `private let` 改為 `let`（internal），這擴大了其可見性。若無外部使用需求，建議維持 `private` 以遵循最小權限原則。",
+    "existing_code": "let gleanWrapper: GleanWrapper",
+    "evidence": "diff 中此行由 `private let gleanWrapper: GleanWrapper` 改為 `let gleanWrapper: GleanWrapper`。"
+  }
+]

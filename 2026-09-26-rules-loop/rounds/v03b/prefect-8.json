@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 462,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "static_subpath 指派邏輯錯誤",
+    "body": "在 `create_ui_app` 中，當 `v2_enabled` 為 True 時，`static_subpath` 被指派為 `prefect.__ui_static_subpath__`（即 `ui_v2_build`），但 `source_static_path` 是 `prefect.__ui_v2_static_path__`（即 `ui_v2`）。這會導致後續 `create_ui_static_subpath` 將 V2 靜態檔案複製到 `ui_v2_build` 目錄，但 `static_dir` 指向 `ui_v2_build`，而 `reference_file_matches_base_url` 檢查的檔案可能不存在，造成服務錯誤。建議將 `static_subpath` 改為 `prefect.__ui_v2_static_subpath__`（即 `ui_v2_build`），並確認 `__ui_v2_static_subpath__` 的定義是否正確。",
+    "existing_code": "static_subpath = prefect.__ui_static_subpath__",
+    "evidence": "diff 中第 462 行：`static_subpath = prefect.__ui_static_subpath__`，但 `source_static_path` 為 `prefect.__ui_v2_static_path__`，兩者不一致。"
+  },
+  {
+    "path": "src/prefect/settings/models/server/ui.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "v2_enabled 預設為 True 可能造成未預期的行為變更",
+    "body": "新增的 `v2_enabled` 設定預設為 `True`，這會讓所有現有使用者自動切換到實驗性的 V2 UI，可能導致未預期的行為變更或破壞性影響。建議將預設值改為 `False`，並在正式發布時再啟用。",
+    "existing_code": "v2_enabled: bool = Field(\n        default=True,\n        description=\"Whether to serve the experimental V2 UI instead of the default V1 UI.\",\n    )",
+    "evidence": "diff 中新增的設定欄位，預設值為 True。"
+  },
+  {
+    "path": "Dockerfile",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "安裝 Chromium 可能大幅增加映像檔大小且未清理 apt 快取",
+    "body": "在 `ui-v2-builder` 階段安裝 Chromium 是為了 arm64 建置，但 Chromium 及其相依套件可能使映像檔大小增加數百 MB。此外，`apt-get clean` 已執行，但未刪除 `/var/lib/apt/lists/*`，可能殘留不必要的檔案。建議評估是否可改用無頭 Chromium 或僅安裝必要元件，並在清理時一併刪除 lists。",
+    "existing_code": "RUN apt-get update && \\\n    apt-get install --no-install-recommends -y \\\n    # Required for arm64 builds\n    chromium \\\n    && apt-get clean && rm -rf /var/lib/apt/lists/*",
+    "evidence": "diff 中新增的 RUN 指令。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 531,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "日誌記錄器未遵循標準初始化模式",
+    "body": "在 `create_ui_app` 中，使用 `logging.getLogger(\"ui_server\")` 直接取得 logger，違反專案規範 R03（Logger 實例必須遵循標準初始化模式）。建議改用 `get_logger(\"ui_server\")` 並加上型別註記。",
+    "existing_code": "ui_logger = logging.getLogger(\"ui_server\")",
+    "evidence": "diff 中新增的日誌記錄器初始化。"
+  }
+]

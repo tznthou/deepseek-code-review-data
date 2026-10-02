@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "日期過濾條件從 `<` 改為 `<=` 可能包含當天已寄送的郵件",
+    "body": "在 `#getHighestCount` 中，filter 條件從 `created_at:<${today}` 改為 `created_at:<=${today}`。這會將當天建立的郵件也納入查詢，可能導致 `lastCount` 包含今天的寄送量，使得暖機限制計算過高。例如，若今天已寄出 1000 封，`lastCount` 可能變成 1000，導致明天的限制從 200 變成 1250，跳過暖機階段。建議改回 `<` 以排除當天資料。",
+    "existing_code": "filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,",
+    "evidence": "diff 中將 `created_at:<` 改為 `created_at:<=`，且註解仍寫「excluding today」，但實際條件已包含今天。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試中 mock 的 `findPage` 可能與實際模型不符",
+    "body": "在 `beforeEach` 中，`Email` 被設定為 `createModelClass({ findAll: [] })`，但 `DomainWarmingService` 呼叫的是 `findPage`。這可能導致測試中 `findPage` 未定義而拋出錯誤，或回傳非預期結果。建議確認 `createModelClass` 的實作是否會將 `findAll` 轉換為 `findPage`，或直接 mock `findPage`。",
+    "existing_code": "Email = createModelClass({\n            findAll: []\n        });",
+    "evidence": "diff 中將 `findOne: null` 改為 `findAll: []`，但服務程式碼呼叫 `findPage`，兩者名稱不一致。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 181,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言仍檢查舊的 `<` 條件，與新程式碼不符",
+    "body": "在測試 `should query for emails created before today` 中，斷言 `callArgs.filter.includes(`created_at:<${today}`)`，但實際程式碼已改為 `<=`。這會導致測試失敗。建議更新斷言以匹配新的過濾條件。",
+    "existing_code": "assert.ok(callArgs.filter.includes(`created_at:<${today}`));",
+    "evidence": "diff 中此斷言未變更，但服務程式碼的 filter 已改為 `<=`。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R20] 使用 var 宣告變數",
+    "body": "在 SelectOptionsPopover 的 onSelect 處理中，將 `const newValues` 改為 `var newValues`，違反專案規範 R20（必須使用 let 或 const）。var 可能導致變數提升與作用域問題，應改回 const。",
+    "existing_code": "var newValues = [...effectiveValues, option.value] as T[];",
+    "evidence": "diff 中將原本的 const 改為 var，違反 R20。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 105,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "預設 i18n 字串設為空字串",
+    "body": "DEFAULT_I18N 中的 `addFilter` 和 `addFilterTitle` 被改為空字串，這會導致使用預設 i18n 的按鈕沒有文字，影響可用性。若有意圖，應提供替代方案或確保所有使用處都有覆寫。",
+    "existing_code": "addFilter: '',",
+    "evidence": "diff 中將 'Add filter' 改為空字串。"
+  },
+  {
+    "path": "apps/stats/src/views/Stats/components/stats-filter.tsx",
+    "line": 498,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "addButtonText 設為空字串",
+    "body": "在 StatsFilter 中，`addButtonText={filters.length ? '' : ''}` 永遠是空字串，導致按鈕沒有文字。可能意圖是只顯示圖示，但應確認設計。若需隱藏文字，應使用適當的 prop 或 CSS。",
+    "existing_code": "addButtonText={filters.length ? '' : ''}",
+    "evidence": "diff 中原本根據 filters.length 顯示不同文字，現在改為空字串。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "autoCloseOnSelect 後未清除搜尋輸入",
+    "body": "在 multiselect 的 onSelect 中，若 autoCloseOnSelect 為 true，呼叫 onClose?.() 但未清除搜尋輸入。這可能導致下次開啟時仍顯示舊的搜尋字串。建議在關閉時一併清除搜尋輸入。",
+    "existing_code": "if (field.autoCloseOnSelect) {\n    onClose?.();\n}",
+    "evidence": "diff 中新增 autoCloseOnSelect 處理，但未呼叫 setSearchInput('')。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1276,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "select 類型關閉時未呼叫 handleClose",
+    "body": "在 select 類型的 onSelect 中，原本呼叫 setOpen(false) 和 handleClose()，現在只呼叫 setOpen(false)，移除了 handleClose()。這可能導致 onClose 回呼未被觸發，影響父元件狀態。",
+    "existing_code": "onChange([option.value] as T[]);\nsetOpen(false);",
+    "evidence": "diff 中移除了 handleClose() 呼叫。"
+  }
+]

@@ -1,0 +1,13 @@
+[info] repo 規範＋範圍說明：repo=aspnetcore、20 條、10512 字元、placement=after_diff、sha256=03cfa3548ec0
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 13301 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:8 → 10（片段唯一命中）
+[info] 重新定位 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:10 → 12（片段唯一命中）
+[info] 定位不到 src/Components/Endpoints/test/EndpointHtmlRendererTest.cs:721（片段多重命中（4 處），不猜）
+[info] 定位不到 src/Components/Endpoints/test/EndpointHtmlRendererTest.cs:736（片段多重命中（4 處），不猜）
+[info] 定位不到 src/Components/Endpoints/test/EndpointHtmlRendererTest.cs:771（片段多重命中（4 處），不猜）
+[info] 定位不到 src/Components/Endpoints/test/EndpointHtmlRendererTest.cs:806（片段多重命中（4 處），不猜）
+[info] 定位不到 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:79（片段多重命中（4 處），不猜）
+[info] 定位不到 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:91（片段多重命中（4 處），不猜）
+[info] 定位不到 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:103（片段多重命中（4 處），不猜）
+[info] 定位不到 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:119（片段多重命中（4 處），不猜）
+[info] 完成於 22.0s ｜ findings=10 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 6993, "completion_tokens": 4398, "total_tokens": 11391, "prompt_tokens_details": {"cached_tokens": 6912}, "prompt_cache_hit_tokens": 6912, "prompt_cache_miss_tokens": 81}

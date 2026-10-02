@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1316,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "window_features 方法中 size 與 position 的處理順序可能影響視窗初始位置",
+    "body": "在 `window_features` 方法中，原本先處理 `position` 再處理 `size`，現在改為先處理 `size` 再處理 `position`。這可能導致在某些平台上視窗初始位置不正確，因為設定 size 後再設定 position 可能觸發視窗重新定位。建議確認此順序變更是否為預期行為，並在必要時調整回原本順序。",
+    "existing_code": "if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 中顯示原本先處理 position 再處理 size，現在順序對調。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1317,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 程式碼格式不符合 rustfmt 規範",
+    "body": "在 `inner_size` 呼叫中，`size.width` 與 `size.height` 之間有多餘的空格，且 `position` 呼叫中 `position.x` 與 `position.y` 之間缺少空格。這違反了專案的 rustfmt 格式規範，可能導致 CI 中的格式檢查失敗。建議執行 `cargo fmt` 修正。",
+    "existing_code": "self.window_builder = self.window_builder.inner_size(size.width,    size.height);",
+    "evidence": "diff 中顯示 `size.width,    size.height` 有多餘空格，且 `position.x,position.y` 缺少空格。"
+  },
+  {
+    "path": "examples/api/src-tauri/src/lib.rs",
+    "line": 74,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "on_new_window 回呼移至桌面平台區塊可能改變非桌面平台行為",
+    "body": "原本 `on_new_window` 回呼在所有平台都會設定，現在被移至 `#[cfg(all(desktop, not(test)))]` 區塊內。這可能導致在非桌面平台（如行動裝置）上，新視窗請求不會被處理，而可能採用預設行為。請確認這是否為預期變更，並考慮是否需要在其他平台保留此回呼。",
+    "existing_code": "#[cfg(all(desktop, not(test)))]\n      {\n        let app_ = app.handle().clone();\n        let mut created_window_count = std::sync::atomic::AtomicUsize::new(0);\n\n        window_builder = window_builder\n          .title(\"Tauri API Validation\")\n          .inner_size(1000., 800.)\n          .min_inner_size(600., 400.)\n          .menu(tauri::menu::Menu::default(app.handle())?)\n          .on_new_window(move |url, features| {",
+    "evidence": "diff 中顯示 `on_new_window` 從原本的位置移至 `#[cfg(all(desktop, not(test)))]` 區塊內。"
+  }
+]

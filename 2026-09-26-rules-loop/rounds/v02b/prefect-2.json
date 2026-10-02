@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/events/schemas/automations.py",
+    "line": 772,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "field_validator 使用 info.data 可能因欄位順序而失效",
+    "body": "在 `validate_automation_triggered_event_id` 中，使用 `info.data.get(\"triggering_event\")` 來檢查 `triggering_event` 是否存在。但 Pydantic 的欄位驗證順序取決於模型定義中的欄位順序，若 `automation_triggered_event_id` 在 `triggering_event` 之前定義，則 `info.data` 中可能還沒有 `triggering_event`，導致驗證器無法正確檢查。建議改用 `model_validator` 進行跨欄位驗證，或確保欄位順序正確。",
+    "existing_code": "@field_validator(\"automation_triggered_event_id\")\n    @classmethod\n    def validate_automation_triggered_event_id(cls, v, info):\n        \"\"\"Ensure automation_triggered_event_id is only set when triggering_event exists.\"\"\"\n        if v is not None and info.data.get(\"triggering_event\") is None:\n            raise ValueError(\n                \"automation_triggered_event_id can only be set when triggering_event is provided\"\n            )\n        return v",
+    "evidence": "在 diff 中新增的欄位 `automation_triggered_event_id` 定義在 `triggering_event` 之後（從 diff 上下文可見），但驗證器依賴 `info.data`，若未來欄位順序變更或模型重構，可能導致驗證失效。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 442,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "primary_state_change_event 選擇邏輯可能選錯事件",
+    "body": "當 `TriggerState.Triggered` 和 `TriggerState.Resolved` 同時存在時，程式碼使用 `state_change_events.get(TriggerState.Triggered) or state_change_events.get(TriggerState.Resolved)` 來選擇主要事件。但若 `Triggered` 事件存在但為 falsy（例如空物件），則會錯誤地選擇 `Resolved` 事件。雖然目前事件物件不太可能為 falsy，但這種寫法不夠嚴謹。建議使用明確的 `if` 判斷。",
+    "existing_code": "primary_state_change_event = state_change_events.get(\n        TriggerState.Triggered\n    ) or state_change_events.get(TriggerState.Resolved)",
+    "evidence": "diff 中新增的這幾行使用 `or` 運算子，若第一個事件為 falsy 則會選第二個。"
+  },
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 202,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "action.triggered 事件的 related 資源可能缺少 automation-triggered-event",
+    "body": "在 `fail` 方法中，`action.triggered` 事件的 `related` 參數被改為 `self._resulting_related_resources`，而不是包含 `automation-triggered-event` 的 `related_resources`。這可能導致 `action.triggered` 事件缺少 automation-triggered-event 關聯，與文件描述不一致。請確認這是否為預期行為。",
+    "existing_code": "related=self._resulting_related_resources,",
+    "evidence": "diff 中將原本的 `related=related_resources` 改為 `related=self._resulting_related_resources`，但 `related_resources` 包含了 automation-triggered-event。"
+  }
+]

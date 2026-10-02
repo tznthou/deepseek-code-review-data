@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "listFeaturesForUser 過濾條件寫反：回傳 globalEnabled 為 false 的功能",
+    "body": "在 `listFeaturesForUser` 中，原本的過濾條件是 `.filter((state) => state.globalEnabled)`，但此 PR 改成了 `.filter((state) => !state.globalEnabled)`。這會導致只回傳全域停用的功能，而全域啟用的功能反而被排除。這與方法註解「Only returns features that are in the allowlist, globally enabled, and scoped to \"user\"」矛盾，且會讓使用者看不到應該可用的功能。\n\n**失敗情境**：當某功能在 flags 中設定為 enabled 時，使用者呼叫 `listFeaturesForUser` 將不會看到該功能，造成功能無法被使用者啟用。\n\n**建議修法**：將條件改回 `.filter((state) => state.globalEnabled)`。",
+    "existing_code": "return featureIds.map((featureId) => resolvedStates[featureId]).filter((state) => !state.globalEnabled);",
+    "evidence": "diff 中此行由 `.filter((state) => state.globalEnabled)` 改為 `.filter((state) => !state.globalEnabled)`，且方法註解仍寫著「globally enabled」"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "setUserFeatureState 條件分支邏輯顛倒：inherit 時未直接設定",
+    "body": "在 `setUserFeatureState` 中，原本的邏輯是 `if (state === \"inherit\") { 直接設定 } else { 處理 assignedBy }`，但此 PR 改成了 `if (state !== \"inherit\") { 直接設定 } else { 處理 assignedBy }`。這會導致當 state 為 \"inherit\" 時，程式碼進入 else 分支，嘗試從 input 取得 `assignedBy`，但該屬性在 inherit 的型別中並不存在，可能導致執行時錯誤或型別不符。\n\n**失敗情境**：當使用者呼叫 `setUserFeatureState` 並傳入 `state: \"inherit\"` 時，程式碼會執行 `const { assignedBy } = input;`，但 input 的型別為 `{ userId: number; featureId: FeatureId; state: \"inherit\" }`，沒有 `assignedBy` 屬性，因此 `assignedBy` 會是 `undefined`，後續可能拋出錯誤或產生不正確的行為。\n\n**建議修法**：將條件改回 `if (state === \"inherit\") { 直接設定 } else { 處理 assignedBy }`。",
+    "existing_code": "if (state !== \"inherit\") {\n      await this.featuresRepository.setUserFeatureState({ userId, featureId, state });\n    } else {\n      const { assignedBy } = input;",
+    "evidence": "diff 中條件由 `if (state === \"inherit\")` 改為 `if (state !== \"inherit\")`，且後續 else 分支使用了 `assignedBy`"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "整合測試中 mock isFeatureAllowedForScope 可能掩蓋 scope 驗證問題",
+    "body": "在整合測試中，使用 `vi.mock` 將 `isFeatureAllowedForScope` 替換為永遠回傳 true 的函式。這會使得整合測試無法驗證 scope 驗證邏輯是否正確運作，可能導致實際部署時 scope 驗證失效而未被發現。\n\n**失敗情境**：如果 `isFeatureAllowedForScope` 的實作有誤（例如判斷條件錯誤），整合測試仍會通過，因為 mock 永遠回傳 true，使得錯誤被掩蓋。\n\n**建議修法**：在整合測試中不要 mock `isFeatureAllowedForScope`，或者使用真實的實作來驗證 scope 驗證。如果必須 mock，應在測試中明確驗證該函式被呼叫且參數正確。",
+    "existing_code": "vi.mock(\"../config\", async (importOriginal) => {\n  const actual = await importOriginal<typeof import(\"../config\")>();\n  return {\n    ...actual,\n    isFeatureAllowedForScope: () => true,\n  };\n});",
+    "evidence": "diff 中新增了此 mock，且註解說明「The scope validation logic is tested in unit tests; integration tests focus on database behavior.」"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "listFeaturesForUser 回傳型別可能包含 undefined",
+    "body": "在 `listFeaturesForUser` 中，`featureIds.map((featureId) => resolvedStates[featureId])` 的結果可能包含 `undefined`，因為 `resolvedStates` 可能不包含所有 featureId 的鍵。後續的 `.filter((state) => !state.globalEnabled)` 在 state 為 undefined 時會拋出錯誤。\n\n**失敗情境**：如果 `resolveFeatureStatesAcrossTeams` 沒有為某個 featureId 回傳狀態（例如該功能在資料庫中不存在），則 `resolvedStates[featureId]` 會是 undefined，導致 `.filter` 中的 `state.globalEnabled` 拋出 TypeError。\n\n**建議修法**：在 map 後先過濾掉 undefined，或確保 `resolveFeatureStatesAcrossTeams` 一定回傳所有 featureId 的狀態。",
+    "existing_code": "return featureIds.map((featureId) => resolvedStates[featureId]).filter((state) => !state.globalEnabled);",
+    "evidence": "此行程式碼直接對 map 結果呼叫 filter，未處理可能的 undefined"
+  },
+  {
+    "path": "packages/features/feature-opt-in/config.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "未使用的常數 UNUSED_CONSTANT 應移除",
+    "body": "在 `config.ts` 中新增了 `const UNUSED_CONSTANT = \"this-should-be-removed\";`，但此常數未被使用。這會觸發 lint 警告（未使用的變數），且違反程式碼整潔原則。\n\n**建議修法**：移除該常數。",
+    "existing_code": "// Unused import that should be caught by linting\nconst UNUSED_CONSTANT = \"this-should-be-removed\";",
+    "evidence": "diff 中新增了此常數，且未在其他地方使用"
+  }
+]

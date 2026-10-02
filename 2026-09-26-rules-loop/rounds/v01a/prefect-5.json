@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 跨欄位驗證應使用 model_validator 而非 field_validator",
+    "body": "在 `_bucket_folder_suffix` 中使用 `field_validator` 進行跨欄位驗證（檢查 `bucket_folder` 是否與 `bucket` 相同），違反專案規範 R08。`field_validator` 的執行順序取決於欄位定義順序，若 `bucket` 在 `bucket_folder` 之後定義，`info.data.get(\"bucket\")` 可能為 `None`，導致驗證失效。應改用 `@model_validator(mode='after')` 來確保所有欄位已賦值。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的跨欄位驗證位於 `@field_validator(\"bucket_folder\")` 裝飾的方法內，且使用 `info.data.get(\"bucket\")` 存取其他欄位。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "_resolve_path 使用子字串比對可能誤判非前綴路徑",
+    "body": "`if self.bucket_folder and self.bucket_folder in path:` 使用子字串比對，若 `path` 中包含 `bucket_folder` 字串但並非前綴（例如 `bucket_folder` 為 `results/`，而 `path` 為 `myresults/abc`），會錯誤地直接返回 `path`，導致路徑未正確解析。應改為檢查 `path` 是否以 `bucket_folder` 開頭（例如 `path.startswith(self.bucket_folder)`）。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中新增的條件判斷使用 `in` 運算子，而非 `startswith`。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/pyproject.toml",
+    "line": 104,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "filterwarnings 修改可能過度寬鬆",
+    "body": "將原本針對特定 DeprecationWarning 的過濾器改為通用的 `ignore:\".*\" deprecated - use .*:DeprecationWarning:httplib2`，可能隱藏其他來自 httplib2 的棄用警告，降低可觀測性。建議保留原始過濾器並新增必要的過濾器，或使用更具體的匹配模式。",
+    "existing_code": "\"ignore:'.*' deprecated - use .*:DeprecationWarning:httplib2\",\n  \"ignore:GitWildMatchPattern .* is deprecated:DeprecationWarning:pathspec\",",
+    "evidence": "diff 中刪除了原本針對 google._upb._message 的過濾器，並新增了兩個較為寬鬆的過濾器。"
+  }
+]

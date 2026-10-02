@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/di/tokens.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "DI token 合併可能造成 Symbol 重複定義",
+    "body": "在 `DI_TOKENS` 物件中，使用 spread 運算子合併 `FLAGS_DI_TOKENS` 與 `FEATURE_OPT_IN_DI_TOKENS`，但這兩個物件都包含 `FEATURES_REPOSITORY` 與 `FEATURES_REPOSITORY_MODULE` 的 Symbol。由於 Symbol 是唯一的，即使名稱相同，合併後會產生兩個不同的 Symbol，導致依賴注入時 token 不一致，可能造成解析失敗或綁定錯誤。\n\n建議：移除 `FLAGS_DI_TOKENS` 中的重複定義，或改用單一來源的 token。",
+    "existing_code": "...FLAGS_DI_TOKENS,\n  ...FEATURE_OPT_IN_DI_TOKENS,",
+    "evidence": "diff 中新增了 `FLAGS_DI_TOKENS` 與 `FEATURE_OPT_IN_DI_TOKENS` 的 spread，而這兩個模組都定義了 `FEATURES_REPOSITORY` 與 `FEATURES_REPOSITORY_MODULE`。"
+  },
+  {
+    "path": "packages/features/di/containers/FeatureOptInService.ts",
+    "line": 7,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "新容器未載入 Prisma 模組，可能導致執行期錯誤",
+    "body": "`getFeatureOptInService` 建立新容器後僅載入 `featureOptInServiceModuleLoader`，但該模組依賴 `featuresRepositoryModuleLoader`，而 `featuresRepositoryModuleLoader` 又依賴 `prismaModuleLoader`。若未載入 `prismaModuleLoader`，容器將無法解析 Prisma 依賴，導致 `FeatureOptInService` 建構失敗。\n\n建議：在容器中一併載入 `prismaModuleLoader` 或確保依賴鏈完整。",
+    "existing_code": "const featureOptInServiceContainer = createContainer();\n  featureOptInServiceModuleLoader.loadModule(featureOptInServiceContainer);",
+    "evidence": "diff 中 `FeatureOptInService.ts` 的 `loadModule` 僅載入 `featureOptInServiceModuleLoader`，但該模組的 `dep` 是 `featuresRepositoryModuleLoader`，而 `featuresRepositoryModuleLoader` 的 `dep` 是 `prismaModuleLoader`。"
+  },
+  {
+    "path": "packages/features/di/containers/FeaturesRepository.ts",
+    "line": 5,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "新容器未載入 Prisma 模組，可能導致執行期錯誤",
+    "body": "`getFeaturesRepository` 建立新容器後僅載入 `featuresRepositoryModuleLoader`，但該模組依賴 `prismaModuleLoader`。若未載入 `prismaModuleLoader`，容器將無法解析 Prisma 依賴，導致 `FeaturesRepository` 建構失敗。\n\n建議：在容器中一併載入 `prismaModuleLoader` 或確保依賴鏈完整。",
+    "existing_code": "const featuresRepositoryContainer = createContainer();\n  featuresRepositoryModuleLoader.loadModule(featuresRepositoryContainer);",
+    "evidence": "diff 中 `FeaturesRepository.ts` 的 `loadModule` 僅載入 `featuresRepositoryModuleLoader`，但該模組的 `dep` 是 `prismaModuleLoader`。"
+  },
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "moduleLoader 的 token 可能設定錯誤",
+    "body": "在 `FeaturesRepository.ts` 中，`moduleLoader` 的 `token` 被設定為 `moduleToken`，但其他模組的慣例是使用 `token`（即綁定的類別 token）。這可能導致依賴此模組的程式碼無法正確取得 token。\n\n建議：確認 `moduleLoader.token` 應為 `token` 而非 `moduleToken`。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中 `FeaturesRepository.ts` 的 `moduleLoader` 使用 `moduleToken`，而其他模組（如 `FeatureOptInService.ts`）使用 `token`。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/IFeatureOptInService.ts",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "多餘的空白字元",
+    "body": "在 `orgAutoOptIn: boolean;` 後方有多餘的空白字元，可能違反格式化規範。\n\n建議：移除多餘空白。",
+    "existing_code": "orgAutoOptIn: boolean;",
+    "evidence": "diff 中該行末尾有三個空格。"
+  }
+]

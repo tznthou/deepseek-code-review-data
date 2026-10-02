@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "複寫指令使用 shared.integers[1] 作為 FIELDS 數量，可能導致未來欄位數不為 1 時複寫錯誤",
+    "body": "在 hincrbyfloatCommand 中，複寫指令改為 HSETEX，並使用 shared.integers[1] 作為 FIELDS 的數量。目前 HINCRBYFLOAT 只操作單一欄位，因此數量為 1 是正確的。但若未來指令支援多欄位，此處會產生錯誤的複寫指令。建議改用明確的整數物件或從參數中取得數量，避免依賴 shared.integers[1]。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 rewriteClientCommandVector 呼叫，其中 shared.integers[1] 被用作 FIELDS 數量。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2559,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 HASH_SET_KEEP_TTL 旗標可能影響其他呼叫 hashTypeSet 的指令",
+    "body": "原本 hashTypeSet 呼叫帶有 HASH_SET_KEEP_TTL 旗標，以保留欄位 TTL。移除後，HINCRBYFLOAT 在執行時會移除欄位的 TTL，但複寫指令會使用 KEEPTTL 來保留。這在 master 上會導致欄位 TTL 被移除，而 replica 上保留，造成不一致。需確認此行為是否符合預期，或是否應保留旗標並在複寫時使用 KEEPTTL。",
+    "existing_code": "hashTypeSet(c->db, o,c->argv[2]->ptr,new,HASH_SET_TAKE_VALUE);",
+    "evidence": "diff 中 hashTypeSet 呼叫移除了 HASH_SET_KEEP_TTL 旗標。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "複寫指令使用 shared.integers[1] 可能造成共享物件生命週期問題",
+    "body": "shared.integers[1] 是共享整數物件，在 rewriteClientCommandVector 中使用後，其引用計數可能被修改。需確認 rewriteClientCommandVector 是否會增加引用計數，否則可能導致共享物件被意外釋放。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中使用了 shared.integers[1] 作為參數。"
+  }
+]

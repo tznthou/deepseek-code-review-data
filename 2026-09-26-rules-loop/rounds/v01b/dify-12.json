@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/core/rag/retrieval/dataset_retrieval.py",
+    "line": 1207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "not contains 分支未傳入 escape 參數，跳脫失效",
+    "body": "在 `case \"not contains\"` 分支中，呼叫 `json_field.notlike(f\"%{escaped_value}%\")` 時未傳入 `escape=\"\\\\\"` 參數。這會導致跳脫字元（反斜線）被視為一般字元，使得 `%` 和 `_` 仍被當作萬用字元，無法達成預期的跳脫效果。攻擊者可利用此漏洞進行萬用字元注入，繞過過濾條件。\n\n建議修正：\n```python\nfilters.append(json_field.notlike(f\"%{escaped_value}%\", escape=\"\\\\\"))\n```",
+    "existing_code": "filters.append(json_field.notlike(f\"%{escaped_value}%\"))",
+    "evidence": "diff 中該行未包含 escape 參數，與其他分支（如 contains）不一致。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/clickzetta/clickzetta_vector.py",
+    "line": 991,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "SQL 字串拼接仍存在注入風險",
+    "body": "此處使用 f-string 將 `escaped_query` 直接嵌入 SQL 查詢，雖然已對 LIKE 特殊字元進行跳脫，但未對單引號進行參數化處理。攻擊者若輸入包含單引號的字串（例如 `' OR 1=1 --`），仍可能破壞 SQL 語法並注入任意條件。建議改用參數化查詢，或至少使用資料庫驅動提供的安全跳脫函式。",
+    "existing_code": "filter_clauses.append(f\"{Field.CONTENT_KEY} LIKE '%{escaped_query}%' ESCAPE '\\\\\\\\'\")",
+    "evidence": "diff 中該行仍使用字串拼接，且 `escaped_query` 僅跳脫 LIKE 特殊字元，未處理單引號。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/iris/iris_vector.py",
+    "line": 298,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ESCAPE 字元與跳脫函式不一致",
+    "body": "此處使用 `ESCAPE '|'`，但 `escape_like_pattern` 函式使用反斜線（`\\`）作為跳脫字元。這會導致跳脫序列無法被正確解析，例如輸入 `%` 會被跳脫為 `\\%`，但資料庫會將 `|` 視為跳脫字元，因此 `\\%` 中的 `%` 仍會被當作萬用字元。建議統一使用反斜線作為跳脫字元，或修改跳脫函式以支援自訂跳脫字元。",
+    "existing_code": "WHERE text LIKE ? ESCAPE '|'",
+    "evidence": "diff 中該行指定 ESCAPE '|'，而 escape_like_pattern 使用反斜線。"
+  },
+  {
+    "path": "api/services/dataset_service.py",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "未使用 helper 別名，可能違反匯入慣例",
+    "body": "此處直接使用 `helper.escape_like_pattern`，但其他檔案多使用 `from libs.helper import escape_like_pattern` 後直接呼叫。雖然功能上無誤，但可能違反專案的匯入風格（R02）。建議統一使用直接匯入的方式。",
+    "existing_code": "escaped_search = helper.escape_like_pattern(search)",
+    "evidence": "diff 中該行使用 `helper.escape_like_pattern`，而其他檔案（如 conversation.py）使用直接匯入。"
+  }
+]

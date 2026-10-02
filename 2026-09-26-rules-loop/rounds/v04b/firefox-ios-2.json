@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 508,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "IpadOnlyTestCase 的 setUp 中呼叫 super.setUp() 未使用 try await",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp()` 中，呼叫 `super.setUp()` 時未加上 `try await`。由於 `BaseTestCase` 的 `setUp()` 已改為 `async throws`，此處會導致編譯錯誤（缺少 await）或未正確處理錯誤。建議改為 `try await super.setUp()`。",
+    "existing_code": "super.setUp()",
+    "evidence": "diff 中 IpadOnlyTestCase 的 setUp 內：\n```\n-            super.setUp()\n+            await super.setUp()\n```\n但實際 diff 顯示為 `await super.setUp()`，未使用 `try`，且未處理 throws。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/A11yUtils.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R01] 移除 MPL 授權標頭",
+    "body": "此檔案原本包含 Mozilla Public License 標頭，但在此 PR 中被移除。根據專案規範 R01，所有 Swift 檔案必須包含 MPL 授權標頭。請恢復授權標頭。",
+    "existing_code": "import XCTest",
+    "evidence": "diff 顯示刪除了以下三行：\n```\n-// This Source Code Form is subject to the terms of the Mozilla Public\n-// License, v. 2.0. If a copy of the MPL was not distributed with this\n-// file, You can obtain one at http://mozilla.org/MPL/2.0/\n```"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 508,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "IpadOnlyTestCase 的 setUp 中呼叫 super.setUp() 未使用 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp()` 中，呼叫 `super.setUp()` 時未加上 `try`。由於 `BaseTestCase` 的 `setUp()` 已改為 `throws`，此處應使用 `try await` 來處理可能的錯誤。建議改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中 IpadOnlyTestCase 的 setUp 內：\n```\n-            super.setUp()\n+            await super.setUp()\n```\n未使用 `try`。"
+  }
+]

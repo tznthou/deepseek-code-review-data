@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "cancelEditMode 中 URL 判斷條件反轉可能導致非預期行為",
+    "body": "原本的條件是 `(currentURL.isWebPage() && !currentURL.isReaderModeURL) ? url : nil`，現在改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil`。這會讓 reader mode URL 也被保留，可能導致取消編輯時 URL 欄顯示 reader mode 的 URL，而非一般網頁 URL。請確認此變更是否為預期行為，並補充測試。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&& !` 改為 `||`，邏輯完全相反。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "readerModeState 對應布林值反轉可能導致遙測錯誤",
+    "body": "原本 `case .available: true` 改為 `false`，`default: false` 改為 `true`。這會讓 `isReaderModeEnabled` 的遙測值與實際狀態相反，可能誤導分析。請確認此變更是否為預期，並修正或補充說明。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中兩行布林值對調。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/ToolbarTelemetry.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R11] gleanWrapper 屬性不應從 private 改為 internal",
+    "body": "`gleanWrapper` 原本為 `private let`，現在改為 `let`（internal）。此屬性僅供內部使用，應維持 `private` 以符合最小權限原則。",
+    "existing_code": "let gleanWrapper: GleanWrapper",
+    "evidence": "diff 中移除了 `private` 修飾詞。"
+  }
+]

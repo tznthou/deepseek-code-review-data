@@ -1,0 +1,90 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "TOML 解析錯誤被錯誤地包裝為 JSON 格式錯誤",
+    "body": "在 `do_parse_toml` 中，原本將 `toml::from_str` 的錯誤包裝為 `ConfigError::FormatToml`，但此 PR 改為 `ConfigError::FormatJson`，並將錯誤轉為 `serde_json::Error`。這會導致 TOML 解析失敗時，使用者看到的是 JSON 格式錯誤訊息，造成誤導。應保留 `ConfigError::FormatToml` 變體，或新增專屬的 TOML 錯誤變體。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中 `do_parse_toml` 的錯誤處理從 `ConfigError::FormatToml` 改為 `ConfigError::FormatJson`，且錯誤型別從 `toml::de::Error` 改為 `serde_json::Error`。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] 公開 enum `BundleType` 新增變體但未標記 `#[non_exhaustive]`",
+    "body": "`BundleType` 是公開 enum，新增 `Flatpak` 變體可能導致下游 match 不完整而編譯失敗。根據規範 R09，公開錯誤 enum 應標記 `#[non_exhaustive]` 以保留未來擴充彈性。建議在 enum 定義加上 `#[non_exhaustive]`。",
+    "existing_code": "pub enum BundleType {\n  App,\n  /// The Apple Disk Image bundle (.dmg).\n  Dmg,\n  /// The Flatpak bundle (.flatpak).\n  Flatpak,\n}",
+    "evidence": "diff 新增 `Flatpak` 變體，但 enum 定義沒有 `#[non_exhaustive]` 屬性。"
+  },
+  {
+    "path": "crates/tauri-cli/Cargo.toml",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "toml_edit 升級至 0.23 可能引入不相容的 API 變更",
+    "body": "`toml_edit` 從 0.22 升級至 0.23，這是一個 major 版本升級，可能包含 breaking changes。需要確認程式碼中使用的 API 是否仍然相容，否則可能導致編譯失敗。建議檢查 `toml_edit` 的 changelog 並更新相關程式碼。",
+    "existing_code": "toml_edit = { version = \"0.23\", features = [\"serde\"] }",
+    "evidence": "diff 中 `toml_edit` 版本從 0.22 改為 0.23。"
+  },
+  {
+    "path": "crates/tauri-build/Cargo.toml",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "toml 升級至 0.9 可能引入不相容的 API 變更",
+    "body": "`toml` 從 0.8 升級至 0.9，這是 major 版本升級，可能包含 breaking changes。需要確認程式碼中使用的 API 是否仍然相容，否則可能導致編譯失敗。建議檢查 `toml` 的 changelog 並更新相關程式碼。",
+    "existing_code": "toml = \"0.9\"",
+    "evidence": "diff 中 `toml` 版本從 0.8 改為 0.9。"
+  },
+  {
+    "path": "crates/tauri-plugin/Cargo.toml",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "toml 升級至 0.9 可能引入不相容的 API 變更",
+    "body": "`toml` 從 0.8 升級至 0.9，這是 major 版本升級，可能包含 breaking changes。需要確認程式碼中使用的 API 是否仍然相容，否則可能導致編譯失敗。建議檢查 `toml` 的 changelog 並更新相關程式碼。",
+    "existing_code": "toml = { version = \"0.9\", optional = true }",
+    "evidence": "diff 中 `toml` 版本從 0.8 改為 0.9。"
+  },
+  {
+    "path": "crates/tauri-utils/Cargo.toml",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "toml 升級至 0.9 可能引入不相容的 API 變更",
+    "body": "`toml` 從 0.8 升級至 0.9，這是 major 版本升級，可能包含 breaking changes。需要確認程式碼中使用的 API 是否仍然相容，否則可能導致編譯失敗。建議檢查 `toml` 的 changelog 並更新相關程式碼。",
+    "existing_code": "toml = { version = \"0.9\", features = [\"parse\"] }",
+    "evidence": "diff 中 `toml` 版本從 0.8 改為 0.9。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`Display` 實作中 `Flatpak` 的大小寫不一致",
+    "body": "`Display` 實作中，`Flatpak` 回傳 `\"Flatpak\"`（首字母大寫），但其他變體如 `Nsis` 回傳 `\"nsis\"`、`Dmg` 回傳 `\"dmg\"`。這可能導致序列化輸出不統一，影響設定檔或日誌的可讀性。建議改為 `\"flatpak\"` 以維持一致性。",
+    "existing_code": "Self::Flatpak => \"Flatpak\",",
+    "evidence": "diff 中 `Display` 實作新增 `Self::Flatpak => \"Flatpak\"`，與其他變體的小寫形式不同。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 209,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "反序列化接受 `\"flatpak\"` 但序列化輸出 `\"Flatpak\"`，可能造成 round-trip 失敗",
+    "body": "`Deserialize` 實作接受 `\"flatpak\"`，但 `Display` 輸出 `\"Flatpak\"`。若程式依賴 `Display` 進行序列化，則反序列化時可能無法解析自己輸出的字串。建議統一大小寫。",
+    "existing_code": "\"flatpak\" => Ok(Self::Flatpak),",
+    "evidence": "diff 中 `Deserialize` 新增 `\"flatpak\"` 分支，但 `Display` 輸出 `\"Flatpak\"`。"
+  }
+]

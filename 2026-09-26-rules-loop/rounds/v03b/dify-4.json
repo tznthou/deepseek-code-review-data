@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] SQLAlchemy session 未使用 context manager",
+    "body": "`ConversationVariableUpdaterImpl.update` 中直接建立 `Session(db.engine)` 並在方法結束時 `commit()`，但未使用 `with` 語句或 `try/finally` 確保 session 關閉。若 `session.scalar` 或 `session.commit` 拋出例外，session 不會被關閉，可能導致連線洩漏。建議改為 `with Session(db.engine) as session:` 並在區塊內完成查詢與提交。",
+    "existing_code": "session = Session(db.engine)\n        row = session.scalar(stmt)\n        if not row:\n            raise ConversationVariableNotFoundError(\"conversation variable not found in the database\")\n        row.data = variable.model_dump_json()\n        session.commit()",
+    "evidence": "diff 中新增的 `update` 方法直接建立 session，沒有 context manager。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "flush 在迴圈內呼叫，但 updater 的 flush 目前為空操作",
+    "body": "`on_event` 中對每個 updated variable 呼叫 `self._conversation_variable_updater.update(...)` 後立即呼叫 `self._conversation_variable_updater.flush()`。但 `ConversationVariableUpdaterImpl.flush` 目前是 `pass`，因此 flush 沒有實際效果。若未來 flush 有實作（例如批次寫入），在迴圈內呼叫可能導致效能問題或非預期行為。建議將 flush 移到迴圈外，或確認 flush 的設計意圖。",
+    "existing_code": "self._conversation_variable_updater.update(conversation_id=conversation_id, variable=variable)\n            self._conversation_variable_updater.flush()",
+    "evidence": "diff 中 layer 的迴圈內呼叫 flush，而 updater 的 flush 為空操作。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "conversation_id 為 None 時靜默跳過，可能導致資料未持久化",
+    "body": "`on_event` 中若 `conversation_id` 為 None，直接 return，不記錄任何警告。在 v1 node 中原本會拋出 `VariableOperatorNodeError`，現在改為靜默跳過。若在非 debug 情境下 conversation_id 缺失，可能導致 conversation variable 未更新且無任何錯誤提示。建議至少記錄 warning log。",
+    "existing_code": "conversation_id = self.graph_runtime_state.system_variable.conversation_id\n        if conversation_id is None:\n            return",
+    "evidence": "diff 中新增的 layer 程式碼，當 conversation_id 為 None 時直接返回。"
+  }
+]

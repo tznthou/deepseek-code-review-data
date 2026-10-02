@@ -1,0 +1,57 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試從 async 改為 sync 可能導致非同步行為未被正確等待",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase` 中，原本使用 `await fulfillment(of: [exp], timeout: 2.0)` 等待非同步 callback，現在移除了 expectation 與等待，直接呼叫 `siteDownloader.downloadImage` 後測試方法即結束。這可能導致測試在非同步 callback 執行前就返回，使得斷言永遠不會被執行，測試形同虛設。\n\n建議：保留 expectation 並使用 `wait(for:timeout:)` 或將測試方法維持 async 並使用 `await fulfillment`，以確保非同步操作完成後再進行驗證。",
+    "existing_code": "func testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase() {",
+    "evidence": "diff 中移除了 `let exp = expectation(...)` 與 `await fulfillment(of: [exp], timeout: 2.0)`，且測試方法從 `async` 改為 sync。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 wait(for:) 可能導致測試不穩定或死鎖",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forSpecialSVGCase` 中，將 `await fulfillment` 改為 `wait(for: [exp], timeout: 2.0)`。若 `downloadImage` 的 callback 是在 main thread 執行，而測試也在 main thread 等待，可能造成死鎖。此外，若 callback 未在 timeout 內觸發，測試會失敗，但原本的 async 寫法可能更安全。\n\n建議：確認 callback 的執行緒，若可能跨執行緒，應使用 `await fulfillment` 或將測試方法標記為 `@MainActor` 並使用 `wait`。",
+    "existing_code": "wait(for: [exp], timeout: 2.0)",
+    "evidence": "diff 中將 `await fulfillment(of: [exp], timeout: 2.0)` 改為 `wait(for: [exp], timeout: 2.0)`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 expectation 可能導致測試未驗證非同步行為",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本有 expectation 等待 decision handler 被呼叫，現在移除了 expectation 與 `wait(for:)`，僅直接呼叫 `subject.requestMediaCapturePermission`。這可能導致測試在 handler 執行前就結束，無法驗證 decision 是否正確。\n\n建議：保留 expectation 並使用 `wait(for:timeout:)` 或將測試方法改為 async 並使用 `await fulfillment`。",
+    "existing_code": "let decisionHandler: @Sendable (WKPermissionDecision) -> Void = { (decision: WKPermissionDecision) in\n            XCTAssertEqual(decision, .prompt)\n        }\n\n        subject.requestMediaCapturePermission(decisionHandler: decisionHandler)",
+    "evidence": "diff 中移除了 `let expectation = expectation(...)` 與 `wait(for: [expectation])`。"
+  },
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 nonisolated(unsafe) 可能隱藏 concurrency 問題",
+    "body": "將 `static let generator` 加上 `nonisolated(unsafe)` 以繞過 Swift 6 的 concurrency 檢查。雖然註解說明 ContentBlockerGenerator 不是 thread safe，但此舉可能讓潛在的資料競爭在未來被忽略。建議確認 generator 的使用情境是否真的安全，或考慮將其改為 actor 或使用鎖保護。",
+    "existing_code": "nonisolated(unsafe) static let generator = ContentBlockerGenerator.factory()",
+    "evidence": "diff 中新增了 `nonisolated(unsafe)` 修飾詞。"
+  },
+  {
+    "path": "BrowserKit/Package.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除 StrictConcurrency 等 flags 可能降低 concurrency 檢查",
+    "body": "此 PR 移除了多個 target 中的 `.enableExperimentalFeature(\"StrictConcurrency\")` 等 flags。雖然 Swift 6 預設啟用 strict concurrency，但移除這些 flags 可能導致某些程式碼在遷移過程中未被嚴格檢查，增加潛在的 concurrency bug 風險。建議確認所有程式碼已在 Swift 6 模式下通過編譯且無警告。",
+    "existing_code": "// swift-tools-version: 6.2",
+    "evidence": "diff 中大量移除了 `.enableExperimentalFeature(\"StrictConcurrency\")` 等設定。"
+  }
+]

@@ -1,0 +1,7 @@
+[info] repo 規範：repo=Ghost、24 條、10047 字元、placement=after_diff、sha256=b100898f200a
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 13876 字元、thinking=disabled、max_tokens=8192）
+[info] 定位不到 ghost/i18n/locales/zh/comments.json:1（片段與模型行號都定不到）
+[info] 重新定位 ghost/i18n/locales/zh/portal.json:61 → 63（片段唯一命中）
+[info] 重新定位 ghost/i18n/locales/zh/portal.json:108 → 117（片段唯一命中）
+[info] 重新定位 ghost/i18n/locales/zh/portal.json:116 → 124（片段唯一命中）
+[info] 完成於 12.5s ｜ findings=10 ｜ relocated=3 ｜ verdict=comment ｜ usage={"prompt_tokens": 8654, "completion_tokens": 1829, "total_tokens": 10483, "prompt_tokens_details": {"cached_tokens": 6272}, "prompt_cache_hit_tokens": 6272, "prompt_cache_miss_tokens": 2382}

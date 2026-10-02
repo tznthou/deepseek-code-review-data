@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1509,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "BookingRepository.update 回傳型別與 IBookingRepository 介面不符",
+    "body": "`IBookingRepository` 介面定義 `update` 回傳 `Promise<Booking>`，但實作回傳的是 `this.prismaClient.booking.update` 的結果，其型別為 `Prisma.Prisma__BookingClient<Booking>`，並非 `Booking`。這可能導致型別錯誤或執行時期行為不一致。建議在實作中加上 `await` 並明確回傳 `Booking`，或調整介面型別。",
+    "existing_code": "async update({ where, data }: { where: BookingWhereUniqueInput; data: BookingUpdateData }) {\n    return await this.prismaClient.booking.update({\n      where,\n      data,\n    });\n  }",
+    "evidence": "diff 中新增的 `update` 方法回傳 `await this.prismaClient.booking.update(...)`，而介面 `IBookingRepository` 定義 `update(...): Promise<Booking>`。Prisma 的 `update` 回傳的是 `PrismaPromise`，即使加上 `await` 也需確認型別是否完全符合。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 513,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "取消後續預約時查詢條件可能遺漏部分預約",
+    "body": "在取消後續預約的邏輯中，原本的 `findMany` 查詢條件為 `startTime: { gte: new Date() }`，但修改後改為 `gte: bookingToDelete.startTime`。若 `bookingToDelete.startTime` 早於目前時間，則可能包含已過去的預約；若晚於目前時間，則可能遺漏應取消的預約。建議確認此變更是否符合預期，或保留原本的 `new Date()` 條件。",
+    "existing_code": "const allUpdatedBookings = await bookingRepository.findManyIncludeWorkflowRemindersAndReferences({\n      where: {\n        recurringEventId: bookingToDelete.recurringEventId,\n        startTime: {\n          gte: bookingToDelete.startTime,\n        },\n      },\n    });",
+    "evidence": "diff 中原本的 `gte: new Date()` 被改為 `gte: bookingToDelete.startTime`，這可能改變查詢結果。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 546,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "單一預約取消時改用 uid 作為唯一條件，可能忽略 id",
+    "body": "原本的 `where` 條件是 `uid ? { uid } : { id }`，修改後固定使用 `{ uid: bookingToDelete.uid }`。若 `bookingToDelete.uid` 可能為空或未定義，將導致查詢失敗或找不到預約。建議確認 `bookingToDelete.uid` 一定存在，或保留原本的條件邏輯。",
+    "existing_code": "const updatedBooking = await bookingRepository.updateIncludeWorkflowRemindersAndReferences({\n      where: {\n        uid: bookingToDelete.uid,\n      },",
+    "evidence": "diff 中原本的條件判斷被移除，改為直接使用 `uid`。"
+  },
+  {
+    "path": "packages/features/users/repositories/UserRepository.ts",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 userSelect 中的 locale 欄位可能影響其他功能",
+    "body": "`userSelect` 中移除了 `locale: true`，但 `handleCancelBooking` 中仍使用 `organizer.locale` 來取得翻譯。若 `UserRepository.findByIdOrThrow` 使用此 `userSelect`，則 `organizer.locale` 將為 `undefined`，可能導致翻譯回退到預設語言。建議確認 `findByIdOrThrow` 的實作是否包含 `locale`，或保留此欄位。",
+    "existing_code": "createdDate: true,\n  trialEndsAt: true,\n  completedOnboarding: true,\n  timeFormat: true,",
+    "evidence": "diff 中移除了 `locale: true`，但 `handleCancelBooking` 中仍使用 `organizer.locale`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 386,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "格式化變更可能違反 Biome 規則",
+    "body": "此處的縮排從原本的 8 空格改為 6 空格，可能不符合 Biome 的格式化規則（2 空格縮排）。建議執行 Biome 格式化確認。",
+    "existing_code": "...(teamMembers &&\n      teamId && {\n      team: {\n        name: bookingToDelete?.eventType?.team?.name || \"Nameless\",\n        members: teamMembers,\n        id: teamId,\n      },\n    }),",
+    "evidence": "diff 中縮排不一致，可能違反 R03。"
+  }
+]

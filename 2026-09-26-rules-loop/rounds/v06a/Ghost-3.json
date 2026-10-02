@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 125,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "高量寄送者邊界條件錯誤：lastCount = 400,000 時應使用 2 倍而非高量上限",
+    "body": "在 `getWarmupLimit` 中，高量區塊的條件是 `lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold`，其中 threshold 為 400,000。因此當 `lastCount` 恰好等於 400,000 時，會進入高量區塊，回傳 `min(400000 * 1.2, 400000 + 75000) = min(480000, 475000) = 475000`。然而，單元測試 `should return correct warmup progression through the stages` 中，測試案例 `{lastCount: 400000, expected: 800000}` 預期回傳 800,000（即 2 倍）。這表示程式碼與測試不一致，且根據註解中的倍率表，400,000 應屬於 2 倍區間（100k–400k），因此高量區塊的條件應改為 `>` 而非 `>=`。",
+    "existing_code": "if (lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold) {",
+    "evidence": "diff 中新增的條件 `if (lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold)` 與測試案例 `{lastCount: 400000, expected: 800000}` 衝突。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "filter 從 `<` 改為 `<=` 可能納入當日資料，影響基準值",
+    "body": "原本的 filter 使用 `created_at:<${today}` 排除當日建立的郵件，但修改後改為 `created_at:<=${today}`，這會將當日建立的郵件也納入最高計數的計算。這可能導致基準值被當日寄送量影響，進而高估暖機限制。若意圖是排除當日，應維持 `<`；若意圖是包含當日，則需確認此變更的合理性，並更新相關測試。",
+    "existing_code": "filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,",
+    "evidence": ""
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 181,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試斷言仍使用舊的 `<` 運算子，與實作不一致",
+    "body": "在測試 `should query for emails created before today` 中，斷言 `callArgs.filter.includes(`created_at:<${today}`)` 仍檢查 `<`，但實作已改為 `<=`。這會導致測試失敗，且無法驗證新的 filter 行為。應更新斷言以匹配實作，或根據預期行為調整實作。",
+    "existing_code": "assert.ok(callArgs.filter.includes(`created_at:<${today}`));",
+    "evidence": ""
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 183,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試斷言未檢查 limit 參數，可能遺漏回歸",
+    "body": "測試 `should query for emails created before today` 中，新增了 `assert.equal(callArgs.limit, 1)`，但未驗證 `findPage` 是否被正確呼叫。若未來 `findPage` 的呼叫方式變更，此測試可能無法捕捉到問題。建議增加對 `findPage` 呼叫次數與參數的完整驗證。",
+    "existing_code": "assert.equal(callArgs.limit, 1);",
+    "evidence": ""
+  }
+]

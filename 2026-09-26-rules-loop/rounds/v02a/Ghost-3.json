@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "findPage 回傳結構假設可能導致執行時期錯誤",
+    "body": "`#getHighestCount` 假設 `findPage` 回傳的物件具有 `data` 陣列，且每個元素都有 `get` 方法。若實際回傳結構不同（例如 `data` 為 undefined 或元素為 plain object），則 `result.data.length` 或 `result.data[0].get` 會拋出錯誤。建議加入防禦性檢查，或確認 `findPage` 的型別定義與實際實作一致。",
+    "existing_code": "const result = await this.#emailModel.findPage({\n            filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,\n            order: 'csd_email_count DESC',\n            limit: 1\n        });\n\n        if (!result.data.length) {\n            return 0;\n        }\n\n        const count = result.data[0].get('csd_email_count');",
+    "evidence": "diff 中新增的 `findPage` 呼叫與後續對 `result.data` 的存取，但未驗證 `result.data` 是否存在或元素是否具有 `get` 方法。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試中對 findPage 的模擬與實際使用不一致",
+    "body": "在 `beforeEach` 中，`Email` 被設定為 `createModelClass({ findAll: [] })`，但服務實際呼叫的是 `findPage`。這可能導致測試在未正確模擬 `findPage` 的情況下執行，掩蓋真實行為。建議統一使用 `findPage` 進行模擬，或確認 `createModelClass` 會自動將 `findAll` 映射到 `findPage`。",
+    "existing_code": "Email = createModelClass({\n            findAll: []\n        });",
+    "evidence": "diff 中 `beforeEach` 的設定仍使用 `findAll`，但服務程式碼已改用 `findPage`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "高流量分支的計算可能與預期不符",
+    "body": "在高流量分支中，`scaledIncrease` 使用 `Math.ceil(lastCount * maxScale)`，而 `absoluteIncrease` 使用 `lastCount + maxAbsoluteIncrease`。若 `lastCount` 很大，`Math.ceil` 可能導致結果比預期多 1，但影響輕微。建議確認此行為是否符合預期。",
+    "existing_code": "const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);\n            const absoluteIncrease = lastCount + WARMUP_SCALING_TABLE.highVolume.maxAbsoluteIncrease;\n            return Math.min(scaledIncrease, absoluteIncrease);",
+    "evidence": "diff 中高流量分支的計算邏輯。"
+  }
+]

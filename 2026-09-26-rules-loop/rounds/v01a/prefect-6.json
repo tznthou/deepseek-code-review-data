@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "移除 @sync_compatible 導致同步呼叫行為中斷",
+    "body": "原本 `run_deployment` 有 `@sync_compatible` 裝飾器，允許在同步環境中直接呼叫並等待結果。現在 `run_deployment` 只是 `arun_deployment` 的別名，而 `arun_deployment` 是 async 函式，因此在同步環境中呼叫 `run_deployment(...)` 會回傳 coroutine 物件，不會執行流程，除非呼叫者自行處理事件迴圈。這破壞了向後相容性，且違反規範 R07（Async Functions Must Have Sync Compatibility Wrappers Where Public）。\n\n建議：保留一個同步包裝函式，例如使用 `@sync_compatible` 裝飾 `arun_deployment` 並指派給 `run_deployment`，或提供明確的同步版本。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中移除了 `@sync_compatible` 和 `@inject_client`，並在檔案末尾新增 `run_deployment = arun_deployment`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "未定義的 `_sync` 參數可能導致 TypeError",
+    "body": "測試中呼叫 `run_deployment(..., _sync=True)`，但 `arun_deployment` 的簽名中沒有 `_sync` 參數。如果 `run_deployment` 只是 `arun_deployment` 的別名，傳入 `_sync=True` 會導致 `TypeError: unexpected keyword argument '_sync'`。這表示同步包裝器必須處理 `_sync` 參數，或者測試本身有誤。\n\n建議：若需支援同步呼叫，應在同步包裝器中接受 `_sync` 參數並忽略或使用；否則應移除測試中的 `_sync` 參數。",
+    "existing_code": "async def arun_deployment(\n    name: Union[str, UUID],\n    client: Optional[\"PrefectClient\"] = None,\n    parameters: Optional[dict[str, Any]] = None,\n    scheduled_time: Optional[datetime] = None,\n    flow_run_name: Optional[str] = None,\n    timeout: Optional[float] = None,\n    poll_interval: Optional[float] = None,\n    tags: Optional[Iterable[str]] = None,\n    idempotency_key: Optional[str] = None,\n    work_pool_name: Optional[str] = None,\n    work_queue_name: Optional[str] = None,\n    job_variables: Optional[dict[str, Any]] = None,\n) -> \"FlowRun\":",
+    "evidence": "函式簽名中沒有 `_sync` 參數，但測試中使用了 `_sync=True`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`collect_task_run_inputs` 可能為 async 函式，移除 await 導致錯誤",
+    "body": "原本程式碼為 `k: await collect_task_run_inputs(v) for k, v in parameters.items()`，現在改為 `k: collect_task_run_inputs(v) for k, v in parameters.items()`。如果 `collect_task_run_inputs` 是 async 函式，移除 `await` 會導致回傳 coroutine 物件而非實際值，造成後續使用錯誤。需要確認該函式的定義。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中將 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 211,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 `deployment_id` 而非 `deployment.id` 可能造成型別不一致",
+    "body": "原本 `create_flow_run_from_deployment` 使用 `deployment.id`，現在改為 `deployment_id`。若 `deployment_id` 是 UUID 物件，而 API 預期字串，可能導致型別錯誤。需確認 `deployment_id` 的型別與 API 要求。",
+    "existing_code": "flow_run = await client.create_flow_run_from_deployment(\n        deployment_id,\n        parameters=parameters,",
+    "evidence": "diff 中將 `deployment.id` 改為 `deployment_id`。"
+  }
+]

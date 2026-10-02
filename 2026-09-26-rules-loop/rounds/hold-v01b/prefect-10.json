@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ui-v2/tsconfig.app.json",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R11] 關閉 TypeScript strict 模式",
+    "body": "將 `strict` 從 `true` 改為 `false` 違反了專案規範 R11（TypeScript Must Enable Strict Type Checking）。這會降低型別安全，可能隱藏潛在的型別錯誤。建議恢復 `strict: true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 `- \"strict\": true,` 改為 `+ \"strict\": false,`"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/work-pool-status-trigger-fields.tsx",
+    "line": 78,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "數字輸入處理不一致：使用 parseInt 而非 Number",
+    "body": "在 `work-pool-status-trigger-fields.tsx` 中，Threshold 欄位的 `onChange` 使用 `parseInt(e.target.value)`，而其他元件（如 `custom-trigger-fields.tsx`）使用 `Number(e.target.value)`。`parseInt` 會忽略非數字字元（例如輸入 \"12abc\" 會得到 12），可能導致非預期行為。建議統一使用 `Number` 並搭配驗證。",
+    "existing_code": "onChange={(e) => field.onChange(parseInt(e.target.value))}",
+    "evidence": "diff 中該行使用 `parseInt`，而其他檔案使用 `Number`"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/custom-trigger-fields.tsx",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Expected Events 欄位在空輸入時可能設定為 undefined",
+    "body": "在 `custom-trigger-fields.tsx` 中，當使用者清空文字區域時，`lines` 會是 `[\"\"]`（長度為 1），因此 `field.onChange(lines)` 會被呼叫，而不是 `undefined`。這可能導致表單值變成 `[\"\"]` 而非預期的空陣列或 undefined。建議檢查是否為空字串並設定為空陣列或 undefined。",
+    "existing_code": "const lines = e.target.value.split(\"\\n\");\nfield.onChange(lines.length > 0 ? lines : undefined);",
+    "evidence": "diff 中該邏輯未處理空字串行"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/deployment-status-trigger-fields.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Posture 變更時可能殘留舊欄位值",
+    "body": "在 `deployment-status-trigger-fields.tsx` 中，當 posture 從 Reactive 切換到 Proactive 時，欄位名稱從 `trigger.expect` 改為 `trigger.after`，但舊的 `trigger.expect` 值可能仍保留在表單狀態中。這可能導致提交時包含不必要的資料。建議在 posture 變更時清除對應欄位。",
+    "existing_code": "const statusFieldName =\n\tposture === \"Proactive\" ? \"trigger.after\" : \"trigger.expect\";",
+    "evidence": "diff 中根據 posture 動態切換欄位名稱，但未清除舊值"
+  }
+]

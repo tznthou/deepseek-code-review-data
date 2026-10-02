@@ -1,0 +1,24 @@
+[
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.98,
+    "title": "listFeaturesForUser 過濾條件反轉，回傳未全域啟用的功能",
+    "body": "在 `listFeaturesForUser` 中，原本應回傳 `globalEnabled` 為 true 的功能，但程式碼改為 `!state.globalEnabled`，導致回傳未全域啟用的功能。這會讓使用者看到不應顯示的功能，可能造成混淆或錯誤操作。\n\n建議改回 `state.globalEnabled`。",
+    "existing_code": "return featureIds.map((featureId) => resolvedStates[featureId]).filter((state) => !state.globalEnabled);",
+    "evidence": "diff 中此行由 `.filter((state) => state.globalEnabled)` 改為 `.filter((state) => !state.globalEnabled)`，邏輯相反。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/config.ts",
+    "line": 5,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 未使用的常數 UNUSED_CONSTANT 可能觸發 lint 警告",
+    "body": "新增的 `UNUSED_CONSTANT` 未被使用，若 lint 設定將未使用變數視為警告，則會違反 R06（lint 警告視為錯誤）。建議移除該常數。",
+    "existing_code": "const UNUSED_CONSTANT = \"this-should-be-removed\";",
+    "evidence": "diff 中新增此行，且後續程式碼未使用此常數。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1962,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "硬編碼恢復 active_defrag_enabled 可能覆蓋原始設定",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，暫時停用 active defrag 後，恢復時直接設定 `server.active_defrag_enabled = 1;`，而非使用先前儲存的 `orig_active_defrag`。這可能導致如果原始設定為 0（例如使用者明確停用），在複製同步後被意外啟用。建議改為 `server.active_defrag_enabled = orig_active_defrag;`。",
+    "existing_code": "server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```c\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n...\n+    server.active_defrag_enabled = 1;\n```\n變數 `orig_active_defrag` 被儲存但未使用，且恢復值硬編碼為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "streamEntryIsReferenced 在 cgroups_ref 為空時回傳 1 可能導致錯誤保留",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 會在沒有 consumer group 參考時直接回傳 1，表示該 entry 被引用。這可能導致在沒有 consumer group 的情況下，stream 的 entry 永遠不會被刪除，即使已達 MAXLEN 限制。需確認此行為是否符合預期，特別是在沒有 consumer group 的 stream 上使用 `XADD ... MAXLEN` 時。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的程式碼：\n```c\n+    if (!s->cgroups_ref) return 1;\n```\n此函式用於判斷 entry 是否被引用，若無 cgroups_ref 則回傳 1 可能造成記憶體無法釋放。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試輔助函式 discard_replies_every 的參數名稱可能造成混淆",
+    "body": "函式 `discard_replies_every` 的參數 `frequency` 和 `discard_num` 語意不明確，且呼叫時傳入的數值（如 10000 和 10000）可能讓讀者難以理解其用途。建議重新命名參數或加入註解說明。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {",
+    "evidence": "diff 中新增的函式定義，參數名稱未清楚表達其用途。"
+  }
+]

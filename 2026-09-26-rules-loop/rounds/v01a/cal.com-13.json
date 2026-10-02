@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/di/tokens.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "DI token 合併方式可能造成 Symbol 重複或型別衝突",
+    "body": "在 `DI_TOKENS` 物件中直接展開 `FLAGS_DI_TOKENS` 與 `FEATURE_OPT_IN_DI_TOKENS`，若這兩個物件未來新增與既有 token 同名的屬性，會造成覆蓋或型別衝突。此外，`FEATURES_REPOSITORY` 與 `FEATURES_REPOSITORY_MODULE` 原本定義於 `DI_TOKENS`，現在改由 `FLAGS_DI_TOKENS` 提供，但其他程式碼可能仍直接引用 `DI_TOKENS.FEATURES_REPOSITORY`，需確認所有引用都已更新。建議改用明確的屬性指派或使用 `Object.assign` 並加上型別檢查。",
+    "existing_code": "...FLAGS_DI_TOKENS,\n  ...FEATURE_OPT_IN_DI_TOKENS,",
+    "evidence": "diff 中 `packages/features/di/tokens.ts` 新增了兩行展開運算子，且刪除了原本的 `FEATURES_REPOSITORY` 與 `FEATURES_REPOSITORY_MODULE` 定義。"
+  },
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "moduleLoader 的 token 可能設定錯誤",
+    "body": "此檔案的 `moduleLoader` 回傳的 `token` 是 `moduleToken`（`FLAGS_DI_TOKENS.FEATURES_REPOSITORY_MODULE`），但其他 module loader（例如 `FeatureOptInService.ts`）回傳的 `token` 是綁定的服務 token（`FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE`）。這可能導致容器在取得服務時使用錯誤的 token。請確認 `bindModuleToClassOnToken` 的實作與 `moduleLoader.token` 的預期用途，並統一所有 module loader 的 token 設定。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `FeaturesRepository.ts` 第 19-22 行，與 `FeatureOptInService.ts` 第 19-22 行比較，後者使用 `token`（服務 token）而非 `moduleToken`。"
+  },
+  {
+    "path": "packages/features/di/containers/FeatureOptInService.ts",
+    "line": 7,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "容器建立方式與既有模式不一致",
+    "body": "此檔案使用 `createContainer()` 建立新容器並載入模組，但其他容器檔案（如 `AvailableSlots.ts`）可能使用不同的模式（例如直接 import 已建立的容器）。這可能導致相依性無法共享或重複建立。建議參考其他容器的實作方式，確保一致性。",
+    "existing_code": "const featureOptInServiceContainer = createContainer();\n  featureOptInServiceModuleLoader.loadModule(featureOptInServiceContainer);",
+    "evidence": "diff 中新增的 `FeatureOptInService.ts` 第 7-8 行，與 `AvailableSlots.ts` 的 import 方式不同。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/IFeatureOptInService.ts",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "介面定義中多餘的空白",
+    "body": "在 `orgAutoOptIn: boolean;` 後面有多餘的空白，可能違反格式規範（R03）。建議移除多餘空白。",
+    "existing_code": "orgAutoOptIn: boolean;",
+    "evidence": "diff 中新增的 `IFeatureOptInService.ts` 第 11 行，行尾有三個空格。"
+  }
+]

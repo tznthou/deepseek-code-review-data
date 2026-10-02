@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] SQLAlchemy session 未使用 context manager",
+    "body": "`Session(db.engine)` 建立的 session 未使用 `with` 語句，若 `session.commit()` 拋出例外，session 不會被關閉，可能導致連線洩漏。建議改為 `with Session(db.engine) as session:`。",
+    "existing_code": "session = Session(db.engine)\n        row = session.scalar(stmt)\n        if not row:\n            raise ConversationVariableNotFoundError(\"conversation variable not found in the database\")\n        row.data = variable.model_dump_json()\n        session.commit()",
+    "evidence": "diff 中新增的 `session = Session(db.engine)` 沒有對應的 `with` 或 `close()`。"
+  },
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "[R07] 查詢未包含 tenant_id 隔離",
+    "body": "查詢 `ConversationVariable` 時僅以 `id` 和 `conversation_id` 過濾，未包含 `tenant_id`。在多租戶環境中，若 conversation_id 不唯一，可能更新到其他租戶的變數。建議加入 tenant_id 條件。",
+    "existing_code": "stmt = select(ConversationVariable).where(\n            ConversationVariable.id == variable.id, ConversationVariable.conversation_id == conversation_id\n        )",
+    "evidence": "diff 中的查詢條件缺少 tenant_id。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "flush 在迴圈內呼叫，可能造成效能問題",
+    "body": "`self._conversation_variable_updater.flush()` 在 for 迴圈內每次更新後呼叫，若有多個變數，會產生多次資料庫往返。建議將 flush 移至迴圈外。",
+    "existing_code": "self._conversation_variable_updater.update(conversation_id=conversation_id, variable=variable)\n            self._conversation_variable_updater.flush()",
+    "evidence": "diff 中 flush 位於 for 迴圈內。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "selector 長度檢查可能不足",
+    "body": "檢查 `len(selector) < 2` 後直接使用 `selector[0]` 和 `selector[1]`，但未驗證 selector 的內容是否合法。若 selector 包含非預期值，可能導致錯誤。",
+    "existing_code": "if len(selector) < 2:\n                logger.warning(\"Conversation variable selector invalid. selector=%s\", selector)\n                continue\n            if selector[0] != CONVERSATION_VARIABLE_NODE_ID:\n                continue",
+    "evidence": "diff 中僅檢查長度，未驗證內容。"
+  }
+]

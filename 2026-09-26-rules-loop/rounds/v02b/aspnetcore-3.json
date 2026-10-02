@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較使用 OrdinalIgnoreCase 在 Linux 上可能誤判",
+    "body": "在 Linux 檔案系統中，路徑是區分大小寫的。使用 `StringComparison.OrdinalIgnoreCase` 比較路徑可能導致錯誤判斷憑證目錄已存在於 SSL_CERT_DIR 中，但實際上因大小寫不同而未被包含。建議改用 `StringComparison.Ordinal` 或 `StringComparison.Ordinal` 搭配 `Path.GetFullPath` 的標準化結果。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的程式碼使用 `StringComparison.OrdinalIgnoreCase` 進行路徑比較，但 Linux 路徑區分大小寫，可能導致誤判。"
+  },
+  {
+    "path": "src/Tools/dotnet-dev-certs/src/Program.cs",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "非 verbose 模式下啟用 LogAlways 事件可能導致過多輸出",
+    "body": "在非 verbose 模式下，`listener.EnableEvents(CertificateManager.Log, EventLevel.LogAlways)` 會啟用所有 LogAlways 等級的事件，可能導致不必要的輸出。建議確認是否有需要僅在 verbose 模式下顯示的事件，或調整事件等級。",
+    "existing_code": "listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);",
+    "evidence": "diff 中新增的 else 區塊使用 LogAlways 等級，可能輸出過多資訊。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "catch 區塊過於寬鬆，可能隱藏非預期的例外",
+    "body": "`catch` 區塊捕獲所有例外並忽略，可能隱藏非預期的錯誤（例如權限不足或 I/O 錯誤）。建議至少記錄例外或僅捕獲預期的例外類型（如 `IOException`、`UnauthorizedAccessException`）。",
+    "existing_code": "catch\n{\n    // Ignore invalid directory entries in SSL_CERT_DIR\n    return false;\n}",
+    "evidence": "diff 中新增的 catch 區塊未指定例外類型，且未記錄任何資訊。"
+  }
+]

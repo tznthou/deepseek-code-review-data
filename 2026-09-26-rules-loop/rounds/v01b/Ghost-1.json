@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 368,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "scheduling.init() 呼叫方式變更可能導致 API URL 設定遺失",
+    "body": "原本 `scheduling.init()` 會傳入 `{apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true)}`，但修改後改為無參數呼叫。若 `scheduling.init()` 內部依賴此參數來設定 API 端點，移除後可能導致排程服務無法正確運作。建議確認 `scheduling.init()` 的實作是否已改為從其他來源取得 API URL，或此變更是否為預期行為。",
+    "existing_code": "scheduling.init(),",
+    "evidence": "diff 中原本的 `scheduling.init({ apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true) })` 被改為 `scheduling.init()`，且未見其他替代設定。"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 351,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 slack.listen() 可能導致 Slack 整合失效",
+    "body": "原本在 `Promise.all` 中有 `slack.listen()`，但修改後被移除。若 Slack 服務需要監聽事件（例如發佈通知），移除後可能導致功能失效。請確認 Slack 服務是否已改為其他初始化方式，或此移除是否為預期。",
+    "existing_code": "slack.listen(),",
+    "evidence": "diff 中 `slack.listen(),` 被刪除，且未見其他替代呼叫。"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 352,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "emailAddressService.init() 移至 Promise.all 可能改變初始化時序",
+    "body": "原本 `emailAddressService.init()` 在 `Promise.all` 之前單獨呼叫，現在移入 `Promise.all` 中。若其他服務依賴 emailAddressService 初始化完成，可能導致競態。建議確認依賴關係是否允許並行初始化。",
+    "existing_code": "emailAddressService.init(),",
+    "evidence": "diff 中原本的 `await emailAddressService.init(),` 被移除，並在 `Promise.all` 中加入 `emailAddressService.init(),`。"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 313,
+    "side": "RIGHT",
+    "severity": "nit",
+    "confidence": 0.5,
+    "title": "新增註解可能不必要",
+    "body": "新增的註解 `// NOTE: If you need to add dependencies for services, use npm install <package>` 可能與專案使用 Yarn 的慣例不符（R23）。若專案使用 Yarn，建議改為 `yarn add`。",
+    "existing_code": "// NOTE: If you need to add dependencies for services, use npm install <package>",
+    "evidence": "diff 中新增的註解提到 npm install，但專案規範 R23 要求使用 Yarn。"
+  }
+]

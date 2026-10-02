@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc 而非 zmalloc 配置 cluster_slot_stats",
+    "body": "在 clusterCommonInit() 中，`server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));` 使用了標準 malloc，違反 Redis 記憶體管理規範。應改用 zmalloc 以納入記憶體追蹤。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的 clusterCommonInit() 函式內，該行直接呼叫 malloc，而原程式碼在 server.c 中使用 zmalloc。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "clusterDeleteKeysInUnownedSlots() 可能遺漏 clusterSaveConfigOrDie 呼叫",
+    "body": "原 verifyClusterConfigWithData() 在處理完 slot 後，若 update_config > 0 會呼叫 clusterSaveConfigOrDie(1) 保存配置。新拆分的 clusterDeleteKeysInUnownedSlots() 僅刪除金鑰，未保存配置；clusterClaimUnassignedSlots() 則有保存。若刪除金鑰後配置未變更，可能不需保存，但需確認原邏輯中刪除金鑰是否會觸發配置變更（例如移除 importing 狀態）。若會，則可能遺漏持久化。",
+    "existing_code": "clusterDelKeysInSlot(i, 0);",
+    "evidence": "原程式碼在 clusterDelKeysInSlot 後，若 update_config 遞增，最後會呼叫 clusterSaveConfigOrDie(1)。新函式 clusterDeleteKeysInUnownedSlots() 內無此呼叫。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "clusterDeleteKeysInUnownedSlots() 未檢查 cluster_module_flags",
+    "body": "原 verifyClusterConfigWithData() 開頭會檢查 CLUSTER_MODULE_FLAG_NO_REDIRECTION，若設定則直接返回。新拆分的 clusterDeleteKeysInUnownedSlots() 未包含此檢查，但呼叫它的 verifyClusterConfigWithData() 仍會先檢查，因此目前行為不變。然而，若未來有其他呼叫者直接呼叫 clusterDeleteKeysInUnownedSlots()，可能跳過此保護。建議在函式內也加入檢查以確保獨立使用時的安全性。",
+    "existing_code": "if (clusterNodeIsSlave(getMyClusterNode())) return;",
+    "evidence": "原函式開頭有 `if (server.cluster_module_flags & CLUSTER_MODULE_FLAG_NO_REDIRECTION) return C_OK;`，新函式未包含。"
+  },
+  {
+    "path": "src/cluster_legacy.c",
+    "line": 5263,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "clusterClaimUnassignedSlots() 未檢查 cluster_module_flags",
+    "body": "與 clusterDeleteKeysInUnownedSlots() 類似，原 verifyClusterConfigWithData() 的 CLUSTER_MODULE_FLAG_NO_REDIRECTION 檢查未包含在新函式中。目前呼叫鏈仍安全，但建議在函式內加入檢查以維持獨立性。",
+    "existing_code": "if (nodeIsSlave(myself)) return;",
+    "evidence": "原函式開頭有 `if (server.cluster_module_flags & CLUSTER_MODULE_FLAG_NO_REDIRECTION) return C_OK;`，新函式未包含。"
+  }
+]

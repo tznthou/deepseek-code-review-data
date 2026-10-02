@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 220,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 strict=True 可能掩蓋 zip 長度不一致問題",
+    "body": "原本使用 `zip(pool_names_list, results, strict=True)` 會在兩個序列長度不一致時拋出 `ValueError`，確保每個 work pool 名稱都有對應的結果。移除 `strict=True` 後，若 `pool_names_list` 比 `results` 長，多餘的名稱會被靜默忽略，導致部分 work pool 的資訊遺失且沒有警告。建議保留 `strict=True`，或明確處理長度不一致的情況。",
+    "existing_code": "for name, result in zip(pool_names_list, results):",
+    "evidence": "diff 中將 `zip(pool_names_list, results, strict=True)` 改為 `zip(pool_names_list, results)`，移除了 strict 參數。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 397,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "部署名稱過濾邏輯可能失效",
+    "body": "原本的條件 `full_name not in deployment_names` 會檢查完整的 `flow_name/deployment_name` 是否在過濾清單中。修改後改為 `dep.name not in deployment_names`，只檢查部署名稱，忽略了 flow 名稱。這可能導致當使用者指定 `--deployment my-flow/production` 時，其他 flow 下名為 `production` 的部署也會被包含進來，過濾結果不正確。建議保留原本的完整名稱比對邏輯。",
+    "existing_code": "if deployment_names and dep.name not in deployment_names:",
+    "evidence": "diff 中將 `full_name not in deployment_names` 改為 `dep.name not in deployment_names`。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] Logger 初始化未遵循專案規範",
+    "body": "專案規範要求 logger 使用 `get_logger(\"module_name\")` 並加上型別註解。此處直接使用 `logging.getLogger(__name__)`，且沒有型別註解。建議改為 `logger: \"logging.Logger\" = get_logger(__name__)`。",
+    "existing_code": "logger = logging.getLogger(__name__)",
+    "evidence": "diff 中新增了 `logger = logging.getLogger(__name__)`，違反 R03。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 block-scoped namespace 違反 file-scoped namespace 規範",
+    "body": "此變更將原本的 file-scoped namespace `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;` 改為 block-scoped namespace，並在檔案結尾加上多餘的 `}`。這違反了專案規範 R02（Use File-Scoped Namespace Declarations），且可能導致編譯錯誤（多餘的右大括號）。請改回 file-scoped namespace 並移除多餘的 `}`。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中顯示原本的 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;` 被改為 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests` 加上 `{`，且檔案結尾新增 `}`。"
+  },
+  {
+    "path": "eng/Versions.props",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ValidateBaseline 設為 false 可能隱藏套件版本不一致",
+    "body": "將 `<ValidateBaseline>true</ValidateBaseline>` 改為 `false` 會停用基準驗證，可能導致未預期的套件版本變更未被偵測。在 servicing 更新中，這可能允許破壞性變更進入。建議確認此變更的必要性，或僅在特定條件下停用。",
+    "existing_code": "<ValidateBaseline>false</ValidateBaseline>",
+    "evidence": "diff 中顯示 `<ValidateBaseline>true</ValidateBaseline>` 被改為 `<ValidateBaseline>false</ValidateBaseline>`。"
+  },
+  {
+    "path": "eng/PackageOverrides.txt",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增 PackageOverrides.txt 可能與實際套件版本不一致",
+    "body": "此檔案列出所有套件版本為 10.0.0，但其他檔案（如 Version.Details.props）已更新至 10.0.1。若此檔案用於覆寫套件版本，可能導致解析到舊版套件。請確認此檔案的目的，並更新版本以符合實際依賴。",
+    "existing_code": "Microsoft.Extensions.Caching.Abstractions|10.0.0",
+    "evidence": "diff 新增 eng/PackageOverrides.txt，內容包含多個套件版本 10.0.0，但 Version.Details.props 中相同套件已更新至 10.0.1。"
+  },
+  {
+    "path": "eng/PlatformManifest.txt",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增 PlatformManifest.txt 可能包含錯誤的組件版本",
+    "body": "此檔案列出多個組件版本為 10.0.25.52413，但實際建置版本可能不同。若此檔案用於驗證平台相容性，錯誤的版本可能導致誤判。請確認此檔案由正確的建置流程產生。",
+    "existing_code": "System.Diagnostics.EventLog.Messages.dll|Microsoft.AspNetCore.App.Ref|10.0.0.0|0.0.0.0",
+    "evidence": "diff 新增 eng/PlatformManifest.txt，內容包含多個組件版本 10.0.25.52413。"
+  },
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "macOS 映像升級至 macOS-15 可能導致相容性問題",
+    "body": "將 macOS 建置映像從 macOS-13 升級至 macOS-15，並將 Xcode 從 15.2.0 升級至 16.4.0，可能導致與現有工具鏈或相依套件不相容。建議確認所有建置步驟在 macOS-15 上通過。",
+    "existing_code": "vmImage: macOS-15",
+    "evidence": "diff 中顯示 `vmImage: macOS-13` 被改為 `vmImage: macOS-15`，且 `displayName: Use XCode 15.2.0` 被改為 `displayName: Use XCode 16.4.0`。"
+  }
+]

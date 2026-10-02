@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 202,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "action.triggered 事件使用錯誤的 related_resources，導致遺漏 triggering-event 連結",
+    "body": "在 `fail` 方法中，`action.triggered` 事件的 `related` 參數被改為 `self._resulting_related_resources`，但此變數是動作執行後產生的資源（例如目標資源），不包含 `triggering-event` 或 `automation-triggered-event`。這會導致 `action.triggered` 事件無法連結回原始觸發事件，破壞可追溯性。\n\n**失敗情境**：當動作失敗時，`action.triggered` 事件將缺少 `triggering-event` 相關資源，使用者無法從該事件追溯到觸發來源。\n\n**建議**：將 `related` 改回 `related_resources`，該變數已包含 `triggering-event` 和 `automation-triggered-event`。",
+    "existing_code": "related=self._resulting_related_resources,",
+    "evidence": "diff 中第 199 行將 `related` 從 `related_resources` 改為 `self._resulting_related_resources`，而 `related_resources` 是稍早建立的清單，包含 `triggering-event` 和 `automation-triggered-event`。"
+  },
+  {
+    "path": "src/prefect/server/events/schemas/automations.py",
+    "line": 772,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "欄位驗證器可能無法正確檢查 triggering_event 是否存在",
+    "body": "`validate_automation_triggered_event_id` 使用 `info.data.get(\"triggering_event\")` 來檢查 `triggering_event` 是否存在。但在 Pydantic v2 中，欄位驗證器的執行順序取決於欄位定義順序，若 `triggering_event` 在 `automation_triggered_event_id` 之後定義，則 `info.data` 中可能尚未包含 `triggering_event`，導致驗證器誤判為 `None` 而拋出錯誤，或反之漏掉驗證。\n\n**失敗情境**：當 `triggering_event` 欄位定義在 `automation_triggered_event_id` 之後時，即使 `triggering_event` 有值，驗證器仍可能因 `info.data` 中缺少該鍵而拋出 `ValueError`，阻止合法資料建立。\n\n**建議**：改用 `model_validator` 進行跨欄位驗證，或使用 `info.data.get(\"triggering_event\", ...)` 並確保欄位順序正確。",
+    "existing_code": "@field_validator(\"automation_triggered_event_id\")\n    @classmethod\n    def validate_automation_triggered_event_id(cls, v, info):\n        \"\"\"Ensure automation_triggered_event_id is only set when triggering_event exists.\"\"\"\n        if v is not None and info.data.get(\"triggering_event\") is None:\n            raise ValueError(\n                \"automation_triggered_event_id can only be set when triggering_event is provided\"\n            )\n        return v",
+    "evidence": "diff 中新增的驗證器使用 `info.data.get(\"triggering_event\")`，但未考慮欄位驗證順序。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 459,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "primary_state_change_event 可能為 None，導致後續取值錯誤",
+    "body": "`primary_state_change_event` 是透過 `state_change_events.get(TriggerState.Triggered) or state_change_events.get(TriggerState.Resolved)` 取得，若兩者皆不存在，則為 `None`。接著 `primary_state_change_event_id = primary_state_change_event.id if primary_state_change_event else None` 處理了 None 情況，但後續在 `if TriggerState.Triggered in firing.trigger_states:` 區塊中，直接使用 `state_change_events[TriggerState.Triggered]` 而沒有檢查鍵是否存在，可能拋出 `KeyError`。\n\n**失敗情境**：當 `firing.trigger_states` 包含 `TriggerState.Triggered`，但 `state_change_events` 中沒有對應鍵時（例如狀態變更事件未成功發布），會拋出 `KeyError`。\n\n**建議**：使用 `state_change_events.get(TriggerState.Triggered)` 並處理 None 情況，或確保 `state_change_events` 一定包含所需鍵。",
+    "existing_code": "if TriggerState.Triggered in firing.trigger_states:\n        triggered_event = state_change_events[TriggerState.Triggered]",
+    "evidence": "diff 中新增的 `triggered_event = state_change_events[TriggerState.Triggered]` 直接使用索引存取，未檢查鍵是否存在。"
+  }
+]

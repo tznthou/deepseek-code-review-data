@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "sortHosts 函式在移動時 priority 排序方向被反轉",
+    "body": "在 `isRRWeightsEnabled` 為 true 且權重相同時，原本的排序是 `priorityB - priorityA`（降冪），但移動後變成 `priorityA - priorityB`（升冪）。這會導致主持人優先級排序完全相反，可能造成錯誤的主持人指派。請改回 `priorityB - priorityA`。",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中新增的 sortHosts 函式內，該行與刪除的原始碼 `return priorityB - priorityA;` 不一致。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用相對路徑跨多層目錄引用 packages/platform 下的模組",
+    "body": "import 路徑 `../../../../packages/platform/atoms/src/components/atoms-wrapper` 和 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar` 非常脆弱，一旦檔案移動就容易斷裂。建議改用 alias（如 `@calcom/atoms/...`）或絕對路徑。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 中新增的相對路徑 import。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "import 路徑從 alias 改為相對路徑，降低可維護性",
+    "body": "多個原本使用 `@calcom/web/...` 的 import 改為相對路徑（如 `./EventType`、`./ChildrenEventTypeSelect`）。雖然目前可運作，但未來若檔案移動，相對路徑容易失效，且與專案慣用 alias 的風格不一致。建議保留 alias 或使用絕對路徑。",
+    "existing_code": "import type { ChildrenEventType } from \"./ChildrenEventTypeSelect\";\nimport { EventType as EventTypeComponent } from \"./EventType\";",
+    "evidence": "diff 中多處將 `@calcom/web/modules/event-types/components/...` 改為 `./...`。"
+  },
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "sortHosts 函式缺少單元測試",
+    "body": "此函式被移動且邏輯有變更，但未見對應的測試更新或新增。建議為 sortHosts 撰寫單元測試，涵蓋不同權重、優先級組合以及 isRRWeightsEnabled 的各種情況。",
+    "existing_code": "export function sortHosts(",
+    "evidence": "diff 中新增 sortHosts 函式，但未見測試檔案變更。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 236,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "JSX 縮排不一致",
+    "body": "在 tabMap 的 setup 和 availability 區塊中，JSX 元素的縮排從原本的 6 空格改為 8 空格，與其他 tab 的縮排不一致。建議統一縮排以符合程式碼風格。",
+    "existing_code": "<EventSetupTab\n            eventType={eventType}\n            locationOptions={locationOptions}\n            team={team}\n            teamMembers={teamMembers}\n            destinationCalendar={destinationCalendar}\n        />",
+    "evidence": "diff 中顯示縮排由 6 空格改為 8 空格。"
+  }
+]

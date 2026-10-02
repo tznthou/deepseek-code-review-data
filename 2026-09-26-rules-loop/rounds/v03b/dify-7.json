@@ -1,0 +1,57 @@
+[
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 61,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Trans mock 的 children 處理可能與實際 react-i18next 行為不符",
+    "body": "在 `createTransMock` 中，當 `children` 存在時，回傳 `children` 而非翻譯文字。實際 react-i18next 的 `Trans` 元件會將翻譯文字與 children 結合（例如將 children 插入翻譯字串中的 `<0>` 等標記）。此 mock 可能導致依賴 `Trans` 渲染翻譯文字的測試無法正確驗證。建議參考實際 `Trans` 行為，或至少提供可配置的渲染方式。",
+    "existing_code": "return React.createElement('span', { 'data-i18n-key': i18nKey }, children ?? text)",
+    "evidence": "diff 中新增的 `createTransMock` 函式，第 60 行。"
+  },
+  {
+    "path": "web/vitest.setup.ts",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "全域 mock 行為變更可能導致未更新的測試失敗",
+    "body": "全域 mock 原本在無 namespace 時回傳 key 本身，現在改為使用 `createReactI18nextMock()`，其 `createTFunction` 在無 namespace 時回傳 `fullKey`（即 key 本身），但當有 namespace 時會加上前綴。這與原本行為一致，但需確認所有依賴舊行為的測試已更新。此外，原本全域 mock 有處理 `returnObjects` 選項，新 helper 未處理，可能導致使用該選項的測試失敗。",
+    "existing_code": "...createReactI18nextMock(),",
+    "evidence": "diff 中 `web/vitest.setup.ts` 的修改，移除了原本的 `useTranslation` 實作，改用 helper。"
+  },
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "TranslationMap 型別可能過於寬鬆",
+    "body": "`interface TranslationMap extends Record<string, string | string[]> {}` 允許值為 string 或 string[]，但 `createTFunction` 回傳型別為 string，若值為 string[] 會導致型別不符。建議明確限制為 string，或處理陣列情況。",
+    "existing_code": "interface TranslationMap extends Record<string, string | string[]> {}",
+    "evidence": "diff 中新增的 `TranslationMap` 介面。"
+  },
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "createTFunction 未處理 returnObjects 選項",
+    "body": "原本全域 mock 有處理 `options.returnObjects`，回傳陣列。新 helper 未處理此選項，可能導致使用該功能的測試失敗。建議加入對 `returnObjects` 的支援。",
+    "existing_code": "const suffix = Object.keys(params).length > 0 ? `:${JSON.stringify(params)}` : ''",
+    "evidence": "diff 中 `createTFunction` 的實作，未見 `returnObjects` 處理。"
+  },
+  {
+    "path": "web/app/components/plugins/install-plugin/install-from-local-package/steps/install.spec.tsx",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "動態 import helper 可能導致 mock 延遲",
+    "body": "在 `vi.mock` 工廠中使用 `await import('@/test/i18n-mock')` 動態載入 helper，可能因非同步載入而影響測試執行時序。建議改為靜態 import（在檔案頂部），或確認此模式在專案中已廣泛使用。",
+    "existing_code": "const { createReactI18nextMock } = await import('@/test/i18n-mock')",
+    "evidence": "diff 中 `install.spec.tsx` 的修改。"
+  }
+]

@@ -1,0 +1,4 @@
+[info] repo 規範：repo=Ghost、24 條、10047 字元、placement=before_diff、sha256=b100898f200a
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 16652 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 ghost/core/core/boot.js:364 → 351（片段唯一命中）
+[info] 完成於 6.6s ｜ findings=2 ｜ relocated=1 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 8104, "completion_tokens": 616, "total_tokens": 8720, "prompt_tokens_details": {"cached_tokens": 8064}, "prompt_cache_hit_tokens": 8064, "prompt_cache_miss_tokens": 40}

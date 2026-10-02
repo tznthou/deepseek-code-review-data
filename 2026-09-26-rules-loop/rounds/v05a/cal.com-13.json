@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/di/tokens.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "DI token 合併可能造成 Symbol 重複定義",
+    "body": "在 `DI_TOKENS` 物件中，使用 spread 運算子將 `FLAGS_DI_TOKENS` 與 `FEATURE_OPT_IN_DI_TOKENS` 合併，但這兩個物件中的 Symbol 名稱可能與原本的 `FEATURES_REPOSITORY` 和 `FEATURES_REPOSITORY_MODULE` 重複。原本的 `FEATURES_REPOSITORY` 和 `FEATURES_REPOSITORY_MODULE` 已被刪除，但若其他程式碼仍依賴這些 Symbol，會導致解析失敗。此外，`FLAGS_DI_TOKENS` 中的 Symbol 名稱與原本相同，但 Symbol 本身是新的，因此任何使用舊 Symbol 的地方都會失效。建議確認所有使用舊 Symbol 的地方都已更新，或保留舊 Symbol 作為別名。",
+    "existing_code": "...FLAGS_DI_TOKENS,\n  ...FEATURE_OPT_IN_DI_TOKENS,",
+    "evidence": "diff 中刪除了原本的 `FEATURES_REPOSITORY` 和 `FEATURES_REPOSITORY_MODULE`，並新增了 `...FLAGS_DI_TOKENS` 和 `...FEATURE_OPT_IN_DI_TOKENS`。由於 Symbol 是唯一的，即使名稱相同，新的 Symbol 也不同於舊的，因此任何使用舊 Symbol 的程式碼都會失效。"
+  },
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "moduleLoader 的 token 欄位誤植為 moduleToken",
+    "body": "在 `moduleLoader` 物件中，`token` 屬性被設定為 `moduleToken`，但根據其他 module 的慣例，`token` 應該是用於解析實例的 token（即 `FEATURES_REPOSITORY`），而不是 module token。這會導致使用 `moduleLoader.token` 來取得實例時，實際拿到的是 module token，造成型別不符或解析失敗。建議將 `token` 改為 `token`（即 `FEATURES_REPOSITORY`）。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `FeaturesRepository.ts` 檔案，`moduleLoader` 的 `token` 欄位被設定為 `moduleToken`，而其他 module（如 `FeatureOptInService.ts`）的 `moduleLoader` 的 `token` 欄位是設定為 `token`（即實例 token）。"
+  },
+  {
+    "path": "packages/features/di/containers/FeatureOptInService.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "每次呼叫 getFeatureOptInService 都會建立新的容器",
+    "body": "`getFeatureOptInService` 函式每次呼叫都會建立一個新的容器並載入 module，這可能導致效能問題，且若 module 內有狀態，會產生不一致。建議考慮使用單例模式或快取容器，避免重複建立。",
+    "existing_code": "export function getFeatureOptInService(): IFeatureOptInService {\n  const featureOptInServiceContainer = createContainer();\n  featureOptInServiceModuleLoader.loadModule(featureOptInServiceContainer);\n  return featureOptInServiceContainer.get<IFeatureOptInService>(featureOptInServiceModuleLoader.token);\n}",
+    "evidence": "diff 中新增的 `FeatureOptInService.ts` 容器檔案，函式內每次都建立新容器。"
+  },
+  {
+    "path": "packages/features/di/containers/FeaturesRepository.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "每次呼叫 getFeaturesRepository 都會建立新的容器",
+    "body": "`getFeaturesRepository` 函式每次呼叫都會建立一個新的容器並載入 module，這可能導致效能問題，且若 module 內有狀態，會產生不一致。建議考慮使用單例模式或快取容器，避免重複建立。",
+    "existing_code": "export function getFeaturesRepository(): FeaturesRepository {\n  const featuresRepositoryContainer = createContainer();\n  featuresRepositoryModuleLoader.loadModule(featuresRepositoryContainer);\n  return featuresRepositoryContainer.get<FeaturesRepository>(featuresRepositoryModuleLoader.token);\n}",
+    "evidence": "diff 中新增的 `FeaturesRepository.ts` 容器檔案，函式內每次都建立新容器。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/IFeatureOptInService.ts",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "多餘的空白字元",
+    "body": "在 `orgAutoOptIn: boolean;` 後面有多餘的空白字元，可能違反格式規範（R03）。建議移除多餘空白。",
+    "existing_code": "orgAutoOptIn: boolean;",
+    "evidence": "diff 中新增的 `IFeatureOptInService.ts` 檔案，該行末尾有三個空格。"
+  }
+]

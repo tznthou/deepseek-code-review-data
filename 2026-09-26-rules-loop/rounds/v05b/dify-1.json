@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R04] 型別標註使用舊式 typing 語法",
+    "body": "新增的 `blocks_variable_output` 方法使用了 `Set[Tuple[str, ...]]`，但專案規範 R04 要求使用 Python 3.12+ 的現代型別語法（`set[tuple[str, ...]]`）。建議改用現代語法以符合規範。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的方法簽名使用了 `Set` 和 `Tuple`，而檔案開頭已從 `typing` 匯入 `Set, Tuple`，但根據 R04 應使用內建泛型。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言可能過於脆弱",
+    "body": "測試中斷言所有 `NodeRunStreamChunkEvent` 的 `chunk` 都等於 `input_query`，但若未來串流事件包含其他內容（如中繼資料），此斷言將失敗。建議改為檢查事件是否存在且其值符合預期，而非要求所有事件完全相同。",
+    "existing_code": "assert all(event.chunk == input_query for event in conv_var_chunk_events), (\n        \"Expected streamed conversation variable value to match the input query\"\n    )",
+    "evidence": "diff 中新增的測試斷言使用 `all(event.chunk == input_query ...)`，對事件內容過於嚴格。"
+  }
+]

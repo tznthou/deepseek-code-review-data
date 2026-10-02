@@ -1,0 +1,6 @@
+[info] repo 規範：repo=firefox-ios、15 條、10013 字元、placement=after_diff、sha256=e4e69f96aa57
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 22995 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift:26 → 27（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/StoriesFeed/StoriesFeedDiffableDataSourceTests.swift:11 → 16（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/SyncContentSettingsViewControllerTests.swift:15 → 24（片段唯一命中）
+[info] 完成於 10.7s ｜ findings=5 ｜ relocated=3 ｜ verdict=comment ｜ usage={"prompt_tokens": 10011, "completion_tokens": 1229, "total_tokens": 11240, "prompt_tokens_details": {"cached_tokens": 7936}, "prompt_cache_hit_tokens": 7936, "prompt_cache_miss_tokens": 2075}

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "rewriteClientCommandVector 參數數量可能不正確",
+    "body": "呼叫 `rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj)` 時，第一個參數 `6` 表示新的 argv 長度，但實際傳入的參數有 8 個（hsetex, key, keepttl, fields, 1, field, value）。這可能導致命令重寫後參數數量錯誤，進而影響複製或 AOF 重寫。請確認 `rewriteClientCommandVector` 的實作，並修正參數數量。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的這行呼叫，第一個參數為 6，但後續傳入 8 個參數，數量不一致。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1987,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "TTL 範圍斷言可能因時間誤差而不穩定",
+    "body": "測試中使用 `assert_range [r httl h1 FIELDS 1 f1] 90 100` 來驗證 TTL 在 90 到 100 秒之間。由於測試執行時間可能超過 10 秒，TTL 可能低於 90，導致測試偶發性失敗。建議放寬範圍或使用更精確的驗證方式。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "測試中對 TTL 的範圍斷言較窄，且未考慮測試執行時間的影響。"
+  }
+]

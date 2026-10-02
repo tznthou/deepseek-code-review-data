@@ -1,0 +1,112 @@
+[
+  {
+    "path": "packages/features/bookings/di/BookingCancelService.module.ts",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "DI 模組缺少 bookingRepository 的相依性設定",
+    "body": "在 `BookingCancelService.module.ts` 中，`depsMap` 設定了 `userRepository`、`bookingRepository`、`profileRepository`、`bookingReferenceRepository`、`attendeeRepository`，但 `bookingRepository` 的 module loader 是從 `@calcom/features/di/modules/Booking` 匯入，而該模組可能未正確設定或未提供 `BookingRepository` 的實例。這可能導致執行時期無法解析 `bookingRepository` 依賴，造成服務初始化失敗。\n\n建議確認 `@calcom/features/di/modules/Booking` 是否正確匯出 `BookingRepository` 的 module loader，並確保其相依性（如 Prisma client）已正確設定。",
+    "existing_code": "bookingRepository: bookingRepositoryModuleLoader,",
+    "evidence": "diff 中 `BookingCancelService.module.ts` 的 `depsMap` 新增了 `bookingRepository: bookingRepositoryModuleLoader`，但未顯示 `bookingRepositoryModuleLoader` 的來源模組內容。"
+  },
+  {
+    "path": "packages/features/users/repositories/UserRepository.ts",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 userSelect 中的 locale 欄位可能影響取消流程的翻譯邏輯",
+    "body": "在 `UserRepository.ts` 中，`userSelect` 移除了 `locale: true`。然而，在 `handleCancelBooking.ts` 中，取消流程會使用 `organizer.locale` 來取得翻譯（`getTranslation(organizer.locale ?? \"en\", \"common\")`）。如果 `userRepository.findByIdOrThrow` 回傳的物件不再包含 `locale`，則 `organizer.locale` 將是 `undefined`，導致翻譯回退到英文，可能造成使用者看到的語言不正確。\n\n建議確認 `userRepository.findByIdOrThrow` 的實作是否仍會回傳 `locale`，或是在取消流程中改用其他方式取得使用者的 locale。",
+    "existing_code": "locale: true,",
+    "evidence": "diff 顯示 `UserRepository.ts` 中 `userSelect` 移除了 `locale: true`，而 `handleCancelBooking.ts` 中使用了 `organizer.locale`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 517,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "取消後續預約時查詢條件可能不正確",
+    "body": "在 `handleCancelBooking.ts` 中，原本的 `prisma.booking.findMany` 查詢條件為 `startTime: { gte: new Date() }`，但重構後改為 `startTime: { gte: bookingToDelete.startTime }`。這可能改變行為：原本是取消「現在時間之後」的所有後續預約，現在變成取消「起始時間等於或晚於被取消預約」的所有預約。如果被取消的預約是過去的預約，則會包含過去已發生的預約，可能導致誤取消。\n\n建議確認此變更是否符合預期，或改回使用 `new Date()` 作為基準。",
+    "existing_code": "gte: bookingToDelete.startTime,",
+    "evidence": "diff 顯示 `handleCancelBooking.ts` 中 `findManyIncludeWorkflowRemindersAndReferences` 的 `where` 條件從 `gte: new Date()` 改為 `gte: bookingToDelete.startTime`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 540,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "取消單一預約時改用 uid 作為唯一條件可能導致錯誤",
+    "body": "在 `handleCancelBooking.ts` 中，原本的 `prisma.booking.update` 使用 `where: uid ? { uid } : { id }`，但重構後改為 `where: { uid: bookingToDelete.uid }`。如果 `bookingToDelete.uid` 為 `undefined` 或空字串，則可能無法正確定位預約，導致更新失敗或更新到錯誤的預約。\n\n建議確認 `bookingToDelete.uid` 在取消流程中一定存在，或保留原本的條件邏輯。",
+    "existing_code": "where: {\n        uid: bookingToDelete.uid,\n      },",
+    "evidence": "diff 顯示 `handleCancelBooking.ts` 中 `updateIncludeWorkflowRemindersAndReferences` 的 `where` 條件改為固定使用 `uid`。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1502,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 updateMany 方法缺少回傳值",
+    "body": "在 `BookingRepository.ts` 中，新增的 `updateMany` 方法沒有回傳值，但介面 `IBookingRepository` 定義了 `updateMany` 應回傳 `Promise<{ count: number }>`。這可能導致型別不符，且呼叫端無法取得更新筆數。\n\n建議讓 `updateMany` 回傳 `this.prismaClient.booking.updateMany` 的結果，以符合介面定義。",
+    "existing_code": "async updateMany({ where, data }: { where: BookingWhereInput; data: BookingUpdateData }) {\n    await this.prismaClient.booking.updateMany({\n      where: where,\n      data,\n    });\n  }",
+    "evidence": "diff 顯示 `BookingRepository.ts` 新增的 `updateMany` 方法僅 `await` 而無回傳，但 `IBookingRepository` 介面要求回傳 `Promise<{ count: number }>`。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案使用單引號，可能違反格式化規範",
+    "body": "在 `PrismaBookingAttendeeRepository.ts` 中，import 陳述式使用了單引號（`'@calcom/prisma/client'`），而專案規範 [R03] 要求使用雙引號。這可能導致 lint 或格式化檢查失敗。\n\n建議將單引號改為雙引號。",
+    "existing_code": "import type { PrismaClient } from '@calcom/prisma/client'",
+    "evidence": "diff 顯示 `PrismaBookingAttendeeRepository.ts` 的 import 使用單引號。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案使用單引號，可能違反格式化規範",
+    "body": "在 `PrismaBookingAttendeeRepository.ts` 中，import 陳述式使用了單引號（`'../lib/dto/IBookingAttendeeRepository'`），而專案規範 [R03] 要求使用雙引號。這可能導致 lint 或格式化檢查失敗。\n\n建議將單引號改為雙引號。",
+    "existing_code": "import type { IBookingAttendeeRepository } from '../lib/dto/IBookingAttendeeRepository'",
+    "evidence": "diff 顯示 `PrismaBookingAttendeeRepository.ts` 的 import 使用單引號。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+    "line": 5,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案使用單引號，可能違反格式化規範",
+    "body": "在 `PrismaBookingAttendeeRepository.ts` 中，類別宣告後的程式碼使用了單引號（`'@calcom/prisma/client'`），而專案規範 [R03] 要求使用雙引號。這可能導致 lint 或格式化檢查失敗。\n\n建議將單引號改為雙引號。",
+    "existing_code": "export class PrismaBookingAttendeeRepository implements IBookingAttendeeRepository {",
+    "evidence": "diff 顯示 `PrismaBookingAttendeeRepository.ts` 的 import 使用單引號。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案使用單引號，可能違反格式化規範",
+    "body": "在 `PrismaBookingAttendeeRepository.ts` 中，方法內的程式碼使用了單引號（`'@calcom/prisma/client'`），而專案規範 [R03] 要求使用雙引號。這可能導致 lint 或格式化檢查失敗。\n\n建議將單引號改為雙引號。",
+    "existing_code": "async deleteManyByBookingId(bookingId: number): Promise<void> {",
+    "evidence": "diff 顯示 `PrismaBookingAttendeeRepository.ts` 的 import 使用單引號。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/PrismaBookingAttendeeRepository.ts",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案使用單引號，可能違反格式化規範",
+    "body": "在 `PrismaBookingAttendeeRepository.ts` 中，方法內的程式碼使用了單引號（`'@calcom/prisma/client'`），而專案規範 [R03] 要求使用雙引號。這可能導致 lint 或格式化檢查失敗。\n\n建議將單引號改為雙引號。",
+    "existing_code": "await this.prismaClient.attendee.deleteMany({",
+    "evidence": "diff 顯示 `PrismaBookingAttendeeRepository.ts` 的 import 使用單引號。"
+  }
+]

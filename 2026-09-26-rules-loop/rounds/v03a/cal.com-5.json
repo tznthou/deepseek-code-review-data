@@ -1,0 +1,57 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 259,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的網域前綴",
+    "body": "在 `BasicsTab` 中，程式碼嘗試從 `bookingUrl` 解析出網域前綴，但邏輯有缺陷：\n- 若 `bookingUrl` 為 `https://i.cal.com/keith/30min`，`url.pathname` 為 `/keith/30min`，移除最後一段後得到 `/keith`，最後回傳 `https://i.cal.com/keith/`，但實際上正確的前綴應為 `https://i.cal.com/`（因為 `keith` 是 username，不是路徑的一部分）。\n- 若 `bookingUrl` 為 `https://cal.com/keith/30min`，則回傳 `https://cal.com/keith/`，但正確前綴應為 `https://cal.com/keith/`（此例剛好正確）。\n- 若 `bookingUrl` 包含 query string 或 hash，`url.pathname` 不會包含它們，但回傳的前綴會遺失這些部分。\n\n建議：不要自行解析 bookingUrl，而是直接顯示完整的 bookingUrl，或由後端提供一個獨立的 `bookingUrlPrefix` 欄位。",
+    "existing_code": "if (props.bookingUrl) {\n  try {\n    const url = new URL(props.bookingUrl);\n    // Get path without the last segment (slug)\n    const pathParts = url.pathname.split(\"/\").filter(Boolean);\n    pathParts.pop(); // Remove slug\n    // Compute prefix outside try/catch for React Compiler\n    let prefix = \"/\";\n    if (pathParts.length > 0) {\n      prefix = `/${pathParts.join(\"/\")}/`;\n    }\n    return `${url.protocol}//${url.hostname}${prefix}`;\n  } catch {\n    // fallback\n  }\n}",
+    "evidence": "diff 中新增的程式碼區塊（BasicsTab.tsx 第 254-273 行）顯示了這個解析邏輯。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "handlePreview 與 handleCopyLink 依賴 bookingUrl state，但該 state 可能永遠為空",
+    "body": "`handlePreview` 和 `handleCopyLink` 現在直接使用 `bookingUrl` state，但這個 state 的初始值為空字串，且程式碼中沒有看到任何地方呼叫 `setBookingUrl` 來設定它。這可能導致使用者在儲存 event type 之前點擊預覽或複製連結時，永遠看到「Booking URL not available」的錯誤。\n\n建議：確認 `bookingUrl` 是否應該從 props 或 API 取得，並在元件掛載時設定；或者保留原本的 `buildEventTypeLink` 作為 fallback。",
+    "existing_code": "const [bookingUrl, setBookingUrl] = useState<string>(\"\");",
+    "evidence": "diff 中新增了 `bookingUrl` state（第 180 行），但沒有看到對應的 `setBookingUrl` 呼叫。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/index.ios.tsx",
+    "line": 114,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "handleCopyLink 中對 bookingUrl 的檢查可能導致使用者無法複製連結",
+    "body": "在 `handleCopyLink` 中，如果 `eventType.bookingUrl` 為空，會顯示錯誤並 return。但原本的實作會嘗試用 `buildEventTypeLink` 動態產生連結，即使 API 沒有回傳 bookingUrl 也能運作。如果 API 在某些情況下不提供 bookingUrl（例如舊版 API 或特定權限），使用者將無法複製連結。\n\n建議：保留 fallback 邏輯，當 bookingUrl 不存在時，仍使用 `buildEventTypeLink` 或類似的機制產生連結。",
+    "existing_code": "if (!eventType.bookingUrl) {\n  showErrorAlert(\"Error\", \"Booking URL not available for this event type.\");\n  return;\n}",
+    "evidence": "diff 中新增了這個檢查（index.ios.tsx 第 114-117 行），移除了原本的 `buildEventTypeLink` 呼叫。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "copyBtn 的 bookingUrl 未使用 eventType.bookingUrl",
+    "body": "在 `copyBtn` 的 click handler 中，bookingUrl 的建構方式仍然是手動拼接 `https://cal.com/...`，沒有使用 `eventType.bookingUrl`。這可能導致複製的連結與預覽的連結不一致（如果 API 回傳的 bookingUrl 是自訂網域或不同路徑）。\n\n建議：與其他 handler 一致，使用 `eventType.bookingUrl || fallback` 的模式。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中此處的程式碼沒有被修改（第 1122-1125 行），但其他類似區塊都改為使用 `eventType.bookingUrl`。"
+  },
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "URL 解析失敗時 fallback 到 cal.com/{username}/，可能與實際 bookingUrl 不一致",
+    "body": "當 `bookingUrl` 存在但無法被 `new URL()` 解析時（例如格式錯誤），程式碼會 fallback 到 `cal.com/${props.username}/`。這可能導致顯示的 URL 前綴與實際的 bookingUrl 完全不同，造成使用者混淆。\n\n建議：在解析失敗時，直接顯示完整的 bookingUrl 或顯示一個通用的提示，而不是猜測前綴。",
+    "existing_code": "} catch {\n  // fallback\n}\n}\nreturn `cal.com/${props.username}/`;",
+    "evidence": "diff 中新增的程式碼區塊（BasicsTab.tsx 第 254-273 行）顯示了這個 fallback 邏輯。"
+  }
+]

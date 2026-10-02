@@ -1,0 +1,68 @@
+[
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 109,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "輪詢 effect 缺少 disableBlueskyMutation 依賴，可能使用過時閉包",
+    "body": "useEffect 的依賴陣列僅包含 `account?.blueskyEnabled`、`account?.blueskyHandleConfirmed` 和 `confirmHandle`，但 effect 內呼叫了 `disableBlueskyMutation.mutateAsync()`。若 `disableBlueskyMutation` 在元件生命週期內被重新建立（例如 queryClient 變更），effect 不會重新執行，導致呼叫到舊的 mutation 實例，可能造成請求失敗或狀態不同步。\n\n建議將 `disableBlueskyMutation` 加入依賴陣列，或使用 ref 保存最新的 mutation 函式。",
+    "existing_code": "await disableBlueskyMutation.mutateAsync();",
+    "evidence": "diff 中新增的 useEffect 內呼叫 `disableBlueskyMutation.mutateAsync()`，但依賴陣列註解寫著 `// disableBlueskyMutation is stable`，實際上並未加入依賴。"
+  },
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R16] 關閉 TypeScript 嚴格模式，降低型別安全",
+    "body": "此 PR 將 `strict` 從 `true` 改為 `false`，違反專案規範 R16（TypeScript 檔案必須啟用嚴格型別檢查）。這可能隱藏潛在的型別錯誤，例如 `account?.blueskyHandle` 可能為 null 或 undefined 的處理。\n\n建議恢復 `strict: true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.json 的 `strict` 屬性從 `true` 改為 `false`。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 119,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "輪詢 interval 未在元件卸載或依賴變更時正確清理",
+    "body": "useEffect 的回傳清理函式僅清除 interval，但若 `account?.blueskyEnabled` 或 `account?.blueskyHandleConfirmed` 在輪詢期間改變，舊的 interval 會被清除，但新的 effect 會重新建立 interval。然而，若元件在 interval 觸發前卸載，清理函式會執行，但 interval 內的非同步操作（如 `confirmHandle`）可能仍在進行，導致狀態更新在卸載後發生。\n\n建議在清理函式中加入取消機制，或使用 AbortController 取消進行中的請求。",
+    "existing_code": "return () => clearInterval(confirmHandleInterval);",
+    "evidence": "diff 中新增的 useEffect 回傳清理函式僅清除 interval，未處理進行中的非同步操作。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 109,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "輪詢重試次數上限後自動停用 Bluesky，可能造成非預期停用",
+    "body": "當 `retryCountRef.current >= MAX_CONFIRMATION_RETRIES` 時，程式會自動呼叫 `disableBlueskyMutation.mutateAsync()` 停用 Bluesky。若使用者只是暫時離開頁面或網路不穩，可能導致已啟用的 Bluesky 被意外停用，且使用者未被告知。\n\n建議改為僅顯示錯誤訊息，不自動停用，或提供明確的確認對話框。",
+    "existing_code": "await disableBlueskyMutation.mutateAsync();",
+    "evidence": "diff 中新增的 interval 回呼內，當重試次數超過上限時呼叫 `disableBlueskyMutation.mutateAsync()`。"
+  },
+  {
+    "path": "apps/activitypub/src/api/activitypub.ts",
+    "line": 711,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "enableBluesky 與 disableBluesky 回傳型別未明確標示，可能導致呼叫端誤用",
+    "body": "`enableBluesky` 和 `disableBluesky` 方法沒有明確的回傳型別（隱含 `Promise<void>`），但呼叫端可能期望取得 handle 或其他資料。這可能導致未來修改時型別檢查失效。\n\n建議明確標示回傳型別為 `Promise<void>`。",
+    "existing_code": "async enableBluesky() {",
+    "evidence": "diff 中 `enableBluesky` 方法沒有回傳型別註記。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2833,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "confirmBlueskyHandle 成功後未 invalidate accountFollows 查詢",
+    "body": "在 `useConfirmBlueskyHandleMutationForUser` 的 `onSuccess` 中，更新了帳戶快取，但註解提到缺少 `accountFollows` 查詢的 invalidation。這可能導致追蹤清單顯示過時資料。\n\n建議加入對應的 query invalidation。",
+    "existing_code": "// Note: Missing invalidation of accountFollows query that should happen here",
+    "evidence": "diff 中新增的 `useConfirmBlueskyHandleMutationForUser` 內有註解指出缺少 invalidation。"
+  }
+]

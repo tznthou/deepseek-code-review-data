@@ -1,0 +1,8 @@
+[info] repo 規範：repo=prefect、15 條、6792 字元、placement=after_diff、sha256=b3a73b0a5e3b
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 6494 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py:706 → 710（片段唯一命中）
+[info] 重新定位 src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py:728 → 734（片段唯一命中）
+[info] 重新定位 src/integrations/prefect-gcp/tests/conftest.py:14 → 19（片段唯一命中）
+[info] 重新定位 src/integrations/prefect-gcp/tests/test_cloud_storage.py:143 → 158（片段唯一命中）
+[info] 完成於 10.5s ｜ findings=4 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 5782, "completion_tokens": 1198, "total_tokens": 6980, "prompt_tokens_details": {"cached_tokens": 5760}, "prompt_cache_hit_tokens": 5760, "prompt_cache_miss_tokens": 22}

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 3503,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "hashTypeDelete 簽名變更後，呼叫端傳入的 key 類型不一致",
+    "body": "hashTypeDelete 原本接受 isSdsField 參數來區分 key 是 sds 還是 entry*，現在移除該參數，假設所有呼叫都傳入 sds。然而，在 onFieldExpire 中，原本呼叫 hashTypeDelete(expCtx->hashObj, field, 0)，其中 field 是 entry*（非 sds），現在改為 hashTypeDelete(expCtx->hashObj, field)，但函式內部會執行 sdslen((sds)field)，這將導致對 entry* 指標進行 sdslen 操作，可能造成記憶體錯誤或崩潰。需要修正 onFieldExpire 中的呼叫，或調整 hashTypeDelete 的實作以正確處理不同類型的 key。",
+    "existing_code": "serverAssert(hashTypeDelete(expCtx->hashObj, field) == 1);",
+    "evidence": "diff 中 onFieldExpire 的呼叫從 hashTypeDelete(expCtx->hashObj, field, 0) 改為 hashTypeDelete(expCtx->hashObj, field)，但 hashTypeDelete 內部仍使用 sdslen((sds)field)。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "validateStoredKeyConversion 函式未使用且邏輯有誤",
+    "body": "新增的 validateStoredKeyConversion 函式從未被呼叫，且其邏輯有問題：當 keyFromStoredKey 存在時，它只檢查回傳值是否為 NULL，但 keyFromStoredKey 可能合法回傳 NULL（例如空字串？），且未驗證回傳的 key 是否與原始 stored key 一致。此外，該函式可能被編譯器警告為未使用（違反 R04）。建議移除該函式，或若需驗證，應在初始化時呼叫並修正邏輯。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}",
+    "evidence": "diff 中新增了 validateStoredKeyConversion 函式，但未見任何呼叫。且其回傳值僅用於檢查，未實際使用。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 913,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "dictSetKeyAtLink 中新增 dictFindLink 呼叫可能造成效能回歸",
+    "body": "在 dictSetKeyAtLink 中，當 *link 為 NULL 時，原本直接使用傳入的 key 進行查找，現在改為先呼叫 dictStoredKey2Key 取得 addedKey，再呼叫 dictFindLink(d, addedKey, NULL)。這會導致額外的 hash 計算和比較，且可能破壞原本的效能假設。此外，若 keyFromStoredKey 回傳的 key 與原始 key 不同，可能導致查找失敗。建議確認此變更的必要性，或改為直接使用原始 key 進行查找。",
+    "existing_code": "if (*link == NULL) {\n        *link = dictFindLink(d, addedKey, NULL);\n        assert(*link != NULL);\n    }",
+    "evidence": "diff 中將原本的 dictFindLink(d, key, NULL) 改為 dictFindLink(d, addedKey, NULL)，其中 addedKey 是經過 keyDup 或直接賦值的 key。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "validateStoredKeyConversion 可能違反 R04（未使用函式警告）",
+    "body": "validateStoredKeyConversion 函式未被使用，若編譯器開啟 -Wunused-function 且 -Werror，將導致編譯失敗。建議移除或標記為 unused。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {",
+    "evidence": "函式定義後未見任何呼叫。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "pauseAutoResize 型別變更可能影響 ABI 相容性",
+    "body": "pauseAutoResize 從 bitfield 改為 int16_t，可能改變 struct dict 的佈局，影響與外部模組的 ABI 相容性。若 Redis 作為動態庫提供，可能導致崩潰。建議確認此變更的必要性，或保持原有 bitfield 佈局。",
+    "existing_code": "int16_t pauseAutoResize;  /* If >0 automatic resizing is disallowed (<0 indicates coding error) */",
+    "evidence": "diff 中將 signed pauseAutoResize: 15; 改為 int16_t pauseAutoResize;"
+  }
+]

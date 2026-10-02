@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "權限角色設定錯誤：@Roles(\"TEAM_MEMBER\") 允許一般成員建立邀請連結",
+    "body": "控制器使用 @Roles(\"TEAM_MEMBER\")，但 E2E 測試明確預期非管理員成員應收到 403。這表示一般成員也能呼叫此端點，違反了測試中的權限要求。應改為 @Roles(\"TEAM_ADMIN\") 或相應的管理員角色。\n\n失敗情境：任何具有 TEAM_MEMBER 角色的使用者都能為團隊建立邀請連結，導致未經授權的邀請發放。",
+    "existing_code": "@Roles(\"TEAM_MEMBER\")",
+    "evidence": "diff 中新增的控制器第 28 行使用 @Roles(\"TEAM_MEMBER\")，而測試檔案 teams-invite.controller.e2e-spec.ts 中「User is Team Member (not Admin)」區塊預期 403。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "createInvite 回傳 token 改為 newToken.identifier，可能破壞既有呼叫端",
+    "body": "原本回傳的 token 是隨機產生的 token 字串，現在改為 newToken.identifier（即 `invite-link-for-teamId-${teamId}`）。這可能導致其他依賴此方法的程式碼（例如邀請連結驗證邏輯）無法正確運作，因為 identifier 並非實際的 token。\n\n失敗情境：如果有其他程式碼使用 createInvite 的回傳 token 來驗證邀請，將無法匹配資料庫中的 token 欄位。",
+    "existing_code": "token: newToken.identifier,",
+    "evidence": "diff 中將原本的 `token` 改為 `newToken.identifier`，而 `newToken` 是 `prisma.verificationToken.create` 的結果，其 identifier 欄位是 `invite-link-for-teamId-${teamId}`，並非隨機 token。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "buildInviteLink 條件判斷反轉，可能產生錯誤的邀請連結",
+    "body": "原本的條件是 `if (!isOrgContext)` 才回傳 teamInviteLink，現在改為 `if (isOrgContext)`。這可能導致在非組織情境下，邀請連結會包含額外的 getting started 路徑，而組織情境下反而沒有。需要確認此變更是否符合預期。\n\n失敗情境：非組織團隊的邀請連結可能錯誤地導向 getting started 頁面，或組織團隊的邀請連結缺少必要的 onboarding 路徑。",
+    "existing_code": "if (isOrgContext) {",
+    "evidence": "diff 中將 `if (!isOrgContext)` 改為 `if (isOrgContext)`，但未提供任何說明或測試來驗證此行為變更。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.e2e-spec.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試使用 Jest 語法，可能違反專案規範 R08",
+    "body": "專案規範 R08 要求所有測試使用 Vitest 框架，但此測試檔案使用了 Jest 風格的 `describe`、`it`、`beforeAll`、`afterAll` 等全域函式，且未見 Vitest 的 import。若專案已全面遷移至 Vitest，此測試可能無法正確執行。",
+    "existing_code": "describe(\"Teams Invite Endpoints\", () => {",
+    "evidence": "測試檔案開頭使用 `describe`，且未 import 任何測試框架，與 Vitest 的典型用法（`import { describe, it, expect } from 'vitest'`）不同。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 567,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案結尾缺少換行符號",
+    "body": "檔案最後一行 `}` 之後沒有換行符號，可能違反專案的格式化規範（R03）。建議在檔案結尾加上換行。",
+    "existing_code": "}",
+    "evidence": "diff 顯示最後一行 `}` 沒有換行符號（`\\ No newline at end of file`）。"
+  }
+]

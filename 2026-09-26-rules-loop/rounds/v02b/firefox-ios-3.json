@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Client/Coordinators/Launch/LaunchCoordinator.swift",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "onActionTap 閉包改為非同步執行可能改變行為",
+    "body": "原本 onActionTap 閉包直接呼叫 onboardingService.handleAction，現在被包在 `Task { ... }` 中，導致 handleAction 的執行延後到下一次 run loop，且不再阻塞當前呼叫者。若呼叫端依賴同步完成（例如在閉包返回後立即讀取狀態），可能出現競態。建議確認 handleAction 是否為非同步設計，或改為在閉包內直接呼叫（若 handleAction 本身已為 @MainActor 且非同步）。",
+    "existing_code": "Task {\n    onboardingService.handleAction(\n        action,\n        from: cardName,\n        cards: onboardingModel.cards,\n        with: activityEventHelper,\n        completion: completion\n    )\n}",
+    "evidence": "diff 中將原本的直接呼叫改為 Task 包覆，且未見任何 await 或明確的非同步需求。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift",
+    "line": 192,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R13] 魔法數字 40 應定義在 UX 結構中",
+    "body": "原本的 `UX.buttonSize` 常數被移除，改為直接使用數字 40。根據專案規範 R13，UI 常數應定義在巢狀 UX struct 中。建議保留 `struct UX { static let buttonSize: CGFloat = 40 }` 並使用 `UX.buttonSize`。",
+    "existing_code": "closeButton.heightAnchor.constraint(equalToConstant: 40),\ncloseButton.widthAnchor.constraint(equalToConstant: 40),",
+    "evidence": "diff 中刪除了 `struct UX { static let buttonSize: CGFloat = 40 }`，並在約束中直接使用 40。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/WebEngineIntegration/BrowserWebUIDelegate.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "completionHandler 缺少 @Sendable 標註",
+    "body": "此處的 completionHandler 型別從 `@escaping @MainActor @Sendable () -> Void` 改為 `@escaping @MainActor () -> Void`，移除了 @Sendable。在 Swift 6 嚴格並行模式下，若此閉包可能跨隔離域傳遞，缺少 @Sendable 可能導致編譯錯誤或資料競爭。建議確認此閉包是否真的不需要 @Sendable，或保留原標註。",
+    "existing_code": "completionHandler: @escaping @MainActor () -> Void",
+    "evidence": "diff 中將原本的 `@escaping @MainActor @Sendable () -> Void` 改為 `@escaping @MainActor () -> Void`。"
+  }
+]

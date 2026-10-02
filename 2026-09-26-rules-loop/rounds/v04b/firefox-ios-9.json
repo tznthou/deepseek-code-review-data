@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "cancelEditMode 條件反轉可能導致網址列內容被錯誤清除",
+    "body": "原本條件為 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，修改後變成 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會讓非網頁但為 Reader Mode 的 URL（例如 `about:reader?url=...`）也被保留，而原本應被清除。若使用者正在編輯網址列且目前頁面為 Reader Mode，取消編輯時網址列可能殘留舊內容，造成顯示錯誤。建議確認此變更意圖，若非必要請還原。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&& !` 改為 `||`，且無相關測試或說明。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "readerModeState 布林值反轉可能導致遙測資料錯誤",
+    "body": "原本 `case .available: true` 改為 `false`，`default: false` 改為 `true`。這會讓 `isReaderModeEnabled` 的語意完全相反，影響 `readerModeButtonTapped` 遙測事件的正確性。若此變更非預期，應還原；若為修正，需補充測試驗證。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中兩行布林值對調，且無相關測試。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/State/BrowserViewControllerState.swift",
+    "line": 566,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "displayView 變更可能導致錯誤的畫面顯示",
+    "body": "原本 `displayView: .readerMode` 改為 `.readerModeLongPressAction`。此變更與 QR code 移除無關，可能影響 Reader Mode 長按行為的畫面呈現。若為誤植，請還原；若為修正，請補充說明與測試。",
+    "existing_code": "displayView: .readerModeLongPressAction,",
+    "evidence": "diff 中此行由 `.readerMode` 改為 `.readerModeLongPressAction`，且無相關說明。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/ToolbarTelemetry.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "gleanWrapper 屬性存取控制放寬可能違反封裝原則",
+    "body": "原本 `private let gleanWrapper` 改為 `let gleanWrapper`，使外部可存取此屬性。若無必要，建議維持 `private` 以符合資訊隱藏原則（R11）。",
+    "existing_code": "let gleanWrapper: GleanWrapper",
+    "evidence": "diff 中移除了 `private` 修飾詞。"
+  }
+]

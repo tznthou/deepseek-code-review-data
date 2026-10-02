@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 202,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "action.triggered 事件使用了錯誤的 related resources",
+    "body": "在 `fail` 方法中，`prefect.automation.action.triggered` 事件的 `related` 參數被設為 `self._resulting_related_resources`，而非先前建構的 `related_resources`。這導致該事件缺少 `triggering-event` 和 `automation-triggered-event` 關聯，破壞了此 PR 欲建立的追蹤鏈。\n\n**失敗情境**：當 action 失敗時，產生的 `action.triggered` 事件將沒有指向原始觸發事件或 automation.triggered 事件的 related resources，使用者無法從該事件回溯。\n\n**建議修法**：將該行改為 `related=related_resources`。",
+    "existing_code": "related=self._resulting_related_resources,",
+    "evidence": "diff 中第 199 行將 `related` 設為 `self._resulting_related_resources`，而同一方法中稍後用於 `action.failed` 事件的 `related` 是 `related_resources`（第 210 行）。"
+  },
+  {
+    "path": "src/prefect/server/events/schemas/automations.py",
+    "line": 772,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 跨欄位驗證應使用 model_validator 而非 field_validator",
+    "body": "新增的 `validate_automation_triggered_event_id` 驗證器檢查 `automation_triggered_event_id` 是否在 `triggering_event` 存在時才可設置，這屬於跨欄位驗證。根據專案規範 R08，此類驗證應使用 `@model_validator` 而非 `@field_validator`，以避免欄位驗證順序造成的問題。\n\n**建議修法**：改用 `@model_validator(mode='after')` 並在方法中檢查兩個欄位。",
+    "existing_code": "@field_validator(\"automation_triggered_event_id\")\n    @classmethod\n    def validate_automation_triggered_event_id(cls, v, info):\n        \"\"\"Ensure automation_triggered_event_id is only set when triggering_event exists.\"\"\"\n        if v is not None and info.data.get(\"triggering_event\") is None:\n            raise ValueError(\n                \"automation_triggered_event_id can only be set when triggering_event is provided\"\n            )\n        return v",
+    "evidence": "diff 中新增的驗證器使用了 `@field_validator`，並在方法內存取 `info.data` 中的其他欄位。"
+  }
+]

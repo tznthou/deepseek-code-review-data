@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] SQLAlchemy session 未使用 context manager，可能造成連線洩漏",
+    "body": "`update` 方法中直接建立 `Session(db.engine)` 而未使用 `with` 區塊，若後續操作拋出例外，session 不會被關閉，可能導致連線洩漏。建議改為 `with Session(db.engine) as session:` 並在區塊內完成查詢與 commit。",
+    "existing_code": "session = Session(db.engine)\n        row = session.scalar(stmt)\n        if not row:\n            raise ConversationVariableNotFoundError(\"conversation variable not found in the database\")\n        row.data = variable.model_dump_json()\n        session.commit()",
+    "evidence": "diff 中新增的 `session = Session(db.engine)` 未搭配 context manager，且後續有 `raise` 可能中斷流程。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "多個 conversation variables 更新時缺乏交易一致性",
+    "body": "`on_event` 中對每個 updated variable 呼叫 `update` 後立即 `flush`，但 `update` 內部已自行 commit，因此每個變數的更新是獨立的交易。若中途某個變數更新失敗，先前已更新的變數不會回滾，造成部分持久化。建議將所有更新包在單一交易中，或至少收集所有變數後一次 flush。",
+    "existing_code": "self._conversation_variable_updater.update(conversation_id=conversation_id, variable=variable)\n            self._conversation_variable_updater.flush()",
+    "evidence": "diff 中 loop 內連續呼叫 update 與 flush，且 update 內部有 session.commit()。"
+  },
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "flush 方法為空操作，可能造成誤解",
+    "body": "`flush` 方法僅有 `pass`，但呼叫端仍呼叫它，暗示有實際 flush 行為。建議移除該方法或實作真正的 flush（例如在單一交易中批次更新）。",
+    "existing_code": "def flush(self) -> None:\n        pass",
+    "evidence": "diff 中新增的 flush 方法內容為 pass。"
+  }
+]

@@ -1,0 +1,49 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 💬 有需要留意的問題
+
+此 PR 新增 SMTP_LOCAL_HOSTNAME 設定，允許覆寫 SMTP HELO/EHLO 使用的主機名稱，並在 SMTPClient 中傳入 local_hostname 參數。主要風險在於 smtplib 建構子呼叫方式改變，可能影響 TLS 模式選擇與 ehlo 行為；此外，設定值未經驗證，可能導致 SMTP 連線失敗。建議先確認 SMTP_SSL 與 SMTP 的建構子參數相容性，並考慮對設定值做基本驗證。
+
+### Findings（4 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| ⚠️ | Major | `api/libs/smtp.py:28` | SMTP 類別選擇邏輯可能導致非預期的 TLS 行為 | 0.80 |
+| 🔸 | Minor | `api/libs/smtp.py:28` | local_hostname 參數傳遞可能導致 SMTP_SSL 連線失敗 | 0.60 |
+| 🔸 | Minor | `api/libs/smtp.py:29` | ehlo 呼叫使用 local_host 可能導致驗證失敗 | 0.50 |
+| 🔸 | Minor | `api/configs/feature/__init__.py:952` | SMTP_LOCAL_HOSTNAME 設定未驗證格式 | 0.40 |
+
+<details><summary>⚠️ <b>Major</b> — <code>api/libs/smtp.py:28</code> SMTP 類別選擇邏輯可能導致非預期的 TLS 行為</summary>
+
+原本的程式碼根據 use_tls 和 opportunistic_tls 明確選擇 SMTP_SSL 或 SMTP，並在 opportunistic 模式下先建立 SMTP 再呼叫 starttls。新的三元運算式在 use_tls=True 且 opportunistic_tls=False 時選擇 SMTP_SSL，否則選擇 SMTP。這看似等價，但若 use_tls=False 且 opportunistic_tls=True（理論上不應發生，但設定可能錯誤），原本會建立 SMTP 並嘗試 starttls，現在則會建立 SMTP 且不呼叫 starttls，導致未加密連線。建議保留原本的 if-elif 結構以維持明確性，或加入設定驗證。
+
+**判斷依據**：diff 中原本的 if-elif 結構被替換為三元運算式，且 opportunistic_tls 的處理僅在 use_tls 為真時執行。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>api/libs/smtp.py:28</code> local_hostname 參數傳遞可能導致 SMTP_SSL 連線失敗</summary>
+
+smtplib.SMTP_SSL 的建構子簽名為 SMTP_SSL(host='', port=0, local_hostname=None, keyfile=None, certfile=None, [timeout, ...])，而 SMTP 的建構子為 SMTP(host='', port=0, local_hostname=None, [timeout, ...])。兩者都接受 local_hostname 和 timeout，但參數順序不同。此處使用關鍵字參數傳遞，因此順序無關，但需確認 SMTP_SSL 是否接受 timeout 關鍵字參數（在 Python 3.7+ 中，SMTP_SSL 的 timeout 參數可透過關鍵字傳遞）。若執行環境的 Python 版本較舊，可能導致 TypeError。建議確認目標 Python 版本，或改用位置參數以確保相容性。
+
+**判斷依據**：diff 中新增了 local_hostname 關鍵字參數，且同時傳遞 timeout 關鍵字參數。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>api/libs/smtp.py:29</code> ehlo 呼叫使用 local_host 可能導致驗證失敗</summary>
+
+在 opportunistic TLS 模式下，原本的 ehlo 呼叫使用 self.server 作為參數，現在改為 local_host。若 local_host 為空字串，則傳入空字串，可能導致某些 SMTP 伺服器拒絕。此外，若 local_host 設定為與實際主機名稱不符的值，可能導致驗證問題。建議在 local_host 為空時使用預設行為（不傳參數），或確保設定值有效。
+
+**判斷依據**：diff 中原本的 smtp.ehlo(self.server) 被改為 smtp.ehlo(local_host)，且 local_host 可能為空字串。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>api/configs/feature/__init__.py:952</code> SMTP_LOCAL_HOSTNAME 設定未驗證格式</summary>
+
+新增的 SMTP_LOCAL_HOSTNAME 欄位為 str | None，但未對其內容做驗證。若使用者設定包含非法字元（如換行、空格），可能導致 SMTP 指令注入或連線失敗。建議使用 Pydantic 的驗證器限制為合法主機名稱格式。
+
+**判斷依據**：diff 中新增的欄位沒有驗證器。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 7604 (cache hit 4096) ｜ completion tokens 1301 ｜ PR #6</sub>

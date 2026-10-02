@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getDisplayEmail 的正規表達式可能誤刪合法 email 中的加號部分",
+    "body": "`getDisplayEmail` 使用 `/\\+[a-zA-Z0-9]{25}/` 來移除 CUID 後綴，但此模式會匹配任何 email 中加號後緊接 25 個字母或數字的片段。若使用者的 email 本身包含加號（例如 `user+tag@example.com`），且 tag 長度為 25 個字元，則該 tag 會被錯誤移除，導致顯示的 email 與實際不符。建議改用更精確的 CUID 格式（例如 `/\\+[a-z0-9]{25}$/` 或直接使用 CUID 驗證函式），或僅在 email 的 local part 結尾處移除。",
+    "existing_code": "return email.replace(/\\+[a-zA-Z0-9]{25}/, \"\");",
+    "evidence": "diff 中新增的 getDisplayEmail 方法使用寬鬆的正規表達式，未限制加號後綴的位置或格式。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 recurring seated bookings 的排序可能改變 API 回應順序",
+    "body": "原本 `getOutputRecurringSeatedBookings` 會依開始時間排序結果，此 PR 移除了排序邏輯，直接回傳依輸入 ID 順序轉換的陣列。這可能導致前端依賴時間排序的顯示錯亂，或破壞既有 API 合約。若排序非必要，請確認所有呼叫端皆能接受任意順序；否則應保留排序。",
+    "existing_code": "return transformed;",
+    "evidence": "diff 中刪除了 `return transformed.sort(...)` 並改為 `return transformed;`，且未提供任何說明。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "displayGuests 的 map 回呼可能遺失 this 綁定",
+    "body": "在 `getOutputBooking` 中，`bookingTransformed.bookingFieldsResponses.guests.map(this.getDisplayEmail)` 直接傳遞方法參考，若 `getDisplayEmail` 內部依賴 `this`（目前沒有），未來修改可能導致錯誤。建議改為箭頭函式 `(guest) => this.getDisplayEmail(guest)` 以確保綁定。",
+    "existing_code": "bookingTransformed.bookingFieldsResponses.displayGuests = bookingTransformed.bookingFieldsResponses.guests.map(\n        this.getDisplayEmail\n      );",
+    "evidence": "diff 中該行使用 `this.getDisplayEmail` 作為 map 回呼，未綁定 this。"
+  }
+]

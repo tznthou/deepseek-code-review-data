@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 411,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "acceptedBookings 的 oldStatus 硬編碼為 ACCEPTED，可能導致 audit log 記錄錯誤的狀態變更",
+    "body": "在非 recurring 的單一 booking 確認流程中，`acceptedBookings` 被設定為 `[{ oldStatus: BookingStatus.ACCEPTED, uid: booking.uid }]`。但此時 booking 的實際狀態可能是 PENDING（或甚至是其他狀態），硬編碼為 ACCEPTED 會讓 audit log 記錄錯誤的 previousStatus。\n\n**失敗情境**：當一個 PENDING booking 被確認時，audit log 會顯示 previousStatus=ACCEPTED, newStatus=ACCEPTED，而不是正確的 PENDING→ACCEPTED。\n\n**建議**：從資料庫取得 booking 的實際狀態，例如在更新前先查詢 `booking.status`，或使用 `updatedBooking.status`（如果 update 有回傳舊值）。",
+    "existing_code": "acceptedBookings = [\n      {\n        oldStatus: BookingStatus.ACCEPTED,\n        uid: booking.uid,\n      },\n    ];",
+    "evidence": "diff 中新增的程式碼片段，在非 recurring 分支中直接將 oldStatus 設為 BookingStatus.ACCEPTED，未考慮 booking 的實際狀態。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts",
+    "line": 432,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "recurring booking 的 rejectedBookings 記錄的 oldStatus 為更新後的狀態，而非更新前的狀態",
+    "body": "在 recurring booking 的拒絕流程中，先執行 `prisma.booking.updateMany` 將所有 PENDING bookings 更新為 REJECTED，然後再查詢這些 bookings 的狀態並填入 `rejectedBookings`。此時查詢到的 `status` 已經是 REJECTED，因此 `oldStatus` 會被記錄為 REJECTED，而不是更新前的 PENDING。\n\n**失敗情境**：audit log 會顯示 previousStatus=REJECTED, newStatus=REJECTED，而不是正確的 PENDING→REJECTED。\n\n**建議**：在更新前先查詢並保存每個 booking 的原始狀態，例如使用 `unconfirmedRecurringBookings` 的 `status` 欄位，而不是更新後再查詢。",
+    "existing_code": "const updatedRecurringBookings = await prisma.booking.findMany({\n        where: {\n          uid: {\n            in: unconfirmedRecurringBookings.map((booking) => booking.uid),\n          },\n        },\n        select: {\n          uid: true,\n          status: true,\n        },\n      });\n\n      rejectedBookings = updatedRecurringBookings.map((recurringBooking) => ({\n        uid: recurringBooking.uid,\n        oldStatus: recurringBooking.status,\n      }));",
+    "evidence": "diff 中顯示在 updateMany 之後才查詢 status，並將該 status 作為 oldStatus。"
+  },
+  {
+    "path": "packages/app-store/_utils/getAppActor.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getAppActor 使用型別不安全的索引存取，可能導致 runtime 錯誤",
+    "body": "`apps?.[appSlug as keyof typeof apps]` 使用了型別斷言來索引 apps 物件。如果 `appSlug` 不是 apps 物件的有效 key，這個表達式會回傳 `undefined`，但 TypeScript 不會報錯。雖然後續有檢查 `appData?.credentialId`，但若 `appData` 為 `undefined`，則會進入 fallback 分支，這可能不是預期行為。\n\n**失敗情境**：如果傳入的 `appSlug` 不存在於 apps 物件中，會錯誤地使用 fallback 建立 actor，而不是拋出錯誤或明確處理。\n\n**建議**：使用更安全的存取方式，例如 `apps?.[appSlug]` 並搭配型別保護，或使用 `Object.prototype.hasOwnProperty` 檢查。",
+    "existing_code": "const appData = apps?.[appSlug as keyof typeof apps];",
+    "evidence": "diff 中新增的 getAppActor 函式，使用了型別斷言來索引 apps 物件。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 263,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "recurring booking 的 acceptedBookings 使用 unconfirmedRecurringBookings 的 status，但該查詢可能未包含所有需要的欄位",
+    "body": "在 recurring booking 的確認流程中，`unconfirmedRecurringBookings` 是透過 `prisma.booking.findMany` 查詢的，但 select 欄位只包含 `id` 和 `uid`（從 diff 中可見）。然而，後續使用 `booking.status` 來設定 `oldStatus`，這可能導致 `status` 為 `undefined`。\n\n**失敗情境**：如果 `unconfirmedRecurringBookings` 的 select 沒有包含 `status`，則 `oldStatus` 會是 `undefined`，導致 audit log 記錄錯誤。\n\n**建議**：確認 `unconfirmedRecurringBookings` 的 select 包含 `status` 欄位，或直接使用已知的 PENDING 狀態（因為查詢條件是 `status: BookingStatus.PENDING`）。",
+    "existing_code": "acceptedBookings = unconfirmedRecurringBookings.map((booking) => ({\n      oldStatus: booking.status,\n      uid: booking.uid,\n    }));",
+    "evidence": "diff 中顯示 acceptedBookings 使用 booking.status，但未顯示 unconfirmedRecurringBookings 的 select 是否包含 status。"
+  },
+  {
+    "path": "packages/features/booking-audit/lib/actions/RejectedAuditActionService.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "RejectedAuditActionService 的 fieldsSchemaV1 中 rejectionReason 改為 z.string().nullable()，可能影響既有資料的相容性",
+    "body": "原本的 `rejectionReason` 使用 `StringChangeSchema`（可能包含 old/new 結構），現在改為 `z.string().nullable()`。這會影響已儲存的 audit log 資料的解析，可能導致舊資料無法正確讀取。\n\n**失敗情境**：如果資料庫中已有舊格式的 rejectionReason（例如 `{ old: ..., new: ... }`），新的 schema 會解析失敗，導致 audit log 無法顯示。\n\n**建議**：確認是否有 migration 或相容性處理，或保留舊 schema 並提供轉換邏輯。",
+    "existing_code": "const fieldsSchemaV1 = z.object({\n  rejectionReason: z.string().nullable(),\n  status: BookingStatusChangeSchema,\n});",
+    "evidence": "diff 中顯示 rejectionReason 的 schema 從 StringChangeSchema 改為 z.string().nullable()。"
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 286,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R08] 自訂錯誤型別未使用 thiserror",
+    "body": "新增的 `FileWriteError` 列舉手動實作了 `Display` 與 `Error`，但專案規範 R08 要求所有自訂錯誤型別必須使用 `thiserror` 衍生巨集。請改用 `#[derive(thiserror::Error)]` 並以 `#[error(...)]` 屬性提供訊息。",
+    "existing_code": "enum FileWriteError {\n  Write(std::io::Error),\n  Permissions(std::io::Error),\n}",
+    "evidence": "diff 中新增了 `FileWriteError` 列舉，並手動實作 `Display` 與 `Error`，未使用 `thiserror`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 286,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 公開錯誤型別未標記 non_exhaustive",
+    "body": "`FileWriteError` 是公開列舉，但未加上 `#[non_exhaustive]`。未來新增錯誤變體時可能造成破壞性變更。請在列舉定義前加上 `#[non_exhaustive]`。",
+    "existing_code": "enum FileWriteError {",
+    "evidence": "diff 中新增的 `FileWriteError` 列舉沒有 `#[non_exhaustive]` 屬性。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R01] 新檔案缺少版權與 SPDX 標頭",
+    "body": "新增的 shell 腳本檔案未包含版權與 SPDX 授權標頭。請在檔案開頭加入包含 'Copyright 2019-2024 Tauri Programme within The Commons Conservancy' 以及 'SPDX-License-Identifier: Apache-2.0' 和 'SPDX-License-Identifier: MIT' 的註解區塊。",
+    "existing_code": "#! /bin/bash",
+    "evidence": "diff 中新增的 `linuxdeploy-plugin-gstreamer.sh` 第一行僅有 shebang，沒有版權標頭。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R01] 新檔案缺少版權與 SPDX 標頭",
+    "body": "新增的 shell 腳本檔案未包含版權與 SPDX 授權標頭。請在檔案開頭加入包含 'Copyright 2019-2024 Tauri Programme within The Commons Conservancy' 以及 'SPDX-License-Identifier: Apache-2.0' 和 'SPDX-License-Identifier: MIT' 的註解區塊。",
+    "existing_code": "#! /usr/bin/env bash",
+    "evidence": "diff 中新增的 `linuxdeploy-plugin-gtk.sh` 第一行僅有 shebang，沒有版權標頭。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 312,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R02] 程式碼可能未通過 Clippy 檢查",
+    "body": "新增的 `FileWriteError` 手動實作 `Display` 與 `Error` 可能觸發 Clippy 的 `manual_thiserror` lint（若啟用）。此外，`write_and_make_executable` 函式先設定權限再寫入檔案，可能導致寫入失敗時權限已被更改，建議調整順序。請執行 `cargo clippy --all-targets --all-features -- -D warnings` 確認無警告。",
+    "existing_code": "fs::set_permissions(path, fs::Permissions::from_mode(0o770)).map_err(FileWriteError::Permissions)?;\n  fs::write(path, data).map_err(FileWriteError::Write)?;",
+    "evidence": "diff 中新增的錯誤處理與檔案操作順序可能不符合 Clippy 建議。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 286,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R03] 程式碼可能未通過 rustfmt 格式化",
+    "body": "新增的 `FileWriteError` 列舉與相關函式可能未符合專案的 rustfmt 設定（例如縮排、換行）。請執行 `cargo fmt --all -- --check` 確認格式正確。",
+    "existing_code": "enum FileWriteError {\n  Write(std::io::Error),\n  Permissions(std::io::Error),\n}",
+    "evidence": "diff 中的程式碼格式可能與專案慣例不一致。"
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "測試依賴真實網路與外部服務，可能導致不穩定或失敗",
+    "body": "`WebKitTestHelpers.captureFrameAndOrigin` 會實際載入 `https://example.com`，這使得測試依賴外部網路連線與 WebKit 的實際行為。在 CI 環境中若無網路或 example.com 無法存取，測試將失敗；此外，載入真實網頁可能引入非確定性（如載入時間、內容變動），導致測試不穩定。建議改為使用本機測試伺服器或注入 mock 的 navigation action，避免外部依賴。",
+    "existing_code": "guard let (frame, origin) = WebKitTestHelpers.captureFrameAndOrigin(for: URL(string: \"https://example.com\")!) else {",
+    "evidence": "diff 中新增了對 `WebKitTestHelpers.captureFrameAndOrigin` 的呼叫，且 helper 內部使用 `webView.load(URLRequest(url: url))` 載入真實 URL。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "未檢查 XCTWaiter 結果，可能誤判成功",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值未被檢查。若等待逾時，`delegate.capturedFrame` 與 `capturedOrigin` 可能為 nil，但函式仍會回傳 nil，導致呼叫端 `XCTFail`。然而，若等待因其他原因（如中斷）提前結束，也可能回傳非 `.completed` 的結果，此時應視為失敗。建議檢查 waiter 結果，若不是 `.completed` 則直接回傳 nil 或拋出錯誤。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增了 `let waiter = XCTWaiter.wait(...)`，但未使用回傳值。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "expectation 在 decisionHandler 外被 fulfill，可能導致測試提前結束",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`expectation.fulfill()` 被放在 `wait(for:)` 之後，而不是在 `decisionHandler` 內。這會導致測試在呼叫 `subject.webView(...)` 後立即 fulfill expectation，而 `decisionHandler` 可能尚未被呼叫，使得 `XCTAssertEqual` 可能未被執行。應將 `expectation.fulfill()` 移回 `decisionHandler` 內，確保斷言有被執行。",
+    "existing_code": "wait(for: [expectation])\nexpectation.fulfill()",
+    "evidence": "diff 中顯示原本在 decisionHandler 內的 `expectation.fulfill()` 被移出，並在 `wait(for:)` 後呼叫。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R03] 缺少 MARK 註解來組織程式碼區段",
+    "body": "此檔案包含多個邏輯區塊（如 FakeWKNavigationDelegate、captureFrameAndOrigin），但未使用 `// MARK:` 註解來分隔。根據專案規範 R03，應使用 MARK 註解來組織程式碼，提升可讀性。",
+    "existing_code": "final class WebKitTestHelpers {",
+    "evidence": "diff 中新增的檔案沒有 MARK 註解。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R09] UI 相關程式碼未標註 @MainActor",
+    "body": "此 helper 涉及 WKWebView 的操作，屬於 UI 相關程式碼，但未標註 `@MainActor`。根據專案規範 R09，UI 相關程式碼應標註 `@MainActor` 以確保執行緒安全。",
+    "existing_code": "final class WebKitTestHelpers {",
+    "evidence": "diff 中新增的類別未標註 @MainActor。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R14] 公開 API 缺少文件註解",
+    "body": "`WebKitTestHelpers` 及其方法 `captureFrameAndOrigin` 是公開的（internal），但缺少文件註解。根據專案規範 R14，公開 API 應有 `///` 文件註解。",
+    "existing_code": "final class WebKitTestHelpers {",
+    "evidence": "diff 中新增的類別和方法沒有文件註解。"
+  }
+]

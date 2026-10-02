@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 dangerouslySetInnerHTML 渲染留言 HTML 可能導致 XSS",
+    "body": "此處直接使用 `dangerouslySetInnerHTML` 渲染 `item.html`。若後端在儲存留言時未對 HTML 進行嚴格消毒（例如允許 `<script>` 或事件屬性），攻擊者可在留言中注入惡意腳本，當管理員查看留言列表時觸發 XSS。\n\n建議：\n- 確認後端在儲存留言時已使用如 DOMPurify 等函式庫進行消毒，並限制允許的標籤與屬性。\n- 若無法保證後端消毒，應在前端渲染前再次消毒，或改用安全的渲染方式（如 React 元件組合）。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 CommentContent 元件內使用 dangerouslySetInnerHTML 直接輸出 item.html。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "useEffect 依賴陣列為空可能導致截斷偵測失效",
+    "body": "`useEffect` 的依賴陣列為空，僅在元件掛載時執行一次。若 `item.html` 內容在掛載後發生變化（例如因分頁載入更多資料而更新），`isClamped` 狀態不會重新計算，可能導致「Show more」按鈕顯示不正確。\n\n建議：將 `item.html` 加入依賴陣列，或在內容更新時觸發重新檢查。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "diff 中新增的 CommentContent 元件內 useEffect 依賴陣列為空。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R13] Button 元素缺少明確的 type 屬性",
+    "body": "此處的 `<Button>` 元件未指定 `type` 屬性。在表單中，預設 type 為 submit，可能導致非預期的表單提交。建議明確指定 `type=\"button\"`。",
+    "existing_code": "<Button\n            className=\"shrink-0 gap-0.5 self-start p-0 text-muted-foreground hover:bg-transparent\"\n            size=\"sm\"\n            variant=\"ghost\"\n            onClick={onClick}\n        >",
+    "evidence": "diff 中新增的 ExpandButton 元件內的 Button 未設定 type 屬性。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 194,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.85,
+    "title": "[R12] JSX props 排序不符合標準順序",
+    "body": "此處 `<Button>` 的 props 順序為 `className`, `size`, `variant`, `onClick`，但標準順序應為保留 props、一般 props（字母序）、callbacks、shorthand props。`onClick` 應放在最後。建議調整為 `className`, `size`, `variant`, `onClick` 的順序（目前 onClick 在 variant 之後，但 variant 與 size 皆為一般 props，應按字母序排列，且 onClick 為 callback 應置於最後）。",
+    "existing_code": "<Button\n            className=\"flex h-auto items-center gap-1.5 truncate p-0 font-semibold text-primary hover:opacity-70 ${item.status === 'hidden' && 'text-muted-foreground'}\"\n            variant='link'\n            onClick={() => {\n                onAddFilter('author', item.member!.id);\n            }}\n        >",
+    "evidence": "diff 中新增的 Button 元件 props 順序不符合規範。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 196,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用非空斷言 (!) 可能導致執行時期錯誤",
+    "body": "在 `onClick` 中使用 `item.member!.id` 和 `item.post!.id`，但條件判斷已確保存在，理論上安全。然而，若未來條件變更或資料結構變動，非空斷言可能隱藏潛在的 null/undefined 錯誤。建議使用明確的變數或可選串連來避免非空斷言。",
+    "existing_code": "onClick={() => {\n    onAddFilter('author', item.member!.id);\n}}",
+    "evidence": "diff 中多處使用非空斷言。"
+  }
+]

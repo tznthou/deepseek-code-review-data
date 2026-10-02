@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/task-runs/task-run-details/task-run-details.tsx",
+    "line": 45,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "flow_run_id 存在但 flow_run_name 為空時渲染空連結",
+    "body": "原本的條件是 `taskRun.flow_run_name && taskRun.flow_run_id`，現在改成只檢查 `taskRun.flow_run_id`。如果 `flow_run_id` 有值但 `flow_run_name` 為 null/undefined，會進入第一個分支，但 `<Link>` 內顯示的 `taskRun.flow_run_name` 會是空的，導致使用者看到一個沒有文字的連結。建議改回同時檢查兩者，或是在名稱缺失時顯示 fallback 文字。",
+    "existing_code": "{taskRun.flow_run_id ? (",
+    "evidence": "diff 中將條件從 `taskRun.flow_run_name && taskRun.flow_run_id` 改為 `taskRun.flow_run_id`，但下方 `<Link>` 內仍使用 `taskRun.flow_run_name` 作為顯示文字。"
+  },
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "SSR 環境下直接存取 window 可能導致錯誤",
+    "body": "`getPreferredColorScheme` 函式直接使用 `window.matchMedia`，但此 hook 可能在伺服器端渲染（SSR）時被呼叫，此時 `window` 未定義，會拋出 ReferenceError。建議加入 `typeof window !== 'undefined'` 的檢查，或將此邏輯移至 `useEffect` 內（該 hook 已在 `useEffect` 中呼叫此函式，但函式本身仍可能在 SSR 時被執行）。",
+    "existing_code": "if (window.matchMedia(\"(prefers-color-scheme: dark)\").matches) {",
+    "evidence": "新檔案 `use-state-favicon.ts` 中的 `getPreferredColorScheme` 函式直接使用 `window`，且此函式在 `useEffect` 內被呼叫，但 `useEffect` 在 SSR 時不會執行，因此函式本身不會在 SSR 時被呼叫。然而，若此 hook 被用於其他情境（如直接在元件 render 中呼叫），則可能出錯。"
+  }
+]

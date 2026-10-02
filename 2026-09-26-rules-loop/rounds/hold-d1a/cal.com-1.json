@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.test.ts",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R05] 測試檔案未遵循 schema/handler 分離模式",
+    "body": "新增的測試檔案 `get.handler.test.ts` 直接測試 handler，但 handler 本身應遵循 R05 的 schema/handler 分離。雖然此檔案是測試，但若 handler 未正確使用 schema 驗證，測試可能無法捕捉到型別錯誤。建議確認 handler 已使用對應的 Zod schema，並在測試中驗證輸入驗證行為。",
+    "existing_code": "import { getBookings, getHandler } from \"./get.handler\";",
+    "evidence": "diff 中新增了測試檔案，直接 import handler，但未見 schema 相關測試。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.test.ts",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "測試中使用大量 `as any` 與手動 mock，可能隱藏型別錯誤",
+    "body": "測試中多處使用 `as any`（例如 `mockBookings`、`mockUser as any`、`mockPrisma` 等），且手動建立複雜的 mock 物件（如 `createMockKysely`）。這會降低測試的型別安全性，且當實際介面變更時，測試可能不會失敗，導致錯誤未被發現。建議使用更嚴格的型別或依賴測試輔助工具來建立 mock。",
+    "existing_code": "const mockBookings = [ ... ] as any;",
+    "evidence": "diff 中多處出現 `as any` 與手動 mock 建構。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.ts",
+    "line": 121,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "權限邏輯變更可能遺漏對 `user.orgId` 的處理",
+    "body": "原本的邏輯會根據 `user.orgId` 限制查詢範圍（僅限組織內），但新的 `getTeamIdsWithPermission` 呼叫傳入了 `orgId: user.orgId ?? undefined`，若 `user.orgId` 為 null，則不限制範圍。這可能導致非組織用戶取得過多權限。建議確認此行為是否符合預期，並在測試中涵蓋 `user.orgId` 為 null 的情境。",
+    "existing_code": "orgId: user.orgId ?? undefined,",
+    "evidence": "diff 中新增了 `orgId` 參數傳遞，但未見對 null 情況的明確處理。"
+  }
+]

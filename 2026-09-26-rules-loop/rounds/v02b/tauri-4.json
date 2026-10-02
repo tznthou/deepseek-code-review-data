@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 201,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "條件判斷邏輯變更導致驗證範圍縮小",
+    "body": "原本的條件是 `config_path.extension() == Some(OsStr::new(\"json\")) || config_path.extension() == Some(OsStr::new(\"json5\"))`，現在改為 `config_path.extension() == Some(OsStr::new(\"json\")) && config_path.extension() == Some(OsStr::new(\"json5\"))`。這會使得條件永遠為 false（因為 extension 不可能同時是 \"json\" 和 \"json5\"），導致 JSON 和 JSON5 設定檔都不會進行 schema 驗證。這是一個嚴重的邏輯錯誤，會讓所有設定檔驗證失效。",
+    "existing_code": "if config_path.extension() == Some(OsStr::new(\"json\"))\n    && config_path.extension() == Some(OsStr::new(\"json5\"))",
+    "evidence": "diff 中將 `||` 改為 `&&`，且兩個比較的對象不同，因此條件恆為 false。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 289,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "merge_with 不再合併設定，可能導致行為變更",
+    "body": "原本的程式碼會將 `merge_config` 合併到 `config_metadata.inner` 中，現在改為將 `merge_config` 存入 `extensions`。這可能導致後續使用 `config_metadata.inner` 的程式碼無法取得合併後的設定，造成功能回歸。需要確認此變更是否為預期行為，並檢查所有使用 `inner` 的地方是否受到影響。",
+    "existing_code": "config_metadata.extensions.insert(MERGE_CONFIG_EXTENSION_NAME.into(), merge_config);",
+    "evidence": "diff 中刪除了 `merge(&mut value, &merge_config);` 和 `config_metadata.inner = serde_json::from_value(value)...`，改為插入 extensions。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 177,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "取得 identifier 的欄位從 \"identifier\" 改為 \"bundle\"",
+    "body": "原本從設定物件中取得 `identifier` 欄位，現在改為取得 `bundle` 欄位。這可能導致 `original_identifier` 的值不正確，影響後續的邏輯（例如重新載入時的識別）。需要確認 `bundle` 物件中是否包含 identifier 字串，否則 `as_str()` 會回傳 None。",
+    "existing_code": ".and_then(|config| config.get(\"bundle\"))",
+    "evidence": "diff 中將 `config.get(\"identifier\")` 改為 `config.get(\"bundle\")`。"
+  },
+  {
+    "path": "crates/tauri-cli/Cargo.toml",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "jsonschema 停用預設功能可能影響其他相依套件",
+    "body": "將 `jsonschema` 的 `default-features` 設為 false 可能移除了某些功能（例如 `resolve-http`），但其他相依套件可能仍需要這些功能。需要確認是否會造成編譯或執行時的問題。",
+    "existing_code": "jsonschema = { version = \"0.33\", default-features = false }",
+    "evidence": "diff 中將 `jsonschema = \"0.33\"` 改為 `jsonschema = { version = \"0.33\", default-features = false }`。"
+  }
+]

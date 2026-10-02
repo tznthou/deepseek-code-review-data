@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 216,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄音端點權限從 BOOKING_READ 改為 BOOKING_WRITE，可能過度授權",
+    "body": "此端點為讀取錄音，原本使用 BOOKING_READ，但此 PR 改為 BOOKING_WRITE。這可能讓只有寫入權限而無讀取權限的角色也能存取錄音，違反最小權限原則。建議確認是否有角色僅具備 BOOKING_WRITE 而無 BOOKING_READ，若無此類角色，則應維持 BOOKING_READ。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中將 @Permissions([BOOKING_READ]) 改為 @Permissions([BOOKING_WRITE])，但端點語意為讀取錄音。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-recordings.output.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R02] 不必要的 import 可能違反相依性規範",
+    "body": "此檔案新增了 `import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";`，但該型別並未在檔案中使用。這可能違反 R02 的相依性限制（platform/types 不應依賴 features），且為多餘的 import。建議移除。",
+    "existing_code": "import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";",
+    "evidence": "diff 中新增此 import，但檔案內容未使用 BookingRepository。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "transcripts 端點 guard 順序與 recordings 端點不一致",
+    "body": "recordings 端點使用 @UseGuards(ApiAuthGuard, BookingUidGuard, BookingPbacGuard)，而 transcripts 端點使用 @UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)。順序不同可能影響驗證流程與錯誤回應（例如未帶 token 時，BookingPbacGuard 可能先執行而回傳不同錯誤）。建議統一順序。",
+    "existing_code": "@UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)",
+    "evidence": "diff 中 transcripts 端點新增的 guard 順序與 recordings 端點不同。"
+  }
+]

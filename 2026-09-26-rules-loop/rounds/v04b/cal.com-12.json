@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "搜尋過濾功能可能失效：改用 `teamMembers` 取代 `filteredMembers`",
+    "body": "原本使用 `filteredMembers` 來渲染成員列表，現在改為 `teamMembers`。如果 `filteredMembers` 是根據搜尋條件過濾後的結果，此變更將導致搜尋功能失效，顯示所有成員。請確認是否應保留過濾邏輯，或改用其他方式處理。",
+    "existing_code": "{teamMembers.map((member) => (",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且空狀態判斷也從 `filteredMembers.length === 0` 改為 `teamMembers.length === 0`。"
+  },
+  {
+    "path": "packages/platform/atoms/availability/AvailabilitySettings.tsx",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "型別變更可能導致不相容：`travelSchedules` 改用 `Awaited<ReturnType<...>>`",
+    "body": "原本使用 `RouterOutputs[\"viewer\"][\"travelSchedules\"][\"get\"]`，現在改為 `Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>`。若兩者型別不完全一致，可能導致下游元件型別錯誤。請確認此變更是否必要，並驗證所有使用處的相容性。",
+    "existing_code": "travelSchedules?: Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>;",
+    "evidence": "diff 中將型別從 `RouterOutputs` 改為 `Awaited<ReturnType<...>>`，且未見其他調整。"
+  },
+  {
+    "path": "packages/platform/atoms/event-types/hooks/useTeamMembersWithSegmentPlatform.tsx",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案最後一行沒有換行符，可能違反程式碼風格規範。建議在檔案結尾加上換行。",
+    "existing_code": "};\n\\ No newline at end of file",
+    "evidence": "diff 顯示檔案結尾為 `};\n\\ No newline at end of file`。"
+  }
+]

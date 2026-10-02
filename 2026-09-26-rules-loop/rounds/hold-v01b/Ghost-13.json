@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/admin-x-framework/src/utils/stats-config.ts",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "版本前綴邏輯與後端不一致，導致端點名稱錯誤",
+    "body": "此處使用 `config.version ? `${config.version}_${endpointName}` : endpointName`，產生如 `v2_api_kpis` 的端點名稱；但後端 `tinybird.js` 使用 `${pipeName}_${version}`，產生 `api_kpis_v2`。兩者不一致，當前端設定 version 時，會呼叫不存在的端點，導致 API 404。\n\n建議統一命名規則，例如都使用後綴方式，或在此處改為 `${endpointName}_${config.version}`。",
+    "existing_code": "const finalEndpointName = config.version ? `${config.version}_${endpointName}` : endpointName;",
+    "evidence": "diff 中新增的這一行，與 `ghost/core/core/server/services/stats/utils/tinybird.js` 中的 `const pipeUrl = version ? `/v0/pipes/${pipeName}_${version}.json` : ...` 形成對比。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/pipes/filtered_sessions_v2.pipe",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "session 屬性過濾條件不完整，可能導致資料外洩",
+    "body": "在 `sessions_filtered_by_session_attributes` 節點中，只對 `source`、`device`、`utm_source`、`utm_medium`、`utm_campaign`、`utm_term`、`utm_content` 進行過濾，但缺少對 `utm_content` 的過濾條件（實際上已包含，但需確認是否所有 UTM 參數都涵蓋）。若呼叫端傳入未處理的參數，可能導致不正確的資料被回傳。\n\n建議補齊所有 UTM 參數的過濾條件，或明確列出支援的參數並忽略其他。",
+    "existing_code": "{% if defined(utm_content) %} and utm_content = {{ String(utm_content, description=\"UTM content to filter on\", required=False) }} {% end %}",
+    "evidence": "diff 中該行顯示僅有 utm_content 的過濾，但其他 UTM 參數（如 utm_term）也有類似條件，需確認是否遺漏。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/ContentStatsService.js",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 source 參數傳遞可能破壞現有功能",
+    "body": "此處刪除了將 `options.source` 加入 `tinybirdOptions` 的程式碼，但 `source` 是有效的過濾參數，且在其他端點（如 `api_top_sources_v2`）中仍被使用。若呼叫端仍傳入 `source`，將被忽略，導致結果不正確。\n\n建議保留此參數傳遞，或確認所有呼叫端都已更新。",
+    "existing_code": "// Only add source if defined (allow empty string for \"Direct\" traffic)\n        if (options.source !== undefined) {\n            tinybirdOptions.source = options.source;\n        }",
+    "evidence": "diff 中刪除了這幾行，但未在其他地方補上。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_kpis_v2.pipe",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "缺少對 `date_from` 和 `date_to` 的驗證可能導致錯誤",
+    "body": "在 `timeseries` 節點中，若 `date_from` 大於 `date_to`，會產生空結果或錯誤。建議加入驗證或交換邏輯。",
+    "existing_code": "{% if defined(date_from) %}\n                toStartOfDay(\n                    toDate(\n                        {{\n                            Date(\n                                date_from,\n                                description=\"Starting day for filtering a date range\",\n                                required=False,\n                            )\n                        }}\n                    )\n                ) as start,",
+    "evidence": "diff 中未見對日期範圍的檢查。"
+  }
+]

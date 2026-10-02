@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 177,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "identifier 欄位誤改為讀取 bundle，導致原始 identifier 遺失",
+    "body": "原本程式碼從 config 物件中取得 `identifier` 欄位，但此變更改為取得 `bundle` 欄位。這會導致 `original_identifier` 變數的值錯誤，後續若用於比對或回寫，將造成設定檔的 identifier 被覆寫或驗證錯誤。\n\n建議：改回 `config.get(\"identifier\")`。",
+    "existing_code": ".and_then(|config| config.get(\"bundle\"))",
+    "evidence": "diff 中此行由 `config.get(\"identifier\")` 改為 `config.get(\"bundle\")`，但變數名稱仍為 `original_identifier`，且後續邏輯未調整。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 201,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "條件判斷由 OR 改為 AND，導致 JSON 設定檔不再進行 schema 驗證",
+    "body": "原本條件為 `config_path.extension() == Some(OsStr::new(\"json\")) || config_path.extension() == Some(OsStr::new(\"json5\"))`，表示 JSON 或 JSON5 都會驗證。改為 AND 後，只有當副檔名同時等於 \"json\" 和 \"json5\"（不可能）時才會驗證，因此所有設定檔都不會被驗證。\n\n建議：改回 OR 條件。",
+    "existing_code": "if config_path.extension() == Some(OsStr::new(\"json\"))\n    && config_path.extension() == Some(OsStr::new(\"json5\"))",
+    "evidence": "diff 中將 `||` 改為 `&&`，且兩個條件都是檢查同一個 `config_path.extension()`，邏輯上不可能同時成立。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 289,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "merge_with 不再合併設定，而是將 merge_config 存入 extensions，可能破壞合併功能",
+    "body": "原本程式碼會將 `merge_config` 合併到 `value` 中，再反序列化回 `config_metadata.inner`。此變更改為將 `merge_config` 存入 `extensions`，但未更新 `inner`，導致合併的設定不會生效。\n\n建議：保留原本的合併邏輯，或確認此變更是否為預期行為（例如改用 extensions 儲存原始合併資料）。",
+    "existing_code": "config_metadata.extensions.insert(MERGE_CONFIG_EXTENSION_NAME.into(), merge_config);",
+    "evidence": "diff 中刪除了 `merge(&mut value, &merge_config);` 和 `config_metadata.inner = serde_json::from_value(value)...`，改為插入 extensions。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 154,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 OnceLock 快取 validator，但未處理 schema 解析失敗的 panic",
+    "body": "`config_schema_validator` 使用 `expect` 處理 schema 解析和 validator 建立失敗，若內嵌的 schema 檔案損壞，程式會 panic。雖然這是開發期錯誤，但可考慮回傳 Result 或使用更安全的初始化方式。",
+    "existing_code": "jsonschema::validator_for(&schema).expect(\"Config schema bundled in the tauri-cli is invalid\")",
+    "evidence": "diff 中新增的函式使用 expect，若 schema 無效會 panic。"
+  }
+]

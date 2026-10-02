@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "同步測試方法未等待非同步下載完成，測試可能提前結束",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase` 中，原本使用 `await fulfillment(of: [exp], timeout: 2.0)` 等待非同步下載完成，但改為同步方法後，移除了 expectation 的建立與等待。`downloadImage` 的回呼是非同步的，測試方法會立即返回，導致 XCTest 可能認為測試已完成，而回呼中的斷言可能永遠不會被執行，或測試在回呼前就結束。這會造成測試無法驗證下載結果，甚至可能導致測試通過但實際上未測試任何內容。\n\n建議：保留 expectation 並使用 `wait(for:timeout:)` 等待，或將測試方法改回 async 並使用 `await fulfillment`。",
+    "existing_code": "func testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase() {",
+    "evidence": "diff 中移除了 `let exp = expectation(description: \"Image download and parse\")` 和 `await fulfillment(of: [exp], timeout: 2.0)`，且方法簽名從 `async` 改為同步。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "測試方法未等待非同步決策處理器呼叫",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本使用 expectation 等待決策處理器被呼叫，但改動後移除了 expectation 的建立與等待。`requestMediaCapturePermission` 可能非同步呼叫決策處理器，測試方法會立即返回，導致斷言可能不會被執行。\n\n建議：保留 expectation 並使用 `wait(for:timeout:)` 等待，或確認該方法為同步呼叫。",
+    "existing_code": "let decisionHandler: @Sendable (WKPermissionDecision) -> Void = { (decision: WKPermissionDecision) in",
+    "evidence": "diff 中移除了 `let expectation = expectation(description: \"Wait for the decision handler to be called\")` 和 `wait(for: [expectation])`。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 208,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 @MainActor 可能導致 GCDWebServer 初始化執行緒問題",
+    "body": "原本 `startMockImageServer` 標註為 `@MainActor`，並有註解說明 GCDWebServer 必須在主執行緒初始化。移除後，該方法可能從背景執行緒呼叫，導致 GCDWebServer 初始化失敗或崩潰。雖然測試方法目前是同步的，但 XCTest 可能在背景執行緒執行測試，因此風險仍然存在。\n\n建議：確認 GCDWebServer 是否真的需要主執行緒，若需要則保留 @MainActor 並將測試方法標註為 @MainActor，或使用其他方式確保主執行緒執行。",
+    "existing_code": "func startMockImageServer(imageData: Data, forAssetType assetType: AssetType) throws -> URL {",
+    "evidence": "diff 中移除了 `@MainActor` 標註及相關註解。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Home/Homepage/SectionHeader/LabelButtonHeaderView.swift",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "不必要的 wrappedAction 閉包可能造成多餘的間接層",
+    "body": "新增的 `wrappedAction` 閉包僅呼叫 `moreButtonAction?(button)`，沒有額外邏輯，可能只是為了滿足型別檢查。這增加了程式碼複雜度，且可能影響效能（雖然微小）。\n\n建議：確認是否可以直接傳遞 `moreButtonAction`，若型別匹配則移除 wrappedAction。",
+    "existing_code": "let wrappedAction: (@MainActor (UIButton) -> Void)? = { button in\n                moreButtonAction?(button)\n            }",
+    "evidence": "diff 中新增了 wrappedAction 閉包，並將其傳遞給 ActionButtonViewModel。"
+  }
+]

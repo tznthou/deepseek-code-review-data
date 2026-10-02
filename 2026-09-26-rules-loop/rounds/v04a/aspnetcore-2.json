@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "正規表達式驗證邏輯可能導致測試不穩定",
+    "body": "原本使用單一正規表達式 `ParseErrorMessage()` 驗證日誌訊息，現在改為同時檢查 `ParseErrorMessageRegexOld` 和 `ParseErrorMessageRegexNew` 兩個模式。這可能導致測試在瀏覽器錯誤訊息格式略有變化時失敗，因為兩個模式都必須匹配。建議改為使用 `Assert.Matches` 搭配單一正規表達式，或使用 `Assert.True` 檢查任一模式匹配，以提高測試穩定性。",
+    "existing_code": "Assert.True(\n    ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n    ParseErrorMessageRegexNew.IsMatch(logs[0].Message),\n    $\"Expected log message to match one of the CSP error patterns: {ParseErrorMessageRegexOld} or {ParseErrorMessageRegexNew}. Actual: {logs[0].Message}\");",
+    "evidence": "diff 中將原本的 `Assert.Matches(ParseErrorMessage(), logs[0].Message);` 改為同時檢查兩個正規表達式，且錯誤訊息指出「Expected log message to match one of the CSP error patterns」，但程式碼卻要求兩個都匹配，邏輯不一致。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增隔離標記可能掩蓋潛在問題",
+    "body": "在 `CanSendAndReceiveUserMessagesFromMultipleConnectionsWithSameUser` 測試方法上新增 `[QuarantinedTest]` 屬性，表示該測試已知不穩定。雖然隔離可以減少 CI 干擾，但應確保有對應的 issue 追蹤修復，並定期檢視是否可移除隔離。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/59991\")]",
+    "evidence": "diff 中新增了 `[QuarantinedTest]` 屬性，並附上 issue 連結。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 188,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增隔離標記可能掩蓋潛在問題",
+    "body": "在 `CanSendAndReceiveUserMessagesUserNameWithPatternIsTreatedAsLiteral` 測試方法上新增 `[QuarantinedTest]` 屬性，表示該測試已知不穩定。雖然隔離可以減少 CI 干擾，但應確保有對應的 issue 追蹤修復，並定期檢視是否可移除隔離。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/63582\")]",
+    "evidence": "diff 中新增了 `[QuarantinedTest]` 屬性，並附上 issue 連結。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 213,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "DisposeAsync 順序變更可能影響測試穩定性",
+    "body": "原本先 `connection.DisposeAsync()` 再 `secondConnection.DisposeAsync()`，現在順序對調。雖然通常不影響功能，但若連線之間有相依性，可能導致測試行為改變。建議確認此變更的必要性。",
+    "existing_code": "await secondConnection.DisposeAsync().DefaultTimeout();\nawait connection.DisposeAsync().DefaultTimeout();",
+    "evidence": "diff 中將兩行順序對調。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 409,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "WebSocketWrapper 中 _receiveTcs 重置時機變更可能影響並發",
+    "body": "原本在處理完接收結果後才重置 `_receiveTcs`，現在改為在 await 之後立即重置。這可能導致在處理零位元組讀取時，下一次接收會使用新的 TCS，但若有多個並發接收，可能造成競態。建議確認此變更是否為了解決特定問題，並評估並發安全性。",
+    "existing_code": "_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);",
+    "evidence": "diff 中將 `_receiveTcs = new(...)` 從原本的位置移到 await 之後。"
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "XCTestExpectation 使用錯誤，可能導致測試永遠等待",
+    "body": "在 `captureFrameAndOrigin` 中，`XCTestExpectation` 被建立後傳入 delegate，但 delegate 在 `decidePolicyFor` 中呼叫 `expect.fulfill()`。然而，`XCTWaiter.wait(for:timeout:)` 會等待 expectation 被 fulfill 或逾時。此處的 expectation 是在 helper 函式內建立，但測試方法中也建立了自己的 expectation 並呼叫 `wait(for:)`。這可能導致測試中的 expectation 永遠不會被 fulfill，因為 helper 內部的 expectation 已經被 fulfill，但測試中的 expectation 沒有被 fulfill。此外，在 `testRequestMediaCaptureSuccess` 中，測試在呼叫 `subject.webView` 後才呼叫 `expectation.fulfill()`，但 `decisionHandler` 內沒有 fulfill，這會造成測試永遠等待。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 43 行，以及 WKUIHandlerTests.swift 中測試方法的 expectation 使用方式。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "測試依賴真實網路，可能導致不穩定或逾時",
+    "body": "`captureFrameAndOrigin` 會載入 `https://example.com`，這需要網路連線。在 CI 環境中，網路可能不可用或速度慢，導致測試逾時或失敗。建議使用本地 HTML 或 data URL 來避免外部依賴。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 44 行。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "測試中的 expectation 可能永遠不會被 fulfill",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`decisionHandler` 內沒有呼叫 `expectation.fulfill()`，而是在呼叫 `subject.webView` 後才呼叫。這可能導致 `wait(for:)` 永遠等待，因為 expectation 在等待開始前就被 fulfill 了。正確做法是在 `decisionHandler` 內 fulfill。",
+    "existing_code": "subject.webView(MockWKWebView(),\n                        requestMediaCapturePermissionFor: origin,\n                        initiatedByFrame: frame,\n                        type: .cameraAndMicrophone,\n                        decisionHandler: decisionHandler)\n        wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中 WKUIHandlerTests.swift 第 41 行附近的變更。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "未處理 XCTWaiter 結果，可能導致測試誤判",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值未被檢查。如果等待逾時，`capturedFrame` 和 `capturedOrigin` 可能為 nil，但函式仍會回傳 nil，測試會失敗。然而，如果等待結果是 `.incorrectOrder` 或其他狀態，可能會有非預期的行為。建議檢查 waiter 結果並記錄錯誤。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 45 行。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R11] 屬性缺少明確的存取控制",
+    "body": "`FakeWKNavigationDelegate` 中的 `expect`、`capturedFrame`、`capturedOrigin` 屬性沒有明確的存取控制修飾詞。根據規範 R11，應明確標示為 `private` 或 `internal`。",
+    "existing_code": "let expect: XCTestExpectation\n        var capturedFrame: WKFrameInfo?\n        var capturedOrigin: WKSecurityOrigin?",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 16-18 行。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 5,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R01] 缺少 Mozilla Public License Header",
+    "body": "新增的 WebKitTestHelpers.swift 檔案開頭沒有包含 Mozilla Public License v2.0 header。根據規範 R01，所有 Swift 檔案都必須包含此 header。",
+    "existing_code": "import WebKit\nimport XCTest",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 1 行。"
+  }
+]

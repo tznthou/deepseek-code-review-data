@@ -1,0 +1,112 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 bootstrapDependencies",
+    "body": "在 async setUp 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 時，該方法已標記為 @MainActor，但此處未加上 `await`。這會導致編譯錯誤，因為從非隔離的 async 函式呼叫 @MainActor 方法必須使用 await。建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock.swift 中該方法已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 reset",
+    "body": "在 async tearDown 中呼叫 `DependencyHelperMock().reset()` 時，該方法可能也標記為 @MainActor（需確認），但此處未加上 `await`。若 reset 為 @MainActor，則會導致編譯錯誤。建議加上 `await`。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock 類別可能已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 bootstrapDependencies",
+    "body": "在 async setUp 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 時，該方法已標記為 @MainActor，但此處未加上 `await`。這會導致編譯錯誤。建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock.swift 中該方法已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 reset",
+    "body": "在 async tearDown 中呼叫 `DependencyHelperMock().reset()` 時，該方法可能也標記為 @MainActor（需確認），但此處未加上 `await`。若 reset 為 @MainActor，則會導致編譯錯誤。建議加上 `await`。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock 類別可能已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/Homepage/PrivateHomepageViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 bootstrapDependencies",
+    "body": "在 async setUp 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 時，該方法已標記為 @MainActor，但此處未加上 `await`。這會導致編譯錯誤。建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock.swift 中該方法已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/Homepage/PrivateHomepageViewControllerTests.swift",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 reset",
+    "body": "在 async tearDown 中呼叫 `DependencyHelperMock().reset()` 時，該方法可能也標記為 @MainActor（需確認），但此處未加上 `await`。若 reset 為 @MainActor，則會導致編譯錯誤。建議加上 `await`。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock 類別可能已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/DownloadsPanelTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 bootstrapDependencies",
+    "body": "在 async setUp 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 時，該方法已標記為 @MainActor，但此處未加上 `await`。這會導致編譯錯誤。建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock.swift 中該方法已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/DownloadsPanelTests.swift",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 reset",
+    "body": "在 async tearDown 中呼叫 `DependencyHelperMock().reset()` 時，該方法可能也標記為 @MainActor（需確認），但此處未加上 `await`。若 reset 為 @MainActor，則會導致編譯錯誤。建議加上 `await`。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock 類別可能已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/ReadingListPanelTests.swift",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 bootstrapDependencies",
+    "body": "在 async setUp 中呼叫 `DependencyHelperMock().bootstrapDependencies()` 時，該方法已標記為 @MainActor，但此處未加上 `await`。這會導致編譯錯誤。建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock.swift 中該方法已標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/ReadingListPanelTests.swift",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 未 await @MainActor 方法 reset",
+    "body": "在 async tearDown 中呼叫 `DependencyHelperMock().reset()` 時，該方法可能也標記為 @MainActor（需確認），但此處未加上 `await`。若 reset 為 @MainActor，則會導致編譯錯誤。建議加上 `await`。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中該行未加上 await，而 DependencyHelperMock 類別可能已標記 @MainActor。"
+  }
+]

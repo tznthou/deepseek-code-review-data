@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 125,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "高量寄送者（lastCount >= 400,000）的計算可能與預期不符",
+    "body": "在 `getWarmupLimit` 中，當 `lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold`（400,000）時，程式會計算 `scaledIncrease = Math.ceil(lastCount * 1.2)` 和 `absoluteIncrease = lastCount + 75,000`，然後回傳兩者較小值。但若 `lastCount` 恰好等於 400,000，則 `scaledIncrease = 480,000`，`absoluteIncrease = 475,000`，回傳 475,000。然而，根據測試案例（`{lastCount: 400000, expected: 800000}`），預期值為 800,000，顯示此處邏輯可能與測試不一致。建議確認高量寄送者的預期行為，並修正程式或測試。",
+    "existing_code": "if (lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold) {\n    const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);\n    const absoluteIncrease = lastCount + WARMUP_SCALING_TABLE.highVolume.maxAbsoluteIncrease;\n    return Math.min(scaledIncrease, absoluteIncrease);\n}",
+    "evidence": "diff 中新增的 highVolume 處理區塊，以及測試檔案中 `{lastCount: 400000, expected: 800000}` 的案例。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中時間模擬的變更可能導致不穩定",
+    "body": "`setDay` 函式改為使用 `sinon.useFakeTimers({ now: time.getTime(), shouldAdvanceTime: true })`。`shouldAdvanceTime: true` 會讓 fake timers 自動推進時間，可能影響依賴時間的測試（例如 `created_at` 的比較）。建議確認此變更是否必要，並考慮使用 `shouldAdvanceTime: false` 或明確控制時間推進。",
+    "existing_code": "clock = sinon.useFakeTimers({\n    now: time.getTime(),\n    shouldAdvanceTime: true\n});",
+    "evidence": "diff 中 `setDay` 函式的修改。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "findPage 的 filter 條件可能包含當天資料",
+    "body": "`#getHighestCount` 使用 `filter: \\`created_at:<=${new Date().toISOString().split('T')[0]}\\``，這會包含當天建立的郵件。原本的 `findOne` 使用 `created_at:<`（不包含當天），但新程式碼改為 `<=`，可能導致取得當天的最高寄送量，影響 warmup 計算。建議確認是否應排除當天資料。",
+    "existing_code": "filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,",
+    "evidence": "diff 中 filter 條件的變更。"
+  }
+]

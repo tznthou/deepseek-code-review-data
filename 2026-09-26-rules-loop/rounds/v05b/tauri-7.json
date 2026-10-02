@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "generate_github_alternative_url 忽略 alt_url，可能導致下載失敗",
+    "body": "在 `generate_github_alternative_url` 函數中，原本的邏輯是計算出替代 URL（`alt_url`）並返回它。但修改後，`.map(|_alt_url| { ... url.to_owned() })` 忽略了 `alt_url`，直接返回原始的 `url`。這意味著當 GitHub 下載失敗時，原本設計的鏡像站點回退機制將失效，可能導致下載失敗。\n\n**失敗情境**：當用戶在網路受限的環境中（例如中國大陸）嘗試下載 GitHub 上的資源時，如果 GitHub 無法訪問，原本應該嘗試鏡像站點，但現在會直接使用原始 URL，導致下載失敗。\n\n**建議**：如果這個變更是有意的（例如不再需要鏡像站點），請在 PR 描述中說明原因；否則，應該恢復為返回 `alt_url`。",
+    "existing_code": ".map(|_alt_url| {\n      (\n        ureq::Agent::config_builder()\n          .user_agent(BUNDLER_USER_AGENT)\n          .build()\n          .into(),\n        url.to_owned(),\n      )\n    })",
+    "evidence": "diff 中顯示 `.map(|_alt_url| {` 和 `url.to_owned(),`，而原本是 `.map(|alt_url| {` 和 `alt_url,`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 HashAlgorithm::Sha256 上的 cfg(target_os = \"windows\") 可能影響跨平台編譯",
+    "body": "在 `HashAlgorithm` 枚舉中，`Sha256` 變體原本帶有 `#[cfg(target_os = \"windows\")]` 屬性，現在被移除。這意味著 `Sha256` 將在所有平台上可用。如果 `Sha256` 的實現在非 Windows 平台上不可用或不需要，這可能導致編譯錯誤或未使用的警告。\n\n**建議**：確認 `Sha256` 在所有目標平台上都能正確編譯，或者根據需要保留條件編譯。",
+    "existing_code": "pub enum HashAlgorithm {\n  Sha256,\n  Sha1,\n}",
+    "evidence": "diff 中顯示刪除了 `#[cfg(target_os = \"windows\")]` 行。"
+  }
+]

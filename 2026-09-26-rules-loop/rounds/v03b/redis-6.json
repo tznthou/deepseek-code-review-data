@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "active defrag 恢復邏輯錯誤：無條件設為 1，忽略原始設定",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 存入 `orig_active_defrag`，然後設為 0，但在 `emptyData` 呼叫後卻直接設為 1，而不是恢復為 `orig_active_defrag`。這會導致即使原本 active defrag 是停用的，此函式執行後也會被強制啟用，可能造成非預期的記憶體整理行為，甚至影響效能或穩定性。\n\n**失敗情境**：若使用者在設定檔中明確停用 active defrag（`activedefrag no`），當 replica 進行同步並觸發此函式後，active defrag 會被意外啟用，直到下次設定變更。\n\n**建議修法**：將 `server.active_defrag_enabled = 1;` 改為 `server.active_defrag_enabled = orig_active_defrag;`",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的兩行：`int orig_active_defrag = server.active_defrag_enabled;` 和 `server.active_defrag_enabled = 1;`。變數 `orig_active_defrag` 被儲存但從未被使用，且恢復值硬編碼為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2707,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "streamEntryIsReferenced 在 cgroups_ref 為 NULL 時回傳 1 可能造成記憶體洩漏或錯誤保留",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 表示當 stream 沒有 consumer group 參考時，函式直接回傳 1（代表被參考）。這可能導致呼叫者認為該 entry 仍被參考，而無法刪除或釋放，造成記憶體洩漏或資料不一致。\n\n**失敗情境**：在沒有 consumer group 的 stream 上執行 XADD with MAXLEN 或 XTRIM 時，舊的 entry 可能因為被誤判為「被參考」而無法被刪除，導致 stream 長度超過預期。\n\n**建議修法**：確認此行為是否符合預期。若沒有 cgroups_ref 就應該視為未被參考，應回傳 0；若此處是為了避免後續 raxFind 對 NULL 的 dereference，則應在呼叫前檢查，而不是直接回傳 1。",
+    "existing_code": "/* Check if the message is in any consumer group's PEL */\n    if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的 `if (!s->cgroups_ref) return 1;` 行。此函式用於判斷 entry 是否被參考，回傳 1 表示被參考，但當 cgroups_ref 為 NULL 時，實際上沒有 consumer group 參考，回傳 1 可能不正確。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "discard_replies_every 函式參數名稱與用途不符",
+    "body": "函式 `discard_replies_every` 的參數 `frequency` 和 `discard_num` 的命名容易混淆。`frequency` 實際上是檢查的間隔（例如每 10000 次），而 `discard_num` 是要丟棄的回覆數量。建議改名為 `interval` 和 `num_to_discard` 以提高可讀性。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {",
+    "evidence": "diff 中新增的函式定義。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 989,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中直接使用 `s` 指令可能取得錯誤的 server 資訊",
+    "body": "在新增的測試中，`wait_for_condition` 內使用 `[s total_active_defrag_time]`，但 `s` 是預設的 server client，可能指向 master 而非 replica。應使用 `$replica` 來取得 replica 的資訊。",
+    "existing_code": "wait_for_condition 50 100 {\n                        [s total_active_defrag_time] ne 0",
+    "evidence": "diff 中新增的測試程式碼。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "搜尋邏輯可能因大小寫或特殊字元導致結果不一致",
+    "body": "在 `BlockDocumentComboboxImplementation` 中，後端查詢使用 `like_` 進行模糊匹配，但前端又用 `toLowerCase()` 進行過濾。若後端比對是 case-sensitive，則輸入大寫字母時，後端可能回傳空陣列，前端再過濾也無結果；反之若後端是 case-insensitive，前端過濾可能因特殊字元（如 regex 字元）而誤刪。建議統一由後端處理搜尋，或在前端使用與後端一致的比對邏輯。",
+    "existing_code": "const filteredData = useMemo(() => {\n    return data.filter((blockDocument) =>\n      blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),\n    );\n  }, [data, deferredSearch]);",
+    "evidence": "diff 中新增的 `filteredData` 使用 `toLowerCase()` 進行前端過濾，但查詢參數 `deferredSearch` 同時傳給後端 `like_`，兩者比對邏輯可能不一致。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 178,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "錯誤處理不完整：validateForm 可能拋出例外但未妥善處理",
+    "body": "`onSave` 中呼叫 `await validateForm({ schema: values })`，但 `validateForm` 可能拋出例外（例如 schema 格式錯誤），目前僅以 `try/catch` 包住並顯示通用錯誤訊息，未提供具體錯誤細節。建議在 catch 中記錄更詳細的錯誤資訊，或讓 `validateForm` 回傳結構化錯誤。",
+    "existing_code": "try {\n\t\t\tawait validateForm({ schema: values });\n\t\t\tif (errors.length > 0) {\n\t\t\t\treturn;\n\t\t\t}",
+    "evidence": "diff 中 `onSave` 的 try 區塊呼叫 `validateForm`，但 catch 區塊僅顯示通用訊息，未包含錯誤細節。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 174,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "建立成功後未重置表單狀態",
+    "body": "當 `createBlockDocument` 成功後，僅呼叫 `onOpenChange(false)` 和 `onCreated`，但未重置 `values` 或 `form`。若使用者再次開啟對話框，可能殘留上次的輸入。建議在成功後重置表單狀態。",
+    "existing_code": "onSuccess: (res) => {\n\t\t\t\t\t\ttoast.success(\"Block created successfully\");\n\t\t\t\t\t\tonOpenChange(false);\n\t\t\t\t\t\tonCreated(res.id);\n\t\t\t\t\t},",
+    "evidence": "diff 中 `onSuccess` 回呼未包含任何重置邏輯。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input.tsx",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "blockTypeSlug 非字串時未處理",
+    "body": "在 `SchemaFormInput` 中，若 `property.blockTypeSlug` 存在但型別不是字串（例如陣列或物件），目前程式碼會直接略過，導致該屬性沒有渲染任何輸入元件。建議加入 fallback 或明確處理。",
+    "existing_code": "if (\"blockTypeSlug\" in property) {\n\t\tconst blockTypeSlug = property.blockTypeSlug;\n\t\tif (typeof blockTypeSlug === \"string\") {\n\t\t\treturn (\n\t\t\t\t<SchemaFormInputBlockDocument\n\t\t\t\t\tvalue={value as { $ref: string } | undefined}\n\t\t\t\t\tonValueChange={onValueChange}\n\t\t\t\t\tblockTypeSlug={blockTypeSlug}\n\t\t\t\t\tid={id}\n\t\t\t\t/>\n\t\t\t);\n\t\t}\n\t}",
+    "evidence": "diff 中僅處理 `typeof blockTypeSlug === \"string\"` 的情況，未處理其他型別。"
+  }
+]

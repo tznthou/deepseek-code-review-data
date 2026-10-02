@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "member 可能為 undefined，直接存取 member.expertise 可能導致執行錯誤",
+    "body": "在 `useEffect` 中，`member` 可能為 `undefined`（例如尚未載入或登出狀態），直接使用 `member?.expertise` 仍可能因 `member` 為 `undefined` 而拋出錯誤。建議使用 `member?.expertise` 或先檢查 `member` 是否存在。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中將原本的 `!!memberName` 改為 `!!member?.expertise`，但 `member` 本身可能為 undefined，雖然使用了 optional chaining，但若 `member` 為 undefined，`member?.expertise` 會回傳 undefined，`!!undefined` 為 false，不會拋錯。但若 `member` 為 null，`member?.expertise` 同樣安全。因此此處可能無實際錯誤，但需確認 `member` 的型別是否允許 null/undefined。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/reply-form.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "in_reply_to_id 改為 parent.id 可能影響回覆巢狀結構",
+    "body": "原本使用 `openForm.in_reply_to_id`，現在改為 `parent.id`。若 `openForm` 代表回覆某則回覆（即巢狀回覆），則 `parent` 可能不是直接父評論，導致回覆層級錯誤。需確認 `parent` 的定義是否為直接父評論。",
+    "existing_code": "in_reply_to_id: parent.id,",
+    "evidence": "diff 中將 `openForm.in_reply_to_id` 改為 `parent.id`，但 `parent` 是傳入的 prop，可能代表頂層評論而非直接父評論。"
+  },
+  {
+    "path": "apps/comments-ui/test/e2e/actions.test.ts",
+    "line": 679,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "測試中對 member-name 的斷言可能因元素不存在而失敗",
+    "body": "在第二個測試中，`await expect(memberName).not.toHaveText('Named Author');` 若 `member-name` 元素不存在，`toHaveText` 會拋出錯誤，導致測試失敗。建議先確認元素是否存在，或改用 `toBeHidden()` 等斷言。",
+    "existing_code": "await expect(memberName).not.toHaveText('Named Author');",
+    "evidence": "diff 中新增的測試直接對 `memberName` 使用 `not.toHaveText`，但若該元素未渲染，測試會失敗。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "編輯器可編輯條件改為 member.expertise，可能與原本意圖不符",
+    "body": "原本條件為 `!!memberName`，現在改為 `!!member?.expertise`。若使用者有姓名但沒有專業領域，編輯器將無法編輯，這可能不是預期行為。建議確認需求：是否應以 `memberName` 或 `member` 存在與否來決定可編輯性。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中將 `!!memberName` 改為 `!!member?.expertise`，但 `memberName` 原本是 `member?.name ?? comment?.member?.name`，現在移除 comment 後，若 member 有 name 但無 expertise，編輯器將被停用。"
+  }
+]

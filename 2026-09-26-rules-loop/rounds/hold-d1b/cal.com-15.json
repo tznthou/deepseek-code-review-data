@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R05] 新增的 validateCreateScheduleInput 未使用 Zod schema，且驗證不完整",
+    "body": "此函式僅檢查 `name` 是否為非空字串，未驗證 `schedule` 與 `eventTypeId` 的型別與格式。若呼叫端傳入錯誤型別（例如 `schedule` 為字串），將在後續處理時才失敗，且錯誤訊息不明確。建議使用 Zod 定義 schema 並進行完整驗證，以符合專案規範 R05。",
+    "existing_code": "export function validateCreateScheduleInput(input: unknown): CreateScheduleInput {\n  if (!input || typeof input !== 'object') {\n    throw new Error('Invalid input: must be an object');\n  }\n\n  const data = input as Record<string, unknown>;\n\n  if (typeof data.name !== 'string' || data.name.length === 0) {\n    throw new Error('Invalid input: name must be a non-empty string');\n  }\n\n  return data as CreateScheduleInput;\n}",
+    "evidence": "diff 中新增的 validateCreateScheduleInput 函式，僅檢查 name 欄位，未對 schedule 與 eventTypeId 進行驗證。"
+  },
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "型別 Slot 的 userIds 型別可能與原 trpc 定義不一致",
+    "body": "原 trpc 的 Slot 型別中 `userIds?: number[]`，但此處定義為 `userIds?: string[]`。若實際 API 回傳數字陣列，將導致型別不符，可能造成執行階段錯誤或型別斷言失效。請確認正確型別並修正。",
+    "existing_code": "export type Slot = {\n  time: string;\n  userIds?: string[];\n  attendees?: number;\n  bookingUid?: string;\n  users?: string[];\n};",
+    "evidence": "diff 中新增的 Slot 型別，與被移除的 trpc Slot 型別相比，userIds 型別從 number[] 改為 string[]。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 \"./booker\" export 可能造成 breaking change",
+    "body": "原本 exports 中有 `\"./booker\": \"./booker/index.ts\"`，此 PR 將其改為 `\"./booker/types\": \"./booker/types.ts\"`。若外部套件依賴 `@calcom/atoms/booker` 路徑，將無法再匯入。請確認是否需保留舊路徑或提供相容性。",
+    "existing_code": "\"./booker/types\": \"./booker/types.ts\",",
+    "evidence": "diff 中 package.json 的 exports 變更，移除了 \"./booker\" 項目。"
+  }
+]

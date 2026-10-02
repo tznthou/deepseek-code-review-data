@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 `filteredMembers` 改為 `teamMembers` 可能導致搜尋功能失效",
+    "body": "原本使用 `filteredMembers` 來顯示經過搜尋過濾後的成員列表，現在改為 `teamMembers` 會顯示所有成員，忽略使用者的搜尋條件。請確認此變更是否為預期行為；若非預期，應保留 `filteredMembers`。",
+    "existing_code": "{teamMembers.map((member) => (",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且下方空狀態判斷也由 `filteredMembers.length` 改為 `teamMembers.length`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/hooks/useTeamMembersWithSegment.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "傳給 `useProcessTeamMembersData` 的 `matchingTeamMembersWithResult` 型別可能不符",
+    "body": "`useProcessTeamMembersData` 預期 `matchingTeamMembersWithResult` 的型別為 `RouterOutputs['viewer']['attributes']['findTeamMembersMatchingAttributeLogic']`，但此處傳入的 `matchingTeamMembersWithResult` 是 `useQuery` 回傳的 `data`，其型別為 `... | undefined`。程式碼中嘗試用條件式包裝成 `{ result: ... }`，但若 `matchingTeamMembersWithResult` 為 `undefined`，則傳入 `undefined`，可能導致下游處理錯誤。建議明確處理 `undefined` 情況。",
+    "existing_code": "matchingTeamMembersWithResult: matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult,",
+    "evidence": "diff 中新增的 hook 內，此行程式碼將 `matchingTeamMembersWithResult` 傳給 `useProcessTeamMembersData`，但未處理 `undefined` 的明確型別。"
+  },
+  {
+    "path": "packages/platform/atoms/event-types/hooks/useTeamMembersWithSegmentPlatform.tsx",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案最後一行 `};` 後沒有換行符，可能導致某些工具或 diff 顯示異常。建議在檔案結尾加上換行。",
+    "existing_code": "};\n\\ No newline at end of file",
+    "evidence": "diff 顯示 `\\ No newline at end of file`。"
+  },
+  {
+    "path": "biome.json",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Biome 規則可能過度限制 atoms 套件匯入 trpc/react",
+    "body": "新增的 Biome 規則禁止 atoms 套件匯入 `@calcom/trpc/react`，但 atoms 套件中可能仍有其他檔案需要此匯入（例如型別）。若規則過嚴，可能導致開發者使用相對路徑繞過限制。建議確認所有 atoms 套件中的 trpc/react 匯入均已移除或改用其他方式。",
+    "existing_code": "\"@calcom/trpc/react\",",
+    "evidence": "diff 中新增的 Biome 規則 patterns 包含 `@calcom/trpc/react` 和 `@calcom/trpc/react/**`。"
+  }
+]

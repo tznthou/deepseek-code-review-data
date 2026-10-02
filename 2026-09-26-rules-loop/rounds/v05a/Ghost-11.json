@@ -1,0 +1,101 @@
+[
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R20] 使用 var 宣告變數違反專案規範",
+    "body": "在 `SelectOptionsPopover` 中，將原本的 `const newValues` 改為 `var newValues`，違反專案規範 R20（必須使用 let 或 const）。此變數在函式內並未重新賦值，應使用 `const`。",
+    "existing_code": "var newValues = [...effectiveValues, option.value] as T[];",
+    "evidence": "diff 中明確將 `const` 改為 `var`。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 105,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "預設 i18n 的 addFilter 與 addFilterTitle 設為空字串可能導致按鈕無文字",
+    "body": "將 `addFilter` 與 `addFilterTitle` 的預設值從 'Add filter' 改為空字串，若使用此預設值且未提供自訂 i18n，則新增篩選器的按鈕將沒有文字，影響可用性。建議保留非空預設值，或確保所有使用處都有提供自訂文字。",
+    "existing_code": "addFilter: '',",
+    "evidence": "diff 中將原本的 'Add filter' 改為空字串，且未見其他替代文字來源。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "autoCloseOnSelect 觸發 onClose 但未清除搜尋輸入",
+    "body": "在多選情境下，當 `autoCloseOnSelect` 為 true 時呼叫 `onClose?.()`，但 `onClose` 的實作（如 `handleClose`）會清除搜尋輸入。然而此處直接呼叫 `onClose`，若父層的 `onClose` 未包含清除邏輯，可能導致搜尋文字殘留。建議統一使用 `handleClose` 或確保 `onClose` 有清除搜尋。",
+    "existing_code": "if (field.autoCloseOnSelect) {\n    onClose?.();\n}",
+    "evidence": "diff 中新增此段，但未呼叫 `setSearchInput('')`。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1271,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "autoCloseOnSelect 觸發 handleClose 但未清除搜尋輸入",
+    "body": "在另一處多選情境中，當 `autoCloseOnSelect` 為 true 時呼叫 `handleClose()`，但 `handleClose` 會清除搜尋輸入。然而此處的 `handleClose` 定義在元件內，應會清除，但需確認此處的 `handleClose` 是否與上方相同。若相同則無問題，但建議檢查一致性。",
+    "existing_code": "if (field.autoCloseOnSelect) {\n    handleClose();\n}",
+    "evidence": "diff 中新增此段。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 946,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R15] Tailwind 類別順序可能不符合標準",
+    "body": "在 `FilterOperatorDropdown` 中，className 從 `flex items-center border-x px-3 text-sm text-muted-foreground` 改為 `flex items-center self-stretch border border-r-[0px] px-3 text-sm text-muted-foreground`。新增的 `self-stretch` 與 `border` 等類別順序可能不符合 Tailwind 標準排序（R15）。建議使用工具自動排序。",
+    "existing_code": "<div className=\"flex items-center self-stretch border border-r-[0px] px-3 text-sm text-muted-foreground\">",
+    "evidence": "diff 中新增類別，但未依標準順序排列。"
+  },
+  {
+    "path": "apps/stats/src/views/Stats/components/stats-filter.tsx",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R15] Tailwind 類別順序可能不符合標準",
+    "body": "在 `useUtmOptionsForField` 中，icon 的 className 從原本的 `flex items-center justify-center rounded-full bg-grey-200 px-2 py-0.5 text-xs font-medium text-grey-900 dark:bg-grey-800 dark:text-grey-100` 改為 `order-2 font-mono text-xs text-muted-foreground`。新類別順序可能不符合 Tailwind 標準排序（R15）。",
+    "existing_code": "<span className=\"order-2 font-mono text-xs text-muted-foreground\">",
+    "evidence": "diff 中替換了 className。"
+  },
+  {
+    "path": "apps/stats/src/views/Stats/components/stats-filter.tsx",
+    "line": 159,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R15] Tailwind 類別順序可能不符合標準",
+    "body": "在 `useSourceOptions` 中，icon 的 className 同樣改為 `order-2 font-mono text-xs text-muted-foreground`，可能不符合 Tailwind 標準排序（R15）。",
+    "existing_code": "<span className=\"order-2 font-mono text-xs text-muted-foreground\">",
+    "evidence": "diff 中替換了 className。"
+  },
+  {
+    "path": "apps/stats/src/views/Stats/components/stats-filter.tsx",
+    "line": 498,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "addButtonText 設為空字串可能導致按鈕無文字",
+    "body": "在 `StatsFilter` 中，`addButtonText` 從條件式改為固定空字串 `''`，且 `addButtonIcon` 改為 `FunnelPlus` 圖示。若按鈕僅依賴文字，則可能無法辨識。建議確認設計意圖，或保留文字。",
+    "existing_code": "addButtonText={filters.length ? '' : ''}",
+    "evidence": "diff 中將原本的條件文字改為空字串。"
+  },
+  {
+    "path": "apps/stats/src/views/Stats/layout/stats-header.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R15] Tailwind 類別順序可能不符合標準",
+    "body": "在 `StatsHeader` 中，Navbar 的 className 從 `py-8` 改為 `pb-6 pt-9`，可能不符合 Tailwind 標準排序（R15）。",
+    "existing_code": "<Navbar className='sticky top-0 z-40 flex-col items-start gap-y-5 border-none bg-white/70 pb-6 pt-9 backdrop-blur-md lg:flex-row lg:items-center dark:bg-black'>",
+    "evidence": "diff 中修改了 padding 類別。"
+  }
+]

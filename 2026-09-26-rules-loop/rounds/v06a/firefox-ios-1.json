@@ -1,0 +1,101 @@
+[
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "[R12] SettingsTextFormatter 類別未標記為 final",
+    "body": "新增的 `SettingsTextFormatter` 類別未標記為 `final`，違反專案規範 R12（Classes That Should Not Be Subclassed Must Be Marked Final）。此類別為輔助格式化用途，不應被繼承。建議加上 `final` 修飾詞。",
+    "existing_code": "class SettingsTextFormatter {",
+    "evidence": "diff 中新增的類別宣告為 `class SettingsTextFormatter {`，未使用 `final` 關鍵字。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 419,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R11] SettingsTextFormatter 的 shared 屬性缺少明確存取控制",
+    "body": "`static let shared = SettingsTextFormatter()` 未標示存取控制修飾詞（如 `public` 或 `internal`），違反專案規範 R11（Properties and Methods Must Have Appropriate Access Control）。建議明確標示為 `public static let shared` 或 `internal static let shared`，以符合專案慣例。",
+    "existing_code": "static let shared = SettingsTextFormatter()",
+    "evidence": "diff 中該行沒有存取控制修飾詞。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R14] 公開方法 formatStudiesText 缺少文件註解",
+    "body": "`formatStudiesText(appName:)` 為公開方法，但未提供文件註解（`///`），違反專案規範 R14（Public APIs Must Have Documentation Comments）。建議加入說明方法用途、參數及回傳值的文件註解。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {",
+    "evidence": "diff 中該方法沒有文件註解。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 427,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R14] 公開方法 formatRolloutsText 缺少文件註解",
+    "body": "`formatRolloutsText(appName:)` 為公開方法，但未提供文件註解（`///`），違反專案規範 R14（Public APIs Must Have Documentation Comments）。建議加入說明方法用途、參數及回傳值的文件註解。",
+    "existing_code": "func formatRolloutsText(appName: String) -> String {",
+    "evidence": "diff 中該方法沒有文件註解。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "formatStudiesText 使用 String(format:) 可能導致執行期錯誤",
+    "body": "`formatStudiesText` 使用 `String(format: strings.detailTextStudies, appName)`，但 `strings.detailTextStudies` 的值為 `\"%@ may install and run studies from time to time.\"`，其中 `%@` 為格式符號，理論上可正確替換。然而，若翻譯字串中意外包含其他格式符號（如 `%d`）或格式符號數量不符，將導致執行期崩潰或錯誤輸出。建議改用更安全的字串替換方式（例如 `String.localizedStringWithFormat` 或直接使用 `replacingOccurrences(of: \"%@\", with: appName)`），或確保翻譯字串嚴格遵守格式規範。",
+    "existing_code": "return String(format: strings.detailTextStudies, appName)",
+    "evidence": "diff 中該行使用 `String(format:)`，且 `detailTextStudies` 的 value 包含 `%@`。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 428,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "formatRolloutsText 使用 String(format:) 可能導致執行期錯誤",
+    "body": "`formatRolloutsText` 使用 `String(format: strings.detailTextRollouts, appName)`，但 `strings.detailTextRollouts` 的值為 `\"%@ will improve features, performance, and stability between updates. Changes applied remotely.\"`，其中 `%@` 為格式符號。與前述問題相同，若翻譯字串包含其他格式符號或格式符號數量不符，將導致執行期錯誤。建議改用更安全的字串替換方式。",
+    "existing_code": "return String(format: strings.detailTextRollouts, appName)",
+    "evidence": "diff 中該行使用 `String(format:)`，且 `detailTextRollouts` 的 value 包含 `%@`。"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6260,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "RolloutsSettingMessage 的註解與格式符號不一致",
+    "body": "`RolloutsSettingMessage` 的 value 為 `\"%@ will improve features, performance, and stability between updates. Changes applied remotely.\"`，但 comment 中寫的是 `%1$@ is the app name`，格式符號不一致（`%@` vs `%1$@`）。這可能導致翻譯人員誤解格式符號的用法。建議統一為 `%@` 或 `%1$@`，並確保與實際使用的格式符號一致。",
+    "existing_code": "value: \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\",\n        comment: \"A short description that explains that Mozilla may change features remotely. %1$@ is the app name (e.g. Firefox).\")",
+    "evidence": "diff 中 value 使用 `%@`，但 comment 使用 `%1$@`。"
+  },
+  {
+    "path": "firefox-ios/Shared/Supporting Files/en-CA.lproj/Settings.strings",
+    "line": 257,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "en-CA 翻譯中 Rollouts.Message 的格式符號可能不一致",
+    "body": "在 en-CA 的翻譯中，`\"Settings.Rollouts.Message.v148\" = \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\";` 使用了 `%@`，但原始碼中的 comment 提到 `%1$@`。雖然目前翻譯與原始碼一致，但若未來翻譯調整格式符號，可能導致不一致。建議確認所有語系的格式符號與原始碼一致。",
+    "existing_code": "\"Settings.Rollouts.Message.v148\" = \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\";",
+    "evidence": "diff 中該行使用 `%@`，但原始碼 comment 使用 `%1$@`。"
+  },
+  {
+    "path": "firefox-ios/Shared/Supporting Files/en-GB.lproj/Settings.strings",
+    "line": 257,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "en-GB 翻譯中 Rollouts.Message 的格式符號可能不一致",
+    "body": "在 en-GB 的翻譯中，`\"Settings.Rollouts.Message.v148\" = \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\";` 使用了 `%@`，但原始碼中的 comment 提到 `%1$@`。雖然目前翻譯與原始碼一致，但若未來翻譯調整格式符號，可能導致不一致。建議確認所有語系的格式符號與原始碼一致。",
+    "existing_code": "\"Settings.Rollouts.Message.v148\" = \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\";",
+    "evidence": "diff 中該行使用 `%@`，但原始碼 comment 使用 `%1$@`。"
+  }
+]

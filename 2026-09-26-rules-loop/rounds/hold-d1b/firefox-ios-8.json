@@ -1,0 +1,112 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/Homepage/PrivateHomepageViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/DownloadsPanelTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/ReadingListPanelTests.swift",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/MainMenu/MainMenuViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Microsurvey/MicrosurveyViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/NativeErrorPage/NativeErrorPageViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Sharing/URLActivityItemProviderTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/WindowManagerTests.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 在 async setUp 中呼叫 @MainActor async 方法未加 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies(injectedTabManager: tabManager)` 現在是 @MainActor async 方法，但在 async setUp 中呼叫時未加上 `await`，會導致編譯錯誤。\n\n建議改為 `await DependencyHelperMock().bootstrapDependencies(injectedTabManager: tabManager)`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies(injectedTabManager: tabManager)",
+    "evidence": "diff 中此檔案 setUp 改為 async throws，但該行未加 await，而 DependencyHelperMock.swift 中該方法已標註 @MainActor 且為 async。"
+  }
+]

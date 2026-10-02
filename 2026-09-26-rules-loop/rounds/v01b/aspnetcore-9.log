@@ -1,0 +1,7 @@
+[info] repo 規範：repo=aspnetcore、20 條、10438 字元、placement=after_diff、sha256=3feef6acc67f
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 89353 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 eng/Versions.props:12 → 14（片段唯一命中）
+[info] 重新定位 eng/common/SetupNugetSources.ps1:177 → 180（片段唯一命中）
+[info] 重新定位 eng/common/SetupNugetSources.sh:177 → 180（片段唯一命中）
+[info] 重新定位 eng/common/core-templates/steps/install-microbuild.yml:18 → 29（片段唯一命中）
+[info] 完成於 14.3s ｜ findings=9 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 32451, "completion_tokens": 1994, "total_tokens": 34445, "prompt_tokens_details": {"cached_tokens": 32384}, "prompt_cache_hit_tokens": 32384, "prompt_cache_miss_tokens": 67}

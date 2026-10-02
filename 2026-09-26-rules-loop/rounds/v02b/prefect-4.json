@@ -1,0 +1,90 @@
+[
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "useSuspenseQuery 缺少錯誤處理",
+    "body": "使用 useSuspenseQuery 時，若 API 請求失敗，錯誤會向上拋出，但此處沒有 ErrorBoundary 或錯誤處理邏輯，可能導致整個元件樹崩潰。建議加入 ErrorBoundary 或使用 useQuery 並處理 error 狀態。",
+    "existing_code": "const { data } = useSuspenseQuery(\n\t\tbuildListFilterBlockDocumentsQuery({",
+    "evidence": "diff 中新增的 useSuspenseQuery 呼叫沒有錯誤處理，且元件未包覆 ErrorBoundary。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "前端過濾可能與後端不一致",
+    "body": "後端查詢已使用 deferredSearch 進行 like_ 過濾，但前端又用 useMemo 進行另一次過濾，可能導致結果不一致（例如大小寫處理、模糊匹配規則不同）。建議只依賴後端過濾，或確保前後端邏輯一致。",
+    "existing_code": "const filteredData = useMemo(() => {\n    return data.filter((blockDocument) =>\n      blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),\n    );\n  }, [data, deferredSearch]);",
+    "evidence": "diff 中同時存在後端 like_ 過濾與前端 filter，可能造成不一致。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 186,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "錯誤處理不完整且可能誤導使用者",
+    "body": "在 onSave 中，validateForm 可能拋出錯誤，但 catch 區塊僅顯示通用錯誤訊息，未提供具體錯誤細節。此外，createBlockDocument 的 onError 也僅顯示通用訊息，使用者無法得知失敗原因。建議顯示後端回傳的錯誤訊息。",
+    "existing_code": "} catch (err) {\n\t\t\tconst message = \"Unknown error while validating block data.\";\n\t\t\ttoast.error(message);\n\t\t\tconsole.error(message, err);\n\t\t}",
+    "evidence": "diff 中 catch 區塊使用固定錯誤訊息，未利用 err 內容。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R09] 縮排使用空格而非 tab",
+    "body": "此檔案中部分行使用空格縮排，違反專案規範 R09（TypeScript 必須使用 tab 縮排）。請改用 tab。",
+    "existing_code": "const filteredData = useMemo(() => {\n    return data.filter((blockDocument) =>\n      blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),\n    );\n  }, [data, deferredSearch]);",
+    "evidence": "diff 中可見行首為空格而非 tab。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-block-document.tsx",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R09] 縮排使用空格而非 tab",
+    "body": "此檔案中部分行使用空格縮排，違反專案規範 R09。請改用 tab。",
+    "existing_code": "import { useState } from \"react\";\nimport { BlockDocumentCombobox } from \"@/components/blocks/block-document-combobox\";",
+    "evidence": "diff 中可見行首為空格而非 tab。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R09] 縮排使用空格而非 tab",
+    "body": "此檔案中部分行使用空格縮排，違反專案規範 R09。請改用 tab。",
+    "existing_code": "import { zodResolver } from \"@hookform/resolvers/zod\";\nimport { useSuspenseQuery } from \"@tanstack/react-query\";",
+    "evidence": "diff 中可見行首為空格而非 tab。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 213,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.85,
+    "title": "缺少載入狀態處理",
+    "body": "在提交表單時，按鈕有 loading 狀態，但 LazySchemaForm 可能也需要載入狀態。此外，若 blockType 或 blockSchemas 查詢失敗，沒有錯誤處理。建議加入對應的錯誤處理與載入指示。",
+    "existing_code": "<LazySchemaForm\n\t\t\t\t\tvalues={values}\n\t\t\t\t\tonValuesChange={setValues}\n\t\t\t\t\terrors={errors}\n\t\t\t\t\tkinds={[\"json\"]}\n\t\t\t\t\tschema={blockSchemaFields}\n\t\t\t\t/>",
+    "evidence": "diff 中 LazySchemaForm 沒有處理載入或錯誤狀態。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input.tsx",
+    "line": 82,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "型別斷言可能不安全",
+    "body": "value as { $ref: string } | undefined 的斷言可能隱藏型別錯誤，若 value 不是預期格式，可能導致執行時期錯誤。建議使用型別守衛或更精確的型別。",
+    "existing_code": "value={value as { $ref: string } | undefined}",
+    "evidence": "diff 中直接使用 as 斷言，未驗證 value 結構。"
+  }
+]

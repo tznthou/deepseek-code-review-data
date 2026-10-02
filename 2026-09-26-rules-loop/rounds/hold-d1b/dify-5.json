@@ -1,0 +1,68 @@
+[
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "max_length 可能為 undefined 導致比較錯誤",
+    "body": "原本使用 `varItem.max_length || DEFAULT_VALUE_MAX_LEN` 提供預設值，現在直接使用 `varItem.max_length`。若後端未提供 `max_length`，則 `item[varIndex].length > undefined` 會得到 `false`，導致長度驗證失效。請確認後端必定提供 `max_length`，或在此處保留預設值。",
+    "existing_code": "if (item[varIndex].length > varItem.max_length) {",
+    "evidence": "diff 中將 `const maxLen = varItem.max_length || DEFAULT_VALUE_MAX_LEN` 改為直接使用 `varItem.max_length`，且未提供 fallback。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/run-once/index.tsx",
+    "line": 142,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "maxLength 屬性可能為 undefined 導致無限制輸入",
+    "body": "原本使用 `item.max_length || DEFAULT_VALUE_MAX_LEN` 提供預設值，現在直接使用 `item.max_length`。若 `max_length` 未定義，則 `maxLength` 屬性會是 `undefined`，瀏覽器將不限制輸入長度。請確認後端必定提供 `max_length`，或在此處保留預設值。",
+    "existing_code": "maxLength={item.max_length}",
+    "evidence": "diff 中將 `maxLength={item.max_length || DEFAULT_VALUE_MAX_LEN}` 改為 `maxLength={item.max_length}`。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 198,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "paragraph 類型不再設定 max_length 預設值",
+    "body": "原本在類型變更為 paragraph 時會設定 `draft.max_length = DEFAULT_VALUE_MAX_LEN`，現在移除後，若使用者未手動設定，`max_length` 可能為 undefined，導致後續驗證或 UI 顯示問題。請確認此行為符合預期。",
+    "existing_code": "if (type === InputVarType.paragraph)\n        draft.max_length = DEFAULT_VALUE_MAX_LEN",
+    "evidence": "diff 中移除了設定 `draft.max_length = DEFAULT_VALUE_MAX_LEN` 的程式碼。"
+  },
+  {
+    "path": "web/app/components/rag-pipeline/components/panel/input-field/editor/form/hooks.ts",
+    "line": 87,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "paragraph 類型不再設定 maxLength 預設值",
+    "body": "原本在類型變更為 paragraph 時會呼叫 `setFieldValue('maxLength', DEFAULT_VALUE_MAX_LEN)`，現在移除後，若使用者未手動設定，`maxLength` 可能為 undefined，導致後續驗證或 UI 顯示問題。請確認此行為符合預期。",
+    "existing_code": "if (type === PipelineInputVarType.paragraph)\n      setFieldValue('maxLength', DEFAULT_VALUE_MAX_LEN)",
+    "evidence": "diff 中移除了設定 `maxLength` 的程式碼。"
+  },
+  {
+    "path": "web/app/components/app/configuration/prompt-value-panel/index.tsx",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "number 輸入類型改為 text 可能影響驗證",
+    "body": "原本 `type=\"number\"` 的輸入框改為 `type=\"text\"`，這可能導致瀏覽器不再提供數字輸入的驗證和介面（如上下箭頭）。若需要數字輸入，建議保留 `type=\"number\"` 或使用其他方式驗證。",
+    "existing_code": "type=\"text\"",
+    "evidence": "diff 中將 `type=\"number\"` 改為 `type=\"text\"`。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 199,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R25] 移除 console.log 陳述式",
+    "body": "新增的 `console.log` 違反前端規範 R25（不得使用 console 陳述式）。請移除或改用適當的 logging 機制。",
+    "existing_code": "console.log('Checking batch inputs:', { dataLength: data.length, headerData })",
+    "evidence": "diff 中新增了 `console.log('Checking batch inputs:', { dataLength: data.length, headerData })`，違反 R25。"
+  }
+]

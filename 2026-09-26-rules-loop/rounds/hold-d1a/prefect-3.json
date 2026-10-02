@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-array-list.tsx",
+    "line": 130,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "拖曳排序可能將 prefixItems 移到可移動項目之後",
+    "body": "在 `handleDragEnd` 中，直接使用 `moveItem(newIndex, oldIndex)` 來交換項目，但未檢查 `oldIndex` 或 `newIndex` 是否對應到 prefixItems。prefixItems 是 schema 中定義的固定前綴項目，不應被拖曳或重新排序。如果使用者將可移動項目拖到 prefixItems 的位置，可能導致 prefixItems 的順序被改變，違反 schema 定義。建議在拖曳結束時，限制可移動的索引範圍，僅允許在 prefixItems 之後的項目之間排序。",
+    "existing_code": "function handleDragEnd(event: DragEndEvent) {\n\t\tconst { active, over } = event;\n\n\t\tif (over && active.id !== over.id) {\n\t\t\tconst oldIndex = localKeyedValues.findIndex(\n\t\t\t\t(item) => item.key === active.id,\n\t\t\t);\n\t\t\tconst newIndex = localKeyedValues.findIndex(\n\t\t\t\t(item) => item.key === over.id,\n\t\t\t);\n\n\t\t\tif (oldIndex !== -1 && newIndex !== -1) {\n\t\t\t\tmoveItem(newIndex, oldIndex);\n\t\t\t}\n\t\t}\n\t}",
+    "evidence": "diff 中新增的 `handleDragEnd` 函式未檢查索引是否落在 prefixItems 範圍內，而 `moveItem` 的實作可能直接交換陣列元素。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form.snapshot.test.tsx",
+    "line": 489,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R10] 測試檔案未與元件檔案同目錄",
+    "body": "根據 R10，React 元件測試檔案應與元件檔案放在同一目錄。此 PR 新增的測試位於 `ui-v2/src/components/schemas/schema-form.snapshot.test.tsx`，但被測試的元件 `schema-form-input-array-item.tsx` 和 `schema-form-input-array-list.tsx` 位於 `ui-v2/src/components/schemas/` 下，測試檔案與元件檔案同目錄，符合 R10。然而，此測試檔案是 snapshot 測試，且原本就存在，新增的測試案例只是擴充，因此不構成違反。",
+    "existing_code": "describe(\"array\", () => {",
+    "evidence": "測試檔案路徑為 `ui-v2/src/components/schemas/schema-form.snapshot.test.tsx`，與元件檔案同目錄，符合 R10。"
+  }
+]

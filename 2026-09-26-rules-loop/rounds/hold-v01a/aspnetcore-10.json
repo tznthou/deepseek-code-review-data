@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Logging.AzureAppServices/src/AzureFileLoggerOptions.cs",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "RetainedFileCountLimit 驗證條件變更可能允許零值",
+    "body": "驗證條件由 `value <= 0` 改為 `value < 0`，這將允許 `RetainedFileCountLimit` 設為 0。但屬性文件仍描述為「strictly positive value」，且 0 可能導致未定義行為（例如不保留任何檔案）。請確認此變更是否為預期，若非預期應維持 `<= 0` 的驗證。",
+    "existing_code": "if (value < 0)",
+    "evidence": "diff 中此行由 `if (value <= 0)` 改為 `if (value < 0)`，但文件未同步更新，且屬性描述仍為 strictly positive。"
+  },
+  {
+    "path": "src/Validation/src/ValidationOptions.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "out 參數初始化位置調整可能影響可讀性",
+    "body": "將 `validatableTypeInfo = null;` 移至方法開頭，雖然功能上無差異，但可能降低可讀性，因為初始化與後續邏輯分離。若無特殊原因，建議保留在迴圈後。",
+    "existing_code": "validatableTypeInfo = null;",
+    "evidence": "diff 顯示此行從方法結尾移至開頭，但未見相關說明。"
+  }
+]

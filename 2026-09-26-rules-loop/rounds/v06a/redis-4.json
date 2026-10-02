@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc 而非 zmalloc 分配 cluster_slot_stats",
+    "body": "在 clusterCommonInit 中，使用 `malloc` 分配 `server.cluster_slot_stats`，違反專案規範 R02（應使用 zmalloc 系列函式）。這會導致記憶體使用量未被 Redis 的記憶體追蹤機制記錄，可能影響 `INFO memory` 的準確性，並在 OOM 時無法正確處理。建議改用 `zmalloc`。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的 clusterCommonInit 函式內，該行使用 malloc 而非 zmalloc。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 1658,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "asmCron 呼叫順序變更可能影響行為",
+    "body": "原本 asmCron 在 clusterCron 內部呼叫（cluster_legacy.c 的 clusterCron 末尾），現在移至 serverCron 中，在 clusterCron 之前呼叫。若 asmCron 依賴 clusterCron 更新後的狀態（例如 slot 遷移狀態），此順序變更可能導致非預期行為。建議確認 asmCron 與 clusterCron 的相依性，或保持原有順序。",
+    "existing_code": "asmCron();\n            clusterCron();",
+    "evidence": "diff 顯示 server.c 中新增 asmCron() 呼叫，且位於 clusterCron() 之前；原 cluster_legacy.c 中 asmCron 在 clusterCron 末尾呼叫。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 1842,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "asmBeforeSleep 呼叫順序變更可能影響行為",
+    "body": "原本 asmBeforeSleep 在 clusterBeforeSleep 內部呼叫（cluster_legacy.c 的 clusterBeforeSleep 末尾），現在移至 server.c 中，在 clusterBeforeSleep 之後呼叫。若 asmBeforeSleep 依賴 clusterBeforeSleep 的某些副作用（例如更新節點狀態），此順序變更可能導致問題。建議確認兩者相依性，或保持原有順序。",
+    "existing_code": "clusterBeforeSleep();\n        asmBeforeSleep();",
+    "evidence": "diff 顯示 server.c 中新增 asmBeforeSleep() 呼叫，且位於 clusterBeforeSleep() 之後；原 cluster_legacy.c 中 asmBeforeSleep 在 clusterBeforeSleep 末尾呼叫。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "clusterCommonInit 中未檢查 malloc 回傳值",
+    "body": "malloc 可能失敗並回傳 NULL，但程式碼未檢查，後續 resetClusterStats 或 asmInit 可能對 NULL 指標進行操作，導致 crash。建議加入 NULL 檢查並在失敗時進行適當處理（如記錄錯誤並退出）。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));\n    resetClusterStats();",
+    "evidence": "diff 中新增的 clusterCommonInit 函式，malloc 後直接呼叫 resetClusterStats，未檢查回傳值。"
+  }
+]

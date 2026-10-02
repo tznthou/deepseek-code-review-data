@@ -1,0 +1,13 @@
+[
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R04] LimitedBadges 元件使用了 default export",
+    "body": "LimitedBadges 元件在檔案結尾使用了 `export default LimitedBadges;`，但根據 repo 規範 R04，default export 僅允許在 Next.js 的 page.tsx 和 layout.tsx 檔案中使用。此檔案位於 `apps/web/components/ui/`，不屬於允許的範圍。請改為 named export，例如 `export { LimitedBadges };`。",
+    "existing_code": "export default LimitedBadges;",
+    "evidence": "diff 中新增的檔案 `apps/web/components/ui/LimitedBadges.tsx` 最後一行為 `export default LimitedBadges;`，違反 R04 規範。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`get_or_create_client` 回傳值未檢查，可能導致 `client` 為 `None`",
+    "body": "`get_or_create_client` 可能回傳 `None`（例如無法建立 client 時），但後續直接使用 `client.read_deployment` 等，會導致 `AttributeError`。建議檢查回傳值或確保該函式必定回傳有效 client。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中新增 `client, _ = get_or_create_client(client)`，但未檢查 `client` 是否為 `None`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 211,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`deployment_id` 可能為 `None` 時傳入 `create_flow_run_from_deployment`",
+    "body": "若 `name` 不是 UUID 且找不到對應 deployment，`deployment_id` 會是 `None`，但此處直接傳入 `create_flow_run_from_deployment`，可能導致 API 錯誤或未定義行為。建議在呼叫前檢查 `deployment_id` 是否存在。",
+    "existing_code": "flow_run = await client.create_flow_run_from_deployment(\n        deployment_id,\n        parameters=parameters,",
+    "evidence": "diff 中將 `deployment.id` 改為 `deployment_id`，但 `deployment_id` 可能為 `None`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`collect_task_run_inputs` 改為同步呼叫可能阻塞事件迴圈",
+    "body": "原本 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`，若該函式內部有非同步操作，可能導致事件迴圈阻塞或錯誤。需確認 `collect_task_run_inputs` 是否為同步函式。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中移除 `await`，但未確認函式同步性。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 230,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "輪詢迴圈中 `await anyio.sleep(poll_interval)` 移至開頭可能延遲首次檢查",
+    "body": "原本先檢查狀態再 sleep，現在先 sleep 再檢查，若 `poll_interval` 較大，會延遲首次狀態檢查。若 `timeout` 小於 `poll_interval`，可能直接超時而無法取得最終狀態。",
+    "existing_code": "while True:\n            await anyio.sleep(poll_interval)\n            flow_run = await client.read_flow_run(flow_run_id)",
+    "evidence": "diff 中將 `await anyio.sleep(poll_interval)` 移到迴圈開頭。"
+  },
+  {
+    "path": "tests/deployment/test_flow_runs.py",
+    "line": 930,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "測試中 `run_deployment` 使用 `_sync=True` 參數，但函式簽名未顯示該參數",
+    "body": "測試呼叫 `run_deployment(..., _sync=True)`，但 `arun_deployment` 的簽名中沒有 `_sync` 參數。若 `@async_dispatch` 未正確處理，測試可能失敗。需確認裝飾器實作。",
+    "existing_code": "flow_run = run_deployment(\n            f\"foo-sync/{deployment.name}\",\n            timeout=0,\n            poll_interval=0,\n            _sync=True,\n        )",
+    "evidence": "diff 中測試使用 `_sync=True`，但函式定義未見該參數。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "listFeaturesForUser 的 filter 條件反轉，導致回傳空陣列",
+    "body": "在 `listFeaturesForUser` 中，原本的 `.filter((state) => state.globalEnabled)` 被改成了 `.filter((state) => !state.globalEnabled)`，這會讓所有全域啟用的功能都被過濾掉，只回傳全域停用的功能。這會導致使用者介面上看不到任何可用的 opt-in 功能。\n\n**失敗情境**：當 `OPT_IN_FEATURES` 中有任何 `globalEnabled` 為 true 的功能時，呼叫 `listFeaturesForUser` 會回傳空陣列，使用者無法看到或設定任何功能。\n\n**建議修法**：將條件改回 `state.globalEnabled`。",
+    "existing_code": "return featureIds.map((featureId) => resolvedStates[featureId]).filter((state) => !state.globalEnabled);",
+    "evidence": "diff 中此行由 `.filter((state) => state.globalEnabled)` 改為 `.filter((state) => !state.globalEnabled)`，邏輯明顯相反。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/config.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R06] 新增未使用的常數 UNUSED_CONSTANT，將觸發 lint 錯誤",
+    "body": "在 `config.ts` 中新增了 `const UNUSED_CONSTANT = \"this-should-be-removed\";`，但此常數從未被使用。根據專案規範 R06，pre-commit hook 會執行 `biome lint --error-on-warnings`，未使用的變數會導致 lint 失敗，阻擋 commit。\n\n**建議修法**：移除該常數。",
+    "existing_code": "// Unused import that should be caught by linting\nconst UNUSED_CONSTANT = \"this-should-be-removed\";",
+    "evidence": "diff 中新增了此常數，且後續程式碼未使用。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "整合測試中 mock 掉 isFeatureAllowedForScope，使 scope 驗證未被測試",
+    "body": "在整合測試中，使用 `vi.mock` 將 `isFeatureAllowedForScope` 替換為永遠回傳 `true` 的函式。這使得整合測試無法驗證 service 層的 scope 驗證邏輯，即使實作有誤，測試仍會通過。\n\n**失敗情境**：若 `setUserFeatureState` 或 `setTeamFeatureState` 中的 scope 驗證邏輯被移除或寫錯，整合測試不會發現。\n\n**建議修法**：不要在整合測試中 mock 此函式，或改為使用真實的 config 資料來測試不同 scope 的行為。",
+    "existing_code": "vi.mock(\"../config\", async (importOriginal) => {\n  const actual = await importOriginal<typeof import(\"../config\")>();\n  return {\n    ...actual,\n    isFeatureAllowedForScope: () => true,\n  };\n});",
+    "evidence": "diff 中新增了此 mock，且註解說明「The scope validation logic is tested in unit tests; integration tests focus on database behavior.」"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "setUserFeatureState 中 state 判斷邏輯反轉，可能導致行為錯誤",
+    "body": "在 `setUserFeatureState` 中，原本的 `if (state === \"inherit\")` 被改成了 `if (state !== \"inherit\")`。這會使得當 state 為 \"inherit\" 時，進入 else 分支執行 `setUserFeatureState`（帶 assignedBy），而當 state 為 \"enabled\" 或 \"disabled\" 時，反而執行不帶 assignedBy 的呼叫。這與預期行為相反。\n\n**失敗情境**：當使用者嘗試將功能設為 \"inherit\" 時，會錯誤地帶入 assignedBy；而設為 \"enabled\" 或 \"disabled\" 時，會缺少 assignedBy，可能導致資料庫寫入錯誤或權限檢查失敗。\n\n**建議修法**：將條件改回 `if (state === \"inherit\")`。",
+    "existing_code": "if (state !== \"inherit\") {\n      await this.featuresRepository.setUserFeatureState({ userId, featureId, state });\n    } else {\n      const { assignedBy } = input;",
+    "evidence": "diff 中此行由 `if (state === \"inherit\")` 改為 `if (state !== \"inherit\")`，且後續分支邏輯未同步調整。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 288,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "setTeamFeatureState 中 scope 預設值可能導致 org 操作被誤判為 team",
+    "body": "在 `setTeamFeatureState` 中，`const scope = input.scope ?? \"team\";` 將未提供 scope 的呼叫預設為 \"team\"。然而，在 tRPC router 中，`setForOrganization` 明確傳入 `scope: \"org\"`，但若未來有其他呼叫未傳 scope 且實際上是 org 操作，可能會被錯誤地以 team scope 驗證。\n\n**失敗情境**：若某個 org 層級的設定操作未傳入 scope，且該功能僅允許 org scope，則會被拒絕；反之，若功能僅允許 team scope，則可能錯誤地允許 org 操作。\n\n**建議修法**：考慮將 scope 設為必填，或根據 teamId 是否為 org ID 來推斷 scope。",
+    "existing_code": "const scope = input.scope ?? \"team\";",
+    "evidence": "diff 中新增此行，且 tRPC router 中 `setForOrganization` 有傳入 scope，但其他呼叫可能依賴預設值。"
+  }
+]

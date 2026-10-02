@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-kubernetes/tests/test_observer.py",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "刪除整個測試檔案，降低覆蓋率",
+    "body": "此 PR 刪除了 `test_observer.py` 檔案，其中包含多個針對 `_replicate_pod_event`、observer 啟動/停止、日誌配置的測試。刪除後，這些功能將不再有測試保護，尤其是本次修改的 semaphore 邏輯沒有新增任何測試。建議保留或遷移相關測試，並為 semaphore 行為（例如並發限制、初始化失敗）添加新測試。",
+    "existing_code": "deleted file mode 100644",
+    "evidence": "diff 顯示整個測試檔案被刪除，且沒有新增替代測試。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Semaphore 可能未初始化而導致 RuntimeError",
+    "body": "在 `_replicate_pod_event` 中，當 `event_type is None` 且 `_startup_event_semaphore` 為 `None` 時，會直接 `raise RuntimeError(\"Startup event semaphore not initialized\")`。但 `_startup_event_semaphore` 只在 `initialize_clients` 成功執行後才會被設定。如果 `initialize_clients` 尚未被呼叫、或呼叫失敗（例如 `get_client()` 或 `get_events_client()` 拋出例外），則任何啟動期間的 pod 事件（`event_type is None`）都會觸發此錯誤，可能導致 observer 無法正常處理現有資源。\n\n建議：\n- 在 `initialize_clients` 中確保 semaphore 初始化失敗時有明確的錯誤處理或 fallback。\n- 或者，在 `_replicate_pod_event` 中若 semaphore 為 `None`，可考慮使用預設值（例如 `asyncio.Semaphore(1)`）或記錄警告後繼續，而非直接拋出例外。",
+    "existing_code": "if _startup_event_semaphore is None:\n    raise RuntimeError(\"Startup event semaphore not initialized\")",
+    "evidence": "diff 中新增了 `_startup_event_semaphore` 全域變數，並在 `initialize_clients` 中賦值，但 `_replicate_pod_event` 在 `event_type is None` 分支中直接檢查並拋出例外，沒有考慮初始化失敗或未執行的情況。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 137,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Semaphore 可能限制過嚴導致啟動延遲",
+    "body": "使用 `asyncio.Semaphore(settings.observer.startup_event_concurrency)` 限制並發，預設值為 5。如果叢集中有大量 pods/jobs，且每個查詢都需要網路往返，啟動時間可能顯著增加。雖然這是預期的權衡，但建議在日誌中記錄 semaphore 的並發限制，並考慮提供設定調整的指引。",
+    "existing_code": "async with _startup_event_semaphore:",
+    "evidence": "diff 中新增了 semaphore 的使用，但沒有對啟動時間的影響進行說明或提供可調參數的建議。"
+  }
+]

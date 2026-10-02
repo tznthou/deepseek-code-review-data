@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/stats/ContentStatsService.js",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 source 過濾條件可能破壞現有 API 行為",
+    "body": "原本的程式碼會將 `options.source` 加入 Tinybird 查詢參數，但這次改動移除了這個區塊。如果前端或其他服務仍會傳送 `source` 參數，這些請求將不再被過濾，導致回傳未過濾的資料。請確認是否有其他地方處理 `source`，或這是否為預期的行為變更。",
+    "existing_code": "// Only add source if defined (allow empty string for \"Direct\" traffic)\n        if (options.source !== undefined) {\n            tinybirdOptions.source = options.source;\n        }",
+    "evidence": "diff 中移除了上述程式碼區塊，且未見其他替代處理。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_kpis_v2.pipe",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "session_metrics 與 filtered_sessions_v2 的 join 可能造成重複計算",
+    "body": "在 `session_metrics` 節點中，`session_data` 與 `filtered_sessions_v2` 以 `session_id` 進行 inner join。若 `filtered_sessions_v2` 因 hit-level 過濾條件而對同一 session 回傳多筆資料（例如同 session 內有多個符合條件的 hit），則 join 後會產生重複的 session 資料，導致 `visits`、`pageviews` 等指標被高估。建議確認 `filtered_sessions_v2` 是否保證每個 session 只回傳一筆，或改用 `distinct` 或聚合方式處理。",
+    "existing_code": "from session_data sd\n            inner join filtered_sessions_v2 fs\n                on fs.session_id = sd.session_id",
+    "evidence": "diff 中 `filtered_sessions_v2.pipe` 的 `sessions_filtered_by_hit_attributes` 節點使用 `select distinct session_id`，但若同一 session 有多個 hit 符合條件，仍可能回傳多筆相同 session_id。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_devices_v2.pipe",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "session_data 節點未使用 -Merge 函數讀取 AggregatingMergeTree",
+    "body": "在 `api_top_devices_v2.pipe` 的 `session_data` 節點中，直接從 `_mv_session_data_v2` 選取 `argMinMerge(device)`，但未先使用 `-Merge` 函數（如 `argMinMerge` 本身即為 merge 函數，但需確認資料表引擎為 AggregatingMergeTree 且查詢時需使用 `-Merge` 後綴）。若直接查詢底層表，可能無法正確合併多個 part 的聚合狀態。建議確認 Tinybird 的 materialized view 查詢方式，或參考其他 v2 管線的寫法。",
+    "existing_code": "argMinMerge(device) as device\n    FROM _mv_session_data_v2",
+    "evidence": "diff 中其他管線（如 `api_kpis_v2.pipe`）使用 `countMerge`、`minMerge` 等函數，但未見明確的 `-Merge` 表名後綴。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_locations_v2.pipe",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "member_status 過濾條件可能包含重複的 'comped'",
+    "body": "在 `api_top_locations_v2.pipe` 的 `_top_locations_0` 節點中，`member_status` 的過濾條件使用 `|| if('paid' IN {{ Array(member_status) }}, ['comped'], [])`。若 `member_status` 陣列中已包含 `'comped'`，則會產生重複值，可能影響查詢結果。建議確認此邏輯是否為預期，或改用 `arrayDistinct` 等方式處理。",
+    "existing_code": "{{ Array(member_status, \"'undefined', 'free', 'paid'\", description=\"Member status to filter on\", required=False) }}\n                    || if('paid' IN {{ Array(member_status) }}, ['comped'], [])",
+    "evidence": "diff 中該條件在多個管線中重複出現，且未見去重處理。"
+  }
+]

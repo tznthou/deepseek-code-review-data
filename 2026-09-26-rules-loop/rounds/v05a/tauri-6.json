@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "AppPlugin 的返回鍵處理可能導致遞迴或非預期行為",
+    "body": "在 `handleOnBackPressed` 中，當沒有監聽器且 WebView 無法返回時，程式碼會將 `this.isEnabled` 設為 false，呼叫 `activity.onBackPressed()`，然後再設回 true。然而，`activity.onBackPressed()` 會觸發系統的返回鍵處理，可能再次呼叫此 callback（若 callback 仍被註冊），造成遞迴。此外，若 `activity` 不是 `AppCompatActivity`，`onBackPressedDispatcher` 可能不存在，導致 NullPointerException。建議改用 `activity.onBackPressedDispatcher.onBackPressed()` 或直接呼叫 `activity.finish()`，並確保 activity 型別正確。",
+    "existing_code": "this.isEnabled = false\n            this@AppPlugin.activity.onBackPressed()\n            this.isEnabled = true",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 29-31 行顯示此邏輯。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "exit 命令未檢查 activity 型別，可能導致 ClassCastException",
+    "body": "`exit` 命令直接呼叫 `activity.finish()`，但 `activity` 在建構子中傳入，若實際型別不是 `Activity`（例如 `Context`），可能導致 ClassCastException。建議在建構子中檢查型別或使用更安全的方式取得 Activity。",
+    "existing_code": "fun exit(invoke: Invoke) {\n    activity.finish()\n    invoke.resolve()\n  }",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 47-50 行。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "AppPlugin 未處理 webView 為 null 的情況",
+    "body": "`webView` 屬性在 `load` 方法中賦值，但在 `handleOnBackPressed` 中直接使用 `this@AppPlugin.webView?.canGoBack()`，若 `load` 尚未被呼叫，`webView` 為 null，則 `canGoBack` 會回傳 null，導致後續邏輯錯誤。建議在 `handleOnBackPressed` 中檢查 `webView` 是否為 null，或確保 `load` 一定先被呼叫。",
+    "existing_code": "private var webView: WebView? = null",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 15 行。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "AppPlugin 的 init 區塊可能過早執行",
+    "body": "`init` 區塊在建構時執行，此時 `activity` 可能尚未完全初始化，且 `onBackPressedDispatcher` 可能尚未準備好。建議將 callback 註冊移至 `load` 方法或使用 `onCreate` 生命週期方法。",
+    "existing_code": "init {\n    val callback = object : OnBackPressedCallback(true) {",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 21-22 行。"
+  },
+  {
+    "path": "crates/tauri/src/app/plugin.rs",
+    "line": 148,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "AppPlugin 結構體缺少文件註解",
+    "body": "根據專案規範 R07，公開 API 應包含文件註解。`AppPlugin` 結構體為 `pub(crate)`，但若未來公開，應補上文件。",
+    "existing_code": "pub(crate) struct AppPlugin<R: Runtime>(pub crate::plugin::PluginHandle<R>);",
+    "evidence": "diff 中新增的 plugin.rs 第 135 行。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳值型別錯誤：True 應為 true",
+    "body": "在 handleJSONSchemaChange 中，成功解析 JSON 後回傳了 `True`（Python 布林值），但 TypeScript 中應為 `true`。這會導致型別錯誤，且可能影響呼叫端的邏輯判斷。\n\n建議改為 `return true`。",
+    "existing_code": "return True",
+    "evidence": "diff 中新增的 `return True` 位於 handleJSONSchemaChange 函式內，該函式預期回傳布林值或 null。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "jsonSchemaStr 變更可能破壞既有資料顯示",
+    "body": "原本 jsonSchemaStr 只顯示 JSON Schema 的 `properties` 部分，現在改為顯示整個 schema。若既有資料中 json_schema 僅包含 properties 而沒有 type 等頂層欄位，顯示將包含額外資訊，可能造成混淆。\n\n建議確認後端儲存的 json_schema 格式是否已更新，或提供遷移機制。",
+    "existing_code": "return JSON.stringify(JSON.parse(tempPayload.json_schema), null, 2)",
+    "evidence": "diff 中將原本的 `.properties` 移除，改為直接 stringify 整個解析後的物件。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "handleJSONSchemaChange 回傳值不一致",
+    "body": "函式在空值時回傳 null，成功時回傳 True（型別錯誤），失敗時回傳 null。回傳值型別不一致可能導致呼叫端難以處理。\n\n建議統一回傳 boolean 或 void，並修正 True 為 true。",
+    "existing_code": "return True",
+    "evidence": "diff 中新增的 return True 與其他 return null 形成對比。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 251,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "未使用的變數 normalizedJsonSchema",
+    "body": "在 handleConfirm 中定義了 `normalizedJsonSchema`，但後續並未使用。這可能觸發 ESLint 的 no-unused-vars 規則。\n\n建議移除該變數或使用它。",
+    "existing_code": "const normalizedJsonSchema = isSchemaEmpty ? undefined : jsonSchemaValue",
+    "evidence": "diff 中新增的 normalizedJsonSchema 變數在後續程式碼中未出現。"
+  }
+]

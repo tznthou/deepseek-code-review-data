@@ -1,0 +1,79 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "CommentContent 的 clamp 偵測可能因內容動態載入或字型載入而失效",
+    "body": "useEffect 僅在元件掛載時執行一次，且依賴陣列為空。若 item.html 內容在掛載後才更新（例如從非同步來源取得），或網頁字型在掛載後才載入完成，scrollHeight 與 clientHeight 的比較結果可能不準確，導致「Show more」按鈕錯誤顯示或隱藏。建議將 item.html 加入依賴陣列，並監聽字型載入事件（如 document.fonts.ready）後重新檢查。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "useEffect 依賴陣列為空，且未處理字型載入或內容更新。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "formatDate 的正規表達式可能誤刪日期中的逗號",
+    "body": "正規表達式 /(\\d+),(\\s+\\d{4})/ 會將「Dec 17, 2025」中的逗號移除，但若日期格式因 locale 或瀏覽器實作不同而產生其他逗號位置（例如「December 17, 2025」），可能無法正確處理。建議改用更精確的格式化選項，或使用 toLocaleString 的選項來避免依賴字串取代。",
+    "existing_code": "// Remove comma between day and year (e.g., \"Dec 17, 2025\" -> \"Dec 17 2025\")\n    return formatted.replace(/(\\d+),(\\s+\\d{4})/, '$1$2');",
+    "evidence": "正規表達式假設逗號僅出現在日與年之間，但實際格式可能因 locale 而異。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 135,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "onAddFilter 改為必填但呼叫端未同步更新，可能導致執行時期錯誤",
+    "body": "原本 onAddFilter 是選用參數，此 PR 將其改為必填，但未檢查所有呼叫 CommentsList 的地方是否都有傳入此 prop。若某處未傳入，執行到 onClick 時會因為 onAddFilter 為 undefined 而拋出錯誤。建議保留選用或確保所有呼叫端都已更新。",
+    "existing_code": "onAddFilter: (field: string, value: string, operator?: string) => void;",
+    "evidence": "型別從選用改為必填，但 diff 中未顯示呼叫端更新。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 185,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R14] 列表渲染缺少 key prop",
+    "body": "在 map 渲染中，TableRow 或其子元件未提供 key prop。React 需要 key 來正確管理列表項目的狀態與效能。請為每個項目加入穩定的 key，例如 item.id。",
+    "existing_code": "className=\"grid w-full grid-cols-[1fr_5rem] items-center gap-x-4 p-2 hover:bg-muted/50 md:grid-cols-[1fr_auto_5rem] lg:table-row lg:p-0 [&.group:hover_td]:bg-transparent\"",
+    "evidence": "diff 中未見 key 屬性。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 198,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R13] Button 缺少 type 屬性",
+    "body": "多個 Button 元件未指定 type 屬性。在表單中可能意外觸發提交。請為所有按鈕加上 type=\"button\"（或適當的 type）。",
+    "existing_code": "<Button\n                                                        className={`flex h-auto items-center gap-1.5 truncate p-0 font-semibold text-primary hover:opacity-70 ${item.status === 'hidden' && 'text-muted-foreground'}`}\n                                                        variant='link'\n                                                        onClick={() => {\n                                                            onAddFilter('author', item.member!.id);\n                                                        }}\n                                                    >",
+    "evidence": "Button 元件未見 type 屬性。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R18] 使用雙引號而非單引號",
+    "body": "程式碼中多處使用雙引號，但專案規範要求使用單引號。請將字串改為單引號。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };",
+    "evidence": "字串使用雙引號。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R17] 縮排不一致",
+    "body": "部分程式碼縮排為 2 格，但專案規範要求 4 格。請調整縮排。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };",
+    "evidence": "縮排為 2 格。"
+  }
+]

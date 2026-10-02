@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R19] 測試方法使用 MSTest 屬性而非 xUnit",
+    "body": "此測試方法使用了 `[TestMethod]` 屬性，但專案規範要求使用 xUnit 框架（[Fact]、[Theory] 等）。這可能導致測試無法被正確執行或與其他測試不一致。建議改為 `[Fact]` 並移除 `using Microsoft.VisualStudio.TestTools.UnitTesting;`。",
+    "existing_code": "[TestMethod]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]\n    public void NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException()",
+    "evidence": "diff 中新增了 `[TestMethod]` 屬性，且檔案中其他測試方法使用 `[Fact]`。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "此測試方法沒有明確的 `// Arrange`、`// Act`、`// Assert` 註解來區分測試階段，違反專案規範。建議加入對應的註解以提高可讀性。",
+    "existing_code": "[TestMethod]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]\n    public void NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException()",
+    "evidence": "diff 中新增的測試方法沒有 AAA 註解，而其他測試方法有。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Navigate 呼叫移至取得元素參考之後可能造成測試不穩定",
+    "body": "原本先呼叫 `Navigate` 再取得 `_originalH1Element`，現在順序顛倒。如果 `Navigate` 會導致頁面重新載入或 DOM 更新，則先前取得的元素參考可能失效，導致後續 `Browser.Equal` 失敗。建議確認 `Navigate` 是否會影響 DOM，或改回原本順序。",
+    "existing_code": "_originalH1Element = Browser.Exists(By.TagName(\"h1\"));\n        Navigate($\"{ServerPathBase}/redirect\");",
+    "evidence": "diff 中將 `Navigate` 呼叫移至 `_originalH1Element` 指派之後。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "將 Back 改為 Forward 可能改變測試意圖",
+    "body": "原本測試使用 `Browser.Navigate().Back()` 來驗證返回行為，現在改為 `Forward()`。這可能改變測試的驗證目標，需確認是否為預期變更。若為誤改，應恢復為 `Back()`。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 `Back()` 改為 `Forward()`。"
+  }
+]

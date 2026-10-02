@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_transform_node.py",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "render_template 回傳 None 時會拋出 TypeError",
+    "body": "`render_template` 可能回傳 `None`（例如 `CodeExecutorJinja2TemplateRenderer` 中 `result.get(\"result\")` 為 `None` 時），但此處直接呼叫 `len(rendered)`，會導致 `TypeError: object of type 'NoneType' has no len()`。建議在呼叫 `len` 前檢查 `rendered is None`，或調整 renderer 合約確保永不回傳 None。",
+    "existing_code": "rendered = self._template_renderer.render_template(self.node_data.template, variables)\n            if len(rendered) > MAX_TEMPLATE_TRANSFORM_OUTPUT_LENGTH:",
+    "evidence": "diff 中新增的 `len(rendered)` 呼叫，而 `render_template` 的實作（template_renderer.py 第 36 行）在 `result.get(\"result\")` 為 None 時會回傳 None。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/nodes/template_transform/template_transform_node_spec.py",
+    "line": 430,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R05] 測試檔案可能超過 800 行限制",
+    "body": "此測試檔案新增了大量測試案例，可能使總行數超過 800 行，違反專案規範 R05。建議將測試拆分為多個檔案，或確認實際行數是否超限。",
+    "existing_code": "@patch(\n        \"core.workflow.nodes.template_transform.template_transform_node.CodeExecutorJinja2TemplateRenderer.render_template\"\n    )\n    def test_run_with_boolean_values(self, mock_execute, mock_graph, mock_graph_runtime_state, graph_init_params):",
+    "evidence": "diff 顯示從第 430 行開始新增大量測試函式，且原始檔案已有 412 行，新增後可能超過 800 行。"
+  }
+]

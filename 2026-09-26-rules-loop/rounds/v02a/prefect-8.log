@@ -1,0 +1,7 @@
+[info] repo 規範：repo=prefect、15 條、6783 字元、placement=before_diff、sha256=70829c92a5ae
+[info] 套用補充規則：github-workflows.md, python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 8118 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/prefect/server/api/server.py:506 → 509（片段唯一命中）
+[info] 重新定位 src/prefect/server/api/server.py:530 → 531（片段唯一命中）
+[info] 重新定位 Dockerfile:46 → 14（片段命中其他檔案（原報 .github/workflows/python-package.yaml））
+[info] 完成於 10.1s ｜ findings=4 ｜ relocated=3 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 7265, "completion_tokens": 1162, "total_tokens": 8427, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 5729}

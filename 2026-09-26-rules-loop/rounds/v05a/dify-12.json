@@ -1,0 +1,68 @@
+[
+  {
+    "path": "api/core/rag/datasource/vdb/clickzetta/clickzetta_vector.py",
+    "line": 990,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "ClickZetta 的 ESCAPE 子句語法可能無效",
+    "body": "在 ClickZetta 的 LIKE 查詢中，使用了 `ESCAPE '\\\\\\\\'`（在 Python 字串中為 `ESCAPE '\\\\'`，實際 SQL 為 `ESCAPE '\\'`）。但 ClickZetta 可能不支援標準 SQL 的 ESCAPE 子句，或使用不同的跳脫字元。這可能導致查詢執行錯誤，或跳脫字元未被正確解析，使萬用字元注入防護失效。\n\n**失敗情境**：當使用者搜尋包含 `%` 或 `_` 的字串時，若 ESCAPE 子句不被支援，查詢會拋出語法錯誤；若被忽略，則 `%` 仍會被視為萬用字元，導致搜尋結果不正確。\n\n**建議**：查閱 ClickZetta 的文件，確認其 LIKE 語法是否支援 ESCAPE 子句，以及正確的跳脫字元。若不支援，應改用其他方式（如使用 `REGEXP_LIKE` 或參數化查詢）來達成精確匹配。",
+    "existing_code": "escaped_query = escape_like_pattern(query).replace(\"'\", \"''\")\n        filter_clauses.append(f\"{Field.CONTENT_KEY} LIKE '%{escaped_query}%' ESCAPE '\\\\\\\\'\")",
+    "evidence": "diff 中新增的 `ESCAPE '\\\\\\\\'` 子句，但未提供 ClickZetta 支援此語法的證據。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/iris/iris_vector.py",
+    "line": 298,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.85,
+    "title": "IRIS 的 ESCAPE 子句使用 '|' 可能與跳脫字元不一致",
+    "body": "在 IRIS 的 LIKE 查詢中，使用了 `ESCAPE '|'`，但 `escape_like_pattern` 函式產生的跳脫字元是反斜線 `\\`。這導致跳脫字元與 ESCAPE 子句指定的字元不一致，跳脫將完全失效。\n\n**失敗情境**：當使用者搜尋包含 `%` 或 `_` 的字串時，`escape_like_pattern` 會將其轉為 `\\%` 或 `\\_`，但資料庫會將 `|` 視為跳脫字元，因此 `\\` 被當作普通字元，`%` 仍被視為萬用字元，導致搜尋結果錯誤。\n\n**建議**：將 ESCAPE 子句改為 `ESCAPE '\\'`（在 SQL 字串中為 `ESCAPE '\\\\'`），或修改 `escape_like_pattern` 以使用 `|` 作為跳脫字元。",
+    "existing_code": "WHERE text LIKE ? ESCAPE '|'",
+    "evidence": "diff 中新增的 `ESCAPE '|'` 與 `escape_like_pattern` 使用的反斜線跳脫不一致。"
+  },
+  {
+    "path": "api/core/rag/retrieval/dataset_retrieval.py",
+    "line": 1207,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`not contains` 分支未傳入 `escape` 參數，跳脫失效",
+    "body": "在 `process_metadata_filter_func` 的 `not contains` 分支中，呼叫 `json_field.notlike(f\"%{escaped_value}%\")` 時未傳入 `escape` 參數。這表示即使 `escaped_value` 已跳脫，資料庫仍會將 `%` 和 `_` 視為萬用字元，導致「不包含」的語意錯誤。\n\n**失敗情境**：當使用者設定「不包含 `50%`」的過濾條件時，由於 `%` 未被視為字面字元，查詢會排除所有包含 `50` 開頭的字串，而非僅排除包含 `50%` 的字串。\n\n**建議**：在 `notlike` 呼叫中加入 `escape=\"\\\\\"` 參數，與其他分支保持一致。",
+    "existing_code": "escaped_value = escape_like_pattern(str(value))\n                filters.append(json_field.notlike(f\"%{escaped_value}%\"))",
+    "evidence": "diff 中 `not contains` 分支的 `notlike` 呼叫缺少 `escape` 參數。"
+  },
+  {
+    "path": "api/services/workflow_app_service.py",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 Unicode 跳脫可能導致非 ASCII 字元搜尋行為改變",
+    "body": "原本的程式碼對關鍵字進行了 `encode('unicode_escape')` 處理，並將 `\\u` 替換為 `\\\\u`，這可能是為了在 JSON 欄位中正確搜尋 Unicode 字元。新的程式碼移除了這項處理，僅使用 `escape_like_pattern` 跳脫 LIKE 特殊字元。這可能導致搜尋非 ASCII 字元（如中文、emoji）時無法正確匹配，因為資料庫中儲存的 JSON 可能使用 Unicode 跳脫序列。\n\n**失敗情境**：當使用者搜尋包含中文的關鍵字時，若資料庫中的 JSON 欄位儲存的是 `\\uXXXX` 形式，則新的查詢將無法匹配，導致搜尋結果遺漏。\n\n**建議**：確認資料庫中 JSON 欄位的實際儲存格式。若確實需要 Unicode 跳脫，應保留原有處理，或將其整合到 `escape_like_pattern` 中。",
+    "existing_code": "keyword_trimmed = keyword[:30]\n            escaped_keyword = escape_like_pattern(keyword_trimmed)\n            keyword_like_val = f\"%{escaped_keyword}%\"",
+    "evidence": "diff 中移除了原有的 `encode('unicode_escape')` 和 `replace(r\"\\u\", r\"\\\\u\")` 處理。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_app_service.py",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試檔案中大量延遲匯入 AppService 可能掩蓋循環依賴",
+    "body": "此 PR 在測試檔案中將 `from services.app_service import AppService` 改為在每個測試函式內延遲匯入，並註解「避免循環依賴」。然而，這與 PR 的主要目的（LIKE 跳脫）無關，且可能掩蓋了實際存在的循環依賴問題。若循環依賴確實存在，應在應用程式程式碼中解決，而非在測試中規避。\n\n**建議**：若循環依賴是本次修改引入的，應找出根本原因並修復；若原本就存在，則不應在此 PR 中處理，以保持變更聚焦。",
+    "existing_code": "# Delay import of AppService to avoid circular dependency\n# from services.app_service import AppService",
+    "evidence": "diff 中多處將頂層匯入改為函式內匯入，並附上避免循環依賴的註解。"
+  },
+  {
+    "path": "api/libs/helper.py",
+    "line": 61,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`escape_like_pattern` 未處理 None 以外的非字串輸入",
+    "body": "函式僅檢查 `if not pattern`，若傳入非字串（如整數、布林值），會直接呼叫 `.replace` 而拋出 `AttributeError`。雖然目前呼叫端大多傳入字串，但未來可能誤用。\n\n**建議**：在函式開頭加入型別檢查，或使用 `isinstance(pattern, str)` 進行防禦。",
+    "existing_code": "if not pattern:\n        return pattern\n    # Escape backslash first, then percent and underscore\n    escapedPattern = pattern.replace(\"\\\\\", \"\\\\\\\\\").replace(\"%\", \"\\\\%\").replace(\"_\", \"\\\\_\")",
+    "evidence": "函式未對輸入型別進行驗證，僅依賴 falsy 檢查。"
+  }
+]

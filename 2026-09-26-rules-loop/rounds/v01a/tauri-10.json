@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1317,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R03] `inner_size` 呼叫參數格式錯誤，可能導致編譯失敗",
+    "body": "在 `window_features` 方法中，`self.window_builder.inner_size(size.width,    size.height);` 的參數之間有多餘空格，這違反了 rustfmt 格式規範（R03），且可能導致編譯器解析錯誤。建議移除多餘空格，改為 `self.window_builder.inner_size(size.width, size.height);`。",
+    "existing_code": "self.window_builder = self.window_builder.inner_size(size.width,    size.height);",
+    "evidence": "diff 中新增行：`+      self.window_builder = self.window_builder.inner_size(size.width,    size.height);`，參數間有多餘空格。"
+  },
+  {
+    "path": "crates/tauri-runtime-wry/src/lib.rs",
+    "line": 1718,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`SetCookie` 訊息與方法名稱不一致，可能導致 cookie 刪除失敗",
+    "body": "在 `delete_cookie` 方法中，原本傳送 `WebviewMessage::DeleteCookie`，現在改為 `WebviewMessage::SetCookie`。這可能導致刪除 cookie 的操作實際上變成設定 cookie，造成功能錯誤。請確認此變更是否為預期，若不是，應改回 `DeleteCookie`。",
+    "existing_code": "WebviewMessage::SetCookie(cookie.into_owned()),",
+    "evidence": "diff 中變更：`-        WebviewMessage::DeleteCookie(cookie.clone().into_owned()),` 改為 `+        WebviewMessage::SetCookie(cookie.into_owned()),`。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1321,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R03] `position` 呼叫參數格式錯誤，可能導致編譯失敗",
+    "body": "在 `window_features` 方法中，`self.window_builder.position(position.x,position.y);` 的參數之間缺少空格，違反 rustfmt 格式規範（R03）。建議改為 `self.window_builder.position(position.x, position.y);`。",
+    "existing_code": "self.window_builder = self.window_builder.position(position.x,position.y);",
+    "evidence": "diff 中新增行：`+      self.window_builder = self.window_builder.position(position.x,position.y);`，參數間缺少空格。"
+  }
+]

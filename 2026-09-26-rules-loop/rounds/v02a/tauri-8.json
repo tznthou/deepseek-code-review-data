@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "MouseButtonState 的 From 轉換邏輯被反轉",
+    "body": "在 `impl From<tray_icon::MouseButtonState> for MouseButtonState` 中，原本的對應關係是 `Up` -> `Up`、`Down` -> `Down`，但此次修改後變成了 `Up` -> `Down`、`Down` -> `Up`。這會導致從底層 tray_icon 事件轉換過來的滑鼠按鍵狀態完全相反，造成應用程式邏輯錯誤。\n\n建議修正為：\n```rust\nmatch value {\n    tray_icon::MouseButtonState::Up => MouseButtonState::Up,\n    tray_icon::MouseButtonState::Down => MouseButtonState::Down,\n}\n```",
+    "existing_code": "tray_icon::MouseButtonState::Up => MouseButtonState::Down,\n      tray_icon::MouseButtonState::Down => MouseButtonState::Up,",
+    "evidence": "diff 中顯示原本的 `tray_icon::MouseButtonState::Up => MouseButtonState::Up` 被改為 `tray_icon::MouseButtonState::Up => MouseButtonState::Down`，且 `Down` 對應也被反轉。"
+  },
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "新增的 TrayIconEvent::new_click 方法未標註 #[cfg(test)]",
+    "body": "此方法僅供測試或建立 mock 事件使用，但未加上 `#[cfg(test)]` 屬性，導致在正式建置中也會包含此方法，增加不必要的程式碼體積。建議加上 `#[cfg(test)]` 或移至測試模組中。",
+    "existing_code": "/// Creates a new Click event with default values.\n  /// Useful for testing or creating mock events.\n  pub fn new_click(id: TrayIconId) -> Self {",
+    "evidence": "diff 中新增了 `pub fn new_click`，且註解明確指出其用途為測試或 mock，但未見任何條件編譯屬性。"
+  }
+]

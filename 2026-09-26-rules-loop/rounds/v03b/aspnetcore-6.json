@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ProcessLogOut 移除 SignOutManager 驗證可能導致登出流程異常",
+    "body": "原本的程式碼在 Navigation.HistoryEntryState 為 null 時會使用 SignOutManager.ValidateSignOutState() 進行驗證，現在完全依賴 ValidateSignOutRequestState()。如果某些舊版用戶端或情境下 HistoryEntryState 為 null 且未設定正確的狀態，登出請求可能被錯誤拒絕或允許。建議確認 ValidateSignOutRequestState() 的實作是否涵蓋所有舊有情境，並補充對應的測試。",
+    "existing_code": "if (!ValidateSignOutRequestState())",
+    "evidence": "diff 中移除了 SignOutManager 的注入與使用，並將條件簡化為只呼叫 ValidateSignOutRequestState()。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Redirect 方法可能因 InteractiveRequestUrl 為 null 而拋出 NullReferenceException",
+    "body": "原本的程式碼在 _tokenResult.InteractionOptions 為 null 時使用 _tokenResult.RedirectUrl，現在改為使用 _tokenResult.InteractiveRequestUrl。如果 InteractiveRequestUrl 為 null（例如舊版建立的 AccessTokenResult 物件），則會傳遞 null 給 NavigateTo，可能導致 NullReferenceException。建議加入 null 檢查或確保 InteractiveRequestUrl 永遠有值。",
+    "existing_code": "_navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);",
+    "evidence": "diff 中將原本的 _tokenResult.RedirectUrl! 改為 _tokenResult.InteractiveRequestUrl!，但未見對 InteractiveRequestUrl 的 null 防護。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 Task.Yield() 可能影響登出流程的時序",
+    "body": "在取得 AuthenticationState 之前加入 await Task.Yield()，可能是為了避免同步阻塞，但這會讓登出流程多一個非同步點。如果後續程式碼依賴同步執行，可能造成行為差異。建議確認此變更的必要性，並補充測試。",
+    "existing_code": "await Task.Yield();",
+    "evidence": "diff 中新增了 await Task.Yield(); 這一行。"
+  }
+]

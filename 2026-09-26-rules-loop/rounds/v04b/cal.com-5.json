@@ -1,0 +1,57 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的 URL 前綴",
+    "body": "在解析 bookingUrl 以顯示 URL 前綴時，程式碼直接使用 `url.hostname` 並忽略 port，且未處理可能存在的子路徑。若 bookingUrl 包含 port（例如開發環境）或路徑結構與預期不同，顯示的前綴將不正確。建議改用 `url.origin` 並保留完整路徑（移除最後一段 slug 後），或直接顯示完整 bookingUrl 並讓使用者編輯 slug 部分。",
+    "existing_code": "const url = new URL(props.bookingUrl);\nconst pathParts = url.pathname.split(\"/\").filter(Boolean);\npathParts.pop(); // Remove slug\nlet prefix = \"/\";\nif (pathParts.length > 0) {\n  prefix = `/${pathParts.join(\"/\")}/`;\n}\nreturn `${url.protocol}//${url.hostname}${prefix}`;",
+    "evidence": "diff 中新增的 URL 解析邏輯（BasicsTab.tsx 第 257-268 行）使用 `url.hostname` 而非 `url.host`，會遺漏 port；且未考慮 pathname 中可能包含多層路徑。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "bookingUrl 可能永遠為空，導致預覽與複製連結功能失效",
+    "body": "`bookingUrl` state 初始化為空字串，且未在 component 中看到設定該 state 的程式碼（可能由 props 傳入但未在 diff 中顯示）。若該值未正確設定，使用者點擊預覽或複製連結時只會看到錯誤訊息，功能完全無法使用。建議確認 bookingUrl 的來源，並在 component mount 或資料載入時正確設定。",
+    "existing_code": "const [bookingUrl, setBookingUrl] = useState<string>(\"\");",
+    "evidence": "diff 中新增 `bookingUrl` state（event-type-detail.tsx 第 180 行），但未見任何 `setBookingUrl` 呼叫；`handlePreview` 與 `handleCopyLink` 皆依賴此值。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "複製連結功能未使用 bookingUrl 欄位",
+    "body": "在 content.ts 的 copyBtn 事件處理中，仍使用手動組成的 URL，未改用 `eventType.bookingUrl`。這可能導致複製的連結與實際 bookingUrl 不一致（例如使用自訂網域時）。建議與 previewBtn 一樣，優先使用 `eventType.bookingUrl`。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中 copyBtn 的 bookingUrl 建構方式未變更（content.ts 第 1125-1128 行），而 previewBtn 已改為使用 `eventType.bookingUrl`。"
+  },
+  {
+    "path": "companion/components/event-type-list-item/EventTypeListItemParts.tsx",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "getDisplayUrl 函式缺少單元測試",
+    "body": "新增的 `getDisplayUrl` 函式包含 URL 解析與 fallback 邏輯，但未見對應的測試。建議補上測試涵蓋：有效 bookingUrl、無 bookingUrl 但有 username/slug、無 bookingUrl 且無 username、無效 URL 等情境。",
+    "existing_code": "function getDisplayUrl(bookingUrl?: string, username?: string, slug?: string): string {",
+    "evidence": "diff 中新增 `getDisplayUrl` 函式（EventTypeListItemParts.tsx 第 10 行），但未見測試檔案變更。"
+  },
+  {
+    "path": "companion/services/calcom.ts",
+    "line": 1655,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "getUsername 函式錯誤處理過於籠統",
+    "body": "`getUsername` 函式將所有錯誤包裝成 `Failed to get username`，喪失原始錯誤資訊，不利於除錯。建議保留原始錯誤或使用結構化錯誤。",
+    "existing_code": "async function getUsername(): Promise<string> {\n  try {\n    const profile = await getUserProfile();\n    return profile.username;\n  } catch (error) {\n    throw new Error(\"Failed to get username\");\n  }\n}",
+    "evidence": "diff 中新增的 `getUsername` 函式（calcom.ts 第 1654-1661 行）捕獲錯誤後僅拋出通用訊息。"
+  }
+]

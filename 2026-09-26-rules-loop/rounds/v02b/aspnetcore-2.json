@@ -1,0 +1,46 @@
+[
+  {
+    "path": "eng/common/core-templates/job/source-index-stage1.yml",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "來源索引條件變更可能導致非 main 分支無法索引",
+    "body": "將 `condition` 從空字串改為 `eq(variables['Build.SourceBranch'], 'refs/heads/main')`，這會使來源索引僅在 main 分支執行。若其他分支（如 release 分支）也需要來源索引，此變更將導致索引遺漏，影響符號伺服器與偵錯體驗。建議確認此限制是否為預期行為，或改用更寬鬆的條件（例如排除 PR 分支）。",
+    "existing_code": "condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')",
+    "evidence": "diff 中將原本的 `condition: ''` 改為 `condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')`，限制了執行分支。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 408,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "WebSocketWrapper 中 _receiveTcs 重設時機可能導致競態",
+    "body": "在 `ReceiveAsync` 中，原本在處理零位元組讀取後才重設 `_receiveTcs`，現在改為在取得結果後立即重設。若 `buffer.Count == 0` 時直接回傳，新的 `_receiveTcs` 已建立，但呼叫端可能預期後續讀取會等待新的結果。此變更可能影響測試的同步邏輯，建議確認是否為修正特定問題所需，並評估對其他測試的影響。",
+    "existing_code": "var res = await _receiveTcs.Task;\n            _receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);",
+    "evidence": "diff 顯示 `_receiveTcs = new(...)` 被移至 `if (buffer.Count == 0)` 之前，改變了重設時機。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 362,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R14] 內部類別 WebSocketWrapper 未標記 sealed",
+    "body": "根據規範 R14，內部實作類別若未預期被繼承應標記為 `sealed`。此變更移除了 `sealed` 修飾詞，可能違反效能與設計意圖。若無繼承需求，建議保留 `sealed`。",
+    "existing_code": "internal class WebSocketWrapper : WebSocket",
+    "evidence": "diff 中 `internal sealed class WebSocketWrapper` 改為 `internal class WebSocketWrapper`，移除了 `sealed`。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "測試斷言使用兩個 Regex 同時匹配可能過於嚴格",
+    "body": "將原本的 `Assert.Matches` 改為同時檢查新舊兩個 Regex，但錯誤訊息可能只符合其中一種模式。若瀏覽器版本不同，可能導致測試不穩定。建議使用 `Assert.True` 搭配 OR 條件，或使用 `Assert.Matches` 逐一檢查。",
+    "existing_code": "Assert.True(\n            ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n            ParseErrorMessageRegexNew.IsMatch(logs[0].Message),",
+    "evidence": "diff 顯示原本的 `Assert.Matches(ParseErrorMessage(), logs[0].Message)` 改為同時檢查兩個 Regex 的 AND 條件。"
+  }
+]

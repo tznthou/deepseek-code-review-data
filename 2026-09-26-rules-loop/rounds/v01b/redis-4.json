@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc 而非 zmalloc 分配記憶體",
+    "body": "在 clusterCommonInit 中使用 `malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat))` 分配記憶體，違反專案規範 R02（必須使用 zmalloc 系列函式）。這會導致記憶體使用量無法被 Redis 的記憶體追蹤機制記錄，可能造成記憶體統計不準確或洩漏。請改用 `zmalloc`。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的 `clusterCommonInit` 函式內使用 `malloc`，而原本在 server.c 中使用 `zmalloc`。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2210,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "clusterDeleteKeysInUnownedSlots 與 clusterClaimUnassignedSlots 的順序可能導致資料遺失",
+    "body": "原本的 verifyClusterConfigWithData 在發現 slot 有 key 且無主時，會先執行 clusterAddSlot 將 slot 指派給自己（claim），否則才刪除 key。現在拆分後，verifyClusterConfigWithData 先呼叫 clusterDeleteKeysInUnownedSlots（刪除不屬於自己的 slot 的 key），再呼叫 clusterClaimUnassignedSlots（claim 無主 slot）。這會導致原本無主但可被 claim 的 slot 中的 key 被刪除，造成資料遺失。建議調整順序：先 claim 無主 slot，再刪除仍不屬於自己的 slot 的 key。",
+    "existing_code": "clusterDeleteKeysInUnownedSlots();\n    /* Take over slots that we have keys for, but are assigned to no one. */\n    clusterClaimUnassignedSlots();",
+    "evidence": "diff 中 verifyClusterConfigWithData 的實作先呼叫 clusterDeleteKeysInUnownedSlots，再呼叫 clusterClaimUnassignedSlots。而 clusterDeleteKeysInUnownedSlots 會刪除所有不屬於自己的 slot 的 key，包括那些無主的 slot。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2153,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "clusterDeleteKeysInUnownedSlots 未處理 importing 狀態的 slot",
+    "body": "clusterDeleteKeysInUnownedSlots 在判斷是否刪除 key 時，只檢查了 `clusterIsMySlot(i)` 和 `getImportingSlotSource(i)`，但未檢查 `server.cluster->importing_slots_from[i]`（即本節點是否正在從其他節點匯入該 slot）。若本節點正在匯入某 slot，且該 slot 尚未指派給自己，則此函式會刪除該 slot 的 key，可能導致匯入過程中的資料遺失。建議加入對 `server.cluster->importing_slots_from[i]` 的檢查。",
+    "existing_code": "if (!countKeysInSlot(i) ||\n            clusterIsMySlot(i) ||\n            getImportingSlotSource(i))\n        {\n            continue;\n        }",
+    "evidence": "diff 中 clusterDeleteKeysInUnownedSlots 的條件判斷缺少對 `server.cluster->importing_slots_from[i]` 的檢查。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "clusterCommonInit 呼叫時機可能導致未初始化指標使用",
+    "body": "clusterCommonInit 在 server.c 的 main 函式中被呼叫，取代原本的 `server.cluster_slot_stats = zmalloc(...)`。但原本的初始化是在 `clusterInit()` 之前，而 `clusterInit()` 中會呼叫 `resetClusterStats()` 和 `asmInit()`。現在 `clusterCommonInit()` 內部呼叫了 `resetClusterStats()` 和 `asmInit()`，但 `clusterInit()` 中仍保留了 `resetClusterStats()` 和 `asmInit()` 的呼叫（從 diff 中可見 cluster_legacy.c 的 clusterInit 移除了這兩個呼叫，但 cluster.c 的 clusterCommonInit 又呼叫了它們）。這可能導致重複初始化或初始化順序問題。需確認 `clusterCommonInit` 是否應完全取代原本的初始化，並移除 clusterInit 中的重複呼叫。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));\n    resetClusterStats();\n    asmInit();",
+    "evidence": "diff 中 clusterCommonInit 呼叫 resetClusterStats 和 asmInit，而 cluster_legacy.c 的 clusterInit 中移除了這兩個呼叫，但 cluster.c 的 clusterCommonInit 又呼叫了它們。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "clusterDeleteKeysInUnownedSlots 與 clusterClaimUnassignedSlots 重複檢查 slave 狀態",
+    "body": "clusterDeleteKeysInUnownedSlots 和 clusterClaimUnassignedSlots 都各自檢查了 `clusterNodeIsSlave(getMyClusterNode())` 或 `nodeIsSlave(myself)`，而呼叫它們的 verifyClusterConfigWithData 也已經檢查過 slave 狀態。這造成重複檢查，雖然不影響正確性，但可考慮移除內部檢查以簡化程式碼。",
+    "existing_code": "if (clusterNodeIsSlave(getMyClusterNode())) return;",
+    "evidence": "diff 中 clusterDeleteKeysInUnownedSlots 和 clusterClaimUnassignedSlots 都有 slave 檢查，而 verifyClusterConfigWithData 也有。"
+  }
+]

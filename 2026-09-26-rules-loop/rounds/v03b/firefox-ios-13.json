@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 test 前綴，將不會被 XCTest 執行",
+    "body": "方法 `verifyBookmarksShareNormalWebsiteReminders()` 原本名為 `testBookmarksShareNormalWebsiteReminders()`，改名後缺少 `test` 前綴。XCTest 只會自動發現並執行以 `test` 開頭的方法，因此這個測試將被靜默跳過，導致測試涵蓋率下降。建議恢復 `test` 前綴，或若有意排除此測試，應使用 `XCTSkip` 或從測試計劃中移除。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中將 `func testBookmarksShareNormalWebsiteReminders()` 改為 `func verifyBookmarksShareNormalWebsiteReminders()`，違反 XCTest 命名慣例。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 471,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "貼上權限提示處理可能不穩定",
+    "body": "新增的 `springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)` 使用固定 0.5 秒等待系統提示出現。在慢速 CI 或裝置上，提示可能延遲出現，導致 tapIfExists 找不到按鈕而略過，後續 `mozWaitForValueContains` 可能因未允許貼上而失敗。建議改用較長的等待時間，或使用 `waitForExistence` 搭配條件點擊。",
+    "existing_code": "springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)",
+    "evidence": "新增行使用 0.5 秒 timeout，系統提示出現時間可能超過此值。"
+  }
+]

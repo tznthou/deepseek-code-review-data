@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "搜尋模式判斷邏輯錯誤：移除否定運算子導致條件相反",
+    "body": "在 `useMarketplaceSearchMode` 中，原本的條件 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)` 被改為 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`，移除了否定運算子。這會讓「當 activePluginType 屬於有 collections 的類別時」被視為搜尋模式，與原本意圖相反。\n\n**失敗情境**：當使用者選擇一個有 collections 的 plugin 類別（例如某個特定分類）且沒有輸入搜尋文字或 tags 時，原本應顯示一般瀏覽模式，但修改後會錯誤地進入搜尋模式，可能導致 UI 顯示錯誤或資料請求行為改變。\n\n**建議**：恢復否定運算子，改回 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`。",
+    "existing_code": "|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))",
+    "evidence": "diff 中此行從 `|| (searchMode ?? (!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))` 改為 `|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))`，移除了 `!`。"
+  },
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] selector 參數型別從函式改為 any，喪失型別安全",
+    "body": "`usePluginPageContext` 的 selector 參數型別從原本的 `(value: PluginPageContextValue) => any` 改為 `any`。這違反了 R09（TypeScript Must Avoid any Type Annotations），且會讓呼叫端可以傳入任意值，導致 `useContextSelector` 在執行時期可能收到非函式而拋出錯誤。\n\n**失敗情境**：如果有開發者誤傳入非函式（例如直接傳入一個值），`useContextSelector` 內部嘗試呼叫該值時會拋出 TypeError，造成 runtime crash。\n\n**建議**：保留原本的函式型別，或至少使用 `(value: PluginPageContextValue) => unknown` 並在內部檢查型別。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中此行從 `export function usePluginPageContext(selector: (value: PluginPageContextValue) => any) {` 改為 `export function usePluginPageContext(selector: any) {`。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "MouseButtonState 轉換邏輯反轉",
+    "body": "在 `From<tray_icon::MouseButtonState>` 的實作中，原本 `Up` 對應 `Up`、`Down` 對應 `Down`，但此 PR 將其反轉為 `Up` 對應 `Down`、`Down` 對應 `Up`。這會導致所有依賴此轉換的程式碼（例如處理滑鼠點擊事件）得到相反的按鈕狀態，造成功能錯誤。\n\n建議修正：\n```rust\nmatch value {\n    tray_icon::MouseButtonState::Up => MouseButtonState::Up,\n    tray_icon::MouseButtonState::Down => MouseButtonState::Down,\n}\n```",
+    "existing_code": "tray_icon::MouseButtonState::Up => MouseButtonState::Down,\n      tray_icon::MouseButtonState::Down => MouseButtonState::Up,",
+    "evidence": "diff 中顯示原本的 `tray_icon::MouseButtonState::Up => MouseButtonState::Up` 被改為 `tray_icon::MouseButtonState::Up => MouseButtonState::Down`，且 `Down` 對應也被反轉。"
+  },
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 140,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R07] 新增公開方法缺少文件註解",
+    "body": "新增的 `pub fn new_click` 方法沒有文件註解。根據專案規範 R07，所有公開 API 都必須有 `///` 文件說明其用途、參數與回傳值。請補充說明此方法的目的（例如「建立一個用於測試或模擬的 Click 事件，所有欄位皆為預設值」）。",
+    "existing_code": "pub fn new_click(id: TrayIconId) -> Self {",
+    "evidence": "diff 中新增了 `pub fn new_click`，但上方沒有 `///` 文件註解。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 使用 any 型別作為 selector 參數",
+    "body": "將 `selector` 參數型別從具體函式改為 `any`，違反 R09（TypeScript Must Avoid any Type Annotations）。這會失去型別檢查，可能導致傳入錯誤的 selector 函式而未被發現。建議保留原本的函式型別，或使用更精確的泛型型別。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中將 `selector: (value: PluginPageContextValue) => any` 改為 `selector: any`，直接違反 R09。"
+  },
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "搜尋模式條件邏輯變更可能導致行為錯誤",
+    "body": "原本條件為 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`，現在改為 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`（移除 `!`）。這會反轉判斷結果，可能導致搜尋模式判斷錯誤。請確認此變更是否為預期，若非預期則應保留原本的否定。",
+    "existing_code": "|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))",
+    "evidence": "diff 中該行從 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)` 改為 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`。"
+  }
+]

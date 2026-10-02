@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "移除 @sync_compatible 導致同步呼叫行為破壞",
+    "body": "原本 `run_deployment` 有 `@sync_compatible` 裝飾器，允許在同步上下文中直接呼叫並等待結果。現在 `run_deployment` 只是 `arun_deployment` 的別名，而 `arun_deployment` 是 async 函式，因此同步呼叫 `run_deployment(...)` 會回傳 coroutine 物件，不會執行任何邏輯，也不會等待 flow run 完成。這會破壞所有現有同步使用者的程式碼。\n\n建議：保留一個同步包裝函式，例如使用 `sync_compatible` 裝飾器或提供明確的同步版本，確保向後相容。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中移除了 `@sync_compatible` 和 `@inject_client`，並在檔案末尾新增 `run_deployment = arun_deployment`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "client 參數未更新，可能使用 None 或舊客戶端",
+    "body": "`get_or_create_client(client)` 會回傳一個客戶端實例，但程式碼沒有將回傳值指派回 `client` 變數。後續程式碼（如 `client.read_deployment`）仍使用原始的 `client` 參數，若呼叫者未提供 client，則 `client` 為 None，導致 `AttributeError`。\n\n建議：改為 `client, _ = get_or_create_client(client)` 或直接使用回傳值。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中新增了 `client, _ = get_or_create_client(client)`，但後續程式碼仍使用 `client` 變數。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 await 可能導致未完成的 coroutine 被傳遞",
+    "body": "原本 `collect_task_run_inputs(v)` 前面有 `await`，現在被移除。若 `collect_task_run_inputs` 是 async 函式，則會回傳 coroutine 物件，而不是實際的輸入值，可能導致後續處理錯誤。\n\n建議：確認 `collect_task_run_inputs` 是否為 async，若是則保留 `await`。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中將 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 212,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "deployment_id 可能未定義",
+    "body": "在 `create_flow_run_from_deployment` 呼叫中，第一個參數從 `deployment.id` 改為 `deployment_id`。但 `deployment_id` 變數只在前面解析名稱時有條件賦值，若名稱解析失敗或走其他路徑，`deployment_id` 可能未定義，導致 `NameError`。\n\n建議：確保 `deployment_id` 在所有路徑下都有賦值，或改用 `deployment.id`。",
+    "existing_code": "deployment_id,",
+    "evidence": "diff 中將 `deployment.id` 改為 `deployment_id`，但未看到 `deployment_id` 的賦值邏輯有相應調整。"
+  },
+  {
+    "path": "tests/deployment/test_flow_runs.py",
+    "line": 760,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試使用不存在的 _sync 參數",
+    "body": "在 `TestRunDeploymentSyncContext` 類別中，多個測試呼叫 `run_deployment(..., _sync=True)`。但 `run_deployment` 的簽名中沒有 `_sync` 參數，這會導致 `TypeError`。\n\n建議：移除 `_sync` 參數，或提供實際的同步包裝函式。",
+    "existing_code": "_sync=True,",
+    "evidence": "diff 中新增的測試程式碼包含 `_sync=True`，但函式簽名未定義此參數。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少型別註記",
+    "body": "`run_deployment = arun_deployment` 沒有型別註記，可能影響型別檢查和 IDE 支援。\n\n建議：加上型別註記，例如 `run_deployment: Callable[..., Awaitable[FlowRun]] = arun_deployment`。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中新增的別名沒有型別註記。"
+  }
+]

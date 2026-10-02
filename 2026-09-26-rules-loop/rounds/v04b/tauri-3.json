@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "TOML 解析錯誤被錯誤地映射為 JSON 錯誤",
+    "body": "在 `do_parse_toml` 函數中，將 `toml::from_str` 的錯誤映射為 `ConfigError::FormatJson`，這會導致錯誤類型不正確，可能誤導使用者。應使用 `ConfigError::FormatToml` 並保留原始錯誤。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中顯示原本使用 `ConfigError::FormatToml`，但被改為 `ConfigError::FormatJson`，且錯誤被轉換為 `serde_json::Error`。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增 Flatpak 變體可能破壞向後相容性",
+    "body": "在 `BundleType` 枚舉中新增 `Flatpak` 變體，但未標記 `#[non_exhaustive]`，這可能導致下游程式碼在匹配時出現非窮盡匹配錯誤。若此枚舉為公開 API，應考慮標記為 `#[non_exhaustive]` 或提供其他相容性措施。",
+    "existing_code": "/// The Flatpak bundle (.flatpak).\n  Flatpak,",
+    "evidence": "diff 中新增了 `Flatpak` 變體，但未見 `#[non_exhaustive]` 屬性。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Display 實作中 Flatpak 的大小寫不一致",
+    "body": "在 `Display` 實作中，`Flatpak` 被輸出為 \"Flatpak\"（首字母大寫），而其他變體如 \"nsis\"、\"app\"、\"dmg\" 均為小寫。這可能導致序列化後的字串與反序列化期望不一致（反序列化接受 \"flatpak\"）。建議統一為小寫 \"flatpak\"。",
+    "existing_code": "Self::Flatpak => \"Flatpak\",",
+    "evidence": "diff 中顯示 `Self::Flatpak => \"Flatpak\"`，而其他變體均為小寫。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 209,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "反序列化接受 \"flatpak\" 但 Display 輸出 \"Flatpak\"，可能造成不一致",
+    "body": "在 `Deserialize` 實作中，接受 \"flatpak\"（小寫），但 `Display` 輸出 \"Flatpak\"（首字母大寫）。這可能導致序列化後再反序列化失敗，或與其他工具鏈的預期不一致。建議統一大小寫。",
+    "existing_code": "\"flatpak\" => Ok(Self::Flatpak),",
+    "evidence": "diff 中顯示反序列化接受 \"flatpak\"，而 Display 輸出 \"Flatpak\"。"
+  }
+]

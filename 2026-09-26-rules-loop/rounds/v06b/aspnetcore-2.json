@@ -1,0 +1,46 @@
+[
+  {
+    "path": "eng/common/core-templates/job/source-index-stage1.yml",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "source-index-stage1 條件改為僅限 main 分支可能導致其他分支無法進行來源索引",
+    "body": "此變更將 `condition` 從空字串改為 `eq(variables['Build.SourceBranch'], 'refs/heads/main')`，這會讓 source-index-stage1 作業只在 main 分支執行。若此作業原本用於所有分支的來源索引（例如用於符號伺服器或來源連結），則 release 分支或其他功能分支將不再產生索引，可能影響偵錯體驗或合規要求。請確認此變更的意圖，並考慮是否應改為排除 PR 分支或使用其他條件。",
+    "existing_code": "condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')",
+    "evidence": "diff 中將原本的 `condition: ''` 改為 `condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')`，限制了作業的執行範圍。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 408,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "WebSocketWrapper.ReceiveAsync 中 _receiveTcs 重設位置變更可能引入競態",
+    "body": "原本在複製資料後才重設 `_receiveTcs`，現在改為在 await 之後立即重設。這可能導致在 `res.Item2.CopyTo(buffer)` 執行期間，另一個執行緒呼叫 `SetReceiveResult` 時會設定新的 `_receiveTcs`，但目前的 `ReceiveAsync` 仍在使用舊的 `res`，造成資料不一致或遺失。建議確認此變更是否為了解決特定問題，並考慮使用鎖定或更安全的同步機制。",
+    "existing_code": "var res = await _receiveTcs.Task;\n            _receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);",
+    "evidence": "diff 顯示 `_receiveTcs = new(...)` 從 `res.Item2.CopyTo(buffer)` 之後移到之前，改變了重設時機。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "CSP 錯誤訊息正規化使用兩個 Regex 可能過於嚴格",
+    "body": "測試現在要求日誌訊息同時符合舊版與新版的正規表達式，但實際上瀏覽器可能只輸出一種格式。若兩種格式不會同時出現，此斷言將永遠失敗。建議確認實際日誌輸出，並改為使用 `Assert.Matches` 搭配單一正規表達式或使用 `Assert.True` 檢查任一符合。",
+    "existing_code": "Assert.True(\n            ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n            ParseErrorMessageRegexNew.IsMatch(logs[0].Message),",
+    "evidence": "diff 將原本的 `Assert.Matches(ParseErrorMessage(), logs[0].Message)` 改為同時檢查兩個 Regex 的 `Assert.True`。"
+  },
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "LocateVisualStudio 中 $vsRequirements 可能為 $null 但後續未完全防護",
+    "body": "新增了當 `$GlobalJson.tools` 沒有 `vs` 屬性時將 `$vsRequirements` 設為 `$null` 的邏輯，但後續的 `if ($vsRequirements -and (Get-Member ...))` 已處理 null 情況。然而，若 `$vsRequirements` 為 null，`$args` 陣列仍會包含 `-requires Microsoft.Component.MSBuild` 等必要參數，這可能導致 vswhere 執行失敗。建議確認在沒有 vs 設定的情況下是否應跳過整個 Visual Studio 定位流程。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n      $vsRequirements = $GlobalJson.tools.vs\n    } else {\n      $vsRequirements = $null\n    }\n  }",
+    "evidence": "diff 新增了對 `$GlobalJson.tools` 缺少 `vs` 屬性的處理，但未改變後續使用 `$vsRequirements` 的邏輯。"
+  }
+]

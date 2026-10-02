@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/A11yUtils.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "[R01] 移除 MPL 授權標頭",
+    "body": "此檔案原本有 Mozilla Public License 2.0 標頭，但在此 diff 中被刪除。根據規範 R01，所有 Swift 檔案必須包含 MPL 標頭。請恢復標頭。",
+    "existing_code": "import XCTest",
+    "evidence": "diff 顯示刪除了三行 MPL 標頭，且未新增任何替代標頭。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 516,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "IpadOnlyTestCase.setUp 中誤用 await 呼叫 super.setUp()",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp` 中，呼叫 `super.setUp()` 時使用了 `await`，但 `super.setUp()` 是 `async throws`，必須使用 `try await`。這會導致編譯錯誤。請改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中該行從 `super.setUp()` 改為 `await super.setUp()`，但其他 override 均使用 `try await super.setUp()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "setUp 中呼叫順序變更可能影響測試行為",
+    "body": "原本 `setUp` 先呼叫 `setUpExperimentVariables()` 再呼叫 `setUpApp()`，現在順序對調。若 `setUpApp()` 依賴實驗變數已設定（例如 launch arguments 中包含實驗相關參數），此變更可能導致測試行為不同。請確認此順序變更是有意為之且不會造成問題。",
+    "existing_code": "setUpApp()\nsetUpExperimentVariables()",
+    "evidence": "diff 顯示兩行順序互換。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/TodayWidgetTests.swift",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "全域變數加上 @MainActor 可能導致非主執行緒存取 crash",
+    "body": "這些全域變數（如 `goToCopiedLink`）現在標記為 `@MainActor`，但若在非 main actor 的 context 中存取（例如某些非同步 callback），會觸發 runtime crash 或編譯錯誤。請確認所有存取點都在 main actor 上，或考慮使用 `nonisolated(unsafe)` 並確保 thread safety。",
+    "existing_code": "@MainActor\nvar goToCopiedLink = springboard.buttons[\"Go to Copied Link\"]",
+    "evidence": "diff 將原本的 `nonisolated(unsafe)` 改為 `@MainActor`，但未提供其他同步機制。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "全域變數加上 @MainActor 可能影響非主執行緒使用",
+    "body": "`urlBarAddress` 和 `homepageSearchBar` 現在是 `@MainActor`，若在非 main actor 的 context 中初始化或使用，可能造成問題。請確認這些變數的使用情境。",
+    "existing_code": "@MainActor\nlet urlBarAddress = XCUIApplication().textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]",
+    "evidence": "diff 新增了 `@MainActor` 屬性。"
+  }
+]

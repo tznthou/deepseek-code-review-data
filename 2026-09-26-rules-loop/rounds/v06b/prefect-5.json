@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R08] 跨欄位驗證應使用 model_validator",
+    "body": "在 `_bucket_folder_suffix` 中使用 `field_validator` 進行跨欄位驗證（檢查 `bucket_folder` 是否與 `bucket` 相同），違反 R08。Pydantic 的欄位驗證器不保證執行順序，若 `bucket` 欄位尚未驗證或設定，`info.data.get(\"bucket\")` 可能為 None，導致驗證失效。應改用 `@model_validator(mode='after')` 進行跨欄位驗證。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的跨欄位驗證位於 `@field_validator(\"bucket_folder\")` 內，且使用 `info.data.get(\"bucket\")` 存取其他欄位。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "子字串比對可能誤判路徑已包含 bucket_folder",
+    "body": "`if self.bucket_folder and self.bucket_folder in path:` 使用子字串比對，若 `path` 中某段恰好包含 `bucket_folder` 字串（例如 `bucket_folder = \"results\"`，`path = \"myresults/file.txt\"`），會錯誤地視為已前綴而直接返回，導致路徑未正確解析。建議改為檢查 `path` 是否以 `bucket_folder` 開頭（如 `path.startswith(self.bucket_folder)`）或使用 `PurePosixPath` 比較。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中新增的條件使用 `in` 運算子進行子字串比對。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/tests/conftest.py",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 disable_logging fixture 可能影響測試日誌行為",
+    "body": "原本的 `disable_logging` fixture 使用 `temporary_settings` 關閉日誌上傳，移除後可能導致測試期間產生大量日誌或依賴日誌行為的測試失敗。若此 fixture 不再需要，應確認無其他測試依賴此設定。",
+    "existing_code": "with prefect_test_harness(server_timeout=60):\n        yield",
+    "evidence": "diff 中刪除了 `disable_logging` fixture，僅保留 `prefect_db` fixture。"
+  }
+]

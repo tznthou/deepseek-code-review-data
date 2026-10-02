@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/reply-form.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "in_reply_to_id 改為 parent.id 可能導致回覆目標錯誤",
+    "body": "原本使用 `openForm.in_reply_to_id` 來指定回覆的目標留言，現在改為 `parent.id`。若 `openForm` 是用於回覆某個子留言（即回覆的回覆），則 `parent` 可能代表頂層留言，而非直接父留言，導致回覆串接錯誤。請確認 `parent` 與 `openForm.in_reply_to_id` 的關係，並確保回覆目標正確。",
+    "existing_code": "in_reply_to_id: parent.id,",
+    "evidence": "diff 中將 `in_reply_to_id: openForm.in_reply_to_id` 改為 `in_reply_to_id: parent.id`，且 `parent` 是元件 prop，可能不是直接父留言。"
+  },
+  {
+    "path": "apps/comments-ui/test/e2e/actions.test.ts",
+    "line": 678,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中對 member-name 元素的假設可能不成立",
+    "body": "測試預期回覆表單中有 `member-name` 元素，但若登入成員沒有名稱，該元素可能不會渲染，導致 `getByTestId('member-name')` 找不到元素而失敗。建議先確認元件在無名稱時的行為，或改用更穩健的斷言方式。",
+    "existing_code": "const memberName = replyForm.getByTestId('member-name');",
+    "evidence": "測試中直接取得 `member-name` 元素，但未確認其在無名稱時是否存在。"
+  }
+]

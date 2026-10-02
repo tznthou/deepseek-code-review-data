@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "潛在循環依賴：apps/web 匯入 packages/platform/atoms",
+    "body": "此檔案從 `packages/platform/atoms` 匯入 `AtomsWrapper` 與 `DestinationCalendarSettings`，但該檔案本身位於 `apps/web`。若 `packages/platform/atoms` 反向依賴 `apps/web`（例如透過其他元件），將形成循環依賴，可能導致建置失敗或執行時期錯誤。建議確認依賴方向，或將共用元件移至更低層的套件。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 顯示此檔案從 packages/platform/atoms 移至 apps/web/components/apps，但保留對 packages/platform/atoms 的匯入。"
+  },
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "sortHosts 排序邏輯變更可能影響行為",
+    "body": "在 `isRRWeightsEnabled` 且權重相同時，原本回傳 `priorityB - priorityA`（降冪），現在改為 `priorityA - priorityB`（升冪）。這會反轉優先權排序，可能導致指派主機的順序錯誤。請確認此變更是否為預期，並更新相關測試。",
+    "existing_code": "if (weightA === weightB) {\n      return priorityA - priorityB;\n    } else {",
+    "evidence": "diff 顯示原本在 HostEditDialogs.tsx 中的 sortHosts 回傳 priorityB - priorityA，移動後改為 priorityA - priorityB。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R04] 非 page/layout 檔案使用 default export",
+    "body": "此檔案使用 `export default EventLimitsTabWebWrapper;`，但位於 `apps/web/modules/...`，不符合 R04 規範（僅 Next.js page/layout 檔案可使用 default export）。請改為 named export 並更新匯入。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 顯示此檔案結尾為 default export，且路徑不符合允許 default export 的 pattern。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R04] 非 page/layout 檔案使用 default export",
+    "body": "此檔案使用 `export default EventRecurringWebWrapper;`，但位於 `apps/web/modules/...`，不符合 R04 規範。請改為 named export 並更新匯入。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 顯示此檔案結尾為 default export，且路徑不符合允許 default export 的 pattern。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 235,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "縮排不一致可能違反格式化規範",
+    "body": "在 `tabMap` 物件中，`setup` 與 `availability` 的 JSX 縮排從原本的 6 空格改為 8 空格，與其他 tab 不一致。這可能違反 R03 的格式化規範，建議執行 Biome 格式化。",
+    "existing_code": "setup: (\n        <EventSetupTab\n            eventType={eventType}\n            locationOptions={locationOptions}\n            team={team}\n            teamMembers={teamMembers}\n            destinationCalendar={destinationCalendar}\n        />\n    ),",
+    "evidence": "diff 顯示縮排從 6 空格改為 8 空格，且其他 tab 仍維持 6 空格。"
+  }
+]

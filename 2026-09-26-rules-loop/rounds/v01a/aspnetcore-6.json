@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "登出流程中新增的 Task.Yield() 可能造成非預期的非同步行為",
+    "body": "在 `ProcessLogOut` 方法中，於取得驗證狀態前新增了 `await Task.Yield();`。此舉會強制讓出執行緒，可能導致後續的 `AuthenticationProvider.GetAuthenticationStateAsync()` 在不同的同步內容中執行。若 `AuthenticationProvider` 依賴特定的同步內容（例如 Blazor 的 SynchronizationContext），可能造成狀態不一致或死鎖。建議移除該行，或提供明確的註解說明其必要性。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\n        await Task.Yield();\n\n        var state = await AuthenticationProvider.GetAuthenticationStateAsync();",
+    "evidence": "diff 中新增了 `await Task.Yield();` 於 `AuthenticationProvider.GetAuthenticationStateAsync()` 之前，且無任何註解說明其目的。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Redirect 方法中改用 InteractiveRequestUrl 可能導致 NullReferenceException",
+    "body": "在 `Redirect` 方法中，原本使用 `_tokenResult.RedirectUrl!`，現在改為 `_tokenResult.InteractiveRequestUrl!`。但 `InteractiveRequestUrl` 可能為 null（例如當 `InteractionOptions` 為 null 且 `InteractiveRequestUrl` 未設定時），使用 null-forgiving 運算子會隱藏潛在的 null 問題，並在執行時拋出 `NullReferenceException`。建議檢查 `InteractiveRequestUrl` 是否為 null，並提供明確的錯誤處理或回退機制。",
+    "existing_code": "_navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);",
+    "evidence": "diff 中將 `_tokenResult.RedirectUrl!` 改為 `_tokenResult.InteractiveRequestUrl!`，但未檢查 `InteractiveRequestUrl` 是否為 null。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "登出流程移除 SignOutSessionStateManager 後可能遺失 CSRF 保護",
+    "body": "原本的登出流程會透過 `SignOutSessionStateManager.ValidateSignOutState()` 驗證登出請求是否來自頁面內部，以提供 CSRF 保護。移除後僅依賴 `ValidateSignOutRequestState()`，但該方法可能只檢查 `HistoryEntryState`，若攻擊者能偽造 `HistoryEntryState`，可能繞過保護。建議確認 `ValidateSignOutRequestState()` 的實作是否足夠安全，或保留某種形式的 CSRF 防護。",
+    "existing_code": "if (!ValidateSignOutRequestState())",
+    "evidence": "diff 中移除了 `SignOutManager.ValidateSignOutState()` 的呼叫，僅保留 `ValidateSignOutRequestState()`。"
+  }
+]

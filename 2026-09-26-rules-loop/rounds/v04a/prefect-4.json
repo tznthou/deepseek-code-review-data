@@ -1,0 +1,57 @@
+[
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "前端重複過濾可能導致結果不一致",
+    "body": "後端查詢已使用 `name: { like_: deferredSearch }` 進行過濾，但前端又用 `filteredData` 再次以 `toLowerCase().includes()` 過濾。這可能導致：\n1. 後端過濾與前端過濾邏輯不一致（例如大小寫處理、萬用字元），造成使用者看到的結果與預期不同。\n2. 若後端 `like_` 是大小寫敏感，而前端 `toLowerCase()` 是大小寫不敏感，則可能出現後端已排除但前端仍顯示的項目，或反之。\n建議移除前端重複過濾，直接使用 `data`，或確保前後端過濾邏輯完全一致。",
+    "existing_code": "const filteredData = useMemo(() => {\n    return data.filter((blockDocument) =>\n      blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),\n    );\n  }, [data, deferredSearch]);",
+    "evidence": "diff 中新增的 `filteredData` 邏輯與 `buildListFilterBlockDocumentsQuery` 中的 `like_` 條件重複。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "搜尋時可能遺漏大小寫不同的結果",
+    "body": "後端查詢使用 `like_` 可能為大小寫敏感，但前端 `toLowerCase()` 假設大小寫不敏感。若後端為大小寫敏感，使用者輸入大寫字母時，後端可能回傳空陣列，但前端仍會嘗試過濾，導致無結果。建議確認後端 `like_` 的大小寫行為，並調整前端邏輯或後端查詢以保持一致。",
+    "existing_code": "blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),",
+    "evidence": "前端使用 `toLowerCase()` 進行大小寫不敏感比較，但後端 `like_` 可能大小寫敏感。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 161,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "表單驗證錯誤處理可能不完整",
+    "body": "`onSave` 中呼叫 `validateForm` 後，若 `errors.length > 0` 則直接 return，但未將錯誤顯示給使用者。使用者可能不知道驗證失敗的原因。建議將 `errors` 傳遞給 `LazySchemaForm` 或顯示錯誤訊息。",
+    "existing_code": "await validateForm({ schema: values });\n      if (errors.length > 0) {\n        return;\n      }",
+    "evidence": "diff 中 `onSave` 函式在驗證失敗時僅 return，未處理錯誤顯示。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 179,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "錯誤訊息未提供具體原因",
+    "body": "`onError` 回呼中僅顯示通用錯誤訊息「Unknown error while creating block.」，未包含伺服器回傳的錯誤細節。這可能讓使用者難以理解失敗原因。建議將 `err` 的訊息（若存在）顯示給使用者。",
+    "existing_code": "onError: (err) => {\n            const message = \"Unknown error while creating block.\";\n            toast.error(message);\n            console.error(message, err);\n          },",
+    "evidence": "diff 中 `onError` 使用固定錯誤訊息，未利用 `err` 物件。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input.tsx",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "未處理 blockTypeSlug 非字串的情況",
+    "body": "程式碼檢查 `typeof blockTypeSlug === \"string\"`，但若 `blockTypeSlug` 存在但非字串（例如數字），則不會渲染任何內容，且不會有錯誤提示。這可能導致表單欄位靜默消失。建議在非字串時拋出錯誤或顯示警告。",
+    "existing_code": "if (typeof blockTypeSlug === \"string\") {\n      return (\n        <SchemaFormInputBlockDocument\n          value={value as { $ref: string } | undefined}\n          onValueChange={onValueChange}\n          blockTypeSlug={blockTypeSlug}\n          id={id}\n        />\n      );\n    }",
+    "evidence": "diff 中僅在 `blockTypeSlug` 為字串時渲染元件，未處理其他型別。"
+  }
+]

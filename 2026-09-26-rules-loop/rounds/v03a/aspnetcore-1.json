@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 288,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "QuarantinedTest 屬性可能掩蓋真實失敗",
+    "body": "新增的 `[QuarantinedTest]` 屬性會將此測試標記為隔離，可能導致 CI 中跳過或延後執行，從而掩蓋潛在的迴歸。若此測試因不穩定而被隔離，應在 PR 描述中說明原因，並提供追蹤 issue 連結。建議確認此測試是否確實不穩定，若已修復則應移除隔離標記。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]",
+    "evidence": "diff 中新增了 `[QuarantinedTest]` 屬性，且未提供任何說明。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "AppContext.SetSwitch 參數值可能與測試意圖相反",
+    "body": "原本設定 `DisableThrowNavigationException` 為 `false`，現在改為 `true`。此開關名稱暗示設為 `true` 會停用拋出例外，但測試名稱是 `NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException`，預期應觸發例外。若設為 `true` 導致不拋例外，測試可能無法驗證預期行為。請確認此變更是否正確，或是否應保持 `false`。",
+    "existing_code": "AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中將參數從 `false` 改為 `true`，與測試名稱的意圖可能衝突。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Navigate 呼叫順序調整可能影響測試穩定性",
+    "body": "原本先 `Navigate` 再取得 `_originalH1Element`，現在改為先取得元素再導航。此變更可能影響測試的時序，若 `Navigate` 後頁面重新載入，先前取得的元素參考可能失效。建議確認此調整是否為了解決特定問題，並確保測試仍穩定。",
+    "existing_code": "_originalH1Element = Browser.Exists(By.TagName(\"h1\"));\n        Navigate($\"{ServerPathBase}/redirect\");",
+    "evidence": "diff 中移動了 `Navigate` 呼叫的位置。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "Browser.Navigate().Forward() 可能不符合測試意圖",
+    "body": "原本使用 `Back()`，現在改為 `Forward()`。測試註解提到「See that 'back' takes you to the place from before the redirection」，但程式碼卻使用 `Forward()`，可能導致測試驗證錯誤的瀏覽器行為。請確認此變更是否正確，或是否應保持 `Back()`。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 `Back()` 改為 `Forward()`，與註解描述不一致。"
+  }
+]

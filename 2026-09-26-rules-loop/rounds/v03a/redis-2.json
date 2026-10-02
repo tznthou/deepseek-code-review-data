@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1867,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "slotRangeArraySortAndMerge 合併邏輯錯誤處理重疊範圍",
+    "body": "在合併時，程式碼僅檢查 `prev.end + 1 == next.start`，但若範圍重疊（例如 `0-100` 與 `50-150`），則會直接跳過合併，導致後續驗證時因重疊而失敗。然而，函式名稱與註解暗示其應能處理重疊範圍，且呼叫端 `slotRangeArrayNormalizeAndValidate` 在合併後才進行重疊檢查，因此重疊範圍將無法通過驗證，但錯誤訊息可能不直觀。建議在合併前先檢查重疊並回報明確錯誤，或修改合併邏輯以正確處理重疊（例如合併重疊範圍）。",
+    "existing_code": "if (slots->ranges[idx].end + 1 == slots->ranges[i].start)\n    slots->ranges[idx].end = slots->ranges[i].end;\nelse\n    slots->ranges[++idx] = slots->ranges[i];",
+    "evidence": "diff 中新增的 slotRangeArraySortAndMerge 函式，其合併條件僅處理相鄰（end+1 == start），未處理重疊（end >= start）。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "asmCreateImportTask 記憶體所有權轉移可能導致 double-free 或 use-after-free",
+    "body": "原本 `task->slots = slotRangeArrayDup(slots);` 會複製一份，但現在改為 `task->slots = slots;` 直接取得所有權。呼叫端 `clusterMigrationCommandImport` 已移除 `slotRangeArrayFree(slots)`，但其他呼叫端（如 `clusterAsmProcess` 中的 `ASM_EVENT_IMPORT_START`）在呼叫前會先 `slotRangeArrayDup(arg)` 並在錯誤時釋放，成功時則將所有權交給 task，這部分看似正確。然而，若 `asmCreateImportTask` 在取得所有權後、回傳前發生錯誤（例如 `asmTaskCreate` 失敗），則會執行 `goto err` 並 `slotRangeArrayFree(slots)`，但此時 `task->slots` 已指向同一記憶體，可能導致 task 後續使用已釋放的記憶體。建議在錯誤路徑中避免釋放已轉移所有權的 slots，或改為在成功建立 task 後才轉移所有權。",
+    "existing_code": "task->slots = slots;",
+    "evidence": "diff 中將 `slotRangeArrayDup(slots)` 改為直接指派，且錯誤處理路徑 `err:` 會 `slotRangeArrayFree(slots)`。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "parseSlotRangesOrReply 錯誤回覆不一致",
+    "body": "原本使用 `serverAssert` 檢查參數，現在改為 `addReplyErrorArity(c)` 回覆錯誤，但後續在驗證失敗時，程式碼僅 `sdsfree(err)` 並釋放 slots，卻未呼叫 `addReplyErrorSds(c, err)` 回覆錯誤訊息，導致客戶端收到空回覆或錯誤格式。建議在驗證失敗時也回覆錯誤訊息，例如 `addReplyErrorSds(c, err)` 後再釋放。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n    sdsfree(err);\n    slotRangeArrayFree(slots);\n    return NULL;\n}",
+    "evidence": "diff 中移除了原本的 `addReplyErrorSds(c, err)`，僅保留 `sdsfree(err)`。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1796,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "slotRangeArrayToString 對 NULL 指標的處理可能掩蓋錯誤",
+    "body": "新增的 `if (slots == NULL || slots->num_ranges == 0) return s;` 會在 slots 為 NULL 時回傳空字串，但呼叫端可能預期 NULL 表示錯誤，這可能掩蓋潛在的 bug。建議明確區分 NULL 和空陣列，或使用 assert 確保 slots 不為 NULL。",
+    "existing_code": "if (slots == NULL || slots->num_ranges == 0) return s;",
+    "evidence": "diff 中新增的 NULL 檢查，但未區分 NULL 與空陣列。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 1013,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "asmCountKeysInSlots 未檢查 slots 指標有效性",
+    "body": "函式僅檢查 `if (!slots) return 0;`，但未檢查 `slots->ranges` 是否為 NULL 或 `num_ranges` 是否合理。若呼叫端傳入未初始化的 slotRangeArray，可能導致記憶體存取錯誤。建議增加對 `slots->ranges` 的檢查。",
+    "existing_code": "if (!slots) return 0;",
+    "evidence": "diff 中新增的函式，僅檢查 slots 指標。"
+  }
+]

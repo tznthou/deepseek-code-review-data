@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/services/billing_service.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R21] 不必要的 __str__ 覆寫",
+    "body": "在 SubscriptionPlan TypedDict 中新增了 __str__ 方法，但 TypedDict 通常不需要自訂字串表示，且此方法僅用於除錯，可能違反 R21（Python Code Must Not Override Dunder Methods Unnecessarily）。建議移除該方法，或提供明確的業務需求說明。",
+    "existing_code": "def __str__(self) -> str:\n        \"\"\"Return a human-readable string representation for debugging.\"\"\"\n        return f\"Plan: {self['plan']}, Expiration: {self['expiration_date']}\"",
+    "evidence": "diff 中新增的 __str__ 方法，且無其他必要理由。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_billing_service.py",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R05] 測試檔案可能超過 800 行",
+    "body": "新增的測試檔案 test_billing_service.py 有 365 行，加上原有的測試檔案可能使總行數超過 800 行，違反 R05（Python Backend Files Must Not Exceed 800 Lines）。建議將測試拆分為多個檔案或模組。",
+    "existing_code": "class TestBillingServiceGetPlanBulkWithCache:",
+    "evidence": "diff 顯示新增檔案有 365 行，但未提供原有檔案行數，需進一步確認。"
+  },
+  {
+    "path": "api/services/billing_service.py",
+    "line": 323,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R19] 直接使用 redis_client 而非抽象層",
+    "body": "get_plan_bulk_with_cache 方法直接使用 redis_client 進行快取操作，可能違反 R19（Backend Storage Access Must Use Abstraction Layer）。建議使用專案的快取抽象層（如 extensions.ext_redis 中的封裝）來存取 Redis。",
+    "existing_code": "cached_values = redis_client.mget(redis_keys)",
+    "evidence": "diff 中直接呼叫 redis_client.mget，未見使用抽象層。"
+  }
+]

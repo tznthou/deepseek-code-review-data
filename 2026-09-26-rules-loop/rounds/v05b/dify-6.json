@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SMTP_LOCAL_HOSTNAME 為空字串時可能導致連線失敗",
+    "body": "當 SMTP_LOCAL_HOSTNAME 未設定時，dify_config.SMTP_LOCAL_HOSTNAME 為 None，local_host 為空字串。程式碼將 local_hostname 設為空字串或 None 傳給 smtplib.SMTP。smtplib 在 local_hostname 為空字串時可能將其視為無效主機名稱，導致連線失敗或 HELO 命令錯誤。建議在 local_host 為空時不要傳遞 local_hostname 參數，或明確傳入 None。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中新增的程式碼使用 local_host or None，當 local_host 為空字串時會傳入 None，但 smtplib 對 None 的處理可能與預期不同。"
+  },
+  {
+    "path": "api/tests/unit_tests/libs/test_smtp_client.py",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試僅驗證 local_hostname 參數存在，未驗證實際值",
+    "body": "測試使用 ANY 來匹配 local_hostname 參數，僅確認參數被傳遞，但未驗證其值是否正確。這可能掩蓋 local_hostname 設定錯誤的問題。建議增加測試案例，驗證當 SMTP_LOCAL_HOSTNAME 設定時，傳入的值正確；未設定時，傳入 None 或不傳遞。",
+    "existing_code": "mock_smtp_cls.assert_called_once_with(\"smtp.example.com\", 25, timeout=10, local_hostname=ANY)",
+    "evidence": "diff 中測試斷言使用 ANY，未檢查實際值。"
+  }
+]

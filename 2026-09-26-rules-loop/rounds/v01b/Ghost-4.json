@@ -1,0 +1,79 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "dangerouslySetInnerHTML 渲染評論 HTML 未見消毒處理",
+    "body": "`CommentContent` 元件使用 `dangerouslySetInnerHTML` 直接渲染 `item.html`。雖然此程式碼在修改前已存在，但本次重構將渲染邏輯抽離，且未見任何消毒（sanitization）處理。若評論內容來自使用者輸入且未在伺服器端或客戶端消毒，可能導致 XSS 攻擊。建議確認 `item.html` 的來源是否已消毒，或在此處使用 DOMPurify 等函式庫進行消毒。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 `CommentContent` 元件包含此行，且未見任何消毒處理。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "useEffect 依賴陣列為空可能導致截斷偵測失效",
+    "body": "`CommentContent` 中的 `useEffect` 僅在掛載時執行一次（依賴陣列為 `[]`），但 `item.html` 可能在之後更新（例如從 API 取得資料或狀態變更）。若內容變更，`isClamped` 不會重新計算，導致「Show more」按鈕顯示不正確。建議將 `item.html` 加入依賴陣列，或改用 `useLayoutEffect` 並在內容變更時重新檢查。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "依賴陣列為空，但函式內使用 `contentRef.current` 與 `item.html` 相關的 DOM 屬性。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R13] Button 元件缺少 type 屬性",
+    "body": "多個 `<Button>` 元件未指定 `type` 屬性。在表單中可能導致意外提交，且違反專案規範 R13。建議為所有按鈕加上 `type=\"button\"`（或適當的 type）。",
+    "existing_code": "<Button\n            className=\"shrink-0 gap-0.5 self-start p-0 text-muted-foreground hover:bg-transparent\"\n            size=\"sm\"\n            variant=\"ghost\"\n            onClick={onClick}\n        >",
+    "evidence": "diff 中新增的 `ExpandButton` 與其他按鈕均未見 type 屬性。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.85,
+    "title": "[R19] 缺少分號",
+    "body": "`CommentContent` 元件中 `useRef` 與 `useState` 的陳述式結尾缺少分號，違反專案規範 R19。建議補上分號。",
+    "existing_code": "const contentRef = useRef<HTMLDivElement>(null)\n    const [isClamped, setIsClamped] = useState(false)\n    const [isExpanded, setIsExpanded] = useState(false)",
+    "evidence": "diff 中新增的程式碼行末無分號。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R12] JSX props 順序不符合標準",
+    "body": "多個 JSX 元素的 props 順序未依照專案規範 R12（reserved props 先、一般 props 字母序、callbacks 最後）。例如 `ExpandButton` 的 `className` 應在 `size` 之前，`onClick` 應在最後。建議使用 ESLint 自動修正或手動調整。",
+    "existing_code": "<Button\n            className=\"shrink-0 gap-0.5 self-start p-0 text-muted-foreground hover:bg-transparent\"\n            size=\"sm\"\n            variant=\"ghost\"\n            onClick={onClick}\n        >",
+    "evidence": "diff 中多處 JSX 元素 props 順序混亂。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 76,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R15] Tailwind class 順序不符合標準",
+    "body": "多個 className 中的 Tailwind class 順序未依照專案規範 R15。例如 `className=\"shrink-0 gap-0.5 self-start p-0 text-muted-foreground hover:bg-transparent\"` 中 `shrink-0` 應在 `gap-0.5` 之前。建議使用 prettier-plugin-tailwindcss 自動排序。",
+    "existing_code": "className=\"shrink-0 gap-0.5 self-start p-0 text-muted-foreground hover:bg-transparent\"",
+    "evidence": "diff 中多處 className 順序混亂。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "圖片缺少 loading=\"lazy\" 與尺寸設定",
+    "body": "新增的文章特色圖片 `<img>` 未設定 `loading=\"lazy\"`，可能影響效能。此外，僅以 CSS 設定寬度，未提供 `width`/`height` 屬性，可能導致版面跳動。建議加上 `loading=\"lazy\"` 與明確尺寸。",
+    "existing_code": "<img\n                                            alt={item.post.title || 'Post feature image'}\n                                            className=\"hidden aspect-video w-32 rounded object-cover lg:block\"\n                                            src={item.post.feature_image}\n                                        />",
+    "evidence": "diff 中新增的 img 元素。"
+  }
+]

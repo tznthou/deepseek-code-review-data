@@ -1,0 +1,79 @@
+[
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R16] 關閉 TypeScript strict 模式",
+    "body": "將 `strict` 從 `true` 改為 `false` 違反專案規範 R16，且會降低型別安全，可能隱藏潛在的執行時期錯誤。建議恢復 `strict: true` 並修正所有型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.json 的變更：`-    \"strict\": true,` 改為 `+    \"strict\": false,`"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "輪詢邏輯可能產生競態條件並導致錯誤的狀態更新",
+    "body": "在 `useEffect` 中，`confirmHandle` 被非同步呼叫，但沒有檢查元件是否已卸載或依賴是否已變更。若使用者在輪詢期間停用 Bluesky 或快速切換，可能導致過時的 Promise 回呼更新狀態，造成 UI 不一致。建議使用取消旗標或 AbortController 來處理非同步操作的取消。",
+    "existing_code": "const confirmHandleInterval = setInterval(async () => {\n    if (retryCountRef.current >= MAX_CONFIRMATION_RETRIES) {\n        clearInterval(confirmHandleInterval);\n\n        toast.error('Something went wrong, please try again.');\n\n        await disableBlueskyMutation.mutateAsync();\n        setLoading(false);\n\n        return;\n    }\n\n    retryCountRef.current += 1;\n    confirmHandle();\n}, CONFIRMATION_INTERVAL);",
+    "evidence": "diff 中新增的 `useEffect` 區塊，包含 `setInterval` 與非同步呼叫 `confirmHandle`，但未處理元件卸載或依賴變更時的中止。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 104,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "輪詢失敗時自動停用 Bluesky 可能非使用者預期",
+    "body": "當輪詢達到最大重試次數時，程式碼會自動呼叫 `disableBlueskyMutation.mutateAsync()` 來停用 Bluesky。這可能導致使用者在未明確同意的情況下被停用，且若停用失敗，錯誤未被處理。建議改為顯示錯誤訊息並讓使用者手動決定是否停用。",
+    "existing_code": "if (retryCountRef.current >= MAX_CONFIRMATION_RETRIES) {\n    clearInterval(confirmHandleInterval);\n\n    toast.error('Something went wrong, please try again.');\n\n    await disableBlueskyMutation.mutateAsync();\n    setLoading(false);\n\n    return;\n}",
+    "evidence": "diff 中新增的錯誤處理區塊，自動呼叫 `disableBlueskyMutation.mutateAsync()`。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2833,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "缺少 accountFollows 查詢的失效處理",
+    "body": "在 `useConfirmBlueskyHandleMutationForUser` 的 `onSuccess` 中，註解指出缺少 `accountFollows` 查詢的失效處理。這可能導致相關資料（如追蹤清單）在確認 handle 後未更新，造成 UI 不一致。建議加入對應的 `invalidateQueries` 呼叫。",
+    "existing_code": "// Note: Missing invalidation of accountFollows query that should happen here",
+    "evidence": "diff 中新增的註解，明確指出缺少失效處理。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 130,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "useEffect 依賴陣列不完整可能導致 stale closure",
+    "body": "`useEffect` 的依賴陣列僅包含 `account?.blueskyEnabled`、`account?.blueskyHandleConfirmed` 和 `confirmHandle`，但函式內使用了 `disableBlueskyMutation`。雖然註解聲稱其為 stable，但若未來實作變更，可能導致 stale closure。建議明確加入依賴或使用 ref。",
+    "existing_code": "// eslint-disable-next-line react-hooks/exhaustive-deps\n}, [account?.blueskyEnabled, account?.blueskyHandleConfirmed, confirmHandle]); // disableBlueskyMutation is stable",
+    "evidence": "diff 中新增的 useEffect 依賴陣列，缺少 `disableBlueskyMutation`。"
+  },
+  {
+    "path": "apps/activitypub/src/api/activitypub.ts",
+    "line": 711,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "enableBluesky 方法未回傳任何值，可能導致呼叫端誤用",
+    "body": "`enableBluesky` 方法現在不回傳任何值（`Promise<void>`），但測試中仍以 `await api.enableBluesky()` 呼叫。若未來需要回傳資料，可能需要修改簽名。建議明確標註回傳型別為 `Promise<void>`。",
+    "existing_code": "async enableBluesky() {\n    const url = new URL('.ghost/activitypub/v2/actions/bluesky/enable', this.apiUrl);\n\n    await this.fetchJSON(url, 'POST');\n}",
+    "evidence": "diff 中 `enableBluesky` 方法移除回傳型別與回傳值。"
+  },
+  {
+    "path": "apps/activitypub/src/api/activitypub.ts",
+    "line": 723,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "confirmBlueskyHandle 對 null 或非字串回傳值的處理不一致",
+    "body": "`confirmBlueskyHandle` 方法在 `json` 為 null 或 `json.handle` 不存在時回傳空字串，但若 `json.handle` 為非字串（如數字），`String(json.handle)` 會將其轉為字串，可能不符合預期。建議明確驗證型別。",
+    "existing_code": "if (!json || typeof json.handle !== 'string') {\n    return '';\n}\n\nreturn String(json.handle);",
+    "evidence": "diff 中 `confirmBlueskyHandle` 方法的實作。"
+  }
+]

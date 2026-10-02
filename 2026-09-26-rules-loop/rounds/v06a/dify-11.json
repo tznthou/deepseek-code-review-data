@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "organize_agent_history 中 tool_call_response 的 content 誤用 tool_inputs 而非 tool_responses",
+    "body": "在 `organize_agent_history` 中，建構 `ToolPromptMessage` 時，`content` 參數使用了 `tool_inputs.get(tool, agent_thought.observation)`，但此處應為工具的回應內容，應使用 `tool_responses`。這會導致工具回應內容錯誤地顯示為輸入參數，影響對話歷史的正確性。\n\n建議修正為：\n```python\ncontent=str(tool_responses.get(tool, observation_payload)),\n```",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中新增行 `content=str(tool_inputs.get(tool, agent_thought.observation)),`，而前文已解析 `tool_responses`，此處應使用 `tool_responses`。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R14] AgentThoughtValidation 使用 Pydantic v1 語法且未實際使用",
+    "body": "新增的 `AgentThoughtValidation` 模型使用 `class Config: extra = \"allow\"`，這是 Pydantic v1 的寫法，違反專案規範 R14（應使用 Pydantic v2 的 `ConfigDict(extra='forbid')`）。此外，該模型在程式碼中並未被使用，可能為冗餘程式碼。\n\n建議移除或改用 Pydantic v2 語法並實際應用於驗證。",
+    "existing_code": "class Config:\n        extra = \"allow\"  # Pydantic v1 syntax - should use ConfigDict(extra='forbid')",
+    "evidence": "diff 中新增 `AgentThoughtValidation` 類別，包含 `class Config: extra = \"allow\"`，且未見其他使用。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 320,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "message_price_unit 與 answer_price_unit 的預設值不一致",
+    "body": "在 `create_agent_thought` 中，`message_price_unit` 設定為 `Decimal(\"0.001\")`，而 `answer_price_unit` 設定為 `Decimal(0)`。這可能導致價格計算不一致，需確認是否為預期行為。",
+    "existing_code": "message_price_unit=Decimal(\"0.001\"),\n            answer_unit_price=Decimal(\"0.001\"),\n            answer_price_unit=Decimal(0),",
+    "evidence": "diff 中新增行顯示 `message_price_unit` 與 `answer_price_unit` 的預設值不同。"
+  }
+]

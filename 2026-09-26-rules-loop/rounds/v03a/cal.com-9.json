@@ -1,0 +1,68 @@
+[
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移動後 import 路徑可能造成循環依賴",
+    "body": "此檔案從 packages/platform/atoms 移至 apps/web/components/apps，但 import 了 `../../../../packages/platform/atoms/src/components/atoms-wrapper` 與 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar`。這代表 apps/web 直接依賴 packages/platform/atoms 的內部路徑，而 packages/platform/atoms 可能也依賴 apps/web（例如其他 wrapper），形成循環依賴。建議改為使用公開的 package exports（如 `@calcom/atoms/...`）或將 AtomsWrapper 與 DestinationCalendarSettings 一併移至 apps/web。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 中新增的 import 路徑指向 packages/platform/atoms 的內部檔案，而非公開 API。"
+  },
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "sortHosts 函式邏輯變更可能影響排序結果",
+    "body": "原本在 HostEditDialogs.tsx 中的 sortHosts 在 weight 相等時回傳 `priorityB - priorityA`，但移動後改為 `priorityA - priorityB`，排序方向相反。這可能導致 host 優先順序錯誤。請確認此變更是否為預期，並補充測試。",
+    "existing_code": "if (weightA === weightB) {\n      return priorityA - priorityB;\n    } else {\n      return weightB - weightA;\n    }",
+    "evidence": "diff 顯示 `return priorityB - priorityA;` 被改為 `return priorityA - priorityB;`"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 61,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "動態 import 路徑可能不正確",
+    "body": "`EventTeamAssignmentTab` 的動態 import 從 `./EventTeamAssignmentTabWebWrapper` 改為 `./tabs/assignment/EventTeamAssignmentTabWebWrapper`，但該檔案實際位於 `apps/web/modules/event-types/components/tabs/assignment/EventTeamAssignmentTabWebWrapper.tsx`，相對路徑應為 `./tabs/assignment/EventTeamAssignmentTabWebWrapper`，此處正確。但需確認其他動態 import 路徑是否皆正確。",
+    "existing_code": "const EventTeamAssignmentTab = dynamic(() => import(\"./tabs/assignment/EventTeamAssignmentTabWebWrapper\"));",
+    "evidence": "diff 中此行的 import 路徑變更。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 236,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "縮排不一致",
+    "body": "在 tabMap 的 JSX 中，`<EventSetupTab>` 與 `<EventAvailabilityTab>` 的縮排從原本的 6 空格改為 8 空格，與其他 tab 不一致。建議使用 Biome 格式化。",
+    "existing_code": "<EventSetupTab\n            eventType={eventType}\n            locationOptions={locationOptions}\n            team={team}\n            teamMembers={teamMembers}\n            destinationCalendar={destinationCalendar}\n        />",
+    "evidence": "diff 顯示縮排變更。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾的 `export default EventLimitsTabWebWrapper;` 後缺少換行符，可能導致 lint 警告。建議補上換行。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 顯示 `\\ No newline at end of file`"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾的 `export default EventRecurringWebWrapper;` 後缺少換行符，可能導致 lint 警告。建議補上換行。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 顯示 `\\ No newline at end of file`"
+  }
+]

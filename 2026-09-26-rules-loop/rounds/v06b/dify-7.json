@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "createTFunction 未處理 returnObjects 選項，可能導致依賴該功能的測試失敗",
+    "body": "舊的全域 mock 在 `useTranslation` 中對 `options?.returnObjects` 有特殊處理，會回傳陣列 `[`${key}-feature-1`, `${key}-feature-2`]`。新的 `createTFunction` 完全忽略此選項，僅將 `returnObjects` 視為一般參數並序列化到回傳字串中。這會導致任何依賴 `returnObjects` 的測試（例如預期取得陣列）失敗。\n\n建議在 `createTFunction` 中加入對 `returnObjects` 的處理，例如：\n```typescript\nif (options?.returnObjects) {\n  return [`${key}-feature-1`, `${key}-feature-2`]\n}\n```\n並確保此行為與舊全域 mock 一致。",
+    "existing_code": "export function createTFunction(translations: TranslationMap, defaultNs?: string) {\n  return (key: string, options?: Record<string, unknown>) => {\n    const ns = (options?.ns as string | undefined) ?? defaultNs\n    const fullKey = ns ? `${ns}.${key}` : key\n\n    // Check custom translations with namespace first\n    if (translations[fullKey] !== undefined)\n      return translations[fullKey]\n\n    // Check custom translations without namespace\n    if (translations[key] !== undefined)\n      return translations[key]\n\n    // Serialize params (excluding ns) for test assertions\n    const params = { ...options }\n    delete params.ns\n    const suffix = Object.keys(params).length > 0 ? `:${JSON.stringify(params)}` : ''\n    return `${fullKey}${suffix}`\n  }\n}",
+    "evidence": "diff 中 `web/vitest.setup.ts` 的舊全域 mock 包含 `if (options?.returnObjects) return [`${key}-feature-1`, `${key}-feature-2`]`，但新的 `createTFunction` 中沒有對應邏輯。"
+  },
+  {
+    "path": "web/app/components/plugins/install-plugin/install-from-local-package/steps/install.spec.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "自訂 Trans mock 可能與 createReactI18nextMock 的 Trans 衝突",
+    "body": "此處使用 `createReactI18nextMock()` 取得預設的 `useTranslation` 和 `Trans`，但隨後又覆寫了 `Trans` 以加入 `data-testid=\"trans\"` 和自訂渲染邏輯。這會導致 `createReactI18nextMock` 提供的 `Trans` 被完全取代，可能遺失其原本的行為（例如處理 `children` 或 `data-i18n-key`）。若此測試需要自訂 `Trans`，建議直接使用 `createUseTranslationMock` 並自行定義 `Trans`，或擴充 `createReactI18nextMock` 以支援自訂 `Trans` 選項。",
+    "existing_code": "vi.mock('react-i18next', async (importOriginal) => {\n  const actual = await importOriginal<typeof import('react-i18next')>()\n  const { createReactI18nextMock } = await import('@/test/i18n-mock')\n  return {\n    ...actual,\n    ...createReactI18nextMock(),\n    Trans: ({ i18nKey, components }: { i18nKey: string, components?: Record<string, React.ReactNode> }) => (\n      <span data-testid=\"trans\">\n        {i18nKey}\n        {components?.trustSource}\n      </span>\n    ),\n  }\n})",
+    "evidence": "diff 中此檔案新增了 `...createReactI18nextMock()` 並覆寫 `Trans`，但 `createReactI18nextMock` 本身已包含 `Trans` 的實作。"
+  },
+  {
+    "path": "web/app/components/plugins/marketplace/index.spec.tsx",
+    "line": 31,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "i18next-config mock 的 getFixedT 行為變更可能影響其他測試",
+    "body": "此處將 `getFixedT` 的 mock 從回傳 key 改為回傳 `ns.key`（若有 ns），以配合新的全域 mock 行為。但此 mock 僅在此測試檔案中生效，若其他測試檔案也 mock 了 `@/i18n-config/i18next-config` 並依賴舊行為，可能導致不一致。建議確認所有相關測試均已更新，或考慮將此 mock 也集中至輔助函式。",
+    "existing_code": "vi.mock('@/i18n-config/i18next-config', () => ({\n  default: {\n    getFixedT: (_locale: string) => (key: string, options?: Record<string, unknown>) => {\n      if (options && options.ns) {\n        return `${options.ns}.${key}`\n      }\n      else {\n        return key\n      }\n    },\n  },\n}))",
+    "evidence": "diff 中此檔案的 `getFixedT` mock 從 `(key: string) => key` 改為有條件地加上 namespace 前綴。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 216,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄音端點權限從 BOOKING_READ 改為 BOOKING_WRITE 可能過度授權",
+    "body": "此端點為讀取錄音，但權限從 BOOKING_READ 改為 BOOKING_WRITE。若 BOOKING_WRITE 權限包含修改能力，則擁有寫入權限但無讀取權限的使用者將可存取錄音，可能違反最小權限原則。建議確認 BOOKING_WRITE 的定義，若僅為讀取用途應維持 BOOKING_READ。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中將原本的 @Permissions([BOOKING_READ]) 改為 @Permissions([BOOKING_WRITE])，但端點仍為 GET 且回傳錄音資料。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "transcripts 端點 guard 順序可能導致 Pbac 檢查被跳過",
+    "body": "原本的 guard 順序為 BookingUidGuard，現在改為 BookingPbacGuard, ApiAuthGuard, BookingUidGuard。若 BookingPbacGuard 依賴 ApiAuthGuard 設定的使用者資訊，則可能在使用者未通過驗證時就執行 Pbac 檢查，導致錯誤或安全漏洞。建議確認 guard 執行順序與相依性，必要時調整為 ApiAuthGuard 在前。",
+    "existing_code": "@UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)",
+    "evidence": "diff 中將 @UseGuards(BookingUidGuard) 改為 @UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)，但未提供 guard 內部實作，無法確認順序是否正確。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-recordings.output.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "新增未使用的 import",
+    "body": "新增了 `import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";`，但在此檔案中並未使用該型別。這會觸發 lint 警告（未使用的 import），建議移除。",
+    "existing_code": "import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";",
+    "evidence": "diff 中新增此 import，但檔案內容未見使用 BookingRepository。"
+  }
+]

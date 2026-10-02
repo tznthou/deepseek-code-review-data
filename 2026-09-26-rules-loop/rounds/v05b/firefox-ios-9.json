@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "cancelEditMode 條件變更可能導致非網頁 URL 被傳遞",
+    "body": "原本條件為 `currentURL.isWebPage() && !currentURL.isReaderModeURL`，表示只有當 URL 是網頁且非閱讀模式時才保留 URL。修改後變成 `currentURL.isWebPage() || currentURL.isReaderModeURL`，這會讓任何網頁 URL（包括閱讀模式）或任何閱讀模式 URL（即使不是網頁）都被保留。這可能導致非網頁 URL（如 `about:blank` 或 `file://`）被傳遞給 `ToolbarAction`，進而影響取消編輯時的行為。\n\n**失敗情境**：當使用者在網址列編輯一個非網頁 URL（例如 `about:config`）並取消編輯時，原本會將 URL 設為 nil，但修改後會保留該 URL，可能導致工具列顯示錯誤的 URL 或觸發非預期的導航。\n\n**建議**：若此變更為刻意修正，請提供對應的測試案例；否則應還原為原本的 AND 條件。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `url = (currentURL.isWebPage() && !currentURL.isReaderModeURL) ? url : nil` 改為 `url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil`，邏輯運算子與條件完全相反。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "readerModeState 布林值反轉可能導致錯誤的遙測事件",
+    "body": "原本 `isReaderModeEnabled` 在 `.available` 時為 `true`，其他情況為 `false`。修改後變成 `.available` 時為 `false`，其他情況為 `true`。這會讓遙測事件記錄錯誤的啟用狀態，影響數據分析。\n\n**失敗情境**：當閱讀模式可用時，使用者點擊閱讀模式按鈕，遙測會記錄 `isEnabled: false`，與實際行為相反。\n\n**建議**：若此變更為刻意修正，請提供對應的測試案例；否則應還原為原本的邏輯。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中原本為 `case .available: true` 與 `default: false`，修改後完全反轉。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "cancelEditMode 條件變更缺乏測試覆蓋",
+    "body": "此邏輯變更未包含任何對應的單元測試。`ToolbarMiddlewareTests` 中沒有針對 `cancelEditMode` 的測試案例，無法驗證新邏輯的正確性。\n\n**建議**：新增測試案例，涵蓋 `isWebPage` 與 `isReaderModeURL` 的各種組合，確保行為符合預期。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中僅修改了實作，未見任何測試檔案變更。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "readerModeState 布林值反轉缺乏測試覆蓋",
+    "body": "此邏輯變更未包含任何對應的單元測試。`ToolbarMiddlewareTests` 中沒有針對 `readerModeButtonTapped` 遙測事件的測試案例，無法驗證新邏輯的正確性。\n\n**建議**：新增測試案例，驗證不同 `readerModeState` 下遙測事件的正確性。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中僅修改了實作，未見任何測試檔案變更。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/ToolbarTelemetry.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R11] gleanWrapper 屬性存取控制從 private 改為 internal",
+    "body": "原本 `private let gleanWrapper: GleanWrapper` 改為 `let gleanWrapper: GleanWrapper`，擴大了屬性的可見範圍。若無外部使用需求，建議保持 `private` 以符合資訊隱藏原則。",
+    "existing_code": "let gleanWrapper: GleanWrapper",
+    "evidence": "diff 中此行由 `private let gleanWrapper: GleanWrapper` 改為 `let gleanWrapper: GleanWrapper`。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "description 欄位 trim 後可能將有意義的空白字串轉為 null",
+    "body": "在 handleSubmit 中，`trimmedDescription === \"\" ? null : trimmedDescription` 會將僅包含空白的 description 轉為 null。若使用者原本 description 為 null，但輸入空白後送出，會將 null 改為 null（無影響）；但若原本 description 為有意義的空白字串（例如多個空格），送出後會被轉為 null，可能非使用者預期。建議保留原始值，或僅在空字串時轉為 null，而非 trim 後判斷。",
+    "existing_code": "const trimmedDescription = data.description?.trim();\n\t\tupdateWorkPool(\n\t\t\t{\n\t\t\t\tname: workPool.name,\n\t\t\t\tworkPool: {\n\t\t\t\t\tdescription: trimmedDescription === \"\" ? null : trimmedDescription,",
+    "evidence": "diff 中新增的 handleSubmit 函式，第 42-47 行。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 158,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中對 mockUpdateWorkPool 的型別斷言可能隱藏型別錯誤",
+    "body": "在測試中，`mockUpdateWorkPool.mock.calls[0]` 被斷言為特定型別，但若實際呼叫參數型別不符，測試仍可能通過，因為斷言僅在執行時期檢查。建議使用更精確的型別定義或直接使用 `expect.objectContaining` 進行比對，以確保型別安全。",
+    "existing_code": "const callArgs = mockUpdateWorkPool.mock.calls[0] as [\n\t\t\t\t{ name: string; workPool: { concurrency_limit: number | null } },\n\t\t\t\tUpdateWorkPoolOptions,\n\t\t\t];",
+    "evidence": "diff 中測試檔案第 137-140 行。"
+  }
+]

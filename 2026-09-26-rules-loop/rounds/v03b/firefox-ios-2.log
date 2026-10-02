@@ -1,0 +1,9 @@
+[info] repo 規範：repo=firefox-ios、15 條、10013 字元、placement=after_diff、sha256=e4e69f96aa57
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 53645 字元、thinking=disabled、max_tokens=8192）
+[info] 定位不到 firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift:112（片段多重命中（3 處），不猜）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift:47 → 48（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/XCUITests/A11yUtils.swift:4 → 1（片段唯一命中）
+[info] 定位不到 firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift:13（片段多重命中（2 處），不猜）
+[info] 定位不到 firefox-ios/firefox-ios-tests/Tests/XCUITests/TodayWidgetTests.swift:15（片段多重命中（13 處），不猜）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/XCUITests/ScreenGraphTest.swift:54 → 53（片段唯一命中）
+[info] 完成於 15.3s ｜ findings=7 ｜ relocated=3 ｜ verdict=comment ｜ usage={"prompt_tokens": 19358, "completion_tokens": 1819, "total_tokens": 21177, "prompt_tokens_details": {"cached_tokens": 19328}, "prompt_cache_hit_tokens": 19328, "prompt_cache_miss_tokens": 30}

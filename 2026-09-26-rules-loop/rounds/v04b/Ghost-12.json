@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "JWT token 儲存型別變更導致後續使用錯誤",
+    "body": "原本 `this._serverToken` 儲存的是 token 字串，現在改存整個 tokenData 物件。但在 `getServerToken` 方法中，回傳時仍使用 `this._serverToken`，這會導致回傳物件而非字串，造成呼叫端錯誤。建議改回儲存 token 字串，或調整回傳邏輯。",
+    "existing_code": "this._serverToken = tokenData;",
+    "evidence": "diff 中 `-                this._serverToken = tokenData.token;` 改為 `+                this._serverToken = tokenData;`，但後續回傳仍使用 `this._serverToken`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 noTimestamp 選項可能導致 JWT 驗證失敗",
+    "body": "原本 `jwt.sign` 使用 `{noTimestamp: true}`，現在移除該選項。若 Tinybird 端預期 token 不含 `iat` claim，可能導致驗證失敗。需確認 Tinybird 對 token 的要求。",
+    "existing_code": "const token = jwt.sign(payload, this.tinybirdConfig.adminToken);",
+    "evidence": "diff 中 `-        const token = jwt.sign(payload, this.tinybirdConfig.adminToken, {noTimestamp: true});` 改為 `+        const token = jwt.sign(payload, this.tinybirdConfig.adminToken);`"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 164,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 jwt.decode 取代 jwt.verify 可能導致安全性問題",
+    "body": "`_isJWTExpired` 原本使用 `jwt.verify` 驗證 token 簽名，現在改用 `jwt.decode` 僅解碼不驗證。這可能讓攻擊者偽造 token 並繞過過期檢查。建議保留 `jwt.verify` 以確保 token 完整性。",
+    "existing_code": "const decoded = jwt.decode(token);",
+    "evidence": "diff 中 `-            const decoded = jwt.verify(token, this.tinybirdConfig.adminToken);` 改為 `+            const decoded = jwt.decode(token);`"
+  }
+]

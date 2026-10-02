@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R08] 錯誤型別未使用 thiserror，可能違反專案規範",
+    "body": "原本的 Error enum 使用 thiserror 的 derive 巨集來產生 Display 與 Error 實作，但此 PR 移除了 thiserror 依賴，改為手動實作。這可能違反專案規範 R08（Error Types Must Use thiserror for Structured Error Handling）。若專案強制使用 thiserror，此變更應被拒絕；若允許手動實作，則需確認所有錯誤訊息與來源鏈接正確。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中移除了 #[derive(Debug, thiserror::Error)]，改為 #[derive(Debug)]，並新增手動的 Display 與 Error 實作。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "[R09] 公開錯誤枚舉未標記 #[non_exhaustive]",
+    "body": "Error enum 是公開 API，但未加上 #[non_exhaustive] 屬性。這可能違反專案規範 R09（Public Error Enums Must Be Marked as Non-Exhaustive）。若未來需要新增錯誤變體，將造成破壞性變更。建議加上 #[non_exhaustive]。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中新增的 Error enum 定義沒有 #[non_exhaustive] 屬性。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "notarize_inner 中條件判斷邏輯可能反轉",
+    "body": "原本的條件 `submit_output.status.map_or(!wait, |s| s == \"Accepted\")` 改為 `submit_output.status.map_or(wait, |s| s == \"Accepted\")`。這改變了當 status 為 None 時的行為：原本在 wait=false 時會進入 if 區塊，現在則在 wait=true 時才會進入。需確認此變更是否符合預期，特別是在非等待模式下是否會跳過必要的日誌輸出。",
+    "existing_code": "if submit_output.status.map_or(wait, |s| s == \"Accepted\") {",
+    "evidence": "diff 中該行由 `map_or(!wait, ...)` 改為 `map_or(wait, ...)`。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "日期過濾條件從 `<` 改為 `<=` 可能包含今天的信件，導致暖機限制計算錯誤",
+    "body": "在 `#getHighestCount` 方法中，原本的過濾條件是 `created_at:<${today}`，現在改為 `created_at:<=${today}`。這會將今天建立的郵件也納入最高計數的計算中。根據方法註解，其目的是取得「excluding today」的最高計數，因此這個變更可能導致暖機限制被錯誤地提高，尤其是在同一天內多次發送郵件時。\n\n**失敗情境**：假設今天已經發送了一封郵件，其 `csd_email_count` 為 500。當再次呼叫 `getWarmupLimit` 時，`#getHighestCount` 會回傳 500（因為包含了今天的郵件），然後計算出的暖機限制會基於 500 來擴展，而不是基於昨天的最高值。這可能導致暖機速度過快，影響郵件送達率。\n\n**建議**：將過濾條件改回 `<`，以排除今天的郵件。",
+    "existing_code": "filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,",
+    "evidence": ""
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中對 findPage 的模擬不一致，可能導致測試無法正確驗證行為",
+    "body": "在單元測試中，`Email` 模型的模擬方式不一致。有些測試使用 `createModelClass({ findAll: [...] })`，而有些測試直接指定 `findPage` stub。然而，`DomainWarmingService` 呼叫的是 `findPage`，而不是 `findAll`。`createModelClass` 可能不會自動將 `findAll` 映射到 `findPage`，這可能導致測試中 `findPage` 未被正確定義，從而引發錯誤或無法驗證預期行為。\n\n**失敗情境**：如果 `createModelClass` 沒有提供 `findPage` 方法，則在呼叫 `service.getWarmupLimit` 時會拋出 `TypeError: this.#emailModel.findPage is not a function`，導致測試失敗。\n\n**建議**：統一使用 `findPage` stub，或確保 `createModelClass` 正確配置 `findPage`。",
+    "existing_code": "Email = createModelClass({\n            findAll: []\n        });",
+    "evidence": ""
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 125,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "高流量分支的計算可能導致暖機限制超過總收件人數",
+    "body": "在 `getWarmupLimit` 方法中，當 `lastCount >= highVolume.threshold` 時，計算出的暖機限制可能超過 `emailCount`。雖然後續有 `Math.min` 來限制，但此處的計算邏輯可能導致不必要的複雜性。\n\n**失敗情境**：假設 `lastCount = 500000`，`emailCount = 600000`。計算出的暖機限制為 `min(600000, 575000) = 575000`，這小於 `emailCount`，因此最終回傳 575000。但如果 `emailCount` 小於計算出的限制，例如 `emailCount = 500000`，則最終回傳 500000。這本身是正確的，但高流量分支的計算可能與後續的 `Math.min` 重複，且可能導致可讀性降低。\n\n**建議**：考慮簡化邏輯，或添加註解說明高流量分支的意圖。",
+    "existing_code": "if (lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold) {\n            const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);\n            const absoluteIncrease = lastCount + WARMUP_SCALING_TABLE.highVolume.maxAbsoluteIncrease;\n            return Math.min(scaledIncrease, absoluteIncrease);\n        }",
+    "evidence": ""
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中設定假時間的方式可能導致跨日問題",
+    "body": "在整合測試中，`setDay` 函式使用 `baseDate` 作為基準，並設定 `shouldAdvanceTime: true`。這可能導致測試中的時間自動前進，影響依賴時間的邏輯。\n\n**失敗情境**：如果測試中需要精確控制時間，`shouldAdvanceTime: true` 可能導致時間在測試期間自動前進，使得後續的日期計算出現偏差。\n\n**建議**：確認 `shouldAdvanceTime` 是否必要，或改為 `false` 以保持時間固定。",
+    "existing_code": "clock = sinon.useFakeTimers({\n            now: time.getTime(),\n            shouldAdvanceTime: true\n        });",
+    "evidence": ""
+  }
+]

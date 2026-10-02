@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R05] 新增的 validateCreateScheduleInput 未使用 Zod schema，且型別轉換不安全",
+    "body": "此函式僅檢查 `name` 為非空字串，其餘欄位（如 `schedule`、`eventTypeId`）未做任何驗證，直接以 `as CreateScheduleInput` 斷言。若呼叫端傳入錯誤型別（例如 `schedule` 為字串），將在後續處理時才發生錯誤，且錯誤訊息不明確。建議使用 Zod schema 定義並驗證輸入，或至少對每個欄位進行型別檢查。",
+    "existing_code": "export function validateCreateScheduleInput(input: unknown): CreateScheduleInput {\n  if (!input || typeof input !== 'object') {\n    throw new Error('Invalid input: must be an object');\n  }\n\n  const data = input as Record<string, unknown>;\n\n  if (typeof data.name !== 'string' || data.name.length === 0) {\n    throw new Error('Invalid input: name must be a non-empty string');\n  }\n\n  return data as CreateScheduleInput;\n}",
+    "evidence": "diff 中新增的 validateCreateScheduleInput 函式，僅驗證 name，其餘欄位直接斷言型別，違反 R05 的型別安全模式。"
+  },
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Slot 型別中 userIds 型別從 number[] 改為 string[]，可能與實際 API 不符",
+    "body": "原本從 @calcom/trpc 匯入的 Slot 型別中 `userIds?: number[]`，此處新定義改為 `userIds?: string[]`。若 API 實際回傳 number[]，將導致型別錯誤或執行階段問題。請確認 API 規格，若確實為 string[] 則需同步更新相關使用處。",
+    "existing_code": "export type Slot = {\n  time: string;\n  userIds?: string[];\n  attendees?: number;\n  bookingUid?: string;\n  users?: string[];\n};",
+    "evidence": "diff 中新增的 Slot 型別，與被移除的 trpc 版本相比，userIds 型別從 number[] 改為 string[]。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 \"./booker\" export 可能造成 breaking change",
+    "body": "原本 exports 中有 `\"./booker\": \"./booker/index.ts\"`，此 PR 將其改為 `\"./booker/types\": \"./booker/types.ts\"`。若其他套件或應用程式依賴 `@calcom/atoms/booker` 的匯入，將導致解析失敗。建議保留原有 export 或確認無外部使用。",
+    "existing_code": "\"./booker/types\": \"./booker/types.ts\",",
+    "evidence": "diff 中 package.json 的 exports 變更，移除了 \"./booker\" 路徑。"
+  }
+]

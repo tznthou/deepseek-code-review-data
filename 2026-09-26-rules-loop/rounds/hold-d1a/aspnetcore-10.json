@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Logging.AzureAppServices/src/BatchingLoggerOptions.cs",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "BackgroundQueueSize 驗證條件變更可能導致行為不一致",
+    "body": "原本 `BackgroundQueueSize` 的 setter 在 `value < 0` 時拋出例外，現在改為 `value <= 0`。這表示原本允許的 `0` 現在會被拒絕。若 `0` 在原本設計中代表「無佇列」或「不緩衝」，此變更可能破壞既有使用者的設定。請確認此變更是否為預期行為，並考慮是否應保留 `0` 為合法值。",
+    "existing_code": "if (value <= 0)\n            {\n                throw new ArgumentOutOfRangeException(nameof(value), $\"{nameof(BackgroundQueueSize)} must be non-negative.\");\n            }",
+    "evidence": "diff 中將 `if (value < 0)` 改為 `if (value <= 0)`，且錯誤訊息仍為 \"must be non-negative\"，但條件已排除 0。"
+  },
+  {
+    "path": "src/Validation/src/ValidationOptions.cs",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R18] 方法開頭大括號應在新行",
+    "body": "方法 `TryGetValidatableParameterInfo` 的開頭大括號與方法簽名在同一行，違反 Allman 風格。請將大括號移至下一行。",
+    "existing_code": "public bool TryGetValidatableParameterInfo(ParameterInfo parameterInfo, [NotNullWhen(true)] out IValidatableInfo? validatableInfo) {",
+    "evidence": "diff 中新增行：`public bool TryGetValidatableParameterInfo(ParameterInfo parameterInfo, [NotNullWhen(true)] out IValidatableInfo? validatableInfo) {`，開頭大括號與簽名同行。"
+  },
+  {
+    "path": "src/Validation/src/ValidationOptions.cs",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R17] 控制流程應使用大括號",
+    "body": "`foreach` 迴圈內只有一行 `if` 陳述式，但未使用大括號。雖然目前語法正確，但為了避免未來修改時出錯，建議加上大括號。",
+    "existing_code": "foreach (var resolver in Resolvers)\n        {\n            if (resolver.TryGetValidatableParameterInfo(parameterInfo, out validatableInfo))",
+    "evidence": "diff 中新增的 `foreach` 迴圈內，`if` 陳述式沒有大括號。"
+  }
+]

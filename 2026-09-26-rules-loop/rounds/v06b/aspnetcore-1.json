@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Navigate 呼叫順序變更可能導致測試不穩定",
+    "body": "原本先 Navigate 再取得 h1 元素，現在改為先取得元素再 Navigate。如果 Navigate 會觸發頁面重新載入或 DOM 重建，先前取得的元素參考可能失效，導致後續 Browser.Equal 失敗。建議確認此變更的意圖，並考慮在 Navigate 後重新取得元素。",
+    "existing_code": "_originalH1Element = Browser.Exists(By.TagName(\"h1\"));\nNavigate($\"{ServerPathBase}/redirect\");",
+    "evidence": "diff 中將 Navigate 移至 _originalH1Element 指派之後。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "將 Back 改為 Forward 可能改變測試意圖",
+    "body": "原本測試驗證「back」能回到重導向前的頁面，現在改為「forward」。若測試目的是驗證瀏覽器歷史記錄行為，此變更可能使測試失去原有意義。請確認是否為預期修正。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 Browser.Navigate().Back() 改為 Browser.Navigate().Forward()。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "AppContext.SetSwitch 參數變更可能使測試失效",
+    "body": "原本將 DisableThrowNavigationException 設為 false，現在改為 true。若測試目的是驗證在未停用例外時的行為，設為 true 可能使測試不再觸發預期的例外路徑。請確認此變更是否正確。",
+    "existing_code": "AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中將 false 改為 true。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R19] 測試框架屬性混用可能違反專案慣例",
+    "body": "此測試類別原本使用 xUnit 的 [Fact]，現在改用 MSTest 的 [TestMethod]，但其他測試方法仍使用 [Fact]。若專案規定使用 xUnit，此變更可能違反規範。請確認測試框架的統一性。",
+    "existing_code": "[TestMethod]",
+    "evidence": "diff 中將 [Fact] 改為 [TestMethod]，但檔案中其他方法仍使用 [Fact]。"
+  }
+]

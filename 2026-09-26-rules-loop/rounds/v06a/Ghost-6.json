@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "排程條件反轉導致重複排程",
+    "body": "原本條件 `!hasScheduled.processOutbox` 在尚未排程時才排程，修改後變成 `hasScheduled.processOutbox`，導致已排程時又重複排程。這會造成多個排程任務同時執行，可能重複發送歡迎郵件。\n\n建議改回 `!hasScheduled.processOutbox`，或使用其他冪等機制。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中此行由 `if (!hasScheduled.processOutbox && ...)` 改為 `if (hasScheduled.processOutbox && ...)`，條件反轉。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 341,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "config 值未驗證型別，可能造成非預期行為",
+    "body": "`config.get('memberWelcomeEmailTestInbox')` 的回傳值可能是任意型別（例如物件或陣列），但程式碼直接將其作為布林值使用。若設定檔中該值為非空字串以外的 truthy 值（如 `{}` 或 `[]`），仍會觸發歡迎郵件邏輯，可能導致非預期行為。\n\n建議明確檢查該值是否為非空字串，或使用 `Boolean()` 轉換並驗證型別。",
+    "existing_code": "const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');\nif (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)) {",
+    "evidence": "diff 中新增 `const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');` 並在條件中使用，未見型別驗證。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R20] 使用 var 宣告變數",
+    "body": "此處將原本的 `let member;` 改為 `var member;`，違反專案規範 R20（應使用 let 或 const）。建議改回 `let member;`。",
+    "existing_code": "var member;",
+    "evidence": "diff 中此行由 `let member;` 改為 `var member;`。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/member-welcome-emails.test.js",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中設定空字串可能無法模擬未設定狀態",
+    "body": "在測試 `does NOT create outbox entry when config is not set` 中，使用 `configUtils.set('memberWelcomeEmailTestInbox', '')` 來模擬未設定。但若實際 config 未設定時回傳 `undefined`，而空字串在條件判斷中也是 falsy，兩者行為相同，因此測試可能無法區分「未設定」與「設定為空字串」。建議使用 `configUtils.set('memberWelcomeEmailTestInbox', undefined)` 或直接刪除該設定，以更貼近實際情境。",
+    "existing_code": "configUtils.set('memberWelcomeEmailTestInbox', '');",
+    "evidence": "diff 中此行將原本的 `sinon.stub(labs, 'isSet').withArgs('welcomeEmails').returns(false);` 改為 `configUtils.set('memberWelcomeEmailTestInbox', '');`。"
+  }
+]

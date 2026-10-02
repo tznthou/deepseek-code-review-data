@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 部分 require 陳述式缺少分號",
+    "body": "在重新命名 require 路徑時，部分陳述式結尾的分號被移除，違反專案規範 R19（Code Must Always Use Semicolons）。例如：\n```js\nconst {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')\n```\n建議補上分號以維持一致性。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中新增的這幾行沒有分號，而其他 require 陳述式有分號。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 部分 require 陳述式缺少分號",
+    "body": "以下 require 陳述式同樣缺少分號：\n```js\nconst PaymentsService = require('./services/payments-service')\nconst TokenService = require('./services/token-service')\nconst GeolocationService = require('./services/geolocation-service')\nconst MemberBREADService = require('./services/member-bread-service')\nconst MemberRepository = require('./repositories/member-repository')\n```\n建議補上分號。",
+    "existing_code": "const PaymentsService = require('./services/payments-service')\nconst TokenService = require('./services/token-service')\nconst GeolocationService = require('./services/geolocation-service')\nconst MemberBREADService = require('./services/member-bread-service')\nconst MemberRepository = require('./repositories/member-repository')",
+    "evidence": "diff 中新增的這幾行沒有分號，而其他 require 陳述式有分號。"
+  }
+]

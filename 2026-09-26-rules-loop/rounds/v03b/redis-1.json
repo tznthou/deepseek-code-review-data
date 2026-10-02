@@ -1,0 +1,79 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "dictStoredKey2Key 未在 dict.h 中宣告，可能導致隱式宣告或連結錯誤",
+    "body": "函式 `dictStoredKey2Key` 在 dict.c 中定義，但未在 dict.h 中宣告。其他檔案（如 defrag.c）呼叫此函式時，若未包含正確的宣告，將導致隱式宣告（C99 中為錯誤）或連結錯誤。\n\n建議在 dict.h 中新增宣告：\n```c\nconst void *dictStoredKey2Key(dict *d, const void *key __stored_key);\n```",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {\n    return (d->type->keyFromStoredKey) ? d->type->keyFromStoredKey(key) : key;\n}",
+    "evidence": "diff 中新增了此函式，但 dict.h 的修改未包含其宣告。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 1257,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "hashTypeDelete 簽名變更未更新所有呼叫點",
+    "body": "`hashTypeDelete` 的簽名從 `int hashTypeDelete(robj *o, void *key, int isSdsField)` 改為 `int hashTypeDelete(robj *o, void *key)`，但 diff 中仍有呼叫點傳入第三個參數（例如 `hashTypeDelete(o, field, 1)`）。這會導致編譯錯誤。\n\n請搜尋所有呼叫點並移除多餘的參數。",
+    "existing_code": "int hashTypeDelete(robj *o, void *field) {",
+    "evidence": "diff 中修改了函式定義，但未修改所有呼叫點（例如 module.c 中的呼叫仍傳入 1）。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "validateStoredKeyConversion 函式未使用，可能觸發編譯警告",
+    "body": "新增的靜態函式 `validateStoredKeyConversion` 從未被呼叫。若編譯器開啟 `-Wunused-function`（通常包含在 `-Wall` 中），將產生警告，違反 R04（-Werror 下編譯失敗）。\n\n建議移除該函式，或加入實際使用（例如在 debug 模式中驗證）。",
+    "existing_code": "/* Validate that stored-key to key conversion works correctly */\nstatic int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}",
+    "evidence": "diff 中新增此函式，但未見任何呼叫。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 913,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "dictSetKeyAtLink 中新增 dictFindLink 呼叫可能造成效能回歸",
+    "body": "在 `dictSetKeyAtLink` 中，當 `*link == NULL` 時，新增了 `dictFindLink(d, addedKey, NULL)` 來尋找連結。這會對每個插入操作增加一次完整的 dict 查找，可能顯著影響效能，特別是在大量插入時。\n\n原本的設計是呼叫者應提供正確的 link，此處的 fallback 可能掩蓋呼叫者的錯誤。建議評估是否必要，或改為 assert 並要求呼叫者提供 link。",
+    "existing_code": "if (*link == NULL) {\n        *link = dictFindLink(d, addedKey, NULL);\n        assert(*link != NULL);\n    }",
+    "evidence": "diff 中新增了 dictFindLink 呼叫。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "pauseAutoResize 型別變更可能影響 ABI 相容性",
+    "body": "`pauseAutoResize` 從 bitfield 改為 `int16_t`，這可能改變 struct dict 的記憶體佈局，影響 ABI 相容性。若有用戶端依賴舊佈局（例如透過擴充模組），可能導致問題。\n\n建議確認此變更的必要性，並評估對 ABI 的影響。",
+    "existing_code": "int16_t pauseAutoResize;  /* If >0 automatic resizing is disallowed (<0 indicates coding error) */",
+    "evidence": "diff 中將 bitfield 改為 int16_t。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 321,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 dictCompareKV 可能影響其他使用者",
+    "body": "`dictCompareKV` 被移除，但可能仍有其他程式碼引用它（例如在外部模組中）。若未完全移除所有引用，將導致連結錯誤。\n\n建議搜尋整個程式碼庫，確保沒有殘留引用。",
+    "existing_code": "int dictSdsCompareKV(dictCmpCache *cache, const void *sdsKey1, const void *sdsKey2)",
+    "evidence": "diff 中移除了 dictCompareKV，但未確認所有引用已移除。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "dictStoredKey2Key 應為 static inline 以減少呼叫開銷",
+    "body": "`dictStoredKey2Key` 在多處被呼叫，若未內聯，可能增加函式呼叫開銷。建議宣告為 `static inline` 以允許編譯器最佳化。",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中定義為 static，但未 inline。"
+  }
+]

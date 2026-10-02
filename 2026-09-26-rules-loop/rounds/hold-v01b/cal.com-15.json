@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "Slot.userIds 型別從 number[] 改為 string[]，可能導致下游型別錯誤",
+    "body": "原本在 @calcom/trpc/server/routers/viewer/slots/types.ts 中，Slot.userIds 的型別是 number[]，但此處新定義的 Slot.userIds 型別為 string[]。這可能導致使用該型別的下游程式碼（例如 apps/web/test/lib/getSchedule/expects.ts）在編譯或執行時發生型別不符的錯誤。建議確認實際資料型別，若確實為 string[] 則需同步更新所有相關程式碼；若為 number[] 則應修正此處定義。",
+    "existing_code": "export type Slot = {\n  time: string;\n  userIds?: string[];\n  attendees?: number;\n  bookingUid?: string;\n  users?: string[];\n};",
+    "evidence": "diff 中新增的 Slot 型別定義 userIds?: string[]，而刪除的舊型別為 userIds?: number[]。"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "validateCreateScheduleInput 驗證不足，可能導致執行時期錯誤",
+    "body": "此函式僅驗證 name 為非空字串，但未驗證 schedule 的結構（應為 { start: Date; end: Date }[][]）及 eventTypeId 的型別（應為 number）。若呼叫端傳入錯誤格式的資料，可能導致後續 API 呼叫失敗或產生難以除錯的錯誤。建議使用 Zod 或更完整的型別檢查來驗證輸入。",
+    "existing_code": "export function validateCreateScheduleInput(input: unknown): CreateScheduleInput {\n  if (!input || typeof input !== 'object') {\n    throw new Error('Invalid input: must be an object');\n  }\n\n  const data = input as Record<string, unknown>;\n\n  if (typeof data.name !== 'string' || data.name.length === 0) {\n    throw new Error('Invalid input: name must be a non-empty string');\n  }\n\n  return data as CreateScheduleInput;\n}",
+    "evidence": "函式中僅檢查 name，未檢查 schedule 與 eventTypeId。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 \"./booker\" export 可能造成 breaking change",
+    "body": "原本 package.json 中有 \"./booker\": \"./booker/index.ts\" 的 export，此 PR 將其移除，僅保留 \"./booker/types\": \"./booker/types.ts\"。若其他套件或應用程式依賴 \"@calcom/atoms/booker\" 的 import，將導致模組解析失敗。建議確認是否有下游使用者，若有必要則保留原 export 或提供替代路徑。",
+    "existing_code": "\"./booker/types\": \"./booker/types.ts\",",
+    "evidence": "diff 中刪除了 \"./booker\": \"./booker/index.ts\"，僅新增 \"./booker/types\"。"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 49,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "validateCreateScheduleInput 回傳型別未嚴格驗證",
+    "body": "函式回傳型別為 CreateScheduleInput，但僅透過型別斷言 (as CreateScheduleInput) 轉換，未實際驗證 schedule 與 eventTypeId 的型別。這可能導致呼叫端誤以為輸入已通過驗證，但實際上可能包含無效資料。建議使用型別守衛或 Zod schema 來確保型別安全。",
+    "existing_code": "return data as CreateScheduleInput;",
+    "evidence": "函式結尾直接使用 as 斷言，未進行額外驗證。"
+  }
+]

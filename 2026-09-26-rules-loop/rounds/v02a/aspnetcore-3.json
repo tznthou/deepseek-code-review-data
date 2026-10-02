@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 371,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "過度寬鬆的 catch 區塊可能掩蓋非預期的例外",
+    "body": "在解析 SSL_CERT_DIR 中的每個目錄時，`catch` 區塊捕獲所有例外並回傳 false。這可能掩蓋了非預期的錯誤（例如 `Path.GetFullPath` 因權限不足或路徑格式錯誤以外的原因失敗）。建議僅捕獲預期的例外類型（如 `ArgumentException`、`NotSupportedException`、`PathTooLongException`），或至少記錄例外訊息以便診斷。",
+    "existing_code": "catch\n                    {\n                        // Ignore invalid directory entries in SSL_CERT_DIR\n                        return false;\n                    }",
+    "evidence": "diff 中新增的 try-catch 區塊，catch 未指定例外類型。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/CertificateManager.cs",
+    "line": 1317,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "事件 114 的訊息格式與事件 110 不一致",
+    "body": "事件 110 的訊息為 `For example, `export {2}=\"{0}:{1}\"`.`，而事件 114 的訊息為 `For example, `export {1}=\"{0}:${1}\"`.`。兩者皆用於建議設定 SSL_CERT_DIR，但格式不同（一個使用 `{1}` 代表現有值，另一個使用 `${1}`）。這可能導致使用者困惑，建議統一格式。",
+    "existing_code": "[Event(114, Level = EventLevel.LogAlways, Message = \"For OpenSSL trust to take effect, '{0}' must be listed in the {1} environment variable. \" +\n            \"For example, `export {1}=\\\"{0}:${1}\\\"`. \" +\n            \"See https://aka.ms/dev-certs-trust for more information.\")]",
+    "evidence": "diff 中新增的事件 114 定義，與既有事件 110 的訊息格式不同。"
+  }
+]

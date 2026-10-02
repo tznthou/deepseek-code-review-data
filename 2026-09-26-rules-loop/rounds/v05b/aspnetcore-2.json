@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "CSP 錯誤訊息比對邏輯可能過於嚴格",
+    "body": "原本使用單一 Regex 比對，現在改為同時比對兩個 Regex（`ParseErrorMessageRegexOld` 與 `ParseErrorMessageRegexNew`）。若瀏覽器版本或錯誤訊息格式略有不同，可能導致測試失敗。建議確認兩個 Regex 是否涵蓋所有可能的錯誤訊息格式，或考慮使用單一更寬鬆的 Regex。",
+    "existing_code": "Assert.True(\n    ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n    ParseErrorMessageRegexNew.IsMatch(logs[0].Message),\n    $\"Expected log message to match one of the CSP error patterns: {ParseErrorMessageRegexOld} or {ParseErrorMessageRegexNew}. Actual: {logs[0].Message}\");",
+    "evidence": "diff 中新增了第二個 Regex 並要求兩者同時匹配，但錯誤訊息可能因瀏覽器而異，導致測試不穩定。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增 QuarantinedTest 屬性可能隱藏測試失敗",
+    "body": "在兩個測試方法上新增 `[QuarantinedTest]` 屬性，這會將測試標記為隔離，可能導致 CI 忽略其失敗。請確認這些測試確實不穩定，並有對應的 issue 追蹤修復。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/59991\")]",
+    "evidence": "diff 中新增了 QuarantinedTest 屬性，但未提供測試不穩定的具體原因。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 213,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "DisposeAsync 順序變更可能影響測試穩定性",
+    "body": "將 `connection.DisposeAsync()` 移到 `secondConnection.DisposeAsync()` 之後，可能改變資源釋放順序，導致測試行為變化。請確認此變更是否為修正特定問題，並確保不會引入新的不穩定。",
+    "existing_code": "await secondConnection.DisposeAsync().DefaultTimeout();\nawait connection.DisposeAsync().DefaultTimeout();",
+    "evidence": "diff 中調整了 DisposeAsync 的呼叫順序。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 362,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "WebSocketWrapper 類別移除 sealed 修飾詞",
+    "body": "將 `internal sealed class WebSocketWrapper` 改為 `internal class WebSocketWrapper`，可能違反專案規範 [R14]（內部實作類別應為 sealed）。請確認是否有繼承需求，否則應保留 sealed。",
+    "existing_code": "internal class WebSocketWrapper : WebSocket",
+    "evidence": "diff 中移除了 sealed 關鍵字。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 409,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "ReceiveAsync 中 _receiveTcs 重設位置變更可能影響行為",
+    "body": "將 `_receiveTcs = new(...)` 移到 `if (buffer.Count == 0)` 之前，可能改變零位元組讀取時的行為。請確認此變更是否為修正特定問題，並確保不會引入新的錯誤。",
+    "existing_code": "_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);\n// Handle zero-byte reads\nif (buffer.Count == 0)\n{\n    return res.Item1;\n}",
+    "evidence": "diff 中調整了 _receiveTcs 重設的位置。"
+  }
+]

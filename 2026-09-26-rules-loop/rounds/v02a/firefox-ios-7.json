@@ -1,0 +1,35 @@
+[
+  {
+    "path": "BrowserKit/Sources/Common/Utilities/DispatchQueueHelper.swift",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ensureMainThread 泛型版本回傳型別改為 T? 可能造成呼叫端未處理 nil",
+    "body": "原本的 `ensureMainThread<T>` 沒有回傳值，現在改成回傳 `T?`。在非主執行緒時會回傳 `nil`，但呼叫端若未檢查 nil 而直接使用，可能導致 force unwrap 崩潰或邏輯錯誤。請確認所有呼叫點都已正確處理可選值，或考慮提供非同步版本以避免回傳 nil。",
+    "existing_code": "public func ensureMainThread<T>(execute work: @escaping @MainActor () -> T) -> T? {",
+    "evidence": "diff 中將回傳型別從 Void 改為 T?，並在非主執行緒分支回傳 nil。"
+  },
+  {
+    "path": "firefox-ios/Client/Application/WebServer.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R12] WebServer 類別移除 final 修飾詞",
+    "body": "WebServer 原本是 final class，現在改成 class。若此類別不預期被繼承，應保留 final 以利編譯器最佳化並防止意外繼承。請確認是否有繼承需求，否則建議加回 final。",
+    "existing_code": "class WebServer: WebServerProtocol, @unchecked Sendable {",
+    "evidence": "diff 中將 `final class WebServer` 改為 `class WebServer`。"
+  },
+  {
+    "path": "firefox-ios/Client/Utils/MainThreadThrottler.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "throttle 方法中 lastExecutionTime 更新順序可能影響節流邏輯",
+    "body": "原本先檢查 threshold 再更新 lastExecutionTime，現在改成先更新 lastExecutionTime 再檢查。這會導致第一次呼叫時 lastExecutionTime 被設為現在，但 threshold 檢查可能因此永遠通過（因為時間差為 0，小於 threshold）。請確認此行為變更是否符合預期。",
+    "existing_code": "lastExecutionTime = Date()\n        guard threshold <= 0 || lastExecutionTime.timeIntervalSinceNow < -threshold else { return }",
+    "evidence": "diff 中將 `lastExecutionTime = Date()` 移到 guard 之前。"
+  }
+]

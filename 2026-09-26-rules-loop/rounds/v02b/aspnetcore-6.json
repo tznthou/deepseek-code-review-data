@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "Redirect() 可能傳入 null 給 NavigateTo，導致 ArgumentNullException",
+    "body": "在 `Redirect()` 方法中，原本的邏輯是當 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 時呼叫 `NavigateToLogin`，否則使用 `_tokenResult.RedirectUrl`。修改後，條件簡化為只檢查 `InteractionOptions != null`，並在 else 分支直接使用 `_tokenResult.InteractiveRequestUrl!`。如果 `InteractionOptions` 為 null 且 `InteractiveRequestUrl` 也為 null（例如舊版程式碼建立的 `AccessTokenResult` 只設定 `RedirectUrl`），則會傳入 null 給 `NavigateTo`，可能導致 `ArgumentNullException`。建議保留對 `InteractiveRequestUrl` 的 null 檢查，或提供明確的 fallback 邏輯。",
+    "existing_code": "_navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);",
+    "evidence": "diff 中 `AccessTokenNotAvailableException.cs` 的變更：原本的 `if (_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null)` 改為 `if (_tokenResult.InteractionOptions != null)`，且 else 分支由 `_navigation.NavigateTo(_tokenResult.RedirectUrl!)` 改為 `_navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!)`。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增的 await Task.Yield() 可能造成非預期的非同步行為",
+    "body": "在 `ProcessLogOut` 方法中，於取得 authentication state 之前新增了 `await Task.Yield();`。此舉可能改變方法的執行時序，特別是在 Blazor 的同步渲染上下文中，可能導致後續的 `Navigation.NavigateTo` 等操作延遲到非同步上下文中執行，進而影響元件狀態或產生競態。若無明確理由，建議移除或提供註解說明其必要性。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\n        await Task.Yield();",
+    "evidence": "diff 中 `RemoteAuthenticatorViewCore.cs` 的變更：在 `AuthenticationState.ReturnUrl = returnUrl;` 之後新增了 `await Task.Yield();`。"
+  }
+]

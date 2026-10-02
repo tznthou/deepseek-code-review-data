@@ -1,0 +1,57 @@
+[
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "前端過濾與後端過濾並存可能導致選項不一致",
+    "body": "查詢參數中已使用 `deferredSearch` 進行後端過濾（`name: { like_: deferredSearch }`），但又在 `filteredData` 中對 `data` 進行前端過濾。這會造成兩次過濾，且前端過濾可能與後端過濾不一致（例如後端使用不同的大小寫處理或模糊匹配）。此外，前端過濾會使 `selectedBlockDocument` 可能找不到已選取的項目（如果該項目不在目前搜尋結果中），導致顯示 fallback 文字。建議移除前端過濾，完全依賴後端過濾，或僅使用前端過濾並移除後端過濾參數。",
+    "existing_code": "const filteredData = useMemo(() => {\n    return data.filter((blockDocument) =>\n      blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),\n    );\n  }, [data, deferredSearch]);",
+    "evidence": "diff 中新增的 `filteredData` 使用 `deferredSearch` 進行前端過濾，而查詢參數中已包含 `deferredSearch` 作為後端過濾條件。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 161,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "驗證錯誤處理不完整，可能導致錯誤被忽略",
+    "body": "`validateForm` 回傳後，程式碼檢查 `errors.length > 0` 並直接 return，但 `errors` 是從 `useSchemaForm` 取得的狀態，可能不是最新的（因為 `validateForm` 是非同步的，且 `errors` 狀態更新可能尚未反映）。此外，`validateForm` 可能拋出錯誤，但 catch 區塊僅顯示 toast 並記錄錯誤，沒有阻止後續的 `createBlockDocument` 呼叫（因為 return 在 try 區塊內，但 catch 後會繼續執行）。建議將 `createBlockDocument` 放在 `validateForm` 成功且無錯誤後才執行，並確保錯誤狀態正確更新。",
+    "existing_code": "await validateForm({ schema: values });\n      if (errors.length > 0) {\n        return;\n      }\n      createBlockDocument(",
+    "evidence": "diff 中 `onSave` 函式先呼叫 `validateForm`，然後檢查 `errors.length`，但 `errors` 可能不是最新的，且 catch 區塊沒有阻止後續執行。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 179,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "錯誤訊息未提供具體錯誤細節",
+    "body": "在 `onError` 回呼中，錯誤訊息固定為 \"Unknown error while creating block.\"，沒有包含實際的錯誤訊息。這會讓使用者難以理解失敗原因，也增加除錯困難。建議從 `err` 中提取可讀的錯誤訊息（例如 `err.message`）並顯示在 toast 中。",
+    "existing_code": "onError: (err) => {\n            const message = \"Unknown error while creating block.\";\n            toast.error(message);\n            console.error(message, err);\n          },",
+    "evidence": "diff 中 `onError` 回呼使用固定字串，未使用 `err` 的內容。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 186,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "catch 區塊的錯誤處理可能導致重複提示",
+    "body": "`validateForm` 拋出錯誤時，catch 區塊顯示 toast 並記錄錯誤，但之後程式碼會繼續執行（因為沒有 return 或 throw），可能導致後續的 `createBlockDocument` 也被呼叫，造成重複的錯誤提示或非預期行為。建議在 catch 區塊中 return 或 throw，以阻止後續執行。",
+    "existing_code": "} catch (err) {\n      const message = \"Unknown error while validating block data.\";\n      toast.error(message);\n      console.error(message, err);\n    }",
+    "evidence": "diff 中 catch 區塊沒有 return 或 throw，可能導致後續程式碼繼續執行。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input.tsx",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "blockTypeSlug 非字串時未處理，可能導致元件未渲染",
+    "body": "當 `property.blockTypeSlug` 存在但不是字串時（例如是陣列或其他型別），程式碼不會渲染任何內容，也不會拋出錯誤。這可能導致表單欄位靜默消失，使用者無法輸入。建議在非字串時拋出錯誤或提供 fallback 渲染。",
+    "existing_code": "if (\"blockTypeSlug\" in property) {\n    const blockTypeSlug = property.blockTypeSlug;\n    if (typeof blockTypeSlug === \"string\") {\n      return (\n        <SchemaFormInputBlockDocument\n          value={value as { $ref: string } | undefined}\n          onValueChange={onValueChange}\n          blockTypeSlug={blockTypeSlug}\n          id={id}\n        />\n      );\n    }\n  }",
+    "evidence": "diff 中新增的條件判斷僅處理字串型別，未處理其他型別。"
+  }
+]

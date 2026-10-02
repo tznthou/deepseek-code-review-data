@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "排程條件反轉導致重複排程",
+    "body": "原本條件 `!hasScheduled.processOutbox` 在尚未排程時才新增 job，但改為 `hasScheduled.processOutbox` 後，變成已排程時才新增 job，導致每次呼叫都會重複新增 job，造成資源浪費與潛在的重複執行。\n\n建議改回 `!hasScheduled.processOutbox`，或在新增 job 後立即設定 `hasScheduled.processOutbox = true`。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中將 `!hasScheduled.processOutbox` 改為 `hasScheduled.processOutbox`，且 `hasScheduled` 物件在檔案開頭定義，未見其他更新邏輯。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 341,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "config 值型別不一致可能導致判斷錯誤",
+    "body": "`config.get('memberWelcomeEmailTestInbox')` 可能回傳空字串、undefined 或其他 falsy 值，但程式碼僅以 `welcomeEmailConfig ||` 判斷，未明確處理空字串與 undefined 的差異。若設定為空字串，條件為 false，但若設定為其他 falsy 值（如 0）也會被視為未啟用，可能與預期不符。\n\n建議使用明確的檢查，例如 `if (welcomeEmailConfig !== undefined && welcomeEmailConfig !== '')`，或統一設定值的型別。",
+    "existing_code": "const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');\n        if (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)) {",
+    "evidence": "diff 中新增 `const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');` 並以 `welcomeEmailConfig ||` 判斷。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R20] 使用 var 宣告變數",
+    "body": "此處將原本的 `let member;` 改為 `var member;`，違反專案規範 R20（應使用 let 或 const）。\n\n建議改回 `let member;`。",
+    "existing_code": "var member;",
+    "evidence": "diff 中將 `let member;` 改為 `var member;`。"
+  }
+]

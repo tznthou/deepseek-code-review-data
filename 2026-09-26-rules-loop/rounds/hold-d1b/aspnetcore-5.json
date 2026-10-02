@@ -1,0 +1,112 @@
+[
+  {
+    "path": "src/Components/Endpoints/test/TestComponents/GenericComponent.razor",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R01] 缺少 MIT 授權標頭",
+    "body": "新增的 Razor 檔案 `GenericComponent.razor` 未包含必要的 MIT 授權標頭。根據規範 R01，所有 C# 原始檔（包括 Razor 檔案中的程式碼部分）必須以標準的兩行註解開頭。請在檔案最上方加入：\n```\n// Licensed to the .NET Foundation under one or more agreements.\n// The .NET Foundation licenses this file to you under the MIT license.\n```",
+    "existing_code": "@typeparam TValue",
+    "evidence": "diff 中新增檔案 `GenericComponent.razor` 的第一行是 `@typeparam TValue`，沒有授權標頭。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R02] 使用區塊命名空間而非檔案範圍命名空間",
+    "body": "此檔案將原本的檔案範圍命名空間 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 改為區塊命名空間 `namespace Microsoft.AspNetCore.Components.Server.Circuits { ... }`，違反規範 R02。請改回檔案範圍命名空間宣告。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{",
+    "evidence": "diff 顯示命名空間宣告從 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 改為 `namespace Microsoft.AspNetCore.Components.Server.Circuits` 加上 `{`，並在檔案結尾新增 `}`。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 722,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `CanRender_ClosedGenericComponent` 未包含明確的 `// Arrange`、`// Act`、`// Assert` 註解。請依照規範 R06 加入結構化註解，以清楚區分測試的三個階段。",
+    "existing_code": "public async Task CanRender_ClosedGenericComponent()",
+    "evidence": "diff 中此方法開頭沒有 AAA 註解，僅有程式碼。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 739,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `CanRender_ClosedGenericComponent_ServerMode` 未包含明確的 `// Arrange`、`// Act`、`// Assert` 註解。請依照規範 R06 加入結構化註解。",
+    "existing_code": "public async Task CanRender_ClosedGenericComponent_ServerMode()",
+    "evidence": "diff 中此方法開頭沒有 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 778,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `CanPrerender_ClosedGenericComponent_ServerMode` 未包含明確的 `// Arrange`、`// Act`、`// Assert` 註解。請依照規範 R06 加入結構化註解。",
+    "existing_code": "public async Task CanPrerender_ClosedGenericComponent_ServerMode()",
+    "evidence": "diff 中此方法開頭沒有 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 817,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 未包含明確的 `// Arrange`、`// Act`、`// Assert` 註解。請依照規範 R06 加入結構化註解。",
+    "existing_code": "public async Task CanPrerender_ClosedGenericComponent_ClientMode()",
+    "evidence": "diff 中此方法開頭沒有 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 80,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `CanParseSingleMarkerForClosedGenericComponent` 未包含明確的 `// Arrange`、`// Act`、`// Assert` 註解。請依照規範 R06 加入結構化註解。",
+    "existing_code": "public void CanParseSingleMarkerForClosedGenericComponent()",
+    "evidence": "diff 中此方法開頭沒有 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `CanParseSingleMarkerForClosedGenericComponentWithStringTypeParameter` 未包含明確的 `// Arrange`、`// Act`、`// Assert` 註解。請依照規範 R06 加入結構化註解。",
+    "existing_code": "public void CanParseSingleMarkerForClosedGenericComponentWithStringTypeParameter()",
+    "evidence": "diff 中此方法開頭沒有 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `CanParseSingleMarkerForClosedGenericComponentWithParameters` 未包含明確的 `// Arrange`、`// Act`、`// Assert` 註解。請依照規範 R06 加入結構化註解。",
+    "existing_code": "public void CanParseSingleMarkerForClosedGenericComponentWithParameters()",
+    "evidence": "diff 中此方法開頭沒有 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 128,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `CanParseMultipleMarkersForClosedGenericComponents` 未包含明確的 `// Arrange`、`// Act`、`// Assert` 註解。請依照規範 R06 加入結構化註解。",
+    "existing_code": "public void CanParseMultipleMarkersForClosedGenericComponents()",
+    "evidence": "diff 中此方法開頭沒有 AAA 註解。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 SignOutManager 後，登出流程的 CSRF 防護可能失效",
+    "body": "原本的登出流程會檢查 Navigation.HistoryEntryState 或 SignOutManager.ValidateSignOutState()，以確保登出請求是由頁面內部發起。移除 SignOutManager 後，只依賴 Navigation.HistoryEntryState，但若瀏覽器不支援 HistoryEntryState 或狀態遺失，可能導致 CSRF 防護被繞過。建議確認 ValidateSignOutRequestState() 的實作是否已涵蓋所有情況，或保留 SignOutManager 作為備援。",
+    "existing_code": "if (!ValidateSignOutRequestState())",
+    "evidence": "diff 中移除了 SignOutManager 的注入與使用，並將條件簡化為只檢查 ValidateSignOutRequestState()。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Redirect() 方法可能因 InteractiveRequestUrl 為 null 而拋出 NullReferenceException",
+    "body": "原本的程式碼在 InteractionOptions 為 null 時使用 RedirectUrl，但現在改為使用 InteractiveRequestUrl。若 InteractiveRequestUrl 為 null（例如舊版程式碼建立的 AccessTokenResult），則會傳遞 null 給 NavigateTo，可能導致例外。建議加入 null 檢查或保留 RedirectUrl 作為 fallback。",
+    "existing_code": "_navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);",
+    "evidence": "diff 中將原本的 `_navigation.NavigateTo(_tokenResult.RedirectUrl!)` 改為 `_navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!)`，但未檢查 InteractiveRequestUrl 是否為 null。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 Task.Yield() 可能造成不必要的延遲",
+    "body": "在 ProcessLogOut 中新增 `await Task.Yield();` 並附註「Ensure we're authenticated before proceeding with sign-out」，但此延遲的目的不明確，且可能影響效能。若只是為了讓 AuthenticationState 更新，應考慮更明確的同步機制。",
+    "existing_code": "await Task.Yield();",
+    "evidence": "diff 中新增了 `await Task.Yield();` 及註解。"
+  }
+]

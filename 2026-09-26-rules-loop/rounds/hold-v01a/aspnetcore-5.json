@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R02] 使用 block-scoped namespace 而非 file-scoped namespace",
+    "body": "此檔案將原本的 file-scoped namespace 宣告改為 block-scoped namespace，違反了專案規範 R02（Use File-Scoped Namespace Declarations）。\n\n**建議修法**：改回 file-scoped namespace 宣告，例如：\n```csharp\nnamespace Microsoft.AspNetCore.Components.Server.Circuits;\n```\n並移除多餘的括號。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{\n    public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 中將原本的 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 改為 block-scoped namespace，並增加了縮排。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "ClientMode 測試中使用了錯誤的泛型型別",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，參數使用 `GenericComponent<int>`，但後續斷言卻使用 `typeof(GenericComponent<string>)` 來取得組件名稱和完整名稱。這會導致斷言失敗，因為實際渲染的元件型別是 `GenericComponent<int>`，而不是 `GenericComponent<string>`。\n\n**失敗情境**：執行此測試時，`preambleMarker.Assembly` 和 `preambleMarker.TypeName` 會是 `GenericComponent<int>` 的組件和型別名稱，但斷言期望的是 `GenericComponent<string>` 的名稱，因此測試會失敗。\n\n**建議修法**：將斷言中的 `typeof(GenericComponent<string>)` 改為 `typeof(GenericComponent<int>)`。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\n        Assert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的 `CanPrerender_ClosedGenericComponent_ClientMode` 測試方法內，參數使用 `typeof(GenericComponent<int>)`，但斷言使用 `typeof(GenericComponent<string>)`。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "類別宣告縮排不一致",
+    "body": "在 block-scoped namespace 內，類別宣告的縮排不一致：`public class ServerComponentDeserializerTest` 前面有 4 個空格，但後續成員的縮排似乎未相應調整。這可能導致程式碼可讀性問題。\n\n**建議修法**：如果改回 file-scoped namespace，此問題自然解決；否則應確保所有成員縮排一致。",
+    "existing_code": "public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 中顯示類別宣告前有 4 個空格，但後續成員（如 `private readonly IDataProtectionProvider _ephemeralDataProtectionProvider;`）的縮排可能未調整。"
+  }
+]

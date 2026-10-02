@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R08] 錯誤型別未使用 thiserror，違反專案規範",
+    "body": "此變更將原本使用 `#[derive(Debug, thiserror::Error)]` 的錯誤列舉改為手動實作 `Display` 與 `Error`。專案規範 R08 要求所有自訂錯誤型別必須使用 thiserror 來提供一致的錯誤處理與清晰的錯誤訊息。手動實作可能導致錯誤訊息不一致、增加維護負擔，且違反專案慣例。建議改回使用 `thiserror::Error` 並保留原有的 `#[error(...)]` 屬性。",
+    "existing_code": "#[derive(Debug)]\npub enum Error {",
+    "evidence": "diff 中移除了 `#[derive(Debug, thiserror::Error)]` 並刪除了所有 `#[error(...)]` 屬性，改為手動實作 `Display` 與 `Error`。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "notarize_inner 中 map_or 參數變更可能改變行為",
+    "body": "原本的 `submit_output.status.map_or(!wait, |s| s == \"Accepted\")` 改為 `submit_output.status.map_or(wait, |s| s == \"Accepted\")`。此變更可能導致在 `status` 為 `None` 時的行為反轉：原本 `!wait` 表示不等待時視為 true，現在改為 `wait` 表示等待時才為 true。需確認此變更是否為預期的錯誤修正，否則可能導致 notarization 流程錯誤。",
+    "existing_code": "if submit_output.status.map_or(wait, |s| s == \"Accepted\") {",
+    "evidence": "diff 中此行由 `map_or(!wait, ...)` 改為 `map_or(wait, ...)`。"
+  }
+]

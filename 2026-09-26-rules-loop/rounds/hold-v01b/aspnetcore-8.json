@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R01] 移除 MIT 授權標頭",
+    "body": "檔案開頭的 MIT 授權標頭被移除，違反專案規範 R01。所有 C# 原始檔必須以標準的 .NET Foundation MIT 授權標頭開頭。請恢復授權標頭。",
+    "existing_code": "using System.Collections.Generic;",
+    "evidence": "diff 中刪除了前兩行授權註解，且新增內容以 using 開頭。"
+  },
+  {
+    "path": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/OperationTests.Controllers.cs",
+    "line": 100,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 SupportsRouteParametersFromControllers 未包含明確的 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "[Fact]\n    public async Task SupportsRouteParametersFromControllers()\n    {",
+    "evidence": "diff 中新增的測試方法沒有 AAA 註解。"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 382,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "將 Remarks 指派給 Summary 可能改變語意",
+    "body": "原本將 methodComment.Remarks 指派給 operation.Description，現在改為 operation.Summary。這可能改變 OpenAPI 文件中 remarks 的呈現位置，需確認是否符合預期。",
+    "existing_code": "operation.Summary = remarks;",
+    "evidence": "diff 中此行由 operation.Description = remarks 改為 operation.Summary = remarks。"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 452,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 propertyName 取代 metadata.Name 可能影響參數匹配",
+    "body": "原本使用 metadata.Name 來尋找 operation.Parameters 中的參數，現在改為 propertyName。若 metadata.Name 與 propertyName 不同，可能導致找不到參數而將描述套用到 RequestBody。需確認此變更符合預期。",
+    "existing_code": "var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == propertyName);",
+    "evidence": "diff 中此行由 p.Name == metadata.Name 改為 p.Name == propertyName。"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 479,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "RequestBody.Description 設定位置變更可能影響行為",
+    "body": "原本在 if (operation.RequestBody is not null) 區塊開頭就設定 operation.RequestBody.Description = description，現在移到區塊結尾。若中間有 continue 或例外，可能導致描述未被設定。需確認此變更不會造成遺漏。",
+    "existing_code": "operation.RequestBody.Description = description;",
+    "evidence": "diff 中此行從區塊開頭移至結尾。"
+  }
+]

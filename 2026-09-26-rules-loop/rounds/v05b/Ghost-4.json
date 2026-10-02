@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "使用 dangerouslySetInnerHTML 渲染評論內容，存在 XSS 風險",
+    "body": "`CommentContent` 元件使用 `dangerouslySetInnerHTML` 直接插入 `item.html`。若評論內容未在後端或前端進行徹底消毒，攻擊者可注入惡意腳本，造成儲存型 XSS。請確認 `item.html` 的來源已通過嚴格的白名單消毒（例如使用 DOMPurify），或改以安全的 HTML 渲染方式。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 `CommentContent` 元件直接使用 `dangerouslySetInnerHTML`，且未見任何消毒處理。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "useEffect 依賴陣列為空，可能導致截斷判斷不更新",
+    "body": "`CommentContent` 的 `useEffect` 僅在掛載時執行一次，若 `item.html` 內容在之後更新（例如從 API 重新取得），`isClamped` 狀態不會重新計算，可能導致「Show more」按鈕顯示錯誤。建議將 `item.html` 加入依賴陣列，或改用 `useLayoutEffect` 並監聽內容變化。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "diff 中 `useEffect` 的依賴陣列為 `[]`，但內部使用了 `item.html` 相關的 DOM 元素。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "評論內容未針對隱藏狀態進行視覺降級以外的處理",
+    "body": "當評論狀態為 `hidden` 時，僅透過 CSS 類別 `text-muted-foreground` 降低文字對比，但內容仍完整顯示。若隱藏評論的目的是防止一般使用者看到，此處可能洩漏內容。請確認產品需求是否允許管理員在列表中看到隱藏評論的全文，或應改為模糊處理。",
+    "existing_code": "className={`prose flex-1 text-base leading-[1.45em] ${isExpanded ? '-mb-1 [&_p]:mb-[0.85em]' : 'line-clamp-2 [&_*]:m-0 [&_*]:inline'} ${item.status === 'hidden' && 'text-muted-foreground'}`}",
+    "evidence": "diff 中 `CommentContent` 的 className 僅在 `hidden` 時加入 `text-muted-foreground`，未隱藏內容。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "activePluginType 的 query key 從 'category' 改為 'tab' 可能破壞現有 URL",
+    "body": "原本使用 'category' 作為 query parameter，現在改為 'tab'。這會導致任何已分享或書籤的 URL 使用舊的 'category' 參數時，狀態無法正確讀取，使用者會回到預設的 'all' 分類。建議保留 'category' 或加入相容性處理（例如同時讀取兩個 key）。",
+    "existing_code": "return useQueryState('tab', marketplaceSearchParamsParsers.category)",
+    "evidence": "diff 中將 'category' 改為 'tab'，且未見任何相容性處理。"
+  },
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R09] usePluginPageContext 的 selector 參數使用 any 型別",
+    "body": "selector 參數從具體的函式型別改為 any，違反 R09（避免 any 型別）。這會失去型別檢查，可能導致呼叫端傳入錯誤的 selector 而不被發現。建議保留原本的函式型別或使用更精確的泛型。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中將 selector 的型別從 (value: PluginPageContextValue) => any 改為 any。"
+  }
+]

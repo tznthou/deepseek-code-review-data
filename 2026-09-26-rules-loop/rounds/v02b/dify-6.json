@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "重構後的 SMTP 連線建立邏輯可能改變行為",
+    "body": "原本的程式碼針對三種模式（TLS、opportunistic TLS、無 TLS）分別建立不同的 SMTP 物件，並在 opportunistic TLS 模式下先建立 SMTP 再呼叫 ehlo 和 starttls。重構後使用三元運算子選擇 SMTP_SSL 或 SMTP，並統一傳入 local_hostname 參數。然而，在 opportunistic TLS 模式下，原本的程式碼是先建立 SMTP 物件，再呼叫 ehlo(self.server)，而新程式碼改為 smtp.ehlo(local_host)，其中 local_host 可能為空字串（若未設定 SMTP_LOCAL_HOSTNAME）。這可能導致 HELO/EHLO 命令使用空字串作為主機名稱，與原本使用伺服器位址的行為不同，可能導致某些 SMTP 伺服器拒絕連線。建議在 local_host 為空時，仍使用 self.server 作為 ehlo 參數。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)\n\nassert smtp is not None\nif self.use_tls and self.opportunistic_tls:\n    smtp.ehlo(local_host)\n    smtp.starttls()\n    smtp.ehlo(local_host)",
+    "evidence": "diff 中顯示原本的 smtp.ehlo(self.server) 被改為 smtp.ehlo(local_host)，而 local_host 可能為空字串。"
+  },
+  {
+    "path": "api/tests/unit_tests/libs/test_smtp_client.py",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試斷言使用 ANY 降低精確度",
+    "body": "測試中將原本的 assert_called_once_with 改為使用 ANY 來匹配 local_hostname 參數，這使得測試無法驗證 local_hostname 是否正確傳遞。建議使用具體的值（例如 None 或預期的 local_hostname）來確保行為正確。",
+    "existing_code": "mock_smtp_cls.assert_called_once_with(\"smtp.example.com\", 25, timeout=10, local_hostname=ANY)",
+    "evidence": "diff 中顯示測試斷言從原本的精確匹配改為使用 ANY。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "local_hostname 參數傳遞空字串可能導致錯誤",
+    "body": "在建立 SMTP 物件時，使用 local_hostname=local_host or None，若 local_host 為空字串，則傳入 None。這可能導致 smtplib 使用預設的 local_hostname（即 socket.getfqdn()），與原本行為一致。但若使用者設定 SMTP_LOCAL_HOSTNAME 為空字串，可能期望使用空字串作為 HELO 名稱，但實際上會使用預設值。建議明確處理空字串的情況，或使用更明確的邏輯。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中顯示 local_hostname=local_host or None，當 local_host 為空字串時會傳入 None。"
+  }
+]

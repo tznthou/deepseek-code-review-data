@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 216,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄音端點權限從 BOOKING_READ 改為 BOOKING_WRITE 可能過度限制",
+    "body": "此端點原本使用 BOOKING_READ 權限，現在改為 BOOKING_WRITE。讀取錄音通常只需要讀取權限，要求寫入權限可能導致僅有讀取權限的用戶無法存取錄音，造成不必要的 breaking change。建議確認是否有特殊原因需要寫入權限，否則應維持 BOOKING_READ。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中將 @Permissions([BOOKING_READ]) 改為 @Permissions([BOOKING_WRITE])"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "transcripts 端點 guard 順序變更可能影響錯誤回應",
+    "body": "原本的 guard 順序為 BookingUidGuard，現在改為 BookingPbacGuard, ApiAuthGuard, BookingUidGuard。若 BookingPbacGuard 在 ApiAuthGuard 之前執行，未驗證的請求可能先被 Pbac 攔截，導致回應 403 而非 401，影響客戶端錯誤處理。建議確認 guard 執行順序是否符合預期。",
+    "existing_code": "@UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)",
+    "evidence": "diff 中將 @UseGuards(BookingUidGuard) 改為 @UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-recordings.output.ts",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 message 欄位為 API 破壞性變更",
+    "body": "此 PR 移除了輸出型別中的 message 欄位，這會導致 API 回應不再包含該欄位。若客戶端仍依賴此欄位，可能造成相容性問題。建議確認所有客戶端已更新，或考慮保留欄位並標記為 deprecated。",
+    "existing_code": "}",
+    "evidence": "diff 中刪除了 message 欄位的定義"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-transcripts.output.ts",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 message 欄位為 API 破壞性變更",
+    "body": "此 PR 移除了輸出型別中的 message 欄位，這會導致 API 回應不再包含該欄位。若客戶端仍依賴此欄位，可能造成相容性問題。建議確認所有客戶端已更新，或考慮保留欄位並標記為 deprecated。",
+    "existing_code": "}",
+    "evidence": "diff 中刪除了 message 欄位的定義"
+  }
+]

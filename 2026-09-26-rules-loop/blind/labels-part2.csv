@@ -1,0 +1,114 @@
+pair,label,note
+P0114,same,
+P0115,same,
+P0116,same,
+P0117,no,"都在 FileWriteError 附近，但 thiserror 風格與缺 From<FileWriteError> 轉換是兩個獨立缺陷"
+P0118,no,"同一函式，缺文件註解與 set_permissions/write 順序顛倒無關"
+P0119,partial,"同一段 label 串接；finding 批評合併顯示的 UX，GT 是 weight 為空時多出尾端空白；照 finding 改回分開 badge 會順帶消掉 GT"
+P0120,no,
+P0121,no,
+P0122,no,"finding 談 malloc 未檢查 NULL，與迴圈 <= 越界無關"
+P0123,no,"同一行，created_at 為 null 與 ceil/floor 取整是獨立缺陷"
+P0124,same,
+P0125,no,"finding 談 orgId 為 null 的處理，GT 是子團隊分支缺 parentId 條件"
+P0126,same,
+P0127,no,
+P0128,no,"zmalloc 規範與 off-by-one 無關"
+P0129,no,
+P0130,no,
+P0131,same,
+P0132,no,
+P0133,no,
+P0134,same,"finding 語氣保留，但指出的正是 Done 與 goto 順序顛倒"
+P0135,same,
+P0136,same,
+P0137,same,"finding 只抓到驗證那一半，沒提顯示"
+P0138,same,
+P0139,no,
+P0140,no,
+P0141,no,
+P0142,same,
+P0143,no,
+P0144,no,"都是呼叫順序問題，但 finding 講的是 mark_edge_skipped，不是 start_execution/enqueue_node"
+P0145,no,
+P0146,no,
+P0147,no,
+P0148,same,
+P0149,no,
+P0150,same,
+P0151,same,"finding 說方法已改成 async，機制描述略有出入，修法同樣是補 await"
+P0152,no,
+P0153,same,
+P0154,no,"finding 談可見 Badge 是否支援 onClick，GT 是 popover 內隱藏項目的 onClick 被拿掉"
+P0155,no,
+P0156,no,
+P0157,same,"finding 的理由是資訊外洩，但建議同樣是不要直接 console 輸出、改用正式記錄機制"
+P0158,no,"同一行，finding 談環境變數名稱可能撞名，GT 是直接存取 process.env 違反注入規範；改名修不掉 GT"
+P0159,no,
+P0160,no,
+P0161,same,
+P0162,same,
+P0163,partial,"finding 指向同一段拖放索引邏輯、症狀同為排序錯誤，但歸因於 prefixItems 偏移，沒發現參數順序對調（範例裡還照抄了 moveItem(3, 2)）"
+P0164,partial,"同一個 valid_up_to > st_size 邊界情況，但 finding 說的後果是 log 顯示負數，不是比較式的 unsigned 繞回"
+P0165,no,
+P0166,same,
+P0167,same,
+P0168,same,
+P0169,partial,"指向同一個大小比較式，但機制講錯：valid_up_to == -1 已被前一個分支處理，沒抓到 unsigned 繞回"
+P0170,partial,"症狀相同（prefix item 可被拖動），但 finding 歸因於 handleDragEnd 沒檢查 over，GT 是 sortableKeys 少了 slice"
+P0171,no,
+P0172,partial,"指到同一個寫死的 section 1，但 finding 認為目前可能正確，只當成未來維護風險；機制判斷錯誤"
+P0173,same,"finding 只涵蓋全空輸入的情況，過濾空行可同時修掉兩者"
+P0174,no,
+P0175,same,
+P0176,no,
+P0177,no,"同一元件，finding 談缺 ErrorBoundary，GT 是 Suspense 缺 fallback；兩者修法互不涵蓋"
+P0178,no,"同一段，finding 談回傳 Infinity，GT 是 > 應為 >="
+P0179,same,
+P0180,no,"finding 指向第二個迴圈的 !last_file 判斷，內容只說同前一筆；GT 是 goto cleanup 條件誤含 BROKEN_RECOVERED"
+P0181,same,
+P0182,no,
+P0183,no,
+P0184,no,
+P0185,no,"finding 談 moveItem 參數順序，GT 是 sortableKeys 把 prefix items 納入"
+P0186,partial,"同一行，finding 談 statusBarOrientation 已棄用，GT 是直接用 UIApplication.shared；照 finding 改用 windowScene 會順帶移除 singleton，但講的是別的問題"
+P0187,same,
+P0188,no,
+P0189,no,
+P0190,no,"finding 談 pipeline 沒用 with，GT 是迭代錯的 dict"
+P0191,no,
+P0192,no,
+P0193,same,
+P0194,same,"finding 低估發生機率，但指出同一個 >= 0 變更並建議改回 > 0"
+P0195,no,
+P0196,no,
+P0197,no,
+P0198,partial,"同一行版本號，但 finding 比對的是 tauri-cli（應為 2.8.1），GT 比對 tauri crate（應為 2.8.3），修正方向相反"
+P0199,same,
+P0200,no,
+P0201,same,
+P0202,no,"都跟 prefix items 有關，但 finding 談 handleDragEnd 索引偏移，GT 是 sortableKeys 少了 slice；缺陷獨立"
+P0203,same,
+P0204,no,
+P0205,same,
+P0206,same,
+P0207,no,
+P0208,no,"同一行，finding 談 API 已棄用，GT 是變數未使用；換 API 後變數仍未使用"
+P0209,same,
+P0210,no,"finding 談第一個 UNION 分支只涵蓋兩層，GT 是第二個分支缺 child.parentId 條件"
+P0211,no,
+P0212,no,"同一段，finding 談記憶體洩漏，GT 是 argv[5] 越界寫入"
+P0213,same,"finding 舉的失敗情境是 12abc，與 GT 的 NaN 不同，但都是 parseInt 用錯、修法同為改用 Number 並驗證"
+P0214,no,"同一行，finding 談翻譯漏變數，GT 是縮排"
+P0215,same,
+P0216,no,
+P0217,same,
+P0218,partial,"同一行，finding 談變數未使用，GT 是直接用 UIApplication.shared；照 finding 刪掉該行會順帶消掉 GT，但講的是別的問題"
+P0219,same,
+P0220,same,
+P0221,no,
+P0222,same,
+P0223,no,
+P0224,no,
+P0225,same,"finding 語氣保留且部分機制含糊，但核心是 trim 後送出與驗證用原始值不一致"
+P0226,no,

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R04] 未使用的靜態函式 validateStoredKeyConversion 可能導致編譯警告",
+    "body": "新增的靜態函式 `validateStoredKeyConversion` 在整個 diff 中沒有被任何地方呼叫。若專案啟用 `-Werror` 且編譯器會對未使用的靜態函式發出警告（如 `-Wunused-function`），這將導致編譯失敗，違反規範 R04。\n\n建議：移除該函式，或若未來有使用計畫，請加上 `__attribute__((unused))` 或 `UNUSED` 巨集，但更佳做法是直接刪除。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增了 `validateStoredKeyConversion` 函式，但搜尋整個 diff 未見任何呼叫點。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "dictStoredKey2Key 函式未宣告為 static，可能違反 R07",
+    "body": "`dictStoredKey2Key` 函式在 `dict.c` 中定義，但未加上 `static` 修飾詞。若此函式僅供 dict.c 內部使用，則應宣告為 `static` 以符合規範 R07（內部輔助函式必須宣告為 static）。\n\n建議：確認此函式是否需要在其他編譯單元中使用，若不需要，請加上 `static`。",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增的 `dictStoredKey2Key` 函式沒有 `static` 關鍵字，且未在標頭檔中宣告。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "dictStoredKey2Key 函式未處理 keyFromStoredKey 回傳 NULL 的情況",
+    "body": "`dictStoredKey2Key` 直接呼叫 `d->type->keyFromStoredKey(key)` 並回傳其結果，但未檢查回傳值是否為 NULL。若 `keyFromStoredKey` 實作可能回傳 NULL（例如輸入無效），則後續的 hash 或比較操作可能對 NULL 指標進行解參考，導致 crash。\n\n建議：在函式內加入斷言或錯誤處理，確保回傳值非 NULL。",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {\n    return (d->type->keyFromStoredKey) ? d->type->keyFromStoredKey(key) : key;\n}",
+    "evidence": "diff 中新增的 `dictStoredKey2Key` 函式沒有對 `keyFromStoredKey` 的回傳值做 NULL 檢查。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "pauseAutoResize 型別從 bitfield 改為 int16_t 可能影響結構佈局與 ABI",
+    "body": "原本 `pauseAutoResize` 是 15 位元的 bitfield，現在改為 `int16_t`。這會改變 `struct dict` 的記憶體佈局，可能影響 ABI 相容性，尤其是當外部模組或序列化依賴此結構時。此外，`int16_t` 的範圍為 -32768 到 32767，而原本 bitfield 的範圍為 -16384 到 16383，若程式碼中曾依賴此範圍，可能造成行為差異。\n\n建議：確認此變更的必要性，並檢查是否有外部程式碼依賴此結構佈局。",
+    "existing_code": "int16_t pauseAutoResize;  /* If >0 automatic resizing is disallowed (<0 indicates coding error) */",
+    "evidence": "diff 中將 `signed pauseAutoResize: 15;` 改為 `int16_t pauseAutoResize;`。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 316,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "kvGetKey 函式未檢查 kvobj 是否為 NULL",
+    "body": "`kvGetKey` 直接呼叫 `kvobjGetKey((kvobj *) kv)`，但未檢查 `kv` 是否為 NULL。若呼叫端傳入 NULL，可能導致 crash。\n\n建議：加入 NULL 檢查或斷言。",
+    "existing_code": "static const void *kvGetKey(const void *kv) {\n    sds sdsKey = kvobjGetKey((kvobj *) kv);\n    return sdsKey;\n}",
+    "evidence": "diff 中新增的 `kvGetKey` 函式沒有對 `kv` 做 NULL 檢查。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "dictStoredKey2Key 函式名稱與參數標記可能造成混淆",
+    "body": "函式名稱 `dictStoredKey2Key` 暗示將 stored key 轉換為 key，但參數標記為 `__stored_key`，且函式內部若 `keyFromStoredKey` 為 NULL 則直接回傳原指標。這可能讓讀者誤解其行為。\n\n建議：在註解中更清楚地說明此函式的用途與回傳值。",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增的函式與其命名和參數標記。"
+  }
+]

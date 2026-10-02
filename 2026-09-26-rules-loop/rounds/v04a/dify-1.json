@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "型別提示使用 Set 而非 set，與既有程式碼風格不一致",
+    "body": "此方法使用 `Set[Tuple[str, ...]]` 作為參數型別，但 Python 3.9+ 建議使用內建泛型 `set[tuple[str, ...]]`。檢查同檔案其他方法，如 `_run` 的參數型別，均使用內建泛型（例如 `Mapping`、`Sequence`）。為保持一致性，建議改為 `set[tuple[str, ...]]`。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的型別提示使用 `Set` 和 `Tuple`，而檔案頂部已從 `typing` 匯入 `Set, Tuple`，但同檔案其他方法（如 `_run`）使用 `Mapping`、`Sequence` 等內建泛型。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試假設事件順序，可能導致不穩定",
+    "body": "測試中透過 `result.events` 收集所有 `NodeRunStreamChunkEvent` 並檢查其 `chunk` 值，但未驗證事件順序。若未來事件順序改變，此測試可能誤報。建議明確檢查事件順序或改為驗證最終狀態。",
+    "existing_code": "assert all(event.chunk == input_query for event in conv_var_chunk_events), (\n        \"Expected streamed conversation variable value to match the input query\"\n    )",
+    "evidence": "測試僅檢查所有 chunk 事件的值是否等於 input_query，未檢查事件順序。"
+  }
+]

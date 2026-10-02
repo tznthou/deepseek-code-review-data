@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 368,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "scheduling.init() 缺少 apiUrl 參數可能導致排程服務無法正常運作",
+    "body": "在 `initServices()` 中，原本 `scheduling.init()` 會傳入 `apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true)`，但此 PR 將其改為無參數呼叫。若 `scheduling.init()` 依賴此參數來建構 API 呼叫的 URL，移除後可能導致排程服務無法正確呼叫內部 API，造成排程任務失敗。請確認 `scheduling.init()` 是否有預設值或從其他來源取得 URL，否則應保留此參數。",
+    "existing_code": "scheduling.init(),",
+    "evidence": "diff 中 `-        scheduling.init({\n-            apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true)\n-        }),\n+        scheduling.init(),`"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 351,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 slack.listen() 但保留 slack 服務初始化可能導致 Slack 通知失效",
+    "body": "原本在 `Promise.all` 中有 `slack.listen()`，此 PR 將其移除，但 `slack` 服務仍被初始化（`const slack = require('./server/services/slack');` 且可能在其他地方呼叫 `slack.init()`）。若 `slack.listen()` 是註冊事件監聽器的必要步驟，移除後將導致 Slack 通知功能失效。請確認是否應一併移除 Slack 服務的初始化，或保留 `slack.listen()`。",
+    "existing_code": "slack.listen(),",
+    "evidence": "diff 中 `-        slack.listen(),` 被移除，但 `slack` 服務的 require 和初始化仍在。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/State/BrowserViewControllerState.swift",
+    "line": 566,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "displayView 從 .readerMode 改為 .readerModeLongPressAction 可能導致錯誤的畫面顯示",
+    "body": "在 `handleShowReaderModeAction` 中，原本設定 `displayView: .readerMode`，但此 PR 將其改為 `.readerModeLongPressAction`。這會導致當使用者點擊 reader mode 按鈕時，顯示的畫面變成 long press action 的畫面，而非 reader mode 畫面。\n\n**失敗情境**：使用者點擊網址列的 reader mode 按鈕，預期進入 reader mode，但實際會顯示 long press action 的選單或畫面，造成功能錯誤。\n\n**建議**：確認此變更是否為筆誤，應保留 `.readerMode`。",
+    "existing_code": "displayView: .readerModeLongPressAction,",
+    "evidence": "diff 中該行由 `displayView: .readerMode` 改為 `displayView: .readerModeLongPressAction`，且此變更與 QR code 移除無關。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "cancelEditMode 中的 URL 條件邏輯反轉可能導致編輯取消時 URL 遺失",
+    "body": "在 `cancelEditMode` 方法中，原本的條件是 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，但此 PR 將其改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會導致當 URL 是 reader mode URL 或不是網頁時，仍會保留 URL，可能造成取消編輯後網址列顯示錯誤的 URL。\n\n**失敗情境**：使用者在 reader mode 下編輯網址列，然後取消編輯，網址列可能顯示 reader mode 的 URL 而非原始網頁 URL。\n\n**建議**：確認此變更是否為筆誤，應保留原始邏輯。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中該行由 `url = (currentURL.isWebPage() && !currentURL.isReaderModeURL) ? url : nil` 改為 `url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil`，且此變更與 QR code 移除無關。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "reader mode 狀態的布林值反轉可能導致遙測記錄錯誤",
+    "body": "在 `readerModeButtonTapped` 相關的遙測記錄中，原本 `case .available: true` 改為 `case .available: false`，且 `default: false` 改為 `default: true`。這會導致當 reader mode 可用時，記錄的 `isEnabled` 為 false，反之亦然，造成遙測數據不正確。\n\n**失敗情境**：使用者點擊 reader mode 按鈕，遙測記錄的 `isEnabled` 值與實際狀態相反，影響數據分析。\n\n**建議**：確認此變更是否為筆誤，應保留原始邏輯。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中該 switch 的兩個 case 回傳值被互換，且此變更與 QR code 移除無關。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/ToolbarTelemetry.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R11] gleanWrapper 屬性從 private 改為 internal 可能違反封裝原則",
+    "body": "`gleanWrapper` 屬性原本為 `private`，此 PR 將其改為 `let`（internal）。這會讓外部程式碼可以直接存取此屬性，違反資訊隱藏原則。\n\n**建議**：除非有明確需求，否則應保留 `private`。",
+    "existing_code": "let gleanWrapper: GleanWrapper",
+    "evidence": "diff 中該行由 `private let gleanWrapper: GleanWrapper` 改為 `let gleanWrapper: GleanWrapper`。"
+  }
+]

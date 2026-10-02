@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "organize_agent_history 中 tool_call_response 的 content 誤用 tool_inputs",
+    "body": "在 `organize_agent_history` 中，原本 `ToolPromptMessage` 的 `content` 使用 `tool_responses.get(tool, agent_thought.observation)`，但修改後改為 `str(tool_inputs.get(tool, agent_thought.observation))`。這會導致工具回應內容變成工具輸入，而非實際的觀察結果，可能造成後續處理錯誤。\n\n**失敗情境**：當 agent 使用工具並產生 observation 時，歷史訊息中的工具回應會錯誤地顯示輸入參數，而非工具輸出。\n\n**建議**：改回使用 `tool_responses`，或確認此變更為有意為之。",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中將 `content=tool_responses.get(tool, agent_thought.observation)` 改為 `content=str(tool_inputs.get(tool, agent_thought.observation))`，但 `tool_inputs` 是工具輸入，非回應。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R14] AgentThoughtValidation 使用 Pydantic v1 語法",
+    "body": "新增的 `AgentThoughtValidation` 模型使用 `class Config: extra = \"allow\"`，這是 Pydantic v1 的寫法。專案規範 R14 要求使用 Pydantic v2 並以 `ConfigDict(extra='forbid')` 設定。此模型目前未見實際使用，但若未來啟用，可能導致未預期的欄位被允許。\n\n**建議**：改用 Pydantic v2 語法：\n```python\nfrom pydantic import BaseModel, ConfigDict\n\nclass AgentThoughtValidation(BaseModel):\n    model_config = ConfigDict(extra=\"forbid\")\n    ...\n```",
+    "existing_code": "class Config:\n        extra = \"allow\"  # Pydantic v1 syntax - should use ConfigDict(extra='forbid')",
+    "evidence": "diff 中新增的 `AgentThoughtValidation` 類別包含 `class Config: extra = \"allow\"`，違反 R14。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1838,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "MessageAgentThought 改繼承 TypeBase 可能影響既有行為",
+    "body": "`MessageAgentThought` 原本繼承 `Base`，現在改為繼承 `TypeBase`。`TypeBase` 可能包含額外的 mixin 行為（如軟刪除、時間戳等），需確認此變更不會影響資料庫操作或 ORM 行為。\n\n**建議**：確認 `TypeBase` 的定義，並驗證相關測試是否通過。",
+    "existing_code": "class MessageAgentThought(TypeBase):",
+    "evidence": "diff 中將 `class MessageAgentThought(Base):` 改為 `class MessageAgentThought(TypeBase):`。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1846,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "id 欄位同時使用 insert_default 和 default_factory 可能造成混淆",
+    "body": "`id` 欄位設定為 `insert_default=lambda: str(uuid4()), default_factory=lambda: str(uuid4()), init=False`。同時使用 `insert_default` 和 `default_factory` 可能導致行為不一致，特別是在不同 SQLAlchemy 版本或操作情境下。\n\n**建議**：確認兩者同時存在的必要性，或僅保留一個。",
+    "existing_code": "id: Mapped[str] = mapped_column(\n        StringUUID, insert_default=lambda: str(uuid4()), default_factory=lambda: str(uuid4()), init=False\n    )",
+    "evidence": "diff 中 `id` 欄位同時指定 `insert_default` 和 `default_factory`。"
+  }
+]

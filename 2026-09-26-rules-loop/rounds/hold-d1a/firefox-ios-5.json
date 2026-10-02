@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/Action/TabPanelAction.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R01] 移除 MPL 標頭違反授權規範",
+    "body": "此檔案原本有 Mozilla Public License 標頭，但在此 PR 中被移除。根據規範 R01，所有 Swift 檔案必須包含 MPL 標頭。請恢復標頭。",
+    "existing_code": "import Redux\nimport Common",
+    "evidence": "diff 顯示刪除了三行 MPL 標頭，且未新增替代標頭。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/State/TabsPanelState.swift",
+    "line": 143,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "scrollToTab 索引計算可能錯誤",
+    "body": "在 `createTabScrollBehavior` 中，當找不到選取的 tab 且 tabs 不為空時，原本回傳 `state.tabs.count - 1`，但此 PR 改為 `state.tabs.count`。這可能導致索引超出範圍，因為陣列索引從 0 開始。請確認是否應為 `state.tabs.count - 1`。",
+    "existing_code": "return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)",
+    "evidence": "diff 中將 `state.tabs.count - 1` 改為 `state.tabs.count`，且未調整其他邏輯。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/Views/TabDisplayView.swift",
+    "line": 172,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "硬編碼 section 索引可能導致錯誤",
+    "body": "在 `scrollToTab` 中，原本根據 `scrollState.isInactiveTabSection` 決定 section，現在固定為 1。若未來 section 順序變更，可能導致滾動到錯誤位置。建議使用更明確的 section 識別方式。",
+    "existing_code": "let indexPath = IndexPath(row: scrollState.toIndex, section: 1)",
+    "evidence": "diff 顯示移除條件判斷，直接使用 section 1。"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 8461,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增 v147 結構可能違反組織慣例",
+    "body": "新增的 `v147` 結構包含 Inactive Tabs 相關字串，但這些字串已從原本的 `InactiveTabs` 結構中移除。若這些字串已不再使用，應直接刪除而非移至新結構。請確認是否仍需要這些字串。",
+    "existing_code": "struct v147 {",
+    "evidence": "diff 顯示刪除原本的 `InactiveTabs` 結構，並新增 `v147` 結構包含相同內容。"
+  }
+]

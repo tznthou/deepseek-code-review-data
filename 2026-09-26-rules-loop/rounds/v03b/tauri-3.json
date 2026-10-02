@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錯誤類型不匹配：使用 ConfigError::FormatJson 包裝 TOML 解析錯誤",
+    "body": "在 `do_parse_toml` 中，原本使用 `ConfigError::FormatToml` 來包裝 TOML 解析錯誤，但現在改為 `ConfigError::FormatJson`，這會導致錯誤類型與實際格式不符，可能誤導使用者或呼叫端。建議保留 `ConfigError::FormatToml` 變體，或新增專用的 TOML 錯誤變體。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中顯示原本的 `ConfigError::FormatToml` 被替換為 `ConfigError::FormatJson`，且錯誤被轉換為 `serde_json::Error`。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增 BundleType::Flatpak 可能破壞既有序列化/反序列化",
+    "body": "新增 `BundleType::Flatpak` 變體後，`Display` 實作回傳 \"Flatpak\"（大寫 F），但 `Deserialize` 接受 \"flatpak\"（小寫）。這可能導致序列化後的字串無法被反序列化（例如使用 serde 序列化為 \"Flatpak\" 後，反序列化時會因大小寫不符而失敗）。建議統一大小寫，或使用 `#[serde(rename_all = \"lowercase\")]` 等屬性。",
+    "existing_code": "/// The Flatpak bundle (.flatpak).\n  Flatpak,",
+    "evidence": "diff 中新增 `Flatpak` 變體，且 `Display` 回傳 \"Flatpak\"，但 `Deserialize` 接受 \"flatpak\"。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增 BundleType::Flatpak 未更新所有相關 match 或測試",
+    "body": "新增 enum 變體後，可能需要在其他 match 或測試中處理新變體，否則可能導致編譯錯誤或未覆蓋的行為。請確認所有使用 `BundleType` 的地方都已更新。",
+    "existing_code": "/// The Flatpak bundle (.flatpak).\n  Flatpak,",
+    "evidence": "diff 中新增變體，但未顯示其他檔案的相應修改。"
+  },
+  {
+    "path": "crates/tauri-cli/Cargo.toml",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "toml_edit 升級到 0.23 可能導致 API 不相容",
+    "body": "`toml_edit` 從 0.22 升級到 0.23，可能包含 breaking changes。請確認程式碼中使用的 API 仍然相容，或已做相應調整。",
+    "existing_code": "toml_edit = { version = \"0.23\", features = [\"serde\"] }",
+    "evidence": "diff 中將 toml_edit 版本從 0.22 改為 0.23。"
+  },
+  {
+    "path": "crates/tauri-build/Cargo.toml",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "toml 升級到 0.9 可能導致 API 不相容",
+    "body": "`toml` crate 從 0.8 升級到 0.9，可能包含 breaking changes。請確認程式碼中使用的 API 仍然相容，或已做相應調整。",
+    "existing_code": "toml = \"0.9\"",
+    "evidence": "diff 中將 toml 版本從 0.8 改為 0.9。"
+  }
+]

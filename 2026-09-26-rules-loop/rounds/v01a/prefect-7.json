@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "使用 Python hash() 作為 advisory lock key 不穩定且可能碰撞",
+    "body": "`lock_key = hash(str(trigger.id)) % (2**63)` 使用 Python 內建 hash，其值在每次執行時可能不同（因 hash randomization），且可能產生負數（取模後仍可能為負），導致 lock 失效或非預期行為。此外，hash 碰撞可能導致不同 trigger 共用同一 lock，雖然註解聲稱「collision is extremely unlikely and benign」，但實際上可能造成不必要的序列化或錯誤的互斥。建議使用 trigger.id 的整數表示（例如 `trigger.id.int`）或直接使用 UUID 的 bytes 轉換為整數，並確保為正數。",
+    "existing_code": "lock_key = hash(str(trigger.id)) % (2**63)",
+    "evidence": "diff 中新增的 `acquire_composite_trigger_lock` 函式內，使用 `hash(str(trigger.id)) % (2**63)` 作為 lock key。Python 的 hash 對字串有隨機化（PYTHONHASHSEED），且可能回傳負數，取模後仍可能為負，導致 SQL 查詢失敗或 lock 行為不正確。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R03] Logger 初始化違反專案規範",
+    "body": "專案規範 R03 要求 logger 使用 `logger: \"logging.Logger\" = get_logger(__name__)` 模式，但此處改為 `logger = logging.getLogger(__name__)`，且移除了型別註記。這可能導致 logging 配置不一致，且違反程式碼風格。建議改回使用 `get_logger` 並保留型別註記。",
+    "existing_code": "logger = logging.getLogger(__name__)",
+    "evidence": "diff 中將原本的 `logger: \"logging.Logger\" = get_logger(__name__)` 改為 `logger = logging.getLogger(__name__)`，違反 R03。"
+  },
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "advisory lock 僅在 PostgreSQL 上生效，SQLite 上無保護",
+    "body": "函式僅在 dialect 為 postgresql 時執行 lock，SQLite 則直接跳過。雖然註解聲稱 SQLite 會序列化寫入，但實際上 SQLite 的寫入鎖定可能無法完全避免此處的競態條件（例如兩個 transaction 同時讀取後再寫入）。若專案支援 SQLite 作為生產資料庫，此修復可能不完整。建議評估 SQLite 下的行為，或至少在 SQLite 上採用其他同步機制（如 application-level lock）。",
+    "existing_code": "if dialect.name == \"postgresql\":\n        # Use the trigger's UUID as the lock key\n        # pg_advisory_xact_lock takes a bigint, so we use the UUID's int representation\n        # truncated to fit (collision is extremely unlikely and benign)\n        lock_key = hash(str(trigger.id)) % (2**63)\n        await session.execute(\n            sa.text(\"SELECT pg_advisory_xact_lock(:key)\"), {\"key\": lock_key}\n        )\n    # SQLite doesn't support advisory locks, but SQLite also serializes writes\n    # at the database level, so the race condition is less likely to occur",
+    "evidence": "diff 中新增的 lock 邏輯僅在 PostgreSQL 上執行，SQLite 上無任何保護。"
+  },
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "取得 engine 的方式可能不正確",
+    "body": "`engine: sa.Engine = bind if isinstance(bind, sa.Engine) else bind.engine` 假設 bind 若不是 Engine 就一定是 Connection，但實際上 bind 也可能是其他型別（例如 `AsyncEngine` 或 `AsyncConnection`）。若 bind 是 `AsyncConnection`，其 `engine` 屬性可能不存在或型別不符。建議使用更穩健的方式取得 dialect，例如 `session.get_bind().dialect`。",
+    "existing_code": "engine: sa.Engine = bind if isinstance(bind, sa.Engine) else bind.engine  # type: ignore[union-attr]",
+    "evidence": "diff 中新增的程式碼直接假設 bind 的型別，並使用 type: ignore 忽略可能的型別錯誤。"
+  }
+]

@@ -1,0 +1,33 @@
+{
+ "label": "smoke-v01",
+ "config": "<repo>/.claude/experiments/2026-09-26-rules-loop/iterations/v01.json",
+ "config_sha256": "f31eec77d20d4a8e2fb65466374f3b8a9b0c1d8a16a45f6b000faf6f74d8f08f",
+ "config_content": {
+  "placement": "after_diff",
+  "fields": "full",
+  "format": "list",
+  "header": "h1"
+ },
+ "split": "tune",
+ "only": [
+  "tauri-10"
+ ],
+ "rubric_sha256": "2e0703249d9bbcc7aab816722b859cd48921451bce7b213d40ef4a3949a691db",
+ "wrapper_sha256": "a041cd1bacf97f5084502e42b9097fbac18beb5c85384af246828f9bbc2b93a6",
+ "render_sha256": "78729b957454b0bbd25080e9997c21b5423ff0e71693e1ef1864d4d4f69fc14e",
+ "kit_head": "50c1e7b7be0e02a99a460d9830c8c66cd41d40bf",
+ "dataset_revision": "a73957c450a70693a743260e5637fffc44625f16",
+ "model": "deepseek-v4-pro",
+ "started_utc": "2026-09-26T03:16:45+00:00",
+ "results": {
+  "tauri-10": {
+   "pr": "tauri-10",
+   "exit": 0,
+   "findings": 5,
+   "seconds": 10.7,
+   "prompt_tokens": 5508,
+   "cache_hit": 3328,
+   "completion_tokens": 1344
+  }
+ }
+}

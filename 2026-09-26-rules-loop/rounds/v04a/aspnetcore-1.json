@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R19] 使用 MSTest 屬性可能違反 xUnit 慣例",
+    "body": "此測試類別原本使用 xUnit 的 `[Fact]`，但此處改用 MSTest 的 `[TestMethod]` 並加上 `[QuarantinedTest]`。若專案規範要求測試統一使用 xUnit（R19），此變更可能破壞一致性，且 `[QuarantinedTest]` 可能不是 xUnit 支援的屬性。建議確認測試框架，若需隔離測試，應使用 xUnit 的機制（如 `[Trait]` 或自訂屬性）。",
+    "existing_code": "[TestMethod]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]\n    public void NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException()",
+    "evidence": "diff 中將原本的 `[Fact]` 改為 `[TestMethod]` 並新增 `[QuarantinedTest]`，但專案規範 R19 要求使用 xUnit。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "AppContext.SetSwitch 參數變更可能改變測試意圖",
+    "body": "原本設定 `DisableThrowNavigationException` 為 `false`，現在改為 `true`。此開關名稱暗示設為 `true` 會停用拋出例外，但測試名稱是「DoesNotBecomeUnobservedTaskException」，可能原本預期會拋出例外並驗證其不會成為未觀察的例外。若改為 `true` 可能使測試不再觸發原本要驗證的情境。建議確認此變更是否為修正測試或誤改。",
+    "existing_code": "AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中將 `false` 改為 `true`，但測試名稱暗示應驗證例外行為。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Browser.Navigate().Forward() 可能非預期操作",
+    "body": "原本使用 `Back()`，現在改為 `Forward()`。若測試情境是驗證返回上一頁，使用 `Forward()` 可能導致測試失敗或驗證錯誤。建議確認此變更是否為修正測試邏輯。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 `Back()` 改為 `Forward()`，但前後文提到「See that 'back' takes you to the place from before the redirection」，可能應維持 `Back()`。"
+  }
+]

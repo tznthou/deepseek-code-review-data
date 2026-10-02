@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較使用 OrdinalIgnoreCase 在 Unix 上可能不正確",
+    "body": "在 Unix 系統上，檔案路徑是區分大小寫的。使用 `StringComparison.OrdinalIgnoreCase` 來比較路徑可能導致誤判，例如將 `/Certs` 和 `/certs` 視為相同，但實際上它們是不同的目錄。這可能導致程式錯誤地認為憑證目錄已包含在 SSL_CERT_DIR 中，而實際上並未包含，從而跳過必要的設定。\n\n建議改用 `StringComparison.Ordinal` 進行比較，或根據作業系統選擇適當的比較方式。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的程式碼行：`return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);`"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 994,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R11] NssDb 類別應使用主要建構函式",
+    "body": "根據專案規範 R11，對於簡單的建構函式到欄位指派模式，應使用 C# 12 的主要建構函式語法。此處將原本的主要建構函式改為傳統建構函式，違反了該規範。\n\n建議改回主要建構函式語法：`private sealed class NssDb(string path, bool isFirefox)`，並保留唯讀屬性。",
+    "existing_code": "private sealed class NssDb\n{\n    private readonly string _path;\n    private readonly bool _isFirefox;\n\n    public NssDb(string path, bool isFirefox)\n    {\n        _path = path;\n        _isFirefox = isFirefox;\n    }\n\n    public string Path => _path;\n    public bool IsFirefox => _isFirefox;\n}",
+    "evidence": "diff 中將原本的主要建構函式 `private sealed class NssDb(string path, bool isFirefox)` 改為傳統建構函式。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/CertificateManager.cs",
+    "line": 1314,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "事件 ID 113 的層級設為 Verbose 可能導致訊息被隱藏",
+    "body": "事件 `UnixOpenSslCertificateDirectoryAlreadyConfigured` 的層級設為 `EventLevel.Verbose`。在預設情況下（未指定 `--verbose`），此事件不會被顯示，因此使用者可能無法得知憑證目錄已正確設定。這可能導致使用者困惑，因為他們看不到任何確認訊息。\n\n建議將此事件的層級改為 `EventLevel.Informational` 或 `EventLevel.LogAlways`，以確保在一般情況下也能顯示。",
+    "existing_code": "[Event(113, Level = EventLevel.Verbose, Message = \"The certificate directory '{0}' is already included in the {1} environment variable.\")]",
+    "evidence": "diff 中新增的事件定義：`[Event(113, Level = EventLevel.Verbose, Message = \"The certificate directory '{0}' is already included in the {1} environment variable.\")]`"
+  }
+]

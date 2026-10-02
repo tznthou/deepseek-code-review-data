@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "description 為 undefined 時未轉為 null",
+    "body": "在 handleSubmit 中，`trimmedDescription` 可能為 undefined（當使用者清空欄位且 schema 允許 undefined 時），但程式碼僅在 `trimmedDescription === \"\"` 時設為 null，否則直接傳遞 `trimmedDescription`。這可能導致 API 收到 undefined 而非 null，造成型別不符或後端處理錯誤。建議改為 `description: trimmedDescription ? trimmedDescription : null` 或明確處理 undefined。",
+    "existing_code": "description: trimmedDescription === \"\" ? null : trimmedDescription,",
+    "evidence": "diff 中第 40 行：`description: trimmedDescription === \"\" ? null : trimmedDescription,`"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "mockUpdateWorkPool 型別定義不完整",
+    "body": "`mockUpdateWorkPool` 的型別定義為 `vi.fn<(data: unknown, options: UpdateWorkPoolOptions) => void>()`，但實際呼叫時第一個參數是 `{ name: string; workPool: { description: string | null; concurrency_limit: number | null } }`。使用 `unknown` 會失去型別檢查，可能隱藏錯誤。建議定義明確的參數型別，例如 `vi.fn<(data: { name: string; workPool: WorkPoolUpdate }, options: UpdateWorkPoolOptions) => void>()`。",
+    "existing_code": "const mockUpdateWorkPool =\n\tvi.fn<(data: unknown, options: UpdateWorkPoolOptions) => void>();",
+    "evidence": "diff 中第 15-16 行：`const mockUpdateWorkPool = vi.fn<(data: unknown, options: UpdateWorkPoolOptions) => void>();`"
+  }
+]

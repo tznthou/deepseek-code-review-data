@@ -1,0 +1,8 @@
+[info] repo 規範：repo=tauri、17 條、9751 字元、placement=after_diff、sha256=c39280b11b8b
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 14090 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/mod.rs:640 → 636（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/mod.rs:640 → 636（片段唯一命中）
+[info] 定位不到 crates/tauri-cli/src/mobile/android/mod.rs:640（片段多重命中（2 處），不猜）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/mod.rs:640 → 645（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/mod.rs:640 → 636（片段唯一命中）
+[info] 完成於 13.4s ｜ findings=5 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 7967, "completion_tokens": 1797, "total_tokens": 9764, "prompt_tokens_details": {"cached_tokens": 7936}, "prompt_cache_hit_tokens": 7936, "prompt_cache_miss_tokens": 31}

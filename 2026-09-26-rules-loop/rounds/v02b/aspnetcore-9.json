@@ -1,0 +1,46 @@
+[
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "macOS 15 與 Xcode 16.4 可能導致建置失敗",
+    "body": "將 macOS 映像從 13 升級至 15，並將 Xcode 版本從 15.2.0 升級至 16.4.0。macOS 15 可能包含與目前建置工具鏈不相容的變更（例如 SDK 路徑、簽署要求或相依性）。若未先在測試管線中驗證，可能導致建置中斷。建議確認 macOS 15 映像已包含必要的 Xcode 16.4.0，且所有建置步驟在該環境下皆能正常運作。",
+    "existing_code": "vmImage: macOS-15",
+    "evidence": "diff 中將 vmImage 從 macOS-13 改為 macOS-15，且 Xcode 版本從 15.2.0 改為 16.4.0。"
+  },
+  {
+    "path": "eng/Versions.props",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "ValidateBaseline 設為 false 可能隱藏 API 相容性問題",
+    "body": "將 ValidateBaseline 從 true 改為 false，這會停用 API 相容性驗證。在 servicing 更新中，此驗證通常用於確保不會意外引入 breaking change。若關閉，可能導致未偵測到的 API 變更進入發行版本。建議確認此變更為暫時性，並在合併前重新啟用驗證。",
+    "existing_code": "<ValidateBaseline>false</ValidateBaseline>",
+    "evidence": "diff 中將 ValidateBaseline 從 true 改為 false。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R02] 使用區塊命名空間而非檔案範圍命名空間",
+    "body": "此檔案將原本的檔案範圍命名空間（file-scoped namespace）改為傳統的區塊命名空間（block-scoped namespace），違反專案規範 R02。請改回使用檔案範圍命名空間宣告（`namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;`）。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中將 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;` 改為 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests` 加上 `{`。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.85,
+    "title": "新增 QuarantinedTest 屬性但未提供隔離原因",
+    "body": "在測試方法上新增 `[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/64305\")]`，但未在程式碼中說明隔離原因。建議在屬性旁加上註解，說明為何此測試被隔離，以及預計何時解除隔離。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/64305\")]",
+    "evidence": "diff 中新增此屬性。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1110,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc/free 而非 zmalloc/zfree",
+    "body": "在 `extractSlotFromKeysResult` 中使用了標準函式 `malloc` 與 `free`，違反 repo 規範 R02。請改用 `zmalloc` 與 `zfree`，以利記憶體追蹤。",
+    "existing_code": "int *slot_buffer = malloc(sizeof(int) * keys_result->numkeys);",
+    "evidence": "diff 中新增的 `malloc` 呼叫，且後續以 `free` 釋放。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R07] extractSlotFromKeysResult 未宣告為 static",
+    "body": "函式 `extractSlotFromKeysResult` 僅在 `src/cluster.c` 內部使用，但未宣告為 `static`，違反 repo 規範 R07。請加上 `static` 修飾。",
+    "existing_code": "int extractSlotFromKeysResult(robj **argv, getKeysResult *keys_result) {",
+    "evidence": "函式定義前沒有 `static`，且此函式未在標頭檔中宣告，僅供內部使用。"
+  }
+]

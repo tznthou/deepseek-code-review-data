@@ -1,0 +1,57 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "organize_agent_history 中 tool_call_response 的 content 誤用 tool_inputs",
+    "body": "在建立 ToolPromptMessage 時，content 參數使用了 `tool_inputs.get(tool, agent_thought.observation)`，但此處應使用 `tool_responses` 來取得工具的回應內容。這會導致回傳給模型的工具回應內容錯誤（變成輸入參數），可能造成模型產生錯誤的後續行為。\n\n建議修正為：\n```python\ncontent=str(tool_responses.get(tool, observation_payload)),\n```",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中此行將原本的 `tool_responses.get(tool, agent_thought.observation)` 改為 `tool_inputs.get(tool, agent_thought.observation)`，但上下文顯示此處應為工具回應。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R14] AgentThoughtValidation 使用 Pydantic v1 語法且未實際使用",
+    "body": "新增的 `AgentThoughtValidation` 模型使用了 Pydantic v1 的 `class Config` 語法，違反專案規範 R14（應使用 Pydantic v2 的 `ConfigDict`）。此外，此模型在程式碼中並未被使用，可能為冗餘程式碼。\n\n建議：\n- 若需保留，改用 `model_config = ConfigDict(extra='forbid')`。\n- 若未使用，應移除。",
+    "existing_code": "class AgentThoughtValidation(BaseModel):\n    \"\"\"\n    Validation model for agent thought data before database persistence.\n    \"\"\"\n\n    message_id: str\n    position: int\n    thought: str | None = None\n    tool: str | None = None\n    tool_input: str | None = None\n    observation: str | None = None\n\n    class Config:\n        extra = \"allow\"  # Pydantic v1 syntax - should use ConfigDict(extra='forbid')",
+    "evidence": "diff 新增此類別，但未見任何使用；且 `class Config` 為 Pydantic v1 寫法。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1838,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "MessageAgentThought 改為繼承 TypeBase 可能影響既有行為",
+    "body": "將 `MessageAgentThought` 的基底類別從 `Base` 改為 `TypeBase`，可能改變其 ORM 行為（例如是否自動加入 tenant_id 等欄位）。需確認 `TypeBase` 的定義與此模型相容，且不會影響現有查詢或資料隔離。\n\n建議：檢查 `TypeBase` 的實作，確認此變更不會引入非預期的欄位或約束。",
+    "existing_code": "class MessageAgentThought(TypeBase):",
+    "evidence": "diff 將 `class MessageAgentThought(Base):` 改為 `class MessageAgentThought(TypeBase):`。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1846,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "id 欄位同時使用 insert_default 與 default_factory 可能造成混淆",
+    "body": "`id` 欄位同時設定了 `insert_default` 和 `default_factory`，兩者皆用於產生 UUID。這可能導致行為不一致或非預期的覆蓋。建議僅保留一個，或確認兩者的使用情境。",
+    "existing_code": "id: Mapped[str] = mapped_column(\n        StringUUID, insert_default=lambda: str(uuid4()), default_factory=lambda: str(uuid4()), init=False\n    )",
+    "evidence": "diff 中此欄位同時出現 `insert_default` 與 `default_factory`。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 320,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "message_price_unit 與 answer_price_unit 的預設值不一致",
+    "body": "在 `create_agent_thought` 中，`message_price_unit` 被設為 `Decimal(\"0.001\")`，而 `answer_price_unit` 被設為 `Decimal(0)`。這可能與模型定義中的 server_default 不一致，需確認是否為預期行為。",
+    "existing_code": "message_price_unit=Decimal(\"0.001\"),\n            answer_unit_price=Decimal(\"0.001\"),\n            answer_price_unit=Decimal(0),",
+    "evidence": "diff 中 `message_price_unit` 與 `answer_price_unit` 的預設值不同，且與模型定義的 server_default 可能不符。"
+  }
+]

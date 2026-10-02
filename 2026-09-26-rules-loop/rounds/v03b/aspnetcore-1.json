@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R19] 使用 MSTest 屬性取代 xUnit 屬性，違反專案測試框架規範",
+    "body": "此測試專案應使用 xUnit 框架（R19），但此處將 [Fact] 改為 [TestMethod]，並新增 using Microsoft.VisualStudio.TestTools.UnitTesting;，顯示改用 MSTest。這可能導致測試無法被 xUnit 執行器發現，或與專案其他測試不一致。建議改回 [Fact] 並移除 MSTest 相關 using。",
+    "existing_code": "[TestMethod]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]\n    public void NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException()",
+    "evidence": "diff 中將 [Fact] 改為 [TestMethod]，並新增 using Microsoft.VisualStudio.TestTools.UnitTesting;，違反 R19。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 288,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "新增 [QuarantinedTest] 屬性可能導致測試永久跳過",
+    "body": "新增的 [QuarantinedTest] 屬性通常用於暫時隔離不穩定的測試，但若未設定自動解除隔離的機制，此測試可能永遠不會被執行。請確認此隔離是否為暫時性，並考慮加入追蹤 issue 或設定到期日。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]",
+    "evidence": "diff 中新增了 [QuarantinedTest] 屬性，且未見其他解除隔離的設定。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "AppContext.SetSwitch 參數從 false 改為 true 可能改變測試意圖",
+    "body": "原本設定 DisableThrowNavigationException 為 false，現在改為 true。此開關名稱暗示為 true 時會停用拋出例外，可能導致測試不再驗證原本的例外行為。請確認此變更是否為刻意調整，並確保測試仍能驗證預期的行為。",
+    "existing_code": "AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中將 SetSwitch 的第二個參數從 false 改為 true。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "將 Browser.Navigate().Back() 改為 Forward() 可能改變測試語意",
+    "body": "原本測試驗證「back」回到重導前的位置，現在改為「forward」。這可能改變測試的意圖，需確認是否為修正錯誤或調整測試情境。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 Browser.Navigate().Back() 改為 Browser.Navigate().Forward()。"
+  }
+]

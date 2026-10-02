@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SMTP_LOCAL_HOSTNAME 為空字串時可能導致連線失敗",
+    "body": "當 SMTP_LOCAL_HOSTNAME 未設定時，local_host 為空字串，但程式碼將 local_host or None 傳給 smtplib.SMTP 的 local_hostname 參數。若 local_host 為空字串，則傳入 None，smtplib 會使用 socket.getfqdn() 取得本機主機名稱，這可能不是預期行為。建議直接傳入 local_host（空字串時 smtplib 會自動處理），或明確設定為 None。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中新增的 local_hostname=local_host or None，當 local_host 為空字串時會傳 None，可能導致非預期行為。"
+  },
+  {
+    "path": "api/configs/feature/__init__.py",
+    "line": 952,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "SMTP_LOCAL_HOSTNAME 未驗證格式",
+    "body": "SMTP_LOCAL_HOSTNAME 直接從環境變數讀取，未驗證是否為合法主機名稱。若設定為無效值（如包含空格或特殊字元），可能導致 SMTP 連線失敗或錯誤。建議在設定層級增加驗證（例如使用 Pydantic 的欄位驗證）。",
+    "existing_code": "SMTP_LOCAL_HOSTNAME: str | None = Field(\n    description=\"Override the local hostname used in SMTP HELO/EHLO. \"\n    \"Useful behind NAT or when the default hostname causes rejections.\",\n    default=None,\n)",
+    "evidence": "新增的設定欄位沒有驗證規則。"
+  }
+]

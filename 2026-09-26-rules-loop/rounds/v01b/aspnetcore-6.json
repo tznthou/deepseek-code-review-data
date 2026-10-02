@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "登出流程移除 SignOutSessionStateManager 後可能導致 CSRF 驗證失效",
+    "body": "原本的登出流程會先檢查 Navigation.HistoryEntryState 是否存在，若不存在則使用 SignOutSessionStateManager.ValidateSignOutState() 進行驗證。移除後，僅依賴 ValidateSignOutRequestState()，但該方法可能只檢查 HistoryEntryState，若使用者直接導航至登出頁面（無 HistoryEntryState），將無法驗證登出請求的合法性，可能導致 CSRF 攻擊。建議確認 ValidateSignOutRequestState() 的實作是否涵蓋所有情境，或保留某種形式的 session state 驗證。",
+    "existing_code": "if (!ValidateSignOutRequestState())",
+    "evidence": "diff 中移除了 SignOutManager 的注入與使用，並將條件簡化為只呼叫 ValidateSignOutRequestState()。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Redirect 方法可能因 InteractiveRequestUrl 為 null 而拋出 NullReferenceException",
+    "body": "原本的程式碼在 _tokenResult.InteractionOptions 為 null 時，使用 _tokenResult.RedirectUrl 進行導航，但該屬性已移除。現在改為使用 _tokenResult.InteractiveRequestUrl，但若該屬性為 null（例如舊版建立的 AccessTokenResult 未設定），則會傳遞 null 給 NavigateTo，可能導致 NullReferenceException。建議加入 null 檢查或確保所有建立 AccessTokenResult 的地方都設定 InteractiveRequestUrl。",
+    "existing_code": "_navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);",
+    "evidence": "diff 中將原本的 _tokenResult.RedirectUrl! 改為 _tokenResult.InteractiveRequestUrl!，但未檢查 null。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 Task.Yield() 可能造成不必要的延遲",
+    "body": "在取得 AuthenticationState 之前加入 await Task.Yield()，可能是為了避免同步上下文問題，但若無明確理由，可能只是增加延遲。建議確認此變更的必要性，或移除。",
+    "existing_code": "await Task.Yield();",
+    "evidence": "diff 中新增了 await Task.Yield(); 這一行。"
+  }
+]

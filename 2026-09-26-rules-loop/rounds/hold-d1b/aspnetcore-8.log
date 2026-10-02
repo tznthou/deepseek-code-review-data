@@ -1,0 +1,7 @@
+[info] repo 規範＋範圍說明：repo=aspnetcore、20 條、10512 字元、placement=after_diff、sha256=03cfa3548ec0
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 43977 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/OpenApi/gen/XmlCommentGenerator.Emitter.cs:441 → 444（片段唯一命中）
+[info] 重新定位 src/OpenApi/gen/XmlCommentGenerator.Emitter.cs:441 → 444（片段唯一命中）
+[info] 重新定位 src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs:379 → 346（片段命中其他檔案（原報 src/OpenApi/gen/XmlCommentGenerator.Emitter.cs））
+[info] 重新定位 src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/snapshots/OperationTests.SupportsRouteParametersFromControllers#OpenApiXmlCommentSupport.generated.verified.cs:379 → 346（片段命中其他檔案（原報 src/OpenApi/gen/XmlCommentGenerator.Emitter.cs））
+[info] 完成於 8.5s ｜ findings=6 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 13052, "completion_tokens": 1223, "total_tokens": 14275, "prompt_tokens_details": {"cached_tokens": 12928}, "prompt_cache_hit_tokens": 12928, "prompt_cache_miss_tokens": 124}

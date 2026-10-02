@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/object.c",
+    "line": 1330,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Stream 記憶體估算可能高估：取樣平均乘以 numele 而非 (numele-1)",
+    "body": "在 stream 的記憶體估算中，原本使用 `s->rax->numele-1` 作為乘數，此 PR 改為 `s->rax->numele`。若 `numele` 包含 radix tree 的 header 節點，則此變更會將 header 節點也納入平均計算，導致高估記憶體使用量。建議確認 `numele` 的定義，若確實包含 header，應保留 `-1` 或調整取樣邏輯。",
+    "existing_code": "asize += lpsize * s->rax->numele;",
+    "evidence": "diff 中將 `asize += lpsize * (s->rax->numele-1);` 改為 `asize += lpsize * s->rax->numele;`，且上下文顯示此處為 stream 的 listpack 平均大小計算。"
+  },
+  {
+    "path": "tests/unit/type/string.tcl",
+    "line": 701,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增測試的記憶體上限過於寬鬆，可能無法偵測高估",
+    "body": "測試中 `max` 的計算為 `32 > $min ? 64 : $min * 2`，當 `min` 較大時，上限為 `min` 的兩倍，可能無法偵測到記憶體估算的顯著高估。建議根據實際配置大小設定更嚴格的上限，或使用 jemalloc 的統計資訊進行驗證。",
+    "existing_code": "set max [expr {32 > $min ? 64 : [expr $min * 2]}]",
+    "evidence": "diff 中新增的測試程式碼包含此上限計算，且測試目的為驗證 kvobjComputeSize 的正確性。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1239,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "取樣平均計算使用 samples 而非 elecount，可能低估平均元素大小",
+    "body": "在 quicklist 的計算中，原本使用 `elecount` 作為平均的分母，此 PR 改為 `samples`。若 `samples` 代表取樣的節點數，而 `elecount` 代表取樣節點中的元素總數，則當節點內元素數不固定時，使用 `samples` 會低估平均元素大小。建議確認 `samples` 與 `elecount` 的語意，若 `samples` 為節點數，應保留 `elecount` 作為分母。",
+    "existing_code": "asize += (double)elesize/samples*ql->count;",
+    "evidence": "diff 中將 `asize += (double)elesize/elecount*ql->count;` 改為 `asize += (double)elesize/samples*ql->count;`，且上下文顯示 `samples` 為取樣節點數，`elecount` 為取樣元素總數。"
+  }
+]

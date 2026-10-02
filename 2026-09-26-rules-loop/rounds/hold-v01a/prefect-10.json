@@ -1,0 +1,79 @@
+[
+  {
+    "path": "ui-v2/tsconfig.app.json",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R11] 關閉 TypeScript 嚴格模式",
+    "body": "將 `strict` 從 `true` 改為 `false` 違反了專案規範 R11，會降低型別安全，可能隱藏潛在的型別錯誤。建議恢復為 `true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.app.json 的變更：`- \"strict\": true,` → `+ \"strict\": false,`"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/custom-trigger-fields.tsx",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Threshold 輸入可能產生 NaN",
+    "body": "當使用者清空輸入框時，`e.target.value` 為空字串，`Number('')` 會得到 `0`，但若輸入非數字字元（例如 'e'），`Number('e')` 會得到 `NaN`。這可能導致表單值變成 `NaN`，進而影響後續驗證或提交。建議在 onChange 中檢查 `Number.isNaN` 或使用 `parseInt` 並處理 `NaN` 的情況。",
+    "existing_code": "onChange={(e) => field.onChange(Number(e.target.value))}",
+    "evidence": "在 custom-trigger-fields.tsx 的 Threshold 欄位中，直接使用 `Number(e.target.value)` 而沒有處理 `NaN` 的情況。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/deployment-status-trigger-fields.tsx",
+    "line": 82,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Threshold 輸入可能產生 NaN",
+    "body": "與 custom-trigger-fields.tsx 相同，直接使用 `Number(e.target.value)` 可能產生 `NaN`。建議加入 `Number.isNaN` 檢查或使用 `parseInt` 並處理無效輸入。",
+    "existing_code": "onChange={(e) => field.onChange(Number(e.target.value))}",
+    "evidence": "在 deployment-status-trigger-fields.tsx 的 Threshold 欄位中，直接使用 `Number(e.target.value)` 而沒有處理 `NaN` 的情況。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/work-pool-status-trigger-fields.tsx",
+    "line": 78,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Threshold 輸入使用 parseInt 可能產生 NaN 或截斷",
+    "body": "使用 `parseInt(e.target.value)` 時，若輸入為空字串或非數字字元，會得到 `NaN`；若輸入包含小數，則會被截斷為整數。這可能導致表單值不正確。建議使用 `Number` 並檢查 `Number.isNaN`，或使用 `parseFloat` 並處理無效輸入。",
+    "existing_code": "onChange={(e) => field.onChange(parseInt(e.target.value))}",
+    "evidence": "在 work-pool-status-trigger-fields.tsx 的 Threshold 欄位中，使用 `parseInt` 而沒有處理 `NaN` 或小數的情況。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/work-queue-status-trigger-fields.tsx",
+    "line": 82,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Threshold 輸入可能產生 NaN",
+    "body": "與其他元件相同，直接使用 `Number(e.target.value)` 可能產生 `NaN`。建議加入 `Number.isNaN` 檢查或使用 `parseInt` 並處理無效輸入。",
+    "existing_code": "onChange={(e) => field.onChange(Number(e.target.value))}",
+    "evidence": "在 work-queue-status-trigger-fields.tsx 的 Threshold 欄位中，直接使用 `Number(e.target.value)` 而沒有處理 `NaN` 的情況。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/deployment-status-trigger-fields.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "狀態欄位名稱依 posture 切換可能導致資料遺失",
+    "body": "當 posture 從 Reactive 切換到 Proactive 時，欄位名稱從 `trigger.expect` 改為 `trigger.after`，但原本在 `trigger.expect` 中的值不會自動轉移到 `trigger.after`，可能導致使用者已選擇的狀態遺失。建議在切換時同步值或使用相同欄位名稱。",
+    "existing_code": "const statusFieldName =\n\t\tposture === \"Proactive\" ? \"trigger.after\" : \"trigger.expect\";",
+    "evidence": "在 deployment-status-trigger-fields.tsx 中，根據 posture 動態決定欄位名稱，但未處理值遷移。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/custom-trigger-fields.tsx",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Expected Events 欄位在空輸入時設定為 undefined 可能導致型別不符",
+    "body": "當使用者清空文字框時，`lines` 為 `['']`，`lines.length > 0` 為 true，因此 `field.onChange([''])` 會被呼叫，而不是 `undefined`。這可能導致表單值包含空字串，與預期的 `undefined` 不符。建議檢查 `lines` 是否為空或僅包含空字串。",
+    "existing_code": "field.onChange(lines.length > 0 ? lines : undefined);",
+    "evidence": "在 custom-trigger-fields.tsx 的 Expected Events 欄位中，空輸入時仍會設定為包含空字串的陣列。"
+  }
+]

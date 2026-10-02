@@ -1,0 +1,49 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 💬 有需要留意的問題
+
+此 PR 旨在修復 GcsBucket._resolve_path 中因 storage_block_id 為 null 時可能導致的路徑雙重嵌套問題。主要變更包括在 _resolve_path 中新增檢查以避免重複前綴，以及在 _bucket_folder_suffix 驗證器中新增跨欄位驗證。然而，跨欄位驗證使用了 field_validator 而非 model_validator，違反專案規範 R08，且可能因欄位驗證順序而失效。此外，測試檔案中的變更（如移除 disable_logging fixture）可能影響測試隔離性。整體而言，修復方向正確，但需修正驗證器實作並確保測試穩定性。
+
+### Findings（4 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| ⚠️ | Major | `src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py:710` | [R08] 跨欄位驗證應使用 model_validator 而非 field_validator | 0.90 |
+| ⚠️ | Major | `src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py:734` | 路徑檢查可能誤判：使用子字串比對而非路徑前綴比對 | 0.80 |
+| 🔸 | Minor | `src/integrations/prefect-gcp/tests/conftest.py:19` | 移除 disable_logging fixture 可能導致測試日誌輸出過多 | 0.70 |
+| 🔸 | Minor | `src/integrations/prefect-gcp/tests/test_cloud_storage.py:158` | 測試僅驗證特定情境，未涵蓋邊界條件 | 0.60 |
+
+<details><summary>⚠️ <b>Major</b> — <code>src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py:710</code> [R08] 跨欄位驗證應使用 model_validator 而非 field_validator</summary>
+
+在 `_bucket_folder_suffix` 中使用 `field_validator` 進行跨欄位驗證（檢查 `bucket_folder` 是否與 `bucket` 相同），違反專案規範 R08。`field_validator` 的執行順序取決於欄位定義順序，若 `bucket` 在 `bucket_folder` 之後定義，則 `info.data.get("bucket")` 可能為 None，導致驗證失效。應改用 `@model_validator(mode='after')` 進行跨欄位驗證。
+
+**判斷依據**：diff 中新增的跨欄位驗證程式碼位於 `field_validator` 裝飾的 `_bucket_folder_suffix` 方法內，且使用 `info.data.get("bucket")` 存取其他欄位。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py:734</code> 路徑檢查可能誤判：使用子字串比對而非路徑前綴比對</summary>
+
+在 `_resolve_path` 中，使用 `if self.bucket_folder and self.bucket_folder in path:` 來判斷路徑是否已包含 bucket_folder。這可能導致誤判：例如 bucket_folder 為 "results/"，而 path 為 "myresults/file.txt" 時，`"results/" in "myresults/file.txt"` 為 True，但實際上並非前綴，導致錯誤地跳過前綴添加。應使用 `path.startswith(self.bucket_folder)` 或更精確的路徑前綴比對。
+
+**判斷依據**：diff 中新增的檢查使用 `in` 運算子進行子字串比對，而非 `startswith`。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>src/integrations/prefect-gcp/tests/conftest.py:19</code> 移除 disable_logging fixture 可能導致測試日誌輸出過多</summary>
+
+移除了 `disable_logging` fixture，該 fixture 原本透過 `temporary_settings` 停用 API 日誌記錄。這可能導致測試期間產生大量日誌輸出，影響測試效能與可讀性。若移除是有意為之，應確認測試環境已透過其他方式控制日誌。
+
+**判斷依據**：diff 中刪除了 `disable_logging` fixture 的定義，且未見替代方案。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>src/integrations/prefect-gcp/tests/test_cloud_storage.py:158</code> 測試僅驗證特定情境，未涵蓋邊界條件</summary>
+
+新增的測試 `test_resolve_path_no_double_nesting` 僅驗證了當路徑已包含 bucket_folder 時不會重複嵌套，但未測試當路徑不包含 bucket_folder 時的正常行為，也未測試 bucket_folder 為空字串或路徑包含部分匹配的情況。建議增加更多測試案例以確保修復的完整性。
+
+**判斷依據**：測試僅包含一個正向案例，未涵蓋其他可能情境。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 5782 (cache hit 5760) ｜ completion tokens 1198 ｜ PR #5</sub>

@@ -1,0 +1,7 @@
+[info] repo 規範：repo=prefect、15 條、6792 字元、placement=after_diff、sha256=b3a73b0a5e3b
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 30801 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx:178 → 161（片段唯一命中）
+[info] 重新定位 ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx:190 → 179（片段唯一命中）
+[info] 重新定位 ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx:197 → 186（片段唯一命中）
+[info] 重新定位 ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx:178 → 161（片段唯一命中）
+[info] 完成於 13.0s ｜ findings=6 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 12838, "completion_tokens": 1541, "total_tokens": 14379, "prompt_tokens_details": {"cached_tokens": 12800}, "prompt_cache_hit_tokens": 12800, "prompt_cache_miss_tokens": 38}

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.ts",
+    "line": 588,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "hasPendingInviteByUserId 條件寫反，應查 accepted: false",
+    "body": "方法名稱是 `hasPendingInviteByUserId`，但查詢條件使用 `accepted: true`，這會回傳「已接受的邀請」而非「待處理的邀請」。\n\n**失敗情境**：\n- 使用者有 pending invite（accepted: false）時，此方法回傳 `false`，導致 `getting-started` 頁面不會重導向，使用者卡在錯誤的 onboarding 流程。\n- 使用者只有已接受的邀請時，此方法回傳 `true`，導致不必要的重導向。\n\n**建議修法**：\n將條件改為 `accepted: false`。",
+    "existing_code": "accepted: true,",
+    "evidence": "diff 中新增的 `hasPendingInviteByUserId` 方法內，`where` 條件為 `accepted: true`，與方法名稱及預期行為矛盾。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴既有 team，可能因資料狀態不穩定",
+    "body": "`beforeAll` 中先以 `prisma.team.findFirst({ where: { slug: { not: null } } })` 尋找任意 team，若找不到才建立新 team。這使得測試結果依賴資料庫中既有的 team 資料，可能因其他測試或種子資料而變動。\n\n**失敗情境**：\n- 若資料庫中已存在多個 team，測試會使用第一個找到的 team，其狀態可能影響測試結果（例如 team 被刪除或欄位不符）。\n- 若並行執行測試，可能互相干擾。\n\n**建議修法**：\n在 `beforeAll` 中一律建立專屬的測試 team，並在 `afterAll` 中刪除，避免依賴既有資料。",
+    "existing_code": "let testTeam = await prisma.team.findFirst({\n      where: { slug: { not: null } },\n    });",
+    "evidence": "diff 中 `beforeAll` 使用 `findFirst` 而非 `create`，且未過濾特定條件。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 121,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中手動清理資料，可能遺漏或重複刪除",
+    "body": "測試中多次手動呼叫 `prisma.membership.delete` 和 `prisma.user.delete`，並手動重置 `createdMembershipIds`。若測試中途失敗，可能留下殘留資料，影響後續測試。\n\n**建議修法**：\n統一使用 `afterEach` 清理，並在 `afterAll` 中刪除建立的 user 和 team，避免手動清理。",
+    "existing_code": "await prisma.membership.delete({ where: { id: membership.id } });\n      createdMembershipIds.length = 0;\n      await prisma.user.delete({ where: { id: newUser.id } });",
+    "evidence": "diff 中多處出現手動刪除與陣列重置，未完全依賴 `afterEach`。"
+  }
+]

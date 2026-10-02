@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 136,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "多主機情境下 currentRendererId 可能被覆寫，導致錯誤的 manager 被使用",
+    "body": "在 enableJSRootComponents 中，當 manager 已存在且 currentRendererId 與新的 rendererId 不同時，程式碼會直接覆寫 currentRendererId 和 manager，而不會拋出錯誤。這可能導致多主機（例如同時使用 Server 和 WebAssembly）時，後呼叫的 renderer 覆蓋先前的 manager，造成動態 root components 操作指向錯誤的 .NET 物件。\n\n建議：在多主機情境下應拋出錯誤或明確處理，而非靜默覆寫。",
+    "existing_code": "currentRendererId = rendererId;\n  manager = managerInstance;",
+    "evidence": "diff 中新增的 currentRendererId 與 manager 指派，且註解提到多主機情境不支援，但程式碼未阻止覆寫。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "hasInitializedJsComponents 全域旗標可能導致不同 renderer 之間初始化遺漏",
+    "body": "hasInitializedJsComponents 是模組層級的全域變數，一旦設為 true，後續不同 renderer 的 enableJSRootComponents 呼叫將不會執行初始化。若不同 renderer 需要不同的初始化邏輯或參數，這可能造成問題。\n\n建議：考慮將初始化狀態與 rendererId 關聯，或確認所有 renderer 共用相同的初始化需求。",
+    "existing_code": "if (!hasInitializedJsComponents) {\n    // Call the registered initializers...\n    hasInitializedJsComponents = true;\n  }",
+    "evidence": "diff 中新增的 hasInitializedJsComponents 旗標與條件判斷。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 137,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "jsComponentParametersByIdentifier 不再被更新，可能導致參數過時",
+    "body": "原本 enableJSRootComponents 會更新 jsComponentParametersByIdentifier，但修改後移除了該指派。若後續呼叫使用不同的 jsComponentParameters，全域變數將保留舊值，可能導致初始化時使用錯誤的參數。\n\n建議：確認是否需要在每次啟用時更新參數，或明確保留舊值。",
+    "existing_code": "manager = managerInstance;\n\n  if (!hasInitializedJsComponents) {",
+    "evidence": "diff 中移除了 jsComponentParametersByIdentifier = jsComponentParameters; 這一行。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/Tests/StatePersistenceTest.cs",
+    "line": 282,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 PersistentStateIsSupportedInDynamicJSRoots 未包含 // Arrange、// Act、// Assert 註解，違反專案規範 R06。\n\n建議：加入明確的 AAA 註解以提升可讀性。",
+    "existing_code": "public void PersistentStateIsSupportedInDynamicJSRoots(string renderMode)\n    {\n        Navigate($\"subdir/WasmMinimal/dynamic-js-root.html?renderMode={renderMode}\");",
+    "evidence": "diff 中新增的測試方法，未見 AAA 註解。"
+  },
+  {
+    "path": "src/Components/test/testassets/Components.TestServer/Program.cs",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除測試伺服器設定可能影響其他測試",
+    "body": "移除了 \"Razor Component Endpoints with JS Root Component\" 的伺服器設定，並將 RegisterForJavaScript 改為無條件註冊。這可能影響依賴該設定的其他測試或情境。\n\n建議：確認所有相關測試已更新，且無其他測試依賴此設定。",
+    "existing_code": "[\"Razor Component Endpoints\"] = (BuildWebHost<RazorComponentEndpointsStartup<App>>(CreateAdditionalArgs(args)), \"/subdir\"),",
+    "evidence": "diff 中刪除了該行，並在 RazorComponentEndpointsStartup.cs 中移除了條件判斷。"
+  }
+]

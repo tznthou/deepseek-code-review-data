@@ -1,0 +1,68 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "sortHosts 函式在移動時邏輯被修改，優先權比較方向反轉",
+    "body": "在 `HostEditDialogs.tsx` 中的原始 `sortHosts` 函式，當 `isRRWeightsEnabled` 為 true 且權重相同時，回傳 `priorityB - priorityA`（降冪排序）。移動到 `hostGroupUtils.ts` 後，該分支變成 `priorityA - priorityB`（升冪排序），導致排序結果相反。這會影響依賴此排序的團隊成員指派邏輯，可能造成優先權最高的成員被排到最後。\n\n建議：將該行改回 `return priorityB - priorityA;` 以維持原始行為。",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中 `packages/lib/bookings/hostGroupUtils.ts` 新增的 `sortHosts` 函式，在 `isRRWeightsEnabled` 且權重相等時回傳 `priorityA - priorityB`，而原始 `HostEditDialogs.tsx` 中對應行為是 `priorityB - priorityA`。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R02] 從 apps/web 使用相對路徑 import packages/platform/atoms，可能造成循環依賴",
+    "body": "此檔案位於 `apps/web/components/apps/`，卻使用相對路徑 `../../../../packages/platform/atoms/src/components/atoms-wrapper` 和 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar` 來 import 平台 atoms 套件。這打破了 apps/web 與 packages/platform/atoms 之間的依賴方向（apps/web 應依賴 atoms，但 atoms 不應依賴 apps/web）。若 atoms 內部也 import apps/web 的模組，將形成循環依賴，可能導致建置失敗或 runtime 錯誤。\n\n建議：改用 package alias（如 `@calcom/atoms/...`）來 import，並確認 atoms 套件沒有反向依賴 apps/web。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 中 `apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx` 的 import 路徑改為相對路徑，指向 `packages/platform/atoms`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "[R02] 從 apps/web 使用 @calcom/atoms 路徑 import hooks，可能造成循環依賴",
+    "body": "此檔案位於 `apps/web/modules/event-types/components/`，卻 import `@calcom/atoms/event-types/hooks/useEventTypeForm`、`useHandleRouteChange`、`useTabsNavigations`。這些 hooks 原本位於 `packages/platform/atoms/event-types/wrappers/` 下，現在被 apps/web 直接引用。若這些 hooks 內部依賴 apps/web 的模組，將形成循環依賴。\n\n建議：確認這些 hooks 沒有反向依賴 apps/web，或考慮將它們移至共享套件（如 `@calcom/features`）。",
+    "existing_code": "import { useEventTypeForm } from \"@calcom/atoms/event-types/hooks/useEventTypeForm\";\nimport { useHandleRouteChange } from \"@calcom/atoms/event-types/hooks/useHandleRouteChange\";\nimport { useTabsNavigations } from \"@calcom/atoms/event-types/hooks/useTabsNavigations\";",
+    "evidence": "diff 中 `EventTypeWebWrapper.tsx` 新增了從 `@calcom/atoms` 的 hooks import。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 檔案結尾缺少換行符",
+    "body": "檔案結尾缺少換行符（newline at end of file），違反常見的程式碼風格規範，可能導致某些工具或 diff 顯示異常。\n\n建議：在檔案最後一行加上換行符。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 顯示 `EventLimitsTabWebWrapper.tsx` 的最後一行沒有換行符（`\\ No newline at end of file`）。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 檔案結尾缺少換行符",
+    "body": "檔案結尾缺少換行符（newline at end of file），違反常見的程式碼風格規範，可能導致某些工具或 diff 顯示異常。\n\n建議：在檔案最後一行加上換行符。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 顯示 `EventRecurringWebWrapper.tsx` 的最後一行沒有換行符（`\\ No newline at end of file`）。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 236,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R03] JSX 縮排不一致",
+    "body": "在 `tabMap` 物件中，`setup` 和 `availability` 的 JSX 元素縮排從原本的 6 空格改為 8 空格，但其他 tab 仍維持 6 空格，造成不一致。雖然不影響功能，但違反一致的格式化風格。\n\n建議：統一縮排為 6 空格，或使用 Biome 自動格式化。",
+    "existing_code": "<EventSetupTab\n            eventType={eventType}\n            locationOptions={locationOptions}\n            team={team}\n            teamMembers={teamMembers}\n            destinationCalendar={destinationCalendar}\n        />",
+    "evidence": "diff 中 `EventTypeWebWrapper.tsx` 的 `tabMap` 區塊，`setup` 和 `availability` 的縮排被改為 8 空格，而其他 tab 仍為 6 空格。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 跨欄位驗證應使用 model_validator 而非 field_validator",
+    "body": "在 `_bucket_folder_suffix` 中，透過 `info.data.get(\"bucket\")` 存取另一個欄位 `bucket` 進行驗證，這屬於跨欄位驗證。專案規範 R08 要求此類驗證必須使用 `@model_validator`。使用 `field_validator` 會造成驗證順序相依：若 `bucket` 欄位在 `bucket_folder` 之後才被驗證，`info.data` 中可能沒有 `bucket`，導致驗證被跳過或行為不一致。建議將此驗證移至獨立的 `@model_validator(mode='after')` 方法中。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的 `if info.data.get(\"bucket\") ...` 行，以及 import 中新增的 `model_validator`（但未使用）。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "子字串比對可能誤判路徑已包含 bucket_folder",
+    "body": "`if self.bucket_folder and self.bucket_folder in path:` 使用子字串比對，若 `path` 中任意位置包含 bucket_folder 字串（例如 `mybucket_folder_results/abc` 且 bucket_folder 為 `bucket_folder/`），會錯誤地視為已前綴而直接返回，導致路徑未正確解析。應改為檢查 `path` 是否以 `bucket_folder` 開頭（例如 `path.startswith(self.bucket_folder)`）或使用 `PurePosixPath` 比較前綴。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中新增的 `if self.bucket_folder and self.bucket_folder in path:` 行。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "field_validator 中存取其他欄位可能因驗證順序而失敗",
+    "body": "即使不考慮規範，`field_validator` 的執行順序取決於欄位定義順序。若 `bucket` 定義在 `bucket_folder` 之後，`info.data` 中將沒有 `bucket`，導致此驗證永遠不觸發。這使得驗證邏輯不可靠。建議改用 `model_validator` 以確保所有欄位已驗證。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "同上，依賴 `info.data` 的可用性。"
+  }
+]

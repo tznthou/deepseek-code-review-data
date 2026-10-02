@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getDisplayEmail 的 regex 假設 CUID 長度固定為 25，未來可能失效",
+    "body": "`getDisplayEmail` 使用 `/\\+[a-zA-Z0-9]{25}/` 來移除 email 中的 CUID 後綴。此 regex 假設 CUID 長度固定為 25 個英數字元。若 CUID 的產生方式變更（例如長度改變或包含其他字元），此函式將無法正確移除後綴，導致 displayEmail 仍包含 CUID。建議確認 CUID 的格式規範，並考慮使用更穩健的解析方式（例如從 email 的 local part 中分離出已知的 CUID 模式），或至少加入單元測試涵蓋不同長度的 CUID。",
+    "existing_code": "private getDisplayEmail(email: string): string {\n    return email.replace(/\\+[a-zA-Z0-9]{25}/, \"\");\n  }",
+    "evidence": "diff 中新增的 getDisplayEmail 方法，regex 明確指定 {25} 長度。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 getOutputRecurringSeatedBookings 的排序可能改變 API 回應順序",
+    "body": "原本 `getOutputRecurringSeatedBookings` 會依 `start` 時間排序回傳的 bookings，但此 PR 移除了排序邏輯，直接回傳 `transformed`。這可能導致 API 回應的順序不穩定（取決於資料庫查詢的順序），影響依賴排序的客戶端。若排序是有意移除，請確認所有呼叫端都能接受任意順序；否則應保留排序。",
+    "existing_code": "return transformed;",
+    "evidence": "diff 中刪除了 `return transformed.sort(...)` 並改為 `return transformed;`"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "displayGuests 的 map 回呼可能遺失 this 綁定",
+    "body": "在 `getOutputBooking` 中，`bookingTransformed.bookingFieldsResponses.guests.map(this.getDisplayEmail)` 直接傳遞 `this.getDisplayEmail` 作為回呼。若 `getDisplayEmail` 內部依賴 `this`（目前沒有，但未來可能加入），會導致執行時錯誤。建議改為 `(guest) => this.getDisplayEmail(guest)` 以確保綁定。",
+    "existing_code": "bookingTransformed.bookingFieldsResponses.displayGuests = bookingTransformed.bookingFieldsResponses.guests.map(\n        this.getDisplayEmail\n      );",
+    "evidence": "diff 中新增的 map 呼叫，直接使用 this.getDisplayEmail 作為回呼。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 322,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "displayGuests 的 map 回呼可能遺失 this 綁定（第二處）",
+    "body": "在 `getOutputRecurringBooking` 中，同樣使用 `bookingTransformed.bookingFieldsResponses.guests.map(this.getDisplayEmail)`，存在相同的 `this` 綁定風險。建議改為箭頭函式。",
+    "existing_code": "bookingTransformed.bookingFieldsResponses.displayGuests = bookingTransformed.bookingFieldsResponses.guests.map(\n        (guest: string) => this.getDisplayEmail(guest)\n      );",
+    "evidence": "diff 中新增的 map 呼叫，但此處已使用箭頭函式，因此風險較低；仍建議統一。"
+  }
+]

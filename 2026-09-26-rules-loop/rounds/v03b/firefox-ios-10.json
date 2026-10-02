@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 208,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 @MainActor 可能導致 GCDWebServer 初始化執行緒不安全",
+    "body": "原本的註解指出 GCDWebServer 必須在主執行緒初始化，因此將 startMockImageServer 標記為 @MainActor。此 PR 移除了該標記，且呼叫端也改為同步呼叫（不再使用 await），這可能導致測試在背景執行緒執行時，GCDWebServer 初始化失敗或崩潰。\n\n建議：保留 @MainActor 標記，或確保測試方法本身在主執行緒執行（例如使用 @MainActor 標記測試方法）。",
+    "existing_code": "func startMockImageServer(imageData: Data, forAssetType assetType: AssetType) throws -> URL {",
+    "evidence": "diff 中移除了 @MainActor 註解與標記，且呼叫端從 `try? await startMockImageServer` 改為 `try? startMockImageServer`。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "移除 expectation 可能導致測試提前結束而漏測",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase` 中，原本使用 expectation 等待非同步下載完成，但此 PR 移除了 expectation 的建立與等待。由於 `downloadImage` 是非同步回呼，測試方法可能在回呼執行前就返回，導致測試永遠通過但實際上未驗證任何內容。\n\n建議：保留 expectation 並使用 `wait(for:timeout:)` 等待，或將測試方法改為 async 並使用 `await` 等待非同步結果。",
+    "existing_code": "siteDownloader.downloadImage(with: mockedURL, options: [.processor(SVGImageProcessor())]) { result in",
+    "evidence": "diff 中移除了 `let exp = expectation(description: \"Image download and parse\")` 與 `await fulfillment(of: [exp], timeout: 2.0)`，且未加入其他等待機制。"
+  },
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 nonisolated(unsafe) 可能隱藏並發問題",
+    "body": "將 `generator` 標記為 `nonisolated(unsafe)` 以繞過 Swift 6 的並發檢查，但此舉可能隱藏潛在的資料競爭。雖然有註解說明 ContentBlockerGenerator 不是執行緒安全的，但應確認此靜態屬性是否真的只會在單一執行緒存取，或考慮將其改為 actor 或使用鎖保護。",
+    "existing_code": "nonisolated(unsafe) static let generator = ContentBlockerGenerator.factory()",
+    "evidence": "diff 中新增了 `nonisolated(unsafe)` 修飾詞，並加上註解。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Home/Homepage/SectionHeader/LabelButtonHeaderView.swift",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "wrappedAction 可能造成不必要的閉包包裝",
+    "body": "新增的 `wrappedAction` 閉包僅是轉呼叫 `moreButtonAction`，沒有額外邏輯。這可能是為了滿足 Swift 6 的 @Sendable 要求，但應確認是否真的需要此包裝，或可直接將 `moreButtonAction` 標記為 @Sendable。",
+    "existing_code": "let wrappedAction: (@MainActor (UIButton) -> Void)? = { button in\n                moreButtonAction?(button)\n            }",
+    "evidence": "diff 中新增了 wrappedAction 閉包，並將其傳遞給 ActionButtonViewModel。"
+  }
+]

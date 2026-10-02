@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試替身使用 findAll 而非 findPage，可能導致測試無法正確模擬",
+    "body": "在 beforeEach 中，Email 模型被建立為 `createModelClass({ findAll: [] })`，但 DomainWarmingService 呼叫的是 `findPage`。這可能導致測試中 `findPage` 未定義，進而拋出錯誤或回傳非預期結果。請確認 `createModelClass` 的實作是否會將 `findAll` 映射到 `findPage`，否則應改為 `findPage: sinon.stub().resolves({ data: [] })` 或類似方式。",
+    "existing_code": "Email = createModelClass({\n            findAll: []\n        });",
+    "evidence": "diff 中將原本的 `findOne: null` 改為 `findAll: []`，但服務程式碼使用的是 `findPage`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "高量上限的計算可能與註解描述不符",
+    "body": "註解說明高量時「cap the increase at 20% or 75k absolute」，但程式碼計算 `scaledIncrease = Math.ceil(lastCount * 1.2)` 與 `absoluteIncrease = lastCount + 75_000`，然後取 `Math.min`。這代表當 `lastCount` 大於 375,000 時，`absoluteIncrease` 會小於 `scaledIncrease`，因此上限會是 +75k，而非 20%。例如 `lastCount = 500,000` 時，結果為 575,000（+75k），而非 600,000（+20%）。請確認此行為是否符合預期，或調整註解與實作。",
+    "existing_code": "const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);\n            const absoluteIncrease = lastCount + WARMUP_SCALING_TABLE.highVolume.maxAbsoluteIncrease;\n            return Math.min(scaledIncrease, absoluteIncrease);",
+    "evidence": "diff 中新增的高量處理邏輯，與上方註解描述不一致。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "findPage 的 filter 條件從 `<` 改為 `<=`，可能包含今日的郵件",
+    "body": "原本使用 `created_at:<${today}` 排除今日，現在改為 `created_at:<=${today}`，這會包含今天建立的郵件。若今日已有寄件，可能會影響最高寄件量的計算，導致暖機限制過高。請確認此變更是否為預期行為。",
+    "existing_code": "filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,",
+    "evidence": "diff 中將 `<` 改為 `<=`。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中 fake timers 的 shouldAdvanceTime 可能導致非預期行為",
+    "body": "在 `setDay` 中，`sinon.useFakeTimers` 使用了 `shouldAdvanceTime: true`，這會讓計時器自動前進。若測試中有依賴真實時間的邏輯，可能會受到影響。請確認此設定是否必要，或考慮使用 `shouldAdvanceTime: false`。",
+    "existing_code": "clock = sinon.useFakeTimers({\n            now: time.getTime(),\n            shouldAdvanceTime: true\n        });",
+    "evidence": "diff 中新增了 `shouldAdvanceTime: true`。"
+  }
+]

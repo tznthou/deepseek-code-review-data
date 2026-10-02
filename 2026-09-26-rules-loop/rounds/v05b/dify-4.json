@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] SQLAlchemy session 未使用 context manager",
+    "body": "`ConversationVariableUpdaterImpl.update` 中直接建立 `Session(db.engine)` 並在方法結束前呼叫 `session.commit()`，但未使用 `with` 語句或 `try/finally` 確保 session 關閉。若 `session.scalar(stmt)` 或 `session.commit()` 拋出例外，session 將不會被關閉，造成連線洩漏。建議改為 `with Session(db.engine) as session:` 模式。",
+    "existing_code": "session = Session(db.engine)\n        row = session.scalar(stmt)\n        if not row:\n            raise ConversationVariableNotFoundError(\"conversation variable not found in the database\")\n        row.data = variable.model_dump_json()\n        session.commit()",
+    "evidence": "diff 中新增的 `session = Session(db.engine)` 與 `session.commit()` 沒有對應的 `session.close()` 或 context manager。"
+  },
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "[R07] 查詢未依 tenant_id 過濾",
+    "body": "`update` 方法中的查詢僅以 `ConversationVariable.id` 和 `conversation_id` 過濾，未加入 `tenant_id` 條件。若 `conversation_id` 在不同 tenant 間可能重複，則可能更新到其他 tenant 的資料。建議在查詢中加入 tenant_id 條件，或確認 conversation_id 全域唯一。",
+    "existing_code": "stmt = select(ConversationVariable).where(\n            ConversationVariable.id == variable.id, ConversationVariable.conversation_id == conversation_id\n        )",
+    "evidence": "diff 中查詢條件僅有 id 和 conversation_id，未見 tenant_id。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "多個變數更新時多次 flush，效能不佳",
+    "body": "在 `on_event` 中，對每個 conversation variable 呼叫 `update` 後立即呼叫 `flush`。若一次 assigner 更新多個變數，將產生多次資料庫 commit。建議將 `flush` 移到迴圈外，僅在所有變數更新後呼叫一次。",
+    "existing_code": "self._conversation_variable_updater.update(conversation_id=conversation_id, variable=variable)\n            self._conversation_variable_updater.flush()",
+    "evidence": "diff 中 `flush()` 位於 for 迴圈內。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "selector 長度檢查可能不足",
+    "body": "程式碼檢查 `len(selector) < 2` 後才使用 `selector[0]`，但未驗證 `selector[0]` 是否為預期的 conversation variable node ID。若 selector 格式異常，可能導致後續邏輯錯誤。建議增加更明確的驗證。",
+    "existing_code": "if len(selector) < 2:\n                logger.warning(\"Conversation variable selector invalid. selector=%s\", selector)\n                continue\n            if selector[0] != CONVERSATION_VARIABLE_NODE_ID:\n                continue",
+    "evidence": "diff 中僅檢查長度，未檢查 selector[0] 的型別或內容。"
+  }
+]

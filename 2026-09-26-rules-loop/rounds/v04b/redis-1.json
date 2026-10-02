@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 3503,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "hashTypeDelete 不再接受 Entry*，但 onFieldExpire 仍傳入 Entry*",
+    "body": "在 `onFieldExpire` 中，原本呼叫 `hashTypeDelete(expCtx->hashObj, field, 0)`，其中 `field` 是 `Entry*` 型別（`isSdsField=0`）。但此 PR 移除了 `isSdsField` 參數，並將 `hashTypeDelete` 的實作改為一律將 `field` 視為 `sds`（呼叫 `sdslen((sds)field)`）。這會導致對 `Entry*` 指標呼叫 `sdslen`，讀取錯誤的記憶體，可能造成當機或未定義行為。\n\n**失敗情境**：當 hash 欄位過期且需要刪除時，`onFieldExpire` 被呼叫，傳入的 `field` 是 `Entry*`，但 `hashTypeDelete` 會嘗試取得其 sds 長度，導致記憶體存取錯誤。\n\n**建議修法**：在呼叫 `hashTypeDelete` 前，先從 `Entry*` 中取出 sds 欄位，例如使用 `entryGetKey(entry)` 取得 sds 後再傳入。或者保留 `isSdsField` 參數以區分兩種型別。",
+    "existing_code": "serverAssert(hashTypeDelete(expCtx->hashObj, field) == 1);",
+    "evidence": "diff 中 `src/t_hash.c` 的變更：`-    serverAssert(hashTypeDelete(expCtx->hashObj, field, 0) == 1);` 改為 `+    serverAssert(hashTypeDelete(expCtx->hashObj, field) == 1);`，且 `hashTypeDelete` 的簽名從 `int hashTypeDelete(robj *o, void *field, int isSdsField)` 改為 `int hashTypeDelete(robj *o, void *field)`，實作中直接呼叫 `sdslen((sds)field)`。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 914,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "dictSetKeyAtLink 中搜尋時使用 addedKey 可能不一致",
+    "body": "在 `dictSetKeyAtLink` 中，當 `*link == NULL` 時，程式碼改為 `*link = dictFindLink(d, addedKey, NULL);`。但 `addedKey` 是經過 `keyDup` 處理後的 key，而 `dictFindLink` 預期的是 lookup key（即從 stored-key 提取出的 key）。如果 `keyDup` 會複製或轉換 key，則 `addedKey` 可能不是正確的 lookup key，導致找不到對應的 entry。\n\n**失敗情境**：若 `keyDup` 回傳的 key 與原始 stored-key 不同（例如配置了不同的 keyDup），則 `dictFindLink` 可能找不到 entry，進而觸發 assert 或錯誤行為。\n\n**建議修法**：應使用 `dictStoredKey2Key(d, key)` 取得 lookup key 後再呼叫 `dictFindLink`，而不是使用 `addedKey`。",
+    "existing_code": "*link = dictFindLink(d, addedKey, NULL);",
+    "evidence": "diff 中 `src/dict.c` 的變更：`-        *link = dictFindLink(d, key, NULL);` 改為 `+        *link = dictFindLink(d, addedKey, NULL);`"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "validateStoredKeyConversion 函式未被使用，可能觸發 -Wunused-function 警告",
+    "body": "新增的 `validateStoredKeyConversion` 函式在整個 diff 中沒有被呼叫。若編譯器開啟 `-Wunused-function`（且專案使用 `-Werror`），這會導致編譯失敗。\n\n**建議修法**：移除該函式，或將其標記為 `static inline` 並確保有使用，或加上 `__attribute__((unused))`。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增了 `validateStoredKeyConversion` 函式，但未見任何呼叫。"
+  }
+]

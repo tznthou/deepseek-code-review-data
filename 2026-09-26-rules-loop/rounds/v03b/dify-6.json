@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "SMTP_SSL 不應呼叫 ehlo，可能導致非預期行為",
+    "body": "在 `self.use_tls and not self.opportunistic_tls` 時使用 `smtplib.SMTP_SSL`，但後續的 `if self.use_tls and self.opportunistic_tls:` 條件不會執行，因此不會呼叫 ehlo。然而，若未來條件變更或誤用，SMTP_SSL 的 ehlo 呼叫可能導致錯誤。建議明確區分 SMTP 與 SMTP_SSL 的初始化流程，避免依賴條件判斷。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中新增的 SMTP_SSL 實例化後，緊接著的條件判斷僅在 opportunistic_tls 為真時呼叫 ehlo，因此 SMTP_SSL 不會呼叫 ehlo。但若未來修改條件，可能誤用。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "assert 在最佳化模式下會被移除，不應作為必要檢查",
+    "body": "`assert smtp is not None` 在 Python 以 `-O` 執行時會被移除，無法保證 smtp 不為 None。雖然目前 smtp 必定有值，但此 assert 無實際作用，建議移除或改用明確的例外處理。",
+    "existing_code": "assert smtp is not None",
+    "evidence": "diff 中新增的 assert 語句，在最佳化模式下會被跳過。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "local_hostname 傳遞空字串可能導致 smtplib 錯誤",
+    "body": "`local_host = dify_config.SMTP_LOCAL_HOSTNAME or \"\"` 將 None 轉為空字串，但 smtplib 的 local_hostname 參數不接受空字串，會拋出 ValueError。雖然後續以 `local_host or None` 傳遞，但若設定為空字串，仍可能觸發錯誤。建議直接使用 `dify_config.SMTP_LOCAL_HOSTNAME`，並在傳遞前檢查。",
+    "existing_code": "local_host = dify_config.SMTP_LOCAL_HOSTNAME or \"\"",
+    "evidence": "diff 中將設定值轉為空字串，但 smtplib 不接受空字串。"
+  },
+  {
+    "path": "api/tests/unit_tests/libs/test_smtp_client.py",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試僅驗證 local_hostname 為 ANY，未驗證實際值",
+    "body": "測試使用 `ANY` 驗證 local_hostname，未確認是否正確傳遞設定值。建議增加測試案例，驗證當 SMTP_LOCAL_HOSTNAME 設定時，傳遞的值正確；未設定時，傳遞 None。",
+    "existing_code": "mock_smtp_cls.assert_called_once_with(\"smtp.example.com\", 25, timeout=10, local_hostname=ANY)",
+    "evidence": "diff 中測試斷言使用 ANY，未驗證實際值。"
+  }
+]

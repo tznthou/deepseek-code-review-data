@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 錯誤型別未使用 thiserror，違反專案規範",
+    "body": "此變更將原本使用 `#[derive(Debug, thiserror::Error)]` 的 `Error` 列舉改為手動實作 `Display` 和 `Error` trait。專案規範 R08 明確要求所有自訂錯誤型別必須使用 thiserror 來提供一致的錯誤處理。手動實作可能導致錯誤訊息不一致、增加維護成本，且容易遺漏 `source` 方法的正確實作。建議保留 thiserror 的 derive，或提供充分理由說明為何需要手動實作。",
+    "existing_code": "#[derive(Debug)]\npub enum Error {",
+    "evidence": "diff 中移除了 `#[derive(Debug, thiserror::Error)]` 並改為 `#[derive(Debug)]`，且新增了手動的 `Display` 和 `Error` 實作。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R09] 公開錯誤列舉未標記 #[non_exhaustive]",
+    "body": "此 `Error` 列舉為公開 API，且未來可能新增變體。專案規範 R09 要求公開錯誤列舉應標記 `#[non_exhaustive]` 以避免新增變體時造成破壞性變更。目前變更未加上此屬性，可能導致下游使用者在未來版本更新時遇到編譯錯誤。建議加上 `#[non_exhaustive]`。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中 `pub enum Error {` 沒有 `#[non_exhaustive]` 屬性。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "notarize_inner 條件判斷邏輯可能反轉",
+    "body": "原本的條件 `submit_output.status.map_or(!wait, |s| s == \"Accepted\")` 改為 `submit_output.status.map_or(wait, |s| s == \"Accepted\")`。這可能改變了行為：當 `status` 為 `None` 時，原本在 `wait` 為 false 時會進入分支，現在則在 `wait` 為 true 時進入。需要確認此變更是否為預期的修正，否則可能導致在等待模式下跳過必要的處理。",
+    "existing_code": "if submit_output.status.map_or(wait, |s| s == \"Accepted\") {",
+    "evidence": "diff 中該行從 `map_or(!wait, ...)` 改為 `map_or(wait, ...)`。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "錯誤型別變更未新增變更檔案",
+    "body": "此 PR 包含對 `tauri-macos-sign` 的錯誤型別變更，這是一個公開 API 的變更，可能影響下游使用者。根據專案規範 R13，所有需要版本提升的變更都應包含對應的變更檔案（.changes 目錄）。目前 diff 中刪除了 `.changes/macos-codesign-error-enum.md`，但未新增新的變更檔案，可能導致版本管理不一致。",
+    "existing_code": "deleted file mode 100644\n--- a/.changes/macos-codesign-error-enum.md\n+++ /dev/null",
+    "evidence": "diff 顯示刪除了 `.changes/macos-codesign-error-enum.md`，但沒有新增對應的變更檔案。"
+  }
+]

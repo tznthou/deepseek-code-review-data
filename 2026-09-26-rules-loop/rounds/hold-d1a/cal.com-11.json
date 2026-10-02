@@ -1,0 +1,112 @@
+[
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 413,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R07] 在業務邏輯中直接存取 process.env",
+    "body": "在 `handleCancelBooking.ts` 的 handler 函式中，直接讀取 `process.env.ENABLE_WEBHOOKS` 來決定是否發送 webhook，這違反了 R07 規範：環境變數不應在非設定程式碼中直接存取。\n\n**失敗情境**：\n- 測試時無法輕易模擬此環境變數，導致測試不穩定。\n- 若未來需要動態調整此設定，必須修改業務邏輯。\n\n**建議修法**：\n- 將此設定透過依賴注入或 centralized configuration 模組傳入。\n- 例如在 `BookingCancelService` 的 dependencies 中加入 `webhooksEnabled` 布林值，由呼叫端從設定中取得。",
+    "existing_code": "// Only send webhooks if enabled in environment\n  const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";",
+    "evidence": "diff 中新增的兩行：\n```\n+  // Only send webhooks if enabled in environment\n+  const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";\n```\n此處直接使用 process.env，違反 R07。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 57,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] import 陳述式格式不符合 Biome 標準",
+    "body": "import 陳述式被重新格式化為多行，但縮排與換行方式可能不符合 Biome 的 110 字元行寬與 2 空格縮排規則。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "import {\n  buildActorEmail,\n  getUniqueIdentifier,\n  makeGuestActor,\n  makeUserActor,\n} from \"@calcom/features/booking-audit/lib/makeActor\";",
+    "evidence": "diff 中將原本的單行 import 改為多行，但縮排為 2 空格，可能超過行寬限制或不符合 Biome 的格式規則。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 物件屬性縮排不一致",
+    "body": "在 `getAuditActor` 函式中，`buildActorEmail` 的參數物件縮排從原本的 4 空格改為 6 空格，與其他程式碼不一致。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "actorEmail = buildActorEmail({\n      identifier: getUniqueIdentifier({ prefix: \"fallback\" }),\n      actorType: \"guest\",\n    });",
+    "evidence": "diff 中此段縮排由 4 空格改為 6 空格，可能不符合 Biome 的 2 空格縮排規則。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 154,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] log.warn 參數格式化不符合 Biome 標準",
+    "body": "`log.warn` 的參數被重新格式化為多行，但縮排與換行方式可能不符合 Biome 規則。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "log.warn(\n      \"Booking cancellation with unknown actionSource\",\n      safeStringify({\n        bookingUid: bookingToDelete.uid,\n        userUuid,\n      })\n    );",
+    "evidence": "diff 中此段被重新格式化，但縮排為 6 空格，可能不符合 Biome 的 2 空格縮排規則。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 374,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 物件展開縮排不一致",
+    "body": "在 `evt` 物件中，`team` 屬性的縮排從原本的 4 空格改為 8 空格，與其他屬性不一致。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "team: {\n          name: bookingToDelete?.eventType?.team?.name || \"Nameless\",\n          members: teamMembers,\n          id: teamId,\n        },",
+    "evidence": "diff 中此段縮排由 4 空格改為 8 空格，可能不符合 Biome 的 2 空格縮排規則。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 416,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 條件運算子換行格式不符合 Biome 標準",
+    "body": "`webhooksEnabled ? webhooks.map(...) : []` 的換行方式可能不符合 Biome 的格式規則。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "const promises = webhooksEnabled ? webhooks.map((webhook) =>\n    sendPayload(webhook.secret, eventTrigger, new Date().toISOString(), webhook, {\n      ...evt,\n      ...eventTypeInfo,\n      status: \"CANCELLED\",\n      smsReminderNumber: bookingToDelete.smsReminderNumber || undefined,\n      cancelledBy: cancelledBy,\n      requestReschedule: false,\n    }).catch((e) => {\n      logger.error(\n        `Error executing webhook for event: ${eventTrigger}, URL: ${webhook.subscriberUrl}, bookingId: ${evt.bookingId}, bookingUid: ${evt.uid}`,\n        safeStringify(e)\n      );\n    })\n  ) : [];",
+    "evidence": "diff 中此段被重新格式化，但換行與縮排可能不符合 Biome 規則。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 建構子格式不符合 Biome 標準",
+    "body": "`constructor(private readonly deps: BookingCancelServiceDependencies) {}` 中的空格可能不符合 Biome 規則。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "constructor(private readonly deps: BookingCancelServiceDependencies) {}",
+    "evidence": "diff 中將 `{ }` 改為 `{}`，但可能不符合 Biome 的空格規則。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 142,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 物件縮排不一致",
+    "body": "在 `buildWhereClauseForActiveBookings` 函式中，多處物件縮排從原本的 4 空格改為 8 空格，與其他程式碼不一致。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "OR: [{ noShowHost: false }, { noShowHost: null }],",
+    "evidence": "diff 中此段縮排由 4 空格改為 8 空格，可能不符合 Biome 的 2 空格縮排規則。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 建構子格式不符合 Biome 標準",
+    "body": "`constructor(private prismaClient: PrismaClient) {}` 中的空格可能不符合 Biome 規則。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "constructor(private prismaClient: PrismaClient) {}",
+    "evidence": "diff 中將 `{ }` 改為 `{}`，但可能不符合 Biome 的空格規則。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 659,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 查詢物件縮排不一致",
+    "body": "在 `currentBookingsAllUsersQueryThree` 查詢中，物件縮排從原本的 4 空格改為 8 空格，與其他程式碼不一致。\n\n**建議修法**：\n- 執行 `biome format` 自動修正。",
+    "existing_code": "where: {\n            startTime: { lte: endDate },\n            endTime: { gte: startDate },\n            eventType: {\n              id: eventTypeId,\n              requiresConfirmation: true,\n              requiresConfirmationWillBlockSlot: true,\n            },\n            status: {\n              in: [BookingStatus.PENDING],\n            },\n          },",
+    "evidence": "diff 中此段縮排由 4 空格改為 8 空格，可能不符合 Biome 的 2 空格縮排規則。"
+  }
+]

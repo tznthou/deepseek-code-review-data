@@ -1,0 +1,112 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "移除 require 陳述式的分號",
+    "body": "在此檔案的開頭，多個 require 陳述式原本以分號結尾，但在此變更中被移除。這違反了專案規則 R19（必須使用分號）。雖然 JavaScript 的自動分號插入（ASI）通常能正確處理，但明確加上分號是專案慣例，且能避免潛在的 ASI 陷阱。建議恢復這些分號。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')\n\nconst PaymentsService = require('./services/payments-service')\nconst TokenService = require('./services/token-service')\nconst GeolocationService = require('./services/geolocation-service')\nconst MemberBREADService = require('./services/member-bread-service')\nconst MemberRepository = require('./repositories/member-repository')",
+    "evidence": "diff 中顯示原本的 require 陳述式都有分號，但新版本移除了分號。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/posts-stats-service.js",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除多餘的空白行",
+    "body": "此變更移除了多個多餘的空白行，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "applyDateFilter(subquery1, dateFrom, dateTo, 'created_at');\n\n                            subquery1.union(function () {",
+    "evidence": "diff 中顯示原本有空白行，但新版本移除了。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/posts-stats-service.js",
+    "line": 269,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除行尾空白",
+    "body": "此變更移除了行尾空白，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "}",
+    "evidence": "diff 中顯示原本行尾有空白，但新版本移除了。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/posts-stats-service.js",
+    "line": 1144,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除多餘的空白行",
+    "body": "此變更移除了多個多餘的空白行，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "const openRate = postData.email_count ?\n                (postData.opened_count / postData.email_count) * 100 :\n                null;",
+    "evidence": "diff 中顯示原本有空白行，但新版本移除了。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/posts-stats-service.js",
+    "line": 1571,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除檔案結尾的換行",
+    "body": "此變更移除了檔案結尾的換行，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "module.exports = PostsStatsService;",
+    "evidence": "diff 中顯示原本檔案結尾沒有換行，但新版本加上了。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/stats-service.js",
+    "line": 124,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除多餘的空白行",
+    "body": "此變更移除了多個多餘的空白行，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "const {newsletter_id: newsletterId, ...otherOptions} = options;\n\n        // If no newsletterId is provided, we can't get specific stats",
+    "evidence": "diff 中顯示原本有空白行，但新版本移除了。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/stats-service.js",
+    "line": 142,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除多餘的空白行",
+    "body": "此變更移除了多個多餘的空白行，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "const {newsletter_id: newsletterId, ...otherOptions} = options;\n\n        // If no newsletterId is provided, we can't get specific stats",
+    "evidence": "diff 中顯示原本有空白行，但新版本移除了。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/stats-service.js",
+    "line": 195,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除多餘的空白行",
+    "body": "此變更移除了多個多餘的空白行，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "const {newsletter_id: newsletterId, ...otherOptions} = options;\n\n        // If no newsletterId is provided, we can't get specific stats",
+    "evidence": "diff 中顯示原本有空白行，但新版本移除了。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/stats-service.js",
+    "line": 223,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除多餘的空白行",
+    "body": "此變更移除了多個多餘的空白行，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "const {newsletter_id: newsletterId, post_ids: postIds} = options;\n\n        // If no newsletterId is provided, we can't get specific stats",
+    "evidence": "diff 中顯示原本有空白行，但新版本移除了。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/stats-service.js",
+    "line": 255,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除多餘的空白行",
+    "body": "此變更移除了多個多餘的空白行，這本身是好的，但與檔案重新命名無關。建議將這類格式調整與重新命名分開提交，以利於 review 和追蹤。",
+    "existing_code": "const {newsletter_id: newsletterId, ...otherOptions} = options;\n\n        // If no newsletterId is provided, we can't get specific stats",
+    "evidence": "diff 中顯示原本有空白行，但新版本移除了。"
+  }
+]

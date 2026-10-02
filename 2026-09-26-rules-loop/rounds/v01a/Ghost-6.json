@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "排程條件反轉導致重複排程或完全停止排程",
+    "body": "原本的條件 `!hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')` 確保只在尚未排程且非測試環境時才新增 job。改成 `hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')` 後，只有在 `hasScheduled.processOutbox` 為 true 時才會排程，但該變數初始為 false，且從未在程式碼中設為 true，因此實際上永遠不會排程。這會導致歡迎郵件完全無法寄出。\n\n建議改回原本的條件，或修正為 `!hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')`。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中將 `!hasScheduled.processOutbox` 改為 `hasScheduled.processOutbox`，且 `hasScheduled` 物件在檔案開頭初始化為 `{ processOutbox: false }`，沒有其他地方將其設為 true。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 342,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "條件判斷語意變更可能導致非測試收件匣也觸發歡迎郵件",
+    "body": "原本的條件 `this._labsService.isSet('welcomeEmails') && WELCOME_EMAIL_SOURCES.includes(source)` 要求 labs 旗標開啟且來源在允許清單中。改成 `welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)` 後，只要 config 有值或來源在清單中就會觸發，即使 config 未設定（例如空字串或 undefined）且來源在清單中，也會建立 outbox 條目。這可能導致在未啟用歡迎郵件功能時仍寄出郵件。\n\n建議改為 `welcomeEmailConfig && WELCOME_EMAIL_SOURCES.includes(source)`，或明確檢查 config 是否為有效值。",
+    "existing_code": "if (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)) {",
+    "evidence": "diff 中將 `this._labsService.isSet('welcomeEmails') && WELCOME_EMAIL_SOURCES.includes(source)` 改為 `welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R20] 使用 var 宣告變數",
+    "body": "程式碼中將 `let member;` 改為 `var member;`，違反專案規範 R20（必須使用 let 或 const）。var 有函數作用域和提升問題，可能導致非預期行為。\n\n建議改回 `let member;` 或使用 `const`（如果不需要重新賦值）。",
+    "existing_code": "var member;",
+    "evidence": "diff 中將 `let member;` 改為 `var member;`。"
+  }
+]

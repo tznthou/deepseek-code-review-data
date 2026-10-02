@@ -1,0 +1,79 @@
+[
+  {
+    "path": "api/core/rag/retrieval/dataset_retrieval.py",
+    "line": 1207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "not contains 條件未傳入 escape 參數，跳脫失效",
+    "body": "在 `case \"not contains\"` 分支中，`json_field.notlike(f\"%{escaped_value}%\")` 沒有傳入 `escape=\"\\\\\"` 參數。這會導致跳脫字元（反斜線）被資料庫視為普通字元，而不是跳脫字元，因此 `%` 和 `_` 仍會被當作萬用字元，造成查詢結果不正確。\n\n**失敗情境**：當使用者輸入包含 `%` 或 `_` 時，例如搜尋 `\"50%\"`，`not contains` 條件會將 `%` 視為萬用字元，導致排除掉所有包含 `50` 開頭的字串，而非僅排除包含字面 `50%` 的字串。\n\n**建議修法**：與其他分支一致，加入 `escape=\"\\\\\"` 參數：\n```python\nfilters.append(json_field.notlike(f\"%{escaped_value}%\", escape=\"\\\\\"))\n```",
+    "existing_code": "filters.append(json_field.notlike(f\"%{escaped_value}%\"))",
+    "evidence": "diff 中該行新增，且未包含 escape 參數，與同檔案其他 like 條件不一致。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/clickzetta/clickzetta_vector.py",
+    "line": 991,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "ClickZetta LIKE 查詢的 escape 子句可能不正確",
+    "body": "在 ClickZetta 的 `_search_by_like` 方法中，SQL 字串使用了 `ESCAPE '\\\\\\\\'`，但 `escape_like_pattern` 函式跳脫時使用的是單一反斜線。這可能導致跳脫字元不一致：如果資料庫將 `ESCAPE '\\\\\\\\'` 解釋為跳脫字元為兩個反斜線，則跳脫後的字串中的單一反斜線將無法正確跳脫後續的 `%` 或 `_`。\n\n**失敗情境**：當使用者輸入包含 `%` 時，例如 `\"50%\"`，跳脫後的字串為 `\"50\\%\"`，但若資料庫期望跳脫字元為 `\\\\`（兩個反斜線），則 `\\%` 不會被視為跳脫的 `%`，而可能被解釋為字面反斜線後跟萬用字元 `%`，導致查詢結果錯誤。\n\n**建議修法**：確認 ClickZetta 資料庫的 escape 語法，並確保 `ESCAPE` 子句中的字元與 `escape_like_pattern` 使用的跳脫字元一致。通常應使用 `ESCAPE '\\'`（單一反斜線）。",
+    "existing_code": "filter_clauses.append(f\"{Field.CONTENT_KEY} LIKE '%{escaped_query}%' ESCAPE '\\\\\\\\'\")",
+    "evidence": "diff 中該行新增，且 escape 子句使用了四個反斜線，而 escape_like_pattern 只使用單一反斜線。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/iris/iris_vector.py",
+    "line": 298,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Iris LIKE 查詢的 escape 字元與跳脫後字串不一致",
+    "body": "在 Iris 的 `search_by_full_text` 方法中，SQL 使用了 `ESCAPE '|'`，但 `escape_like_pattern` 函式跳脫時使用的是反斜線 `\\`。這會導致跳脫後的字串中的反斜線被資料庫視為普通字元，而不是跳脫字元，因此 `%` 和 `_` 仍會被當作萬用字元。\n\n**失敗情境**：當使用者輸入包含 `%` 時，例如 `\"50%\"`，跳脫後的字串為 `\"50\\%\"`，但由於 escape 字元是 `|`，資料庫不會將 `\\%` 視為跳脫的 `%`，而是將 `\\` 視為字面反斜線，`%` 視為萬用字元，導致查詢結果錯誤。\n\n**建議修法**：將 `ESCAPE` 子句改為 `ESCAPE '\\'`，或修改 `escape_like_pattern` 以使用 `|` 作為跳脫字元（但後者會影響其他查詢）。",
+    "existing_code": "WHERE text LIKE ? ESCAPE '|'",
+    "evidence": "diff 中該行新增，且 escape 字元為 '|'，而 escape_like_pattern 使用反斜線。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_annotation_service.py",
+    "line": 517,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試斷言可能無法驗證跳脫效果",
+    "body": "在 `test_get_annotation_list_by_app_id_with_special_characters_in_keyword` 測試中，Test 4 的斷言 `assert all(\"50%\" in (item.question or \"\") or \"50%\" in (item.content or \"\") for item in annotation_list)` 只檢查結果中包含 \"50%\"，但沒有驗證結果中不包含 \"100%\"。如果跳脫失效，查詢 \"50%\" 會匹配到 \"100% different\"，但該斷言仍會通過，因為 \"100% different\" 中也包含 \"50%\" 子字串。\n\n**失敗情境**：如果跳脫未正確處理，查詢 \"50%\" 會返回包含 \"100% different\" 的記錄，但測試仍會通過，無法發現缺陷。\n\n**建議修法**：增加斷言以確保結果中不包含 \"100%\"，例如：\n```python\nassert all(\"50%\" in (item.question or \"\") or \"50%\" in (item.content or \"\") for item in annotation_list)\nassert all(\"100%\" not in (item.question or \"\") and \"100%\" not in (item.content or \"\") for item in annotation_list)\n```",
+    "existing_code": "assert all(\"50%\" in (item.question or \"\") or \"50%\" in (item.content or \"\") for item in annotation_list)",
+    "evidence": "diff 中該行新增，且斷言未排除包含 \"100%\" 的記錄。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_app_service.py",
+    "line": 1131,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試斷言可能無法驗證跳脫效果",
+    "body": "在 `test_get_apps_with_special_characters_in_name` 測試中，Test 4 的斷言 `assert all(\"50%\" in app.name for app in paginated_apps.items)` 只檢查結果中包含 \"50%\"，但沒有驗證結果中不包含 \"100%\"。如果跳脫失效，查詢 \"50%\" 會匹配到 \"100% different\"，但該斷言仍會通過，因為 \"100% different\" 中也包含 \"50%\" 子字串。\n\n**失敗情境**：如果跳脫未正確處理，查詢 \"50%\" 會返回包含 \"100% different\" 的應用程式，但測試仍會通過，無法發現缺陷。\n\n**建議修法**：增加斷言以確保結果中不包含 \"100%\"，例如：\n```python\nassert all(\"50%\" in app.name for app in paginated_apps.items)\nassert all(\"100%\" not in app.name for app in paginated_apps.items)\n```",
+    "existing_code": "assert all(\"50%\" in app.name for app in paginated_apps.items)",
+    "evidence": "diff 中該行新增，且斷言未排除包含 \"100%\" 的記錄。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_tag_service.py",
+    "line": 393,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試斷言可能無法驗證跳脫效果",
+    "body": "在 `test_get_tags_with_special_characters_in_keyword` 測試中，Test 4 的斷言 `assert all(\"50%\" in item.name for item in result)` 只檢查結果中包含 \"50%\"，但沒有驗證結果中不包含 \"100%\"。如果跳脫失效，查詢 \"50%\" 會匹配到 \"100% different\"，但該斷言仍會通過，因為 \"100% different\" 中也包含 \"50%\" 子字串。\n\n**失敗情境**：如果跳脫未正確處理，查詢 \"50%\" 會返回包含 \"100% different\" 的標籤，但測試仍會通過，無法發現缺陷。\n\n**建議修法**：增加斷言以確保結果中不包含 \"100%\"，例如：\n```python\nassert all(\"50%\" in item.name for item in result)\nassert all(\"100%\" not in item.name for item in result)\n```",
+    "existing_code": "assert all(\"50%\" in item.name for item in result)",
+    "evidence": "diff 中該行新增，且斷言未排除包含 \"100%\" 的記錄。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_workflow_app_service.py",
+    "line": 467,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試斷言可能無法驗證跳脫效果",
+    "body": "在 `test_get_paginate_workflow_app_logs_with_special_characters_in_keyword` 測試中，Test 3 的斷言 `assert workflow_run_4.id not in found_run_ids` 是正確的，但前面的 `assert result[\"total\"] >= 1` 和 `assert len(result[\"data\"]) >= 1` 可能不夠嚴格。如果跳脫失效，查詢 \"50%\" 會匹配到 \"100% different\"，但 `workflow_run_4.id not in found_run_ids` 仍會失敗，因此測試仍能發現問題。然而，如果查詢 \"50%\" 同時匹配到 \"50% discount\" 和 \"100% different\"，則 `workflow_run_4.id not in found_run_ids` 會失敗，測試會正確失敗。因此此測試可能有效，但建議增加更明確的斷言以確保結果中不包含 \"100%\"。\n\n**失敗情境**：如果跳脫未正確處理，查詢 \"50%\" 會返回包含 \"100% different\" 的記錄，但測試可能仍會通過，因為 `workflow_run_4.id not in found_run_ids` 可能因其他原因而通過（例如查詢結果未包含該記錄）。\n\n**建議修法**：增加斷言以確保結果中不包含 \"100%\"，例如：\n```python\nassert all(\"100%\" not in log.workflow_run.inputs and \"100%\" not in log.workflow_run.outputs for log in result[\"data\"])\n```",
+    "existing_code": "assert workflow_run_4.id not in found_run_ids",
+    "evidence": "diff 中該行新增，且斷言可能無法完全驗證跳脫效果。"
+  }
+]

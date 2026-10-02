@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "QueryClientProvider 與 RouterProvider 使用不同的 QueryClient 實例",
+    "body": "在 decorator 中，`QueryClientProvider` 使用模組層級的 `queryClient`，但 `createTestRouter` 內部的 `context` 卻傳入 `new QueryClient()`。這會導致 `useSuspenseQuery` 在 RouterProvider 的 context 中找不到對應的 QueryClient，可能拋出錯誤或無法正確取得資料。建議統一使用同一個 QueryClient 實例，例如將模組層級的 `queryClient` 傳入 `createTestRouter` 的 context。",
+    "existing_code": "context: { queryClient: new QueryClient() }",
+    "evidence": "diff 中第 33 行 `context: { queryClient: new QueryClient() }` 與第 38 行 `<QueryClientProvider client={queryClient}>` 使用不同的 QueryClient 實例。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R10] 缺少對應的測試檔案",
+    "body": "根據規範 R10，每個 React 元件檔案應有同目錄下的測試檔案（`flow-icon-text.test.tsx`）。本次新增元件但未提供測試，建議補上測試以確保元件行為正確。",
+    "existing_code": "import { useSuspenseQuery } from \"@tanstack/react-query\";",
+    "evidence": "diff 中新增了 `flow-icon-text.tsx`，但沒有對應的 `flow-icon-text.test.tsx`。"
+  }
+]

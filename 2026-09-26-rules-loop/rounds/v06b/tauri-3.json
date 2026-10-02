@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "TOML 解析錯誤被錯誤地包裝為 FormatJson",
+    "body": "在 `do_parse_toml` 中，原本將 `toml::from_str` 的錯誤包裝為 `ConfigError::FormatToml`，但現在改為 `ConfigError::FormatJson`，並將錯誤轉為字串後放入 `serde_json::Error`。這會導致錯誤類型不正確，且遺失原始錯誤的結構化資訊（如行號、欄位）。呼叫端若依賴 `FormatToml` 來處理 TOML 錯誤，將無法正確運作。建議保留 `FormatToml` variant，並直接傳遞 `toml::de::Error`。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中將 `ConfigError::FormatToml` 改為 `ConfigError::FormatJson`，並使用 `serde_json::Error::custom` 包裝錯誤字串。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "BundleType::Flatpak 的 Display 實作使用大寫，與其他 variant 不一致",
+    "body": "新增的 `BundleType::Flatpak` 在 `Display` 實作中回傳 `\"Flatpak\"`，而其他 variant 皆回傳小寫（如 `\"nsis\"`、`\"app\"`、`\"dmg\"`）。這可能導致序列化或比對時出現不一致，例如在 CLI 參數或設定檔中預期小寫。建議改為 `\"flatpak\"` 以維持一致性。",
+    "existing_code": "Self::Flatpak => \"Flatpak\",",
+    "evidence": "diff 中新增的 `Display` 分支回傳 `\"Flatpak\"`，而其他分支皆為小寫。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 BundleType::Flatpak 可能違反 R07（缺少文件）",
+    "body": "新增的 enum variant `Flatpak` 沒有文件註解，而其他 variant 都有 `///` 說明。根據 R07，公開 API 應包含文件。建議補上說明，例如 `/// The Flatpak bundle (.flatpak).`",
+    "existing_code": "/// The Flatpak bundle (.flatpak).\n  Flatpak,",
+    "evidence": "diff 中新增的 variant 上方有註解，但可能不符合既有格式？"
+  }
+]

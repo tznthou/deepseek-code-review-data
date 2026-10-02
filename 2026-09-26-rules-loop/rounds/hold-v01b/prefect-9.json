@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "useSuspenseQuery 缺少錯誤邊界，查詢失敗可能導致應用程式崩潰",
+    "body": "`useSuspenseQuery` 在查詢失敗時會拋出錯誤，若沒有被 ErrorBoundary 捕獲，會導致整個 React 元件樹卸載。建議在 FlowIconText 外層包覆 ErrorBoundary，或改用 `useQuery` 並自行處理錯誤狀態。",
+    "existing_code": "const { data: flow } = useSuspenseQuery(buildFLowDetailsQuery(flowId));",
+    "evidence": "diff 中新增的 flow-icon-text.tsx 第 19 行使用 useSuspenseQuery，但檔案中未見任何 ErrorBoundary 或錯誤處理邏輯。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Storybook decorator 中 QueryClient 實例可能造成快取污染",
+    "body": "`createTestRouter` 每次呼叫都會建立新的 QueryClient，但 decorator 外層的 `queryClient` 是模組層級的單例。這可能導致不同 story 之間共用快取，影響測試隔離性。建議將 QueryClient 的建立移入 decorator 內，或使用 Storybook 的 `parameters` 來注入。",
+    "existing_code": "const queryClient = new QueryClient({\n\tdefaultOptions: {\n\t\tqueries: {\n\t\t\tretry: false,\n\t\t},\n\t},\n});",
+    "evidence": "diff 中 flow-icon-text.stories.tsx 第 4-10 行定義了模組層級的 queryClient，並在第 27 行的 decorator 中使用，但 createTestRouter 內又建立了新的 QueryClient，可能造成不一致。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "未提供對應的測試檔案",
+    "body": "根據規範 R10，React 元件測試檔案應與元件放在同一目錄。此 PR 新增了 flow-icon-text.tsx，但未見 flow-icon-text.test.tsx。建議補上測試，至少涵蓋成功載入與錯誤處理的情境。",
+    "existing_code": "import { useSuspenseQuery } from \"@tanstack/react-query\";",
+    "evidence": "diff 中僅新增 stories 與元件檔案，沒有測試檔案。"
+  }
+]

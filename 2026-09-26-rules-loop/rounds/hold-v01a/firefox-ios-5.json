@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/State/TabsPanelState.swift",
+    "line": 143,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "scrollToTab 的索引計算可能 off-by-one",
+    "body": "在 `createTabScrollBehavior` 中，當沒有選取的 tab 時，原本回傳 `state.tabs.count - 1`，但修改後變成 `state.tabs.count`。這可能導致滾動到超出最後一個項目的位置，造成越界或滾動失敗。\n\n建議改回 `state.tabs.count - 1`，或確認 collection view 的 section 數量與 item 數量後再決定。",
+    "existing_code": "return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)",
+    "evidence": "diff 中此行由 `state.tabs.count - 1` 改為 `state.tabs.count`，且上下文顯示此為無選取 tab 時的 fallback。"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 8461,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增的 v147 結構體可能造成重複定義或未使用",
+    "body": "原本的 `InactiveTabs` 結構體被刪除，但新增了一個 `v147` 結構體，內容完全相同。這可能導致：\n1. 若 `v147` 未被使用，則為無效程式碼。\n2. 若其他程式碼仍引用舊的 `InactiveTabs`，則會編譯錯誤。\n\n請確認是否應直接刪除這些字串，或保留但更新引用。",
+    "existing_code": "struct v147 {\n            public static let TabsTrayInactiveTabsSectionClosedAccessibilityTitle = MZLocalizedString(",
+    "evidence": "diff 顯示刪除了 `InactiveTabs` 結構體，並在 `v147` 中重新定義相同內容。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/Views/TabDisplayView.swift",
+    "line": 172,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "scrollToTab 使用硬編碼 section 1",
+    "body": "在 `scrollToTab` 方法中，原本根據 `scrollState.isInactiveTabSection` 決定 section，現在固定為 1。由於移除 inactive tabs 後只剩一個 section，這樣做可能正確，但若未來新增 section 則容易出錯。建議使用常數或從 snapshot 取得 section index。",
+    "existing_code": "let indexPath = IndexPath(row: scrollState.toIndex, section: 1)",
+    "evidence": "diff 中此行由動態 section 改為固定 1。"
+  }
+]

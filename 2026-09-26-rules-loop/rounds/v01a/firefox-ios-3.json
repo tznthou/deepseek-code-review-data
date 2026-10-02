@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Coordinators/Launch/LaunchCoordinator.swift",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "onActionTap 閉包改為非同步執行可能改變行為",
+    "body": "原本 onActionTap 閉包直接呼叫 onboardingService.handleAction，現在包在 `Task { ... }` 中，使得 handleAction 變成非同步執行。這可能導致呼叫端預期同步完成的行為改變，例如 completion 回呼的時機延後，或與其他 UI 操作產生競態。建議確認 handleAction 本身是否已為非同步，或是否需要在 Task 中處理取消與錯誤。",
+    "existing_code": "Task {\n    onboardingService.handleAction(\n        action,\n        from: cardName,\n        cards: onboardingModel.cards,\n        with: activityEventHelper,\n        completion: completion\n    )\n}",
+    "evidence": "diff 中將原本直接呼叫的程式碼改為包在 Task 內，且未見任何取消或錯誤處理。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift",
+    "line": 192,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R13] 魔法數字 40 取代 UX.buttonSize 常數",
+    "body": "原本使用 `UX.buttonSize` 常數，現在直接寫死為 40，違反專案規範 R13（UI 常數應定義在巢狀 UX struct 中）。建議保留原本的 UX struct 或將 40 定義為具名常數。",
+    "existing_code": "closeButton.heightAnchor.constraint(equalToConstant: 40),\ncloseButton.widthAnchor.constraint(equalToConstant: 40),",
+    "evidence": "diff 中刪除了 `struct UX { static let buttonSize: CGFloat = 40 }`，並將使用處改為直接寫 40。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "[R01] 缺少 MIT 授權標頭",
+    "body": "此檔案開頭原有的 MIT 授權標頭被移除，違反專案規範 R01。所有 C# 檔案必須以標準的兩行授權註解開頭。請補回：\n```\n// Licensed to the .NET Foundation under one or more agreements.\n// The .NET Foundation licenses this file to you under the MIT license.\n```",
+    "existing_code": "using System.Collections.Generic;",
+    "evidence": "diff 中刪除了兩行授權註解，且未新增替代內容。"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 382,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 remarks 寫入 Summary 可能造成語意不符",
+    "body": "原本將 `<remarks>` 內容寫入 `operation.Description`，現在改為寫入 `operation.Summary`。在 OpenAPI 中，Summary 應為簡短摘要，而 Description 為詳細說明。若 remarks 內容較長，放入 Summary 可能導致 API 文件顯示不當。建議確認此變更是否符合預期，或考慮同時設定兩者。",
+    "existing_code": "operation.Summary = remarks;",
+    "evidence": "diff 中將 `operation.Description = remarks;` 改為 `operation.Summary = remarks;`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 452,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "使用 propertyName 取代 metadata.Name 可能導致參數比對失敗",
+    "body": "原本以 `metadata.Name` 比對 operation.Parameters 中的參數名稱，現在改為 `propertyName`。若 `metadata.Name` 與 `propertyName` 不同（例如 metadata.Name 可能包含前綴或不同大小寫），可能找不到對應參數，導致描述無法套用。請確認兩者在此情境下是否恆等。",
+    "existing_code": "var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == propertyName);",
+    "evidence": "diff 中將 `p.Name == metadata.Name` 改為 `p.Name == propertyName`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 479,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "RequestBody.Description 設定時機變更可能影響既有行為",
+    "body": "原本在處理 propertyComment.Examples 之前就設定 `operation.RequestBody.Description = description`，現在移到處理 Examples 之後。若 Examples 處理過程中發生例外或提前 continue，可能導致 Description 未被設定。建議確認此變更不會造成描述遺失。",
+    "existing_code": "operation.RequestBody.Description = description;",
+    "evidence": "diff 中將該行從 if 區塊開頭移至結尾。"
+  }
+]

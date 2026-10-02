@@ -1,0 +1,5 @@
+[info] repo 規範：repo=dify、25 條、12216 字元、placement=after_diff、sha256=6839ceb7740d
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 47132 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 api/core/workflow/nodes/template_transform/template_transform_node.py:68 → 41（片段唯一命中）
+[info] 完成於 11.3s ｜ findings=3 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 16918, "completion_tokens": 1188, "total_tokens": 18106, "prompt_tokens_details": {"cached_tokens": 5376}, "prompt_cache_hit_tokens": 5376, "prompt_cache_miss_tokens": 11542}

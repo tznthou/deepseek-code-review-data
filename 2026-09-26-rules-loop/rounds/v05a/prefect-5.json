@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R08] 跨欄位驗證應使用 model_validator 而非 field_validator",
+    "body": "在 `_bucket_folder_suffix` 中新增的驗證邏輯依賴 `info.data.get(\"bucket\")`，這是跨欄位驗證。使用 `field_validator` 時，`info.data` 僅包含已驗證的欄位，若 `bucket` 欄位尚未被驗證（例如在模型初始化時欄位順序不同），則 `info.data.get(\"bucket\")` 可能為 `None`，導致驗證失效或錯誤。應改用 `@model_validator(mode='after')` 來執行此驗證，確保所有欄位已就緒。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的驗證邏輯位於 `field_validator(\"bucket_folder\")` 內，但存取 `info.data.get(\"bucket\")`，違反 R08。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑前綴檢查使用子字串比對可能誤判",
+    "body": "`if self.bucket_folder and self.bucket_folder in path:` 使用子字串比對，若 `path` 中包含 `bucket_folder` 字串但並非前綴（例如 `bucket_folder` 為 \"results/\"，而 `path` 為 \"myresults/abc\"），則會錯誤地直接返回 `path`，導致路徑未正確解析。應改為檢查 `path` 是否以 `bucket_folder` 開頭，例如 `path.startswith(self.bucket_folder)`。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中新增的條件使用 `in` 運算子，而非 `startswith`。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "路徑檢查未處理 bucket_folder 為空字串的情況",
+    "body": "`if self.bucket_folder and self.bucket_folder in path:` 中，若 `self.bucket_folder` 為空字串（可能由驗證器允許），則條件為 False，不會提前返回，但後續 `PurePosixPath(self.bucket_folder, path)` 會將空字串視為 '.'，可能導致路徑意外變化。應明確處理空字串情況，或確保驗證器不允許空字串。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中條件未考慮空字串，且驗證器允許空字串（`if value != \"\"`）。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/tests/conftest.py",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 disable_logging fixture 可能影響測試日誌行為",
+    "body": "原本的 `disable_logging` fixture 使用 `temporary_settings` 關閉日誌上傳，移除後可能導致測試期間日誌被發送到 API，增加測試執行時間或產生不必要的網路請求。若此 fixture 不再需要，應確認測試環境已全域設定 `PREFECT_LOGGING_TO_API_ENABLED=False`，否則建議保留。",
+    "existing_code": "with prefect_test_harness(server_timeout=60):\n        yield",
+    "evidence": "diff 中刪除了 `disable_logging` fixture，且未見其他設定替代。"
+  }
+]

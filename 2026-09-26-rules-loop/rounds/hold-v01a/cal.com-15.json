@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Slot 型別中 userIds 型別從 number[] 改為 string[]，可能與實際 API 回應不符",
+    "body": "原本從 @calcom/trpc/server/routers/viewer/slots/types 匯入的 Slot 型別中 userIds 為 number[]，但此處新定義為 string[]。若實際 API 回傳的 userIds 為數字陣列，將導致型別錯誤或執行時期問題。請確認 API 實際回傳型別，並保持與原定義一致。",
+    "existing_code": "export type Slot = {\n  time: string;\n  userIds?: string[];\n  attendees?: number;\n  bookingUid?: string;\n  users?: string[];\n};",
+    "evidence": "diff 中新增的 Slot 型別定義 userIds?: string[]，而刪除的舊型別為 userIds?: number[]。"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "validateCreateScheduleInput 驗證不足，可能允許無效的 schedule 結構",
+    "body": "此函式僅驗證 name 為非空字串，未驗證 schedule 欄位的結構（例如是否為陣列、元素是否為 { start, end } 物件）。若呼叫端傳入錯誤格式，可能導致後續 API 請求失敗或產生非預期行為。建議使用 Zod schema 進行完整驗證，或至少檢查 schedule 的型別與元素結構。",
+    "existing_code": "export function validateCreateScheduleInput(input: unknown): CreateScheduleInput {\n  if (!input || typeof input !== 'object') {\n    throw new Error('Invalid input: must be an object');\n  }\n\n  const data = input as Record<string, unknown>;\n\n  if (typeof data.name !== 'string' || data.name.length === 0) {\n    throw new Error('Invalid input: name must be a non-empty string');\n  }\n\n  return data as CreateScheduleInput;\n}",
+    "evidence": "diff 中新增的 validateCreateScheduleInput 函式僅檢查 name，未檢查 schedule 欄位。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 \"./booker\" 匯出可能導致下游匯入中斷",
+    "body": "原本 package.json 中有 \"./booker\": \"./booker/index.ts\" 的匯出，現在被替換為 \"./booker/types\": \"./booker/types.ts\"。若其他套件或應用程式依賴 \"@calcom/atoms/booker\" 匯入，將導致模組解析失敗。請確認是否有其他程式碼使用該匯入路徑，並考慮保留舊匯出或提供相容性別名。",
+    "existing_code": "\"./booker/types\": \"./booker/types.ts\",",
+    "evidence": "diff 中刪除了 \"./booker\": \"./booker/index.ts\"，新增了 \"./booker/types\": \"./booker/types.ts\"。"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增檔案缺少 export 修飾詞，可能導致型別無法被外部使用",
+    "body": "檔案中定義的 Schedule 型別未加上 export，但後續的 CreateScheduleHandlerReturn 等型別使用了它。若其他檔案需要直接使用 Schedule，將無法匯入。建議將 Schedule 加上 export，或確認其僅供內部使用。",
+    "existing_code": "type Schedule = {\n  id: number;\n  userId: number;\n  name: string;\n  timeZone: string | null;\n};",
+    "evidence": "diff 中新增的 Schedule 型別未加 export。"
+  }
+]

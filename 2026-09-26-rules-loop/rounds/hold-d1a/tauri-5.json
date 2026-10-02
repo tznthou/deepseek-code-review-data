@@ -1,0 +1,13 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/app_paths.rs",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R07] 公開型別 `Dirs` 缺少文件註解",
+    "body": "新增的 `pub struct Dirs` 沒有 `///` 文件註解，違反 R07（Public APIs Must Include Documentation Comments）。建議為此型別及其欄位加上說明，例如其用途與生命週期。",
+    "existing_code": "pub struct Dirs {\n  pub tauri: &'static Path,\n  pub frontend: &'static Path,\n}",
+    "evidence": "diff 中新增了 `pub struct Dirs`，但未附帶任何文件註解。"
+  }
+]

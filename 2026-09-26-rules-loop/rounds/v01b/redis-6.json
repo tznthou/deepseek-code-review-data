@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "恢復 active_defrag_enabled 時未使用原始值",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 設為 0，但在清空資料庫後直接將其設為 1，而非恢復為先前的值（`orig_active_defrag`）。這可能導致如果原始設定為停用（0），函式結束後主動碎片整理會被意外啟用。\n\n**失敗情境**：若使用者在設定檔中停用主動碎片整理（`activedefrag no`），當複製同步觸發資料庫清空時，此函式會將該設定強制改為啟用，之後可能導致不必要的效能影響或非預期行為。\n\n**建議修法**：將最後一行改為 `server.active_defrag_enabled = orig_active_defrag;`",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼片段顯示 `int orig_active_defrag = server.active_defrag_enabled;` 被儲存但未使用，且最後直接指派為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "streamEntryIsReferenced 在無 cgroups_ref 時提前返回 1 可能導致錯誤",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 會在 stream 沒有消費者群組參考時直接返回 1（表示被參考）。這可能導致某些依賴此函式的邏輯（例如刪除或修剪）誤判訊息仍被參考，進而無法正確釋放記憶體或執行操作。\n\n**失敗情境**：當一個 stream 從未有消費者群組時，呼叫 `streamEntryIsReferenced` 會錯誤地回報為已參考，可能阻止合法的刪除或修剪操作。\n\n**建議修法**：確認此行為是否為預期。若無消費者群組時應視為未參考，應返回 0；若確實需要返回 1，應在程式碼中加上註解說明原因。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的這一行在檢查 `s->cgroups_ref` 為 NULL 時直接返回 1，與函式名稱「IsReferenced」的語意可能衝突。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試輔助函式 discard_replies_every 的參數名稱可能造成混淆",
+    "body": "新增的 `discard_replies_every` 函式參數 `frequency` 與 `discard_num` 的用途不夠直觀。從呼叫方式 `discard_replies_every $rd $count 10000 10000` 來看，`frequency` 是檢查的間隔，`discard_num` 是要丟棄的回覆數量。但函式內部的條件 `if {$count % $frequency != 0}` 表示只有在 `count` 不是 `frequency` 的倍數時才丟棄，這與函式名稱「every」的語意可能相反。\n\n**建議**：考慮重新命名參數或調整邏輯，使其更清晰。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {\n        if {$count % $frequency != 0} {\n            for {set k 0} {$k < $discard_num} {incr k} {\n                $rd read ; # Discard replies\n            }\n        }\n    }",
+    "evidence": "diff 中新增的函式定義，其條件判斷與常見的「每 N 次」邏輯相反。"
+  }
+]

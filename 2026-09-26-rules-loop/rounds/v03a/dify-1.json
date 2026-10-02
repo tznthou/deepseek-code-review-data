@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "blocks_variable_output 的參數型別可能與呼叫端不一致",
+    "body": "新增的 `blocks_variable_output` 方法參數型別為 `Set[Tuple[str, ...]]`，但呼叫端可能傳入其他集合型別（如 `list` 或 `set` 的變體）。若型別不符，可能導致執行時期錯誤或型別檢查失敗。建議確認呼叫端的實際型別，或放寬為 `Collection[Tuple[str, ...]]`。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的方法簽名使用 `Set[Tuple[str, ...]]`，但未提供呼叫端程式碼，無法確認實際傳入型別。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試斷言可能未涵蓋串流延遲的核心行為",
+    "body": "測試僅檢查最終輸出與 chunk 事件內容，未驗證串流事件是否在變數更新後才發出。若實作未正確延遲，此測試仍可能通過。建議增加事件順序的斷言，例如確認 assigner 節點完成後才出現 answer 的 chunk。",
+    "existing_code": "assert all(event.chunk == input_query for event in conv_var_chunk_events), (\n        \"Expected streamed conversation variable value to match the input query\"\n    )",
+    "evidence": "測試中僅檢查 chunk 值，未檢查事件順序或時間戳。"
+  }
+]

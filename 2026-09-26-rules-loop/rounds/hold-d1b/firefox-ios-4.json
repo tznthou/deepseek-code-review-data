@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ClipBoardTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R14] 公開方法缺少文件註解",
+    "body": "將 `checkUrl()` 改為 `public func checkUrl()` 後，此方法成為公開 API，但未提供文件註解（///）。根據 R14，所有公開 API 都應有文件註解說明其用途。建議補上文件註解，或若無需公開則改回 internal。",
+    "existing_code": "public func checkUrl() {",
+    "evidence": "diff 中將 `func checkUrl()` 改為 `public func checkUrl()`，且未新增任何註解。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ClipBoardTests.swift",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R14] 公開方法缺少文件註解",
+    "body": "將 `copyUrl()` 改為 `public func copyUrl()` 後，此方法成為公開 API，但未提供文件註解。建議補上文件註解，或若無需公開則改回 internal。",
+    "existing_code": "public func copyUrl() {",
+    "evidence": "diff 中將 `func copyUrl()` 改為 `public func copyUrl()`，且未新增任何註解。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ClipBoardTests.swift",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R14] 公開方法缺少文件註解",
+    "body": "將 `checkCopiedUrl()` 改為 `public func checkCopiedUrl()` 後，此方法成為公開 API，但未提供文件註解。建議補上文件註解，或若無需公開則改回 internal。",
+    "existing_code": "public func checkCopiedUrl() {",
+    "evidence": "diff 中將 `func checkCopiedUrl()` 改為 `public func checkCopiedUrl()`，且未新增任何註解。"
+  }
+]

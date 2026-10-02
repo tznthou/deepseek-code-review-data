@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 216,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄音端點權限從 BOOKING_READ 改為 BOOKING_WRITE，可能導致授權不足",
+    "body": "此端點為讀取錄音，但權限改為 BOOKING_WRITE。若使用者僅有讀取權限，將無法存取錄音，可能造成功能回歸。建議確認此變更是否符合預期，或改回 BOOKING_READ。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中將原本的 @Permissions([BOOKING_READ]) 改為 @Permissions([BOOKING_WRITE])。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 227,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 await 可能導致回傳 Promise 而非實際資料",
+    "body": "原本 `await this.calVideoService.getRecordings(bookingUid)` 改為 `this.calVideoService.getRecordings(bookingUid)`，若該方法回傳 Promise，則回傳的 data 會是 Promise 物件而非解析後的陣列。請確認 getRecordings 是否為同步方法，否則應保留 await。",
+    "existing_code": "const recordings = this.calVideoService.getRecordings(bookingUid);",
+    "evidence": "diff 中將 `await this.calVideoService.getRecordings(bookingUid)` 改為 `this.calVideoService.getRecordings(bookingUid)`。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-recordings.output.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "未使用的 import BookingRepository",
+    "body": "新增的 `import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";` 在檔案中並未使用，可能違反 lint 規則。建議移除。",
+    "existing_code": "import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";",
+    "evidence": "diff 新增此 import，但檔案內容未使用 BookingRepository。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Guard 順序不一致",
+    "body": "錄音端點使用 `@UseGuards(ApiAuthGuard, BookingUidGuard, BookingPbacGuard)`，而逐字稿端點使用 `@UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)`。順序不同可能影響執行順序，建議統一。",
+    "existing_code": "@UseGuards(BookingPbacGuard, ApiAuthGuard, BookingUidGuard)",
+    "evidence": "diff 中逐字稿端點的 guard 順序與錄音端點不同。"
+  }
+]

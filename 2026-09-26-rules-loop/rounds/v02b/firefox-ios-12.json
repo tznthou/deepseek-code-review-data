@@ -1,0 +1,35 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "testRequestMediaCaptureSuccess 的 expectation 邏輯錯誤，可能導致測試永遠等待",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`decisionHandler` 閉包內不再呼叫 `expectation.fulfill()`，而是在 `wait(for:)` 之後才呼叫 `expectation.fulfill()`。這會造成 `wait(for:)` 等待的 expectation 永遠不會被滿足，測試將在 timeout 後失敗。\n\n建議將 `expectation.fulfill()` 移回 `decisionHandler` 閉包內，並移除 `wait(for:)` 之後的呼叫。",
+    "existing_code": "let decisionHandler = { (decision: WKPermissionDecision) in\n            XCTAssertEqual(decision, .prompt)\n        }\n\n        let expectation = expectation(description: \"Wait for the decision handler to be called\")\n        subject.webView(MockWKWebView(),\n                        requestMediaCapturePermissionFor: origin,\n                        initiatedByFrame: frame,\n                        type: .cameraAndMicrophone,\n                        decisionHandler: decisionHandler)\n        wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中顯示原本的 `expectation.fulfill()` 被從 decisionHandler 中移除，並在 wait 之後呼叫，這會導致 wait 永遠等待。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴真實網路與 WebKit 內部行為，可能導致不穩定或逾時",
+    "body": "`captureFrameAndOrigin` 會載入真實的 `https://example.com`，這使得測試依賴外部網路連線。在 CI 環境中若無網路或網路不穩定，測試將逾時失敗。此外，WebKit 的內部行為可能因版本而異，導致取得的 frame/origin 不符合預期。\n\n建議改為使用本地 HTML 字串或 data URL 來避免外部依賴，或使用 mock 方式（若可行）來隔離測試。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 helper 使用 `webView.load(URLRequest(url: url))` 載入外部 URL，且測試中傳入 `https://example.com`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "XCTWaiter.wait 的結果未檢查，可能掩蓋逾時錯誤",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值未被檢查。若等待逾時，函式仍會回傳 nil，但測試可能無法明確指出是逾時還是其他原因。建議檢查回傳值，並在逾時情況下提供更明確的錯誤訊息。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增的 helper 未使用 waiter 的結果。"
+  }
+]

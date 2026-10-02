@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 dangerouslySetInnerHTML 渲染留言內容可能導致 XSS",
+    "body": "此處直接將 `item.html` 以 `dangerouslySetInnerHTML` 插入 DOM。若後端在產生 `item.html` 時未對使用者輸入進行完整的 HTML 消毒（例如移除 `<script>`、事件處理器、`javascript:` URL 等），攻擊者可在留言中注入惡意腳本，當管理員查看留言時觸發 XSS。\n\n**失敗情境**：攻擊者提交包含 `<img src=x onerror=alert(document.cookie)>` 的留言，若後端未過濾，管理員開啟留言清單時即會執行攻擊者腳本。\n\n**建議**：確認後端在儲存留言時已使用如 DOMPurify 等函式庫進行嚴格消毒，並在前端渲染前再次消毒；或改用 React 的安全方式渲染（如將 HTML 轉為純文字或使用受信任的 sanitizer）。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 CommentContent 元件使用 `dangerouslySetInnerHTML` 直接渲染 `item.html`，且未見任何消毒處理。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "CommentContent 的 clamp 偵測未依賴 item.html，內容變更時不會重新計算",
+    "body": "`useEffect` 的依賴陣列為空 `[]`，僅在元件掛載時執行一次 `checkIfClamped`。若 `item.html` 在掛載後發生變化（例如從 API 延遲載入或更新），`isClamped` 不會重新計算，導致「Show more」按鈕可能錯誤顯示或隱藏。\n\n**失敗情境**：留言內容初始為空，之後才載入完整 HTML，此時 `scrollHeight` 可能仍為 0，`isClamped` 保持 false，使用者無法展開被截斷的內容。\n\n**建議**：將 `item.html` 加入依賴陣列，或使用 `useLayoutEffect` 並在內容變更時重新檢查。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "diff 中 `useEffect` 的依賴陣列為空，且 `item.html` 未列入。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用正規表達式移除日期中的逗號可能因 locale 而失效",
+    "body": "`formatDate` 函式使用 `formatted.replace(/(\\d+),(\\s+\\d{4})/, '$1$2')` 移除日期中的逗號。此正規表達式假設日期格式為「月 日, 年」，但 `Intl.DateTimeFormat` 的輸出會因執行環境的 locale 而異。雖然目前指定 `'en-US'`，但若未來變更 locale 或瀏覽器實作不同，可能無法正確移除逗號，導致顯示不一致。\n\n**失敗情境**：在某些環境中，日期格式可能為「2025 Dec 17」或「17 Dec 2025」，正規表達式無法匹配，逗號仍會保留。\n\n**建議**：使用 `Intl.DateTimeFormat` 的選項（如 `year: 'numeric'` 與 `month: 'short'` 的組合）直接產生無逗號格式，或使用更精確的字串處理。",
+    "existing_code": "return formatted.replace(/(\\d+),(\\s+\\d{4})/, '$1$2');",
+    "evidence": "diff 中新增的 `formatDate` 函式使用正規表達式移除逗號，依賴特定 locale 格式。"
+  }
+]

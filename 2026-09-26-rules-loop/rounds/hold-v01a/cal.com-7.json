@@ -1,0 +1,24 @@
+[
+  {
+    "path": "packages/features/calendar-subscription/adapters/AdaptersFactory.ts",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getGenericCalendarSuffixes 合併所有 provider 的後綴，可能導致跨 provider 錯誤過濾",
+    "body": "`getGenericCalendarSuffixes` 方法將所有 provider 的後綴合併成一個陣列，但呼叫端 `CalendarSubscriptionService` 在查詢時並未區分 provider，而是將所有後綴套用到所有 provider 的日曆上。這可能導致例如未來為 office365 定義後綴時，Google 日曆也被錯誤過濾。建議改為依 provider 分別取得後綴，或在查詢中依 provider 條件分開處理。",
+    "existing_code": "getGenericCalendarSuffixes(): string[] {\n    return Object.keys(GENERIC_CALENDAR_SUFFIXES).flatMap(\n      (provider) => GENERIC_CALENDAR_SUFFIXES[provider as CalendarSubscriptionProvider]\n    );\n  }",
+    "evidence": "diff 中新增的 `getGenericCalendarSuffixes` 方法使用 `flatMap` 合併所有 provider 的後綴，而 `CalendarSubscriptionService` 呼叫時未傳入 provider 資訊，直接將結果用於所有查詢。"
+  },
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.ts",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "AND 條件在 genericCalendarSuffixes 為空陣列時會產生空 AND，可能影響查詢結果",
+    "body": "當 `genericCalendarSuffixes` 為空陣列時，`genericCalendarSuffixes?.length` 為 0，因此 `AND` 會被設為 `undefined`，這與未提供該參數時的行為一致。但若未來有其他條件需要加入 `AND`，此處的邏輯可能需要調整。目前影響不大，但建議考慮使用更明確的條件判斷。",
+    "existing_code": "AND: genericCalendarSuffixes?.length\n          ? genericCalendarSuffixes?.map((suffix) => ({\n              NOT: { externalId: { endsWith: suffix } },\n            }))\n          : undefined,",
+    "evidence": "diff 中新增的 `AND` 條件使用 `genericCalendarSuffixes?.length` 來決定是否加入，若為空陣列則設為 `undefined`。"
+  }
+]

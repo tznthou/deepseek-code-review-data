@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 @sync_compatible 可能導致同步呼叫失敗",
+    "body": "原本 `run_deployment` 有 `@sync_compatible` 裝飾器，允許在同步環境中直接呼叫。現在改為 `run_deployment = arun_deployment`，但 `arun_deployment` 是 async 函式，同步呼叫會回傳 coroutine 而非執行結果。若使用者原本在同步程式碼中呼叫 `run_deployment(...)`，現在會得到 coroutine 物件，可能導致未預期的行為。建議保留同步包裝或提供明確的同步版本。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中移除 `@sync_compatible` 並在檔案末尾新增 `run_deployment = arun_deployment`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "client 參數取得方式變更可能破壞相依性注入",
+    "body": "原本使用 `@inject_client` 裝飾器，會自動注入 client 並處理相依性。現在改為手動呼叫 `get_or_create_client(client)`，可能遺漏某些情境（例如在沒有傳入 client 且不在 flow run context 中時，原本的 inject_client 可能提供不同的預設行為）。建議確認 `get_or_create_client` 與原本 `inject_client` 的行為完全一致。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中移除 `@inject_client` 並新增 `client, _ = get_or_create_client(client)`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "collect_task_run_inputs 改為同步呼叫可能造成效能問題",
+    "body": "原本 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`，若該函式是 async，則會回傳 coroutine 而未 await，可能導致錯誤。若該函式是同步，則無影響。建議確認 `collect_task_run_inputs` 的型別。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中將 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 212,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "使用 deployment_id 而非 deployment.id 可能造成不一致",
+    "body": "原本 `deployment.id` 改為 `deployment_id`，但 `deployment_id` 可能為 None（若使用者以名稱呼叫且解析失敗），而 `deployment.id` 是從解析後的 deployment 物件取得，較為可靠。建議確認此變更不會在 deployment_id 為 None 時造成錯誤。",
+    "existing_code": "deployment_id,",
+    "evidence": "diff 中將 `deployment.id` 改為 `deployment_id`。"
+  }
+]

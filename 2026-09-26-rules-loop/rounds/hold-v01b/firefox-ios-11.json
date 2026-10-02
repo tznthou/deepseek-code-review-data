@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift",
+    "line": 448,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "toolbar.leadingAnchor 錯誤地連接到 rightSkeletonAddressBar.trailingAnchor",
+    "body": "在 `setupSkeletonAddressBarsLayout` 中，原本 `toolbar.leadingAnchor` 應連接到 `leftSkeletonAddressBar.trailingAnchor`，但此 PR 將其改為連接到 `rightSkeletonAddressBar.trailingAnchor`。這會造成 toolbar 的左側與右側骨架條的右側對齊，導致 toolbar 與骨架條重疊或超出畫面，並可能引發無法滿足的 Auto Layout 約束。\n\n**失敗情境**：當 `toolbarHelper.isSwipingTabsEnabled` 為 true 且骨架條顯示時，toolbar 會被錯誤定位，使用者可能看到 toolbar 與右側骨架條重疊，或產生約束衝突警告。\n\n**建議**：將該行改回 `toolbar.leadingAnchor.constraint(equalTo: leftSkeletonAddressBar.trailingAnchor).isActive = true`。",
+    "existing_code": "toolbar.leadingAnchor.constraint(equalTo: rightSkeletonAddressBar.trailingAnchor).isActive = true",
+    "evidence": "diff 中此行由 `leftSkeletonAddressBar` 改為 `rightSkeletonAddressBar`，但下一行仍為 `toolbar.trailingAnchor.constraint(equalTo: rightSkeletonAddressBar.leadingAnchor)`，左右對應錯誤。"
+  },
+  {
+    "path": "BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift",
+    "line": 419,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "hasPageActions 判斷改用 leadingPageActionStack，可能導致分隔線顯示錯誤",
+    "body": "原本 `hasPageActions` 是根據 `pageActionStack`（即現在的 `trailingPageActionStack`）是否有 arranged subviews 來決定是否顯示分隔線。此 PR 將其改為檢查 `leadingPageActionStack`。如果 leading 和 trailing page actions 的存在性不一致（例如只有 trailing 有 actions），分隔線的顯示將不正確。\n\n**失敗情境**：當 toolbar 配置為只有 trailing page actions 而沒有 leading page actions 時，`hasPageActions` 會是 false，導致分隔線寬度設為 0，即使 trailing 區域有按鈕也看不到分隔線。\n\n**建議**：應同時考慮 leading 和 trailing page actions，例如 `let hasPageActions = !leadingPageActionStack.arrangedSubviews.isEmpty || !trailingPageActionStack.arrangedSubviews.isEmpty`，或根據實際需求選擇正確的 stack。",
+    "existing_code": "let hasPageActions = !leadingPageActionStack.arrangedSubviews.isEmpty",
+    "evidence": "diff 中此行由 `pageActionStack` 改為 `leadingPageActionStack`，但下方 `dividerWidthConstraint` 的設定仍依賴此值，且未見其他調整。"
+  },
+  {
+    "path": "BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift",
+    "line": 332,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "updateActionStack 動畫陣列重複加入 browserActionStack，可能導致動畫異常",
+    "body": "在 `updateActionStack` 方法中，原本的 stacks 陣列包含 `browserActionStack`、`navigationActionStack`、`leadingPageActionStack` 和 `pageActionStack`。此 PR 將最後一項改為 `browserActionStack`，導致 `browserActionStack` 被加入兩次。這可能使動畫過程中的視圖操作重複執行，造成不必要的效能開銷或視覺異常。\n\n**失敗情境**：當 toolbar 更新且有動畫時，`browserActionStack` 的 arranged subviews 會被處理兩次，可能導致動畫閃爍或約束衝突。\n\n**建議**：應改為 `trailingPageActionStack`，與其他程式碼的重新命名一致。",
+    "existing_code": "browserActionStack.arrangedSubviews",
+    "evidence": "diff 中此行由 `pageActionStack.arrangedSubviews` 改為 `browserActionStack.arrangedSubviews`，但陣列中已有 `browserActionStack.arrangedSubviews`，造成重複。"
+  }
+]

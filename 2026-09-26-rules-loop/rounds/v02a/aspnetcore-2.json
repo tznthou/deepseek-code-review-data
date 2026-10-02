@@ -1,0 +1,24 @@
+[
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 564,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "LocateVisualStudio 中 $vsRequirements 可能為 $null 導致後續 Get-Member 失敗",
+    "body": "在 `LocateVisualStudio` 函式中，當 `$GlobalJson.tools` 沒有 `vs` 屬性時，`$vsRequirements` 被設為 `$null`。後續的 `if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' -ErrorAction SilentlyContinue))` 雖然有 `$vsRequirements -and` 的條件，但 PowerShell 的 `-and` 運算子會先評估左側，若為 `$false` 則不會評估右側，因此不會呼叫 `Get-Member`。然而，若 `$vsRequirements` 是空陣列或空字串，`-and` 的結果可能為 `$false`，但 `Get-Member` 仍可能被呼叫（取決於 PowerShell 版本和型別）。更安全的做法是明確檢查 `$null -ne $vsRequirements`。建議改為：\n```powershell\nif ($null -ne $vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' -ErrorAction SilentlyContinue)) {\n```\n以避免潛在的 null 參考錯誤。",
+    "existing_code": "if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' -ErrorAction SilentlyContinue)) {",
+    "evidence": "diff 中新增了 `$vsRequirements = $null` 的賦值，且後續的條件判斷使用 `$vsRequirements -and ...`，可能因 PowerShell 的 truthiness 判斷而導致非預期行為。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試同時匹配新舊錯誤訊息可能過於嚴格",
+    "body": "測試改為同時匹配 `ParseErrorMessageRegexOld` 和 `ParseErrorMessageRegexNew`，但實際的錯誤訊息可能因瀏覽器版本或環境而異，導致測試不穩定。建議考慮使用單一正則表達式涵蓋兩種格式，或使用 `Assert.Matches` 逐一檢查。",
+    "existing_code": "Assert.True(\n    ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n    ParseErrorMessageRegexNew.IsMatch(logs[0].Message),\n    $\"Expected log message to match one of the CSP error patterns: {ParseErrorMessageRegexOld} or {ParseErrorMessageRegexNew}. Actual: {logs[0].Message}\");",
+    "evidence": "diff 中將原本的 `Assert.Matches(ParseErrorMessage(), logs[0].Message)` 改為同時檢查兩個正則表達式，可能導致測試在部分環境下失敗。"
+  }
+]

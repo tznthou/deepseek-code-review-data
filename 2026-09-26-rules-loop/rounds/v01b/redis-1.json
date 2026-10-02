@@ -1,0 +1,112 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R04] 未使用的靜態函式 validateStoredKeyConversion 可能導致 -Werror 編譯失敗",
+    "body": "新增的靜態函式 `validateStoredKeyConversion` 在整個 diff 中沒有被任何地方呼叫。若專案以 `-Werror` 編譯，且編譯器啟用 `-Wunused-function`（GCC/Clang 預設對 static 函式會警告），將導致編譯失敗。\n\n建議：移除該函式，或若未來有使用計畫，請加上 `__attribute__((unused))` 或實際使用它。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增了此函式，但搜尋整個 diff 未見任何呼叫。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "dictStoredKey2Key 可能對 NULL keyFromStoredKey 回呼處理不當",
+    "body": "`dictStoredKey2Key` 在 `d->type->keyFromStoredKey` 為 NULL 時直接回傳原始 key，但若 key 本身為 NULL，則回傳 NULL。呼叫端（如 `dictAddRaw`）會將此結果傳給 `dictFindLinkForInsert`，後者會對 key 進行 hash 與比較，可能導致對 NULL 指標解參考。\n\n雖然目前所有 dictType 都設定了 keyFromStoredKey，但未來新增 dictType 時若遺漏，將造成崩潰。建議在函式中加入 assert 或明確處理 NULL key。",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {\n    return (d->type->keyFromStoredKey) ? d->type->keyFromStoredKey(key) : key;\n}",
+    "evidence": "函式直接回傳 key，未檢查 NULL。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 913,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "dictSetKeyAtLink 中對 addedKey 的搜尋可能使用錯誤的 key 格式",
+    "body": "在 `dictSetKeyAtLink` 中，當 `*link == NULL` 時，程式碼使用 `addedKey` 呼叫 `dictFindLink`。但 `addedKey` 是經過 `keyDup` 處理後的 key，若 `keyDup` 回傳的 key 與原始 key 不同（例如複製了 sds），則 `dictFindLink` 會以複製後的 key 進行查找，可能找不到原本的 entry。\n\n建議：應使用原始 key（或 `dictStoredKey2Key(d, key)`）進行查找，而非 `addedKey`。",
+    "existing_code": "if (*link == NULL) {\n        *link = dictFindLink(d, addedKey, NULL);\n        assert(*link != NULL);\n    }",
+    "evidence": "diff 中此處將原本的 `key` 改為 `addedKey`。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 647,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "dictGenericDelete 中比較 key 時未使用 dictStoredKey2Key 轉換",
+    "body": "在 `dictGenericDelete` 中，比較時使用 `he_key = dictStoredKey2Key(d, dictGetKey(he))`，但 `key` 參數是 lookup key，未經轉換。若 lookup key 與 stored key 格式不同，比較可能失敗。\n\n目前所有呼叫端都傳入正確的 lookup key，但為求一致與安全，建議也對 `key` 進行轉換（或確保呼叫端已傳入正確格式）。",
+    "existing_code": "const void *he_key = dictStoredKey2Key(d, dictGetKey(he));\n            if (key == he_key || cmpFunc(&cmpCache, key, he_key)) {",
+    "evidence": "此處僅轉換了 stored key，未轉換 lookup key。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 797,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "dictFindLinkInternal 中比較 key 時未使用 dictStoredKey2Key 轉換",
+    "body": "與 `dictGenericDelete` 類似，`dictFindLinkInternal` 中比較時使用 `visitedKey = dictStoredKey2Key(d, dictGetKey(*link))`，但 `key` 參數未轉換。若 lookup key 與 stored key 格式不同，可能導致查找失敗。\n\n建議對 `key` 也進行轉換，或確保所有呼叫端都傳入正確格式。",
+    "existing_code": "const void *visitedKey = dictStoredKey2Key(d, dictGetKey(*link));\n\n            /* Prefetch the next entry to improve cache efficiency */\n            redis_prefetch_read(dictGetNext(*link));",
+    "evidence": "此處僅轉換了 stored key，未轉換 lookup key。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 972,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "dictTwoPhaseUnlinkFind 中比較 key 時未使用 dictStoredKey2Key 轉換",
+    "body": "與前述類似，`dictTwoPhaseUnlinkFind` 中比較時使用 `de_key = dictStoredKey2Key(d, dictGetKey(*ref))`，但 `key` 參數未轉換。若 lookup key 與 stored key 格式不同，可能導致查找失敗。\n\n建議對 `key` 也進行轉換，或確保所有呼叫端都傳入正確格式。",
+    "existing_code": "const void *de_key = dictStoredKey2Key(d, dictGetKey(*ref));\n            if (key == de_key || cmpFunc(&cmpCache, key, de_key)) {",
+    "evidence": "此處僅轉換了 stored key，未轉換 lookup key。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 1766,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "dictFindLinkForInsert 中比較 key 時未使用 dictStoredKey2Key 轉換",
+    "body": "與前述類似，`dictFindLinkForInsert` 中比較時使用 `he_key = dictStoredKey2Key(d, dictGetKey(he))`，但 `key` 參數未轉換。若 lookup key 與 stored key 格式不同，可能導致查找失敗。\n\n建議對 `key` 也進行轉換，或確保所有呼叫端都傳入正確格式。",
+    "existing_code": "const void *he_key = dictStoredKey2Key(d, dictGetKey(he));            \n            if (key == he_key || cmpFunc(&cmpCache, key, he_key)) {",
+    "evidence": "此處僅轉換了 stored key，未轉換 lookup key。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 316,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "kvGetKey 回呼可能對非 kvobj 指標進行錯誤轉型",
+    "body": "`kvGetKey` 直接將 `kv` 轉型為 `kvobj *` 並呼叫 `kvobjGetKey`。若 dict 中儲存的不是 kvobj（例如誤用），將導致未定義行為。雖然目前使用此 dictType 的 dict 都儲存 kvobj，但建議加入 assert 或型別檢查。",
+    "existing_code": "static const void *kvGetKey(const void *kv) {\n    sds sdsKey = kvobjGetKey((kvobj *) kv);\n    return sdsKey;\n}",
+    "evidence": "直接轉型，無任何檢查。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 1257,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "hashTypeDelete 簽名變更可能遺漏呼叫點",
+    "body": "`hashTypeDelete` 移除了 `isSdsField` 參數，但 diff 中僅更新了部分呼叫點。若其他檔案（未在此 diff 中）仍以舊簽名呼叫，將導致編譯錯誤。建議全域搜尋確認所有呼叫點均已更新。",
+    "existing_code": "int hashTypeDelete(robj *o, void *field) {",
+    "evidence": "diff 中更新了多處呼叫，但無法確認是否涵蓋所有檔案。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "nit",
+    "confidence": 0.5,
+    "title": "註解中提及 __stored_key 但未定義其語意",
+    "body": "新增的 `__stored_key` 巨集僅作為標記，但註解未清楚說明其用途與限制。建議補充說明此巨集僅用於靜態分析或文件，不影響編譯。",
+    "existing_code": "#define __stored_key",
+    "evidence": "巨集定義為空，但未在註解中明確說明。"
+  }
+]

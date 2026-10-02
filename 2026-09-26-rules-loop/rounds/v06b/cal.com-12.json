@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 `filteredMembers` 改為 `teamMembers` 可能導致搜尋/篩選功能失效",
+    "body": "在渲染列表時，原本使用 `filteredMembers`（應是根據搜尋字串過濾後的結果），現在改為 `teamMembers`（完整列表）。這會讓使用者在搜尋框輸入文字時，列表不會即時過濾，顯示所有成員。若此為非預期變更，將造成功能回歸。\n\n建議：確認此變更是否為刻意移除篩選功能；若非刻意，應保留 `filteredMembers` 的計算與使用。",
+    "existing_code": "{teamMembers.map((member) => (",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且下方空狀態判斷也從 `filteredMembers.length === 0` 改為 `teamMembers.length === 0`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 128,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "未處理 `isPending` 狀態可能導致 UI 不一致",
+    "body": "從 hook 中解構出 `isPending`，但在元件中未使用。當查詢進行中時，`teamMembers` 可能仍是初始值或空陣列，導致畫面顯示「無成員」或舊資料，使用者可能誤以為載入完成。\n\n建議：在 `isPending` 為 true 時顯示載入指示器或骨架畫面。",
+    "existing_code": "const { teamMembers, localWeightsInitialValues, isPending } = useTeamMembersHook({",
+    "evidence": "diff 中新增解構 `isPending`，但後續程式碼未見使用。"
+  },
+  {
+    "path": "packages/platform/atoms/event-types/hooks/useTeamMembersWithSegmentPlatform.tsx",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案最後一行 `};` 後沒有換行符，可能違反專案的格式化規則（R03）。\n\n建議：在檔案結尾加上換行符。",
+    "existing_code": "};\n\\ No newline at end of file",
+    "evidence": "diff 顯示 `\\ No newline at end of file`。"
+  }
+]

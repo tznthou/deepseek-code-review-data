@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "使用 assert 取代 XCTAssert 可能導致測試失效",
+    "body": "在測試方法中，將原本的 `XCTAssertTrue` 改為 Swift 標準庫的 `assert`。`assert` 在 Release 建置中會被編譯器移除，且 XCTest 不會將其視為測試斷言，因此即使條件為 false，測試仍會通過。這會讓測試失去驗證功能。\n\n建議改回使用 `XCTAssertTrue`，或若因 actor isolation 無法直接使用，可考慮將斷言移到 MainActor 隔離的區塊中，或使用 `XCTAssert` 的 async 版本。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\n            assert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將 `XCTAssertTrue(granted)` 改為 `assert(granted, ...)`，且 `XCTAssertTrue(self.center.requestAuthorizationWasCalled)` 改為 `assert(center?.requestAuthorizationWasCalled ?? false, ...)`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 assert 而非 XCTAssert 違反測試慣例",
+    "body": "XCTest 測試應使用 XCTest 框架的斷言（如 XCTAssertTrue）以正確回報失敗。使用標準庫的 `assert` 會讓測試在 Debug 模式下可能 crash，在 Release 模式下完全失效，且 XCTest 無法記錄失敗。建議改回 `XCTAssertTrue`。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\n            assert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將 `XCTAssertTrue` 改為 `assert`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/FxAWebViewModelTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試類別未加上 @MainActor 可能仍有併發警告",
+    "body": "此測試類別操作 UI 相關物件（FxAWebViewModel），但未加上 `@MainActor`。在 Swift 6 嚴格併發檢查下，若這些物件或方法要求 MainActor 隔離，測試方法可能會產生編譯警告或錯誤。建議確認此類別是否需要加上 `@MainActor`，或將相關屬性標記為 `@MainActor`。",
+    "existing_code": "class FxAWebViewModelTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他 UI 相關測試類別（如 StoriesFeedDiffableDataSourceTests）已加上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Mocks/MockProfile.swift",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "getQueuedTabs 的 completion 加上 @Sendable 可能影響呼叫端",
+    "body": "將 completion 閉包標記為 `@Sendable` 是為了符合 Swift 6 的併發安全要求，但這可能要求所有傳入的閉包也必須是 `@Sendable`。若呼叫端傳入的閉包捕獲了非 Sendable 的狀態，可能會產生編譯錯誤。建議確認所有呼叫端都能滿足此要求，或考慮使用 `@preconcurrency` 標記以漸進式遷移。",
+    "existing_code": "func getQueuedTabs(completion: @MainActor @Sendable @escaping ([ShareItem]) -> Void) {",
+    "evidence": "diff 中將 `completion: @escaping @MainActor ([ShareItem]) -> Void` 改為 `completion: @MainActor @Sendable @escaping ([ShareItem]) -> Void`。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 2,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R04] 使用舊式 typing 語法 Set 和 Tuple",
+    "body": "根據專案規範 R04，應使用 Python 3.12+ 的現代型別語法，例如 `set[tuple[str, ...]]` 取代 `Set[Tuple[str, ...]]`。此處 import 了 `Set` 和 `Tuple`，違反規範。建議改為 `from collections.abc import Set` 或直接使用內建泛型。",
+    "existing_code": "from typing import TYPE_CHECKING, Any, Set, Tuple",
+    "evidence": "diff 中新增的 import 行：`from typing import TYPE_CHECKING, Any, Set, Tuple`"
+  },
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R01] blocks_variable_output 方法缺少型別註記",
+    "body": "根據專案規範 R01，所有 Python 函式參數與回傳值都必須有型別註記。此方法參數 `variable_selectors` 與回傳值都缺少型別註記。建議補上，例如 `def blocks_variable_output(self, variable_selectors: set[tuple[str, ...]]) -> bool:`。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的方法定義，參數與回傳值型別已標註，但使用了舊式 typing 語法，且未符合 R01 的現代語法要求。"
+  }
+]

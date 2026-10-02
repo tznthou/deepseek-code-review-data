@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "登出流程中新增的 Task.Yield() 可能造成非預期的非同步行為",
+    "body": "在 ProcessLogOut 方法中新增了 `await Task.Yield();`，這會強制讓出執行緒，可能導致後續的 AuthenticationState 檢查延遲。若此處是為了避免同步上下文問題，應考慮使用 `ConfigureAwait(false)` 或明確說明原因。此外，此變更可能影響登出流程的時序，特別是在 Blazor Server 環境中。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\n        await Task.Yield();",
+    "evidence": "diff 中新增了 `await Task.Yield();`，且無對應的註解說明其必要性。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Redirect() 方法中改用 InteractiveRequestUrl 可能導致 NullReferenceException",
+    "body": "原本的程式碼在 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 時才呼叫 NavigateToLogin，否則使用 `_tokenResult.RedirectUrl!`。修改後，條件僅檢查 `InteractionOptions != null`，但若 `InteractiveRequestUrl` 為 null，則會傳入 null 給 NavigateToLogin，可能導致 NullReferenceException。建議保留對 InteractiveRequestUrl 的 null 檢查，或確保該屬性在 InteractionOptions 存在時必定非 null。",
+    "existing_code": "if (_tokenResult.InteractionOptions != null)\n        {\n            _navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, _tokenResult.InteractionOptions);\n        }\n        else\n        {\n            _navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);\n        }",
+    "evidence": "diff 中移除了 `_tokenResult.InteractiveRequestUrl != null` 的條件，且 else 分支使用 `_tokenResult.InteractiveRequestUrl!` 強制斷言非 null。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 SignOutSessionStateManager 後，登出驗證邏輯可能遺漏舊版狀態",
+    "body": "原本的登出驗證會同時檢查 HistoryEntryState 與 SignOutSessionStateManager 的狀態，以相容舊版。移除後僅依賴 HistoryEntryState，可能導致使用舊版機制產生的登出請求被拒絕。若此為預期的 breaking change，應在 PR 描述中明確說明。",
+    "existing_code": "if (!ValidateSignOutRequestState())",
+    "evidence": "diff 中移除了 `(Navigation.HistoryEntryState != null && !ValidateSignOutRequestState()) || (Navigation.HistoryEntryState == null && !await SignOutManager.ValidateSignOutState())` 的條件，簡化為 `!ValidateSignOutRequestState()`。"
+  }
+]

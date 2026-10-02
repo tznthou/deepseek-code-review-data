@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/web/modules/event-types/hooks/useTeamMembersWithSegment.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "matchingTeamMembersWithResult 型別可能不相容於 useProcessTeamMembersData 的輸入",
+    "body": "新 hook 將 `matchingTeamMembersWithResult` 包裝成 `{ result: matchingTeamMembersWithResult.result }` 後傳給 `useProcessTeamMembersData`，但原本 atoms 中的 `useTeamMembersWithSegment` 是直接傳遞 `matchingTeamMembersWithResult`。若 `useProcessTeamMembersData` 預期的是完整的 query result 型別（包含 `isPending` 等欄位），此包裝可能導致型別錯誤或執行期問題。建議確認 `useProcessTeamMembersData` 的輸入型別，並調整此處的資料轉換。",
+    "existing_code": "matchingTeamMembersWithResult: matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult,",
+    "evidence": "diff 中新增的 hook 在呼叫 useProcessTeamMembersData 時，將 matchingTeamMembersWithResult 包裝成 { result: ... }，但原本 atoms 中的實作是直接傳遞 matchingTeamMembersWithResult。"
+  },
+  {
+    "path": "packages/platform/atoms/availability/AvailabilitySettings.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "travelSchedules 型別改用 TravelScheduleRepository 可能造成型別斷裂",
+    "body": "原本使用 `RouterOutputs[\"viewer\"][\"travelSchedules\"][\"get\"]` 作為 travelSchedules 的型別，現在改為 `Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>`。若 repository 的回傳型別與原本的 trpc output 不完全一致，可能導致下游元件型別錯誤。建議確認兩者型別是否相容，或保留原本的型別來源。",
+    "existing_code": "travelSchedules?: Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>;",
+    "evidence": "diff 中將 travelSchedules 的型別從 RouterOutputs 改為 repository 方法的回傳型別，可能影響使用此 prop 的元件。"
+  },
+  {
+    "path": "packages/platform/atoms/event-types/hooks/useTeamMembersWithSegmentPlatform.tsx",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾缺少換行符號",
+    "body": "檔案最後一行 `};` 之後沒有換行符號，可能違反專案的格式化規範（R03）。建議在檔案結尾加上換行。",
+    "existing_code": "};\n\\ No newline at end of file",
+    "evidence": "diff 顯示檔案結尾為 `};\n\\ No newline at end of file`，表示缺少換行。"
+  }
+]

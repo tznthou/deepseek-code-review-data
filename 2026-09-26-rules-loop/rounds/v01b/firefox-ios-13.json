@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法改名後不再以 'test' 開頭，可能導致測試不被 XCTest 執行",
+    "body": "方法 `testBookmarksShareNormalWebsiteReminders` 被改名為 `verifyBookmarksShareNormalWebsiteReminders`，不再符合 XCTest 的命名慣例（必須以 `test` 開頭）。這會導致該測試方法不再被 XCTest 自動發現與執行，等同於移除了這個測試。若此為有意為之，應直接刪除方法或使用 `XCTSkip`；否則應保留 `test` 前綴。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中將 `func testBookmarksShareNormalWebsiteReminders()` 改為 `func verifyBookmarksShareNormalWebsiteReminders()`，違反 R06 規範。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "tearDown 中提前 return 可能跳過 super.tearDown() 呼叫",
+    "body": "在 `tearDown()` 中，當條件成立時直接 `return`，這會跳過後續的 `app.terminate()` 與 `try await super.tearDown()`。若 `super.tearDown()` 包含必要的清理邏輯（例如釋放資源、重設狀態），此處提前返回可能導致測試環境污染。建議改為使用 `if` 條件包住主題切換，但保留 `app.terminate()` 與 `super.tearDown()` 的呼叫。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 中新增的 `return` 位於 `tearDown()` 內，且後續仍有 `app.terminate()` 與 `try await super.tearDown()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 471,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "貼上允許對話框處理可能不穩定",
+    "body": "新增 `springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)` 來處理系統貼上權限對話框。此對話框的出現時機可能因 iOS 版本或應用狀態而異，固定 0.5 秒的等待可能不足或過長。建議使用更穩健的等待機制（例如 `mozWaitForElementToExist`）或確認此對話框是否總是在此步驟出現。",
+    "existing_code": "springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)",
+    "evidence": "diff 中新增此行，使用固定 timeout 處理系統對話框。"
+  }
+]

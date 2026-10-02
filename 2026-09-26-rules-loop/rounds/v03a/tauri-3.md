@@ -1,0 +1,58 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 💬 有需要留意的問題
+
+此 PR 主要將 toml 依賴從 0.8 升級到 0.9，並更新相關 crate（toml_edit、winnow 等），同時新增 Flatpak bundle 類型。主要風險在於 toml 0.9 的 API 變更可能導致編譯錯誤或行為差異，且 config.rs 中新增的 Flatpak 變體可能影響序列化與向後相容性。此外，parse.rs 中錯誤處理的變更可能改變錯誤類型，需確認下游處理邏輯。建議先確認 toml 0.9 的 API 相容性並補充測試。
+
+### Findings（5 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| ⚠️ | Major | `crates/tauri-utils/src/config/parse.rs:387` | 錯誤類型從 FormatToml 改為 FormatJson，可能破壞下游錯誤處理 | 0.80 |
+| ⚠️ | Major | `crates/tauri-utils/src/config.rs:147` | 新增 BundleType::Flatpak 可能影響序列化與向後相容性 | 0.70 |
+| 🔸 | Minor | `crates/tauri-utils/src/config.rs:147` | 新增 BundleType::Flatpak 可能違反 R07（公開 API 缺少文件） | 0.60 |
+| 🔸 | Minor | `crates/tauri-utils/src/config.rs:147` | 新增 BundleType::Flatpak 可能違反 R09（公開 enum 未標記 non_exhaustive） | 0.50 |
+| 🔸 | Minor | `crates/tauri-utils/src/config.rs:147` | 新增 BundleType::Flatpak 可能違反 R13（缺少 change file） | 0.40 |
+
+<details><summary>⚠️ <b>Major</b> — <code>crates/tauri-utils/src/config/parse.rs:387</code> 錯誤類型從 FormatToml 改為 FormatJson，可能破壞下游錯誤處理</summary>
+
+在 `do_parse_toml` 中，原本的錯誤類型 `ConfigError::FormatToml` 被改為 `ConfigError::FormatJson`，且錯誤內容被包裝成 `serde_json::Error`。這可能導致下游程式碼依賴 `FormatToml` 變體進行錯誤處理時失效，且錯誤訊息可能不準確（TOML 解析錯誤被標記為 JSON 格式錯誤）。建議確認 `ConfigError` 的定義與所有使用處，若需保留原始錯誤類型，應新增對應的 `FormatToml` 變體或調整錯誤映射。
+
+**判斷依據**：diff 中將 `ConfigError::FormatToml` 改為 `ConfigError::FormatJson`，並將錯誤包裝為 `serde_json::Error`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>crates/tauri-utils/src/config.rs:147</code> 新增 BundleType::Flatpak 可能影響序列化與向後相容性</summary>
+
+新增 `BundleType::Flatpak` 變體，但 `Display` 實作中輸出為 `"Flatpak"`（首字母大寫），而 `Deserialize` 接受 `"flatpak"`（小寫）。這可能導致序列化後的字串無法被反序列化（若使用 Display 輸出作為輸入）。此外，若此 enum 被用於序列化（如 serde），新增變體可能改變既有序列化格式，影響向後相容性。建議確認序列化方式，並統一大小寫或提供明確的序列化實作。
+
+**判斷依據**：diff 中新增 `Flatpak` 變體，且 `Display` 輸出 `"Flatpak"`，`Deserialize` 接受 `"flatpak"`。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>crates/tauri-utils/src/config.rs:147</code> 新增 BundleType::Flatpak 可能違反 R07（公開 API 缺少文件）</summary>
+
+新增的 `BundleType::Flatpak` 變體僅有簡單的 doc comment，但未說明其用途、支援平台或與其他 bundle 類型的差異。根據規範 R07，公開 API 應包含完整的文件說明。建議補充更詳細的文件，包括使用情境與限制。
+
+**判斷依據**：diff 中新增變體，但 doc comment 過於簡略。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>crates/tauri-utils/src/config.rs:147</code> 新增 BundleType::Flatpak 可能違反 R09（公開 enum 未標記 non_exhaustive）</summary>
+
+`BundleType` 是公開 enum，且新增變體可能導致下游 match 不完整。若此 enum 預期未來會擴充，應加上 `#[non_exhaustive]` 屬性以避免 breaking change。請確認是否已標記，若無則建議加上。
+
+**判斷依據**：diff 中新增變體，但未見 `#[non_exhaustive]` 標記。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>crates/tauri-utils/src/config.rs:147</code> 新增 BundleType::Flatpak 可能違反 R13（缺少 change file）</summary>
+
+此 PR 新增了公開 API（`BundleType::Flatpak`），屬於使用者可見的變更，但未提供 `.changes` 目錄下的 change file。根據規範 R13，此類變更應包含 change file 以利版本管理與 changelog 生成。建議新增對應的 change file。
+
+**判斷依據**：diff 中新增公開變體，但未見 change file。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 8474 (cache hit 6272) ｜ completion tokens 1323 ｜ PR #3</sub>

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 409,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "WebSocketWrapper.ReceiveAsync 中 _receiveTcs 重置時機變更可能導致測試行為不正確",
+    "body": "原本在處理完 buffer 後才重置 _receiveTcs，現在改為在 await 後立即重置。這可能導致在 buffer.Count == 0 的 zero-byte read 情況下，下一次呼叫 ReceiveAsync 時會 await 一個新的 TaskCompletionSource，而該 TCS 尚未被設定，造成測試卡住或行為不符預期。建議確認此變更是否為修正特定問題，並確保所有相關測試（包括 zero-byte read 情境）通過。",
+    "existing_code": "_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);",
+    "evidence": "diff 顯示 _receiveTcs 的重置從 buffer.Count == 0 的 early return 之後移到 await 之後，改變了 zero-byte read 時的行為。"
+  },
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "vswhere 需求處理變更可能導致 $vsRequirements 為 null 時行為不一致",
+    "body": "當 $GlobalJson.tools 沒有 'vs' 屬性時，$vsRequirements 被設為 $null，後續的 Get-Member 檢查也增加了 $vsRequirements 的 null 檢查。但原本的程式碼在 $vsRequirements 為 null 時會直接使用 $GlobalJson.tools.vs（可能也是 null），行為可能相同。建議確認此變更是否為修正特定問題，並確保在各種 global.json 設定下行為正確。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n      $vsRequirements = $GlobalJson.tools.vs\n    } else {\n      $vsRequirements = $null\n    }\n  }",
+    "evidence": "diff 顯示原本直接指派 $GlobalJson.tools.vs，現在改為條件指派並可能設為 null。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "錯誤訊息比對同時要求符合新舊兩種正規表達式，可能過於嚴格",
+    "body": "測試現在要求 log 訊息同時符合 ParseErrorMessageRegexOld 和 ParseErrorMessageRegexNew。若瀏覽器或執行環境只產生其中一種格式，測試將失敗。建議確認兩種格式是否可能同時出現，或改為符合其中一種即可。",
+    "existing_code": "Assert.True(\n    ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n    ParseErrorMessageRegexNew.IsMatch(logs[0].Message),\n    $\"Expected log message to match one of the CSP error patterns: {ParseErrorMessageRegexOld} or {ParseErrorMessageRegexNew}. Actual: {logs[0].Message}\");",
+    "evidence": "diff 顯示原本使用 Assert.Matches(ParseErrorMessage(), logs[0].Message)，現在改為同時檢查兩個 regex。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "ClientMode 測試使用錯誤的泛型型別參數",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，參數使用 `typeof(GenericComponent<int>)` 進行 prerender，但後續斷言卻使用 `typeof(GenericComponent<string>)` 來取得 Assembly 與 FullName。這會導致斷言失敗，因為實際元件型別是 `GenericComponent<int>`，而非 `GenericComponent<string>`。\n\n建議將斷言中的 `GenericComponent<string>` 改為 `GenericComponent<int>`，以符合實際使用的型別。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\n        Assert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 內，prerender 使用 `typeof(GenericComponent<int>)`，但後續斷言使用 `typeof(GenericComponent<string>)`。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R02] 命名空間宣告未使用 file-scoped 語法",
+    "body": "此檔案將原本的 file-scoped namespace 改為 block-scoped namespace，違反 repo 規範 R02（Use File-Scoped Namespace Declarations）。\n\n建議改回 file-scoped namespace 宣告，例如：\n```csharp\nnamespace Microsoft.AspNetCore.Components.Server.Circuits;\n```",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{",
+    "evidence": "diff 中將原本的 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 改為 `namespace Microsoft.AspNetCore.Components.Server.Circuits` 並加上大括號。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R18] 類別宣告的開頭大括號未換行",
+    "body": "類別 `ServerComponentDeserializerTest` 的開頭大括號與類別宣告在同一行，違反 repo 規範 R18（Opening Braces Must Be on New Line (Allman Style)）。\n\n建議將大括號移至下一行：\n```csharp\npublic class ServerComponentDeserializerTest\n{\n```",
+    "existing_code": "public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 中新增的類別宣告行 `public class ServerComponentDeserializerTest` 後緊接著 `{`，未換行。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 590,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R14] 內部測試類別未標記為 sealed",
+    "body": "新增的 `GenericTestComponent<T>` 類別是內部實作類別，且未預期被繼承，但未標記為 `sealed`，違反 repo 規範 R14（Sealed Keyword Required for Internal Implementation Classes）。\n\n建議加上 `sealed` 修飾詞：\n```csharp\nprivate sealed class GenericTestComponent<T> : IComponent\n```",
+    "existing_code": "private class GenericTestComponent<T> : IComponent",
+    "evidence": "diff 中新增的類別宣告 `private class GenericTestComponent<T> : IComponent` 缺少 `sealed`。"
+  }
+]

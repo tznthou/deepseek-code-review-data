@@ -1,0 +1,13 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 136,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "重新啟用時未更新 jsComponentParametersByIdentifier",
+    "body": "在 `enableJSRootComponents` 中，當 `manager && currentRendererId === rendererId` 為 false（即首次啟用或不同 renderer）時，會更新 `manager` 與 `currentRendererId`，但 `jsComponentParametersByIdentifier` 只在函式開頭指派一次，且該指派位於 `if (!hasInitializedJsComponents)` 區塊之外。這表示當相同 renderer 重新啟用時（例如 circuit 重啟），`jsComponentParametersByIdentifier` 仍保留舊的參數物件，可能導致後續動態 root component 使用到過時的參數。\n\n建議：將 `jsComponentParametersByIdentifier = jsComponentParameters;` 移到 `if (!hasInitializedJsComponents)` 區塊內，或確保在每次啟用時都更新該變數。",
+    "existing_code": "currentRendererId = rendererId;\n  manager = managerInstance;\n\n  if (!hasInitializedJsComponents) {",
+    "evidence": "diff 中顯示原本的 `jsComponentParametersByIdentifier = jsComponentParameters;` 被移除，但沒有在新的位置重新指派。在重新啟用的情境下，該變數不會被更新。"
+  }
+]

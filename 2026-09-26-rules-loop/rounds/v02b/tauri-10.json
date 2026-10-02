@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1321,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R03] 程式碼格式不符合 rustfmt 規範",
+    "body": "在 `window_features` 方法中，`position` 參數的傳遞格式為 `position.x,position.y`，缺少逗號後的空格。這將導致 `cargo fmt --check` 失敗，違反專案的 rustfmt 規範（R03）。\n\n建議修正為 `position.x, position.y`。",
+    "existing_code": "self.window_builder = self.window_builder.position(position.x,position.y);",
+    "evidence": "diff 中新增行：`+      self.window_builder = self.window_builder.position(position.x,position.y);`，逗號後缺少空格。"
+  },
+  {
+    "path": "crates/tauri/src/webview/mod.rs",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R07] 公開重新匯出缺少文件註解",
+    "body": "新增的 `pub use tauri_runtime::Cookie;` 重新匯出沒有文件註解。雖然這是為了向後相容，但公開 API 應包含文件說明其用途與棄用狀態。建議加上 `#[doc = \"...\"]` 或 `///` 註解，並標註將於 v3 移除。",
+    "existing_code": "pub use tauri_runtime::Cookie;",
+    "evidence": "diff 中新增行：`+pub use tauri_runtime::Cookie;`，且上方註解 `// Remove this re-export in v3` 並非文件註解。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1315,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R13] 公開 API 更名需要變更檔案",
+    "body": "將 `with_window_features` 更名為 `window_features` 是公開 API 的破壞性變更，應包含一個變更檔案（change file）以記錄此變更並觸發適當的版本提升。請在 `.changes` 目錄下新增對應的 markdown 檔案。",
+    "existing_code": "pub fn window_features(mut self, features: NewWindowFeatures) -> Self {",
+    "evidence": "diff 中將 `-  pub fn with_window_features(mut self, features: NewWindowFeatures) -> Self {` 改為 `+  pub fn window_features(mut self, features: NewWindowFeatures) -> Self {`，且未見變更檔案。"
+  },
+  {
+    "path": "crates/tauri/src/webview/mod.rs",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R13] 公開重新匯出需要變更檔案",
+    "body": "新增 `pub use tauri_runtime::Cookie;` 是公開 API 的變更，應包含變更檔案以記錄此新增並觸發版本提升。請在 `.changes` 目錄下新增對應的 markdown 檔案。",
+    "existing_code": "pub use tauri_runtime::Cookie;",
+    "evidence": "diff 中新增行：`+pub use tauri_runtime::Cookie;`，且未見變更檔案。"
+  }
+]

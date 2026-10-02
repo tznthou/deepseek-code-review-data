@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "強制非空斷言可能導致 NPE",
+    "body": "在 `handleOnBackPressed` 中，`this@AppPlugin.webView!!.goBack()` 使用了強制非空斷言。如果 `webView` 尚未初始化（例如 `load` 未被呼叫），按下返回鍵會拋出 NullPointerException 並導致應用程式崩潰。建議改用安全呼叫（`?.goBack()`）或加入 null 檢查。",
+    "existing_code": "this@AppPlugin.webView!!.goBack()",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 31 行使用 `!!` 操作符，而 `webView` 是 nullable 且僅在 `load` 中賦值。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "OnBackPressedCallback 啟用狀態管理可能導致返回鍵失效",
+    "body": "在 `handleOnBackPressed` 中，當沒有 listener 且 webView 無法返回時，會先將 `this.isEnabled = false`，呼叫 `activity.onBackPressed()`，再設回 `true`。如果 `activity.onBackPressed()` 內部觸發了非同步操作或拋出例外，`isEnabled` 可能永遠保持 false，導致後續返回鍵無效。建議使用 try-finally 確保狀態恢復，或改用其他方式處理預設行為。",
+    "existing_code": "this.isEnabled = false\nthis@AppPlugin.activity.onBackPressed()\nthis.isEnabled = true",
+    "evidence": "diff 中 AppPlugin.kt 第 33-35 行，狀態切換與呼叫之間沒有例外保護。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少對應的單元測試",
+    "body": "新增的返回鍵處理邏輯（包含 listener 分支與 webView 返回分支）沒有對應的測試。建議為 `AppPlugin` 的 `handleOnBackPressed` 行為撰寫單元測試，涵蓋有/無 listener、webView 可/不可返回等情境。",
+    "existing_code": "override fun handleOnBackPressed() {",
+    "evidence": "diff 中新增的 AppPlugin.kt 沒有包含任何測試程式碼。"
+  },
+  {
+    "path": "crates/tauri/src/app/plugin.rs",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Android plugin 註冊缺少錯誤處理",
+    "body": "`register_android_plugin` 回傳 `Result`，但此處使用 `?` 直接傳播錯誤。若註冊失敗，整個 plugin 初始化會失敗，可能導致應用程式無法啟動。建議考慮記錄錯誤並提供 fallback 或更明確的錯誤訊息。",
+    "existing_code": "let handle = _api.register_android_plugin(\"app.tauri\", \"AppPlugin\")?;",
+    "evidence": "diff 中 plugin.rs 第 136 行使用 `?` 傳播錯誤，未見任何錯誤處理或日誌。"
+  }
+]

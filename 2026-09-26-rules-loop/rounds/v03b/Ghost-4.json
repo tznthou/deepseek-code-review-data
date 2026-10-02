@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 dangerouslySetInnerHTML 渲染評論 HTML 可能導致 XSS",
+    "body": "`dangerouslySetInnerHTML` 直接將 `item.html` 插入 DOM。若後端在儲存評論時未對 HTML 進行嚴格消毒（例如允許 `<script>` 或事件屬性），攻擊者可在評論中注入惡意腳本，當管理員查看評論列表時觸發 XSS。\n\n**失敗情境**：攻擊者提交包含 `<img src=x onerror=alert(document.cookie)>` 的評論，若後端未移除 `onerror` 屬性，管理員開啟評論列表時即會執行腳本。\n\n**建議**：確認後端在儲存評論時已使用如 DOMPurify 等函式庫進行消毒，並在前端渲染前再次消毒；或改用 React 的安全渲染方式（如將 HTML 轉為純文字或使用受信任的 sanitizer）。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 CommentContent 元件使用 dangerouslySetInnerHTML 渲染 item.html，且未見任何消毒處理。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R19] 缺少分號",
+    "body": "`const contentRef = useRef<HTMLDivElement>(null)` 和 `const [isClamped, setIsClamped] = useState(false)` 等陳述式結尾缺少分號，違反專案規範 R19。",
+    "existing_code": "const contentRef = useRef<HTMLDivElement>(null)\n    const [isClamped, setIsClamped] = useState(false)\n    const [isExpanded, setIsExpanded] = useState(false)",
+    "evidence": "diff 中新增的程式碼行末未加分號。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R18] 使用雙引號字串",
+    "body": "`className={`prose flex-1 text-base leading-[1.45em] ${isExpanded ? '-mb-1 [&_p]:mb-[0.85em]' : 'line-clamp-2 [&_*]:m-0 [&_*]:inline'} ${item.status === 'hidden' && 'text-muted-foreground'}`}` 中的字串使用雙引號，違反專案規範 R18（應使用單引號）。",
+    "existing_code": "className={`prose flex-1 text-base leading-[1.45em] ${isExpanded ? '-mb-1 [&_p]:mb-[0.85em]' : 'line-clamp-2 [&_*]:m-0 [&_*]:inline'} ${item.status === 'hidden' && 'text-muted-foreground'}`}",
+    "evidence": "diff 中新增的 className 屬性值使用雙引號包覆字串。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.75,
+    "title": "CommentContent 的截斷偵測不會在內容變更時重新執行",
+    "body": "`useEffect` 的依賴陣列為空，只在掛載時執行一次。若 `item.html` 因資料更新而改變（例如從 API 重新取得），`isClamped` 不會重新計算，可能導致「Show more」按鈕顯示錯誤。\n\n**失敗情境**：評論內容原本超過兩行，顯示「Show more」；之後內容被更新為較短文字，但按鈕仍存在，點擊後無任何效果。\n\n**建議**：將 `item.html` 加入依賴陣列，或使用 `useLayoutEffect` 確保在 DOM 更新後同步計算。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "useEffect 依賴陣列為空，但內部使用了 item.html（透過 ref 間接依賴），當 item.html 改變時不會重新執行。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R12] JSX props 順序不符合規範",
+    "body": "`dangerouslySetInnerHTML` 應在 `ref` 之前，且 `className` 應在 `dangerouslySetInnerHTML` 之前。目前順序為 `dangerouslySetInnerHTML`、`ref`、`className`，違反專案規範 R12（reserved props 先，再 regular props 字母序）。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}\n                    ref={contentRef}\n                    className={`prose flex-1 text-base leading-[1.45em] ${isExpanded ? '-mb-1 [&_p]:mb-[0.85em]' : 'line-clamp-2 [&_*]:m-0 [&_*]:inline'} ${item.status === 'hidden' && 'text-muted-foreground'}`}",
+    "evidence": "diff 中新增的 div 元素 props 順序為 dangerouslySetInnerHTML、ref、className，不符合 R12 規定的 reserved props 先、regular props 字母序。"
+  }
+]

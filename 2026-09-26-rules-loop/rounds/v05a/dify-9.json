@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] selector 參數型別從具體函式放寬為 any",
+    "body": "`usePluginPageContext` 的 selector 參數型別從 `(value: PluginPageContextValue) => any` 改為 `any`，這會完全喪失型別檢查，允許傳入任意值，可能導致執行時期錯誤。建議保留原本的函式型別，或使用更精確的泛型型別。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中將原本的 `(value: PluginPageContextValue) => any` 改為 `any`，違反 R09 規範。"
+  },
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "搜尋模式判斷邏輯可能反轉",
+    "body": "原本的條件是 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`，現在改為 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`，移除了否定運算子。這可能導致 `isSearchMode` 的判斷結果相反，影響搜尋模式的啟用時機。請確認此變更是否為預期行為，並補充對應的測試。",
+    "existing_code": "|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))",
+    "evidence": "diff 中將 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)` 改為 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`。"
+  }
+]

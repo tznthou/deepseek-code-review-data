@@ -1,0 +1,57 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "重複呼叫 expectation.fulfill() 可能導致測試失敗",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`decisionHandler` 內已呼叫 `expectation.fulfill()`，但測試方法結尾又再次呼叫 `expectation.fulfill()`。這會造成 expectation 被 fulfill 兩次，XCTest 會拋出錯誤（「API violation - multiple calls made to -[XCTestExpectation fulfill]」）。\n\n建議移除測試方法結尾的 `expectation.fulfill()`，只保留 `decisionHandler` 內的呼叫。",
+    "existing_code": "wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中新增的 `expectation.fulfill()` 位於 `wait(for:)` 之後，而 `decisionHandler` 內已有 `expectation.fulfill()`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴真實網路與 WebKit 行為，可能不穩定",
+    "body": "`captureFrameAndOrigin` 使用真實的 `WKWebView` 載入 `https://example.com`，這使得測試依賴外部網路連線與 WebKit 的實際行為。在 CI 環境中若無網路或網路不穩定，測試可能逾時或失敗。\n\n建議改用 `WKWebView` 載入本地 HTML 或使用 `about:blank`，或考慮使用其他方式建立 `WKFrameInfo` 與 `WKSecurityOrigin`（例如透過 `WKWebView` 的 `loadHTMLString`）。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 `webView.load(URLRequest(url: url))` 使用外部 URL。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "未檢查 XCTWaiter 結果，可能誤判成功",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值未被檢查。若等待逾時，`delegate.capturedFrame` 與 `capturedOrigin` 可能為 nil，但函式仍會回傳 nil，導致測試失敗。建議檢查 waiter 結果，並在逾時或失敗時提供更明確的錯誤訊息。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增的 `XCTWaiter.wait` 呼叫未使用回傳值。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "FakeWKNavigationDelegate 未標記為 final",
+    "body": "根據專案規範 R12，不應被繼承的類別應標記為 `final`。`FakeWKNavigationDelegate` 是測試輔助類別，不應被繼承，建議加上 `final`。",
+    "existing_code": "class FakeWKNavigationDelegate: NSObject, WKNavigationDelegate {",
+    "evidence": "diff 中新增的類別宣告缺少 `final`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "缺少 MARK 註解組織程式碼區段",
+    "body": "根據專案規範 R03，程式碼應使用 MARK 註解組織邏輯區段。此檔案包含類別與靜態方法，但未使用 MARK 分隔，建議加入 `// MARK: -` 來提升可讀性。",
+    "existing_code": "final class WebKitTestHelpers {",
+    "evidence": "diff 中新增的類別未使用 MARK 註解。"
+  }
+]

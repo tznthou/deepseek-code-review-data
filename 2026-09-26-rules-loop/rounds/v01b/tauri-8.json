@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "滑鼠按鈕狀態轉換邏輯反轉",
+    "body": "在 `From<tray_icon::MouseButtonState>` 的實作中，原本的對應關係被反轉了：`tray_icon::MouseButtonState::Up` 現在對應到 `MouseButtonState::Down`，反之亦然。這會導致所有依賴此轉換的功能（例如處理滑鼠點擊事件）得到相反的狀態，造成嚴重的行為錯誤。\n\n建議修正為：\n```rust\nmatch value {\n    tray_icon::MouseButtonState::Up => MouseButtonState::Up,\n    tray_icon::MouseButtonState::Down => MouseButtonState::Down,\n}\n```",
+    "existing_code": "tray_icon::MouseButtonState::Up => MouseButtonState::Down,\n      tray_icon::MouseButtonState::Down => MouseButtonState::Up,",
+    "evidence": "diff 中原本的 `tray_icon::MouseButtonState::Up => MouseButtonState::Up` 被改為 `tray_icon::MouseButtonState::Up => MouseButtonState::Down`，且 `Down` 對應也被反轉。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/error.rs",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 cfg_attr 條件式錯誤訊息可能降低可讀性",
+    "body": "原本使用 `#[cfg]` 與 `#[error]` 分開的寫法被改為 `#[cfg_attr]` 來條件式套用錯誤訊息。雖然功能相同，但這種寫法較不直觀，且可能讓錯誤訊息的維護更困難。建議確認是否有其他方式（例如使用 `cfg_if!` 巨集或保留原本的寫法）來滿足 Clippy 的要求，同時保持可讀性。",
+    "existing_code": "#[cfg_attr(\n    target_os = \"linux\",\n    error(\"__TAURI_BUNDLE_TYPE variable not found in binary. Make sure tauri crate and tauri-cli are up to date and that symbol stripping is disabled (https://doc.rust-lang.org/cargo/reference/profiles.html#strip)\")\n  )]\n  #[cfg_attr(\n    not(target_os = \"linux\"),\n    error(\"__TAURI_BUNDLE_TYPE variable not found in binary. Make sure tauri crate and tauri-cli are up to date\")\n  )]",
+    "evidence": "diff 中將原本的 `#[cfg(target_os = \"linux\")]` 與 `#[error(...)]` 合併為 `#[cfg_attr]`，但此變更僅為風格調整，未改變行為。"
+  }
+]

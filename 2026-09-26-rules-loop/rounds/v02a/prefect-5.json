@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 跨欄位驗證應使用 model_validator 而非 field_validator",
+    "body": "在 `_bucket_folder_suffix` 中新增了對 `bucket` 欄位的檢查，但此驗證器是 `field_validator`，其執行順序取決於欄位定義順序。若 `bucket_folder` 在 `bucket` 之前定義，則 `info.data.get(\"bucket\")` 可能尚未被設定，導致驗證失效或錯誤。應改用 `@model_validator(mode='after')` 進行跨欄位驗證。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的 `if info.data.get(\"bucket\")...` 位於 `@field_validator(\"bucket_folder\")` 內，且使用 `info.data` 存取其他欄位，違反 R08。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "路徑前綴檢查使用子字串比對可能誤判",
+    "body": "`if self.bucket_folder and self.bucket_folder in path:` 使用子字串比對，若 `bucket_folder` 出現在路徑中間（例如 `mybucket_folder_results/abc`）也會被誤判為已前綴，導致回傳未正確處理的路徑。應改為檢查 `path` 是否以 `bucket_folder` 開頭，並考慮路徑分隔符。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中新增的 `if self.bucket_folder and self.bucket_folder in path:` 使用 `in` 運算子，未限定在開頭。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 711,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "驗證錯誤訊息未包含實際值",
+    "body": "錯誤訊息 `\"bucket_folder cannot be the same as bucket name\"` 未包含實際的 `bucket_folder` 和 `bucket` 值，不利於除錯。建議加入實際值。",
+    "existing_code": "raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的 raise 語句。"
+  }
+]

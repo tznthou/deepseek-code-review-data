@@ -1,0 +1,13 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 部分 require 陳述式缺少分號",
+    "body": "在 `members-api.js` 中，前 10 行的 require 陳述式結尾缺少分號，違反專案規範 R19（所有陳述式必須以分號結尾）。這可能導致 ASI 問題，且與檔案其他部分風格不一致。\n\n建議在每個 require 陳述式結尾補上分號。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')\n\nconst PaymentsService = require('./services/payments-service')\nconst TokenService = require('./services/token-service')\nconst GeolocationService = require('./services/geolocation-service')\nconst MemberBREADService = require('./services/member-bread-service')\nconst MemberRepository = require('./repositories/member-repository')",
+    "evidence": "diff 中顯示這些行從原本有分號的版本改為無分號，且其他 require 陳述式（如 EventRepository）仍保留分號，顯示不一致。"
+  }
+]

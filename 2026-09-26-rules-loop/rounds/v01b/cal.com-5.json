@@ -1,0 +1,46 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的前綴",
+    "body": "在解析 bookingUrl 以取得前綴時，程式碼使用 `url.hostname` 而非 `url.host`，這會忽略埠號。若 bookingUrl 包含非預設埠（例如開發環境），顯示的前綴會不正確。此外，若 bookingUrl 的 pathname 只有 slug（例如 `https://cal.com/30min`），`pathParts.pop()` 後陣列為空，前綴會是 `/`，但實際應為 `https://cal.com/`。建議改用 `url.origin` 並保留完整路徑結構。",
+    "existing_code": "const url = new URL(props.bookingUrl);\n// Get path without the last segment (slug)\nconst pathParts = url.pathname.split(\"/\").filter(Boolean);\npathParts.pop(); // Remove slug\n// Compute prefix outside try/catch for React Compiler\nlet prefix = \"/\";\nif (pathParts.length > 0) {\n  prefix = `/${pathParts.join(\"/\")}/`;\n}\nreturn `${url.protocol}//${url.hostname}${prefix}`;",
+    "evidence": "diff 中新增的 URL 解析邏輯使用 `url.hostname` 而非 `url.host`，且未處理 pathname 僅有 slug 的情況。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 949,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "bookingUrl 可能為空字串，導致預覽/複製功能失效",
+    "body": "handlePreview 和 handleCopyLink 僅檢查 `!bookingUrl`，但 bookingUrl 的初始值為空字串，若使用者尚未儲存事件類型，會顯示錯誤訊息。然而，若後端回傳的 bookingUrl 為空字串（例如未設定），使用者將無法使用預覽或複製功能，且錯誤訊息可能誤導。建議在取得事件類型資料時，若 bookingUrl 缺失，應提供明確的提示或停用相關按鈕。",
+    "existing_code": "if (!bookingUrl) {\n  showErrorAlert(\"Error\", \"Booking URL not available. Please save the event type first.\");\n  return;\n}",
+    "evidence": "diff 中新增的檢查僅判斷空字串，未區分未儲存與後端未提供 bookingUrl 的情況。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/index.ios.tsx",
+    "line": 114,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "bookingUrl 缺失時僅顯示錯誤，未提供替代方案",
+    "body": "在 handleCopyLink、_handleShare 和 handlePreview 中，若 eventType.bookingUrl 不存在，僅顯示錯誤訊息。但舊版會嘗試動態建立連結，現在完全依賴後端提供 bookingUrl。若後端資料不完整，使用者將無法執行這些操作。建議保留 fallback 機制，或確保後端必定提供 bookingUrl。",
+    "existing_code": "if (!eventType.bookingUrl) {\n  showErrorAlert(\"Error\", \"Booking URL not available for this event type.\");\n  return;\n}",
+    "evidence": "diff 中新增的檢查直接 return，未提供任何替代方案。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1122,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "copyBtn 的 bookingUrl 未使用 eventType.bookingUrl",
+    "body": "在 copyBtn 的事件處理中，bookingUrl 的建構仍使用硬編碼的 `https://cal.com/...`，未使用 eventType.bookingUrl。這可能導致複製的連結與實際預覽不一致。建議與 previewBtn 的邏輯保持一致，使用 eventType.bookingUrl 或 fallback。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中 copyBtn 的程式碼未修改，但 previewBtn 已改用 eventType.bookingUrl，兩者不一致。"
+  }
+]

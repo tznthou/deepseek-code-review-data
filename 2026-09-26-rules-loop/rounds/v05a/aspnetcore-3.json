@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較使用 OrdinalIgnoreCase 在 Linux 上可能誤判",
+    "body": "在 Linux 上檔案路徑是區分大小寫的，使用 `StringComparison.OrdinalIgnoreCase` 比較路徑可能導致將不同目錄視為相同，或將相同目錄視為不同。例如 `/home/user/.dotnet/corefx/cryptography/x509stores/ca` 與 `/home/user/.dotnet/corefx/cryptography/x509stores/CA` 會被視為相同，但實際上是不同目錄。建議在 Unix 平台上使用 `StringComparison.Ordinal`，或根據作業系統動態選擇比較方式。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的 `isCertDirIncluded` 判斷使用了 `StringComparison.OrdinalIgnoreCase`，而此程式碼位於 `UnixCertificateManager.cs`，主要執行於 Unix 平台。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "過度寬泛的例外處理可能隱藏真實錯誤",
+    "body": "在解析 SSL_CERT_DIR 中的每個目錄時，使用 `catch` 捕捉所有例外並直接忽略，這可能隱藏了如 `Path.GetFullPath` 拋出的 `ArgumentException`、`SecurityException` 等真實錯誤。建議至少記錄例外資訊，或僅捕捉預期的例外類型（如 `ArgumentException`）。",
+    "existing_code": "catch\n{\n    // Ignore invalid directory entries in SSL_CERT_DIR\n    return false;\n}",
+    "evidence": "diff 中新增的 try-catch 區塊捕捉所有例外且未記錄任何資訊。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/CertificateManager.cs",
+    "line": 1314,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增 EventSource 事件缺少對應測試",
+    "body": "新增了 `UnixOpenSslCertificateDirectoryAlreadyConfigured` 和 `UnixSuggestAppendingToEnvironmentVariable` 兩個事件，但未看到對應的測試來驗證事件是否在正確情境下觸發。建議補充單元測試，涵蓋 SSL_CERT_DIR 已包含憑證目錄、未包含、以及環境變數為空等情況。",
+    "existing_code": "[Event(113, Level = EventLevel.Verbose, Message = \"The certificate directory '{0}' is already included in the {1} environment variable.\")]\ninternal void UnixOpenSslCertificateDirectoryAlreadyConfigured(string certDir, string envVarName) => WriteEvent(113, certDir, envVarName);",
+    "evidence": "diff 中新增了兩個 EventSource 事件，但未包含任何測試程式碼。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 365,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 Path.GetFullPath 可能拋出例外且未處理",
+    "body": "`Path.GetFullPath(prettyCertDir)` 在 `prettyCertDir` 包含無效字元或路徑過長時可能拋出 `ArgumentException` 或 `PathTooLongException`，但此處未進行任何例外處理。雖然 `prettyCertDir` 來自內部邏輯，但若未來修改可能引入風險。建議加入防禦性處理或確保輸入有效性。",
+    "existing_code": "var certDirFullPath = Path.GetFullPath(prettyCertDir);",
+    "evidence": "diff 中新增的 `certDirFullPath` 計算未包覆在 try-catch 中。"
+  }
+]

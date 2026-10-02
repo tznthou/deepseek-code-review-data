@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc 而非 zmalloc 配置記憶體",
+    "body": "clusterCommonInit() 中使用 `malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat))` 配置記憶體，違反專案規範 R02（必須使用 zmalloc 系列函式）。這會導致記憶體使用量無法被 Redis 的記憶體追蹤機制監控，且可能造成記憶體洩漏。\n\n建議改為 `zmalloc(CLUSTER_SLOTS*sizeof(clusterSlotStat))`。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的 clusterCommonInit() 函式內使用 malloc，而原本在 server.c 中對應的配置是使用 zmalloc（見 diff 中刪除的 `server.cluster_slot_stats = zmalloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));`）。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 1658,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "asmCron() 呼叫順序可能影響 clusterCron() 行為",
+    "body": "在 serverCron() 中，原本 clusterCron() 內部會呼叫 asmCron()（見 cluster_legacy.c 刪除的 `asmCron();`），現在改為在 clusterCron() 之前呼叫 asmCron()。若 asmCron() 會修改 cluster 狀態（例如 slot 遷移狀態），可能導致 clusterCron() 讀取到不同的狀態，進而影響其邏輯。\n\n建議確認 asmCron() 與 clusterCron() 的相依性，必要時調整順序或保留原本的呼叫位置。",
+    "existing_code": "asmCron();\n            clusterCron();",
+    "evidence": "diff 中 server.c 的 serverCron() 新增 `asmCron();` 並置於 `clusterCron();` 之前，而 cluster_legacy.c 中原本的 `asmCron();` 被移除。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 1842,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "asmBeforeSleep() 呼叫順序可能影響 clusterBeforeSleep() 行為",
+    "body": "在 beforeSleep() 中，原本 clusterBeforeSleep() 內部會呼叫 asmBeforeSleep()（見 cluster_legacy.c 刪除的 `asmBeforeSleep();`），現在改為在 clusterBeforeSleep() 之後呼叫 asmBeforeSleep()。若 asmBeforeSleep() 依賴 clusterBeforeSleep() 設定的狀態，或反之，可能導致非預期行為。\n\n建議確認兩者的相依性，必要時調整順序或保留原本的呼叫位置。",
+    "existing_code": "clusterBeforeSleep();\n        asmBeforeSleep();",
+    "evidence": "diff 中 server.c 的 beforeSleep() 新增 `asmBeforeSleep();` 並置於 `clusterBeforeSleep();` 之後，而 cluster_legacy.c 中原本的 `asmBeforeSleep();` 被移除。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2210,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "clusterDeleteKeysInUnownedSlots 與 clusterClaimUnassignedSlots 拆分可能改變行為",
+    "body": "原本 verifyClusterConfigWithData() 在一個迴圈中同時處理「刪除不屬於自己的 slot 的 keys」與「認領未分配的 slot」。現在拆分為兩個函式，並在 verifyClusterConfigWithData() 中先呼叫 clusterDeleteKeysInUnownedSlots() 再呼叫 clusterClaimUnassignedSlots()。\n\n但原本的邏輯是：若 slot 有 keys 且未分配給任何人，則認領該 slot；若已分配給其他節點，則刪除 keys。拆分後，clusterDeleteKeysInUnownedSlots() 會刪除所有不屬於自己的 slot 的 keys（包括未分配的 slot），然後 clusterClaimUnassignedSlots() 才認領未分配的 slot。這可能導致原本應認領的 slot 的 keys 被刪除。\n\n建議檢查此行為變更是否符合預期，並補充測試。",
+    "existing_code": "clusterDeleteKeysInUnownedSlots();\n    /* Take over slots that we have keys for, but are assigned to no one. */\n    clusterClaimUnassignedSlots();",
+    "evidence": "diff 中 verifyClusterConfigWithData() 的實作改為呼叫兩個新函式，而原本的單一迴圈邏輯被移除。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2146,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "clusterDeleteKeysInUnownedSlots 未檢查 cluster_module_flags",
+    "body": "clusterDeleteKeysInUnownedSlots() 中未檢查 `server.cluster_module_flags & CLUSTER_MODULE_FLAG_NO_REDIRECTION`，但原本的 verifyClusterConfigWithData() 會先檢查此旗標並直接返回。若模組停用重導向，此函式仍可能刪除 keys。\n\n建議在 clusterDeleteKeysInUnownedSlots() 開頭加入相同的旗標檢查，或確保呼叫者已處理。",
+    "existing_code": "void clusterDeleteKeysInUnownedSlots(void) {\n    if (clusterNodeIsSlave(getMyClusterNode())) return;",
+    "evidence": "diff 中新增的 clusterDeleteKeysInUnownedSlots() 沒有檢查 CLUSTER_MODULE_FLAG_NO_REDIRECTION，而原本的 verifyClusterConfigWithData() 有檢查。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2146,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "clusterDeleteKeysInUnownedSlots 未檢查 DB 是否為 0",
+    "body": "clusterDeleteKeysInUnownedSlots() 中未檢查目前是否在 DB0，但原本的 verifyClusterConfigWithData() 會先確認所有非 DB0 的資料庫皆為空。若在非 DB0 有 keys，此函式仍可能刪除 slot 中的 keys，可能造成非預期的資料遺失。\n\n建議在呼叫 clusterDeleteKeysInUnownedSlots() 前先確認 DB0 以外的資料庫為空，或在此函式中加入檢查。",
+    "existing_code": "void clusterDeleteKeysInUnownedSlots(void) {\n    if (clusterNodeIsSlave(getMyClusterNode())) return;",
+    "evidence": "diff 中新增的 clusterDeleteKeysInUnownedSlots() 沒有檢查 DB 編號，而原本的 verifyClusterConfigWithData() 有檢查。"
+  }
+]

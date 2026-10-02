@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "validateStoredKeyConversion 函式未被使用",
+    "body": "新增的 validateStoredKeyConversion 函式在整個 diff 中沒有被任何地方呼叫。這可能表示原本打算在關鍵路徑（例如 dictAddRaw 或 dictFindLinkInternal）加入驗證，但最後遺漏了。如果 keyFromStoredKey 回呼實作有誤，可能導致 key 轉換失敗而未被偵測，進而產生錯誤的 hash 或比較結果。建議在 dictAddRaw 或 dictFindLinkInternal 等進入點呼叫此函式，或移除該函式以避免 dead code。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}",
+    "evidence": "diff 中新增了 validateStoredKeyConversion 函式，但搜尋整個 diff 未見任何呼叫點。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 1257,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "hashTypeDelete 移除 isSdsField 參數可能遺漏呼叫點",
+    "body": "hashTypeDelete 的簽名從 `int hashTypeDelete(robj *o, void *key, int isSdsField)` 改為 `int hashTypeDelete(robj *o, void *key)`，移除了 isSdsField 參數。在 diff 中所有呼叫點都已更新，但若程式碼庫中其他檔案（未包含在此 diff）仍有使用舊簽名的呼叫，將導致編譯錯誤。建議全域搜尋確認所有呼叫點均已更新，或保留一個過渡版本。",
+    "existing_code": "int hashTypeDelete(robj *o, void *field) {",
+    "evidence": "diff 顯示 hashTypeDelete 的宣告和定義都移除了 isSdsField 參數，但無法確認所有呼叫點都在此 diff 中。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 902,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "dictSetKeyAtLink 中新增的 validateStoredKeyConversion 呼叫可能造成效能影響",
+    "body": "在 dictSetKeyAtLink 的錯誤處理路徑中，新增了 `validateStoredKeyConversion(d, key)` 呼叫。此函式會呼叫 keyFromStoredKey 回呼，若該回呼有非零成本（例如需要解包結構），且此路徑在正常操作中頻繁觸發，可能造成不必要的效能損耗。建議評估此驗證是否必要，或僅在 debug 模式啟用。",
+    "existing_code": "*link = dictFindLinkInternal(d, dictStoredKey2Key(d, key), &bucket);\n            assert(bucket != NULL);\n            assert(*link == NULL);\n            *link = bucket; /* On newItem the link should be the bucket */",
+    "evidence": "diff 中 dictSetKeyAtLink 的錯誤處理路徑新增了 validateStoredKeyConversion 呼叫，但該函式本身未被使用，且可能增加額外開銷。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "keyFromStoredKey 回呼的錯誤處理不足",
+    "body": "dictStoredKey2Key 函式在 keyFromStoredKey 回呼存在時直接呼叫它，但沒有檢查回傳值是否為 NULL。如果回呼因某種原因回傳 NULL（例如 stored-key 格式錯誤），後續的 hash 或比較操作可能會對 NULL 指標進行操作，導致 crash。建議在 dictStoredKey2Key 中加入 NULL 檢查，或確保所有回呼實作都不會回傳 NULL。",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {\n    return (d->type->keyFromStoredKey) ? d->type->keyFromStoredKey(key) : key;\n}",
+    "evidence": "diff 中新增的 dictStoredKey2Key 函式沒有對 keyFromStoredKey 的回傳值進行 NULL 檢查。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "__stored_key 巨集定義為空，可能降低可讀性",
+    "body": "新增的 `#define __stored_key` 巨集展開為空，僅作為標記用途。雖然有助於程式碼閱讀，但對於不熟悉此慣例的開發者可能造成困惑。建議在註解中更清楚地說明其用途，或考慮使用其他方式（如 typedef）來標記 stored-key 指標。",
+    "existing_code": "#define __stored_key",
+    "evidence": "diff 中新增了空的巨集定義，僅用於標記參數。"
+  }
+]

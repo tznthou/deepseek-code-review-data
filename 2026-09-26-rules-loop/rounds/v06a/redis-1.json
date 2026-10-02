@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "validateStoredKeyConversion 函式未使用",
+    "body": "新增的 validateStoredKeyConversion 函式在整個 diff 中沒有被呼叫。這可能是為了驗證 keyFromStoredKey 回呼的正確性，但若未使用，則無法提供任何保障，且可能觸發編譯器警告（-Wunused-function），違反 R04。建議移除該函式，或實際在 dict 初始化或插入時呼叫它。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}",
+    "evidence": "diff 中新增了 validateStoredKeyConversion 函式，但後續沒有呼叫它的程式碼。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 1257,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "hashTypeDelete 移除 isSdsField 參數可能導致錯誤的 dictDelete 呼叫",
+    "body": "原本 hashTypeDelete 接受 isSdsField 參數來決定是否使用 stored-key API。移除後，函式內直接呼叫 dictDelete，但 dictDelete 現在預期 key 為 lookup key（sds），而呼叫者可能傳入 Entry*（stored-key）。在 onFieldExpire 中，原本傳入 isSdsField=0，表示 field 是 Entry*，但現在直接傳入 field，可能導致 dictDelete 將 Entry* 當作 sds 處理，造成記憶體錯誤或找不到鍵。建議保留參數或明確區分呼叫者傳入的型別。",
+    "existing_code": "int hashTypeDelete(robj *o, void *field) {\n    int deleted = 0;\n    int fieldLen = sdslen((sds)field);",
+    "evidence": "diff 中 hashTypeDelete 的簽名從 (robj *o, void *key, int isSdsField) 改為 (robj *o, void *key)，且呼叫點 onFieldExpire 原本傳入 isSdsField=0，現在直接傳入 field。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 890,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "dictSetKeyAtLink 中 keyDup 可能重複複製 stored-key",
+    "body": "在 dictSetKeyAtLink 中，addedKey 是透過 keyDup 複製 key 得到的。但 key 現在是 stored-key，而 keyDup 的簽名已改為接受 stored-key。若 keyDup 實作會從 stored-key 提取 lookup key 再複製，則可能導致重複複製或型別不符。需要確認所有 keyDup 實作是否正確處理 stored-key。",
+    "existing_code": "void *addedKey = (d->type->keyDup) ? d->type->keyDup(d, key) : key;",
+    "evidence": "diff 中 dictSetKeyAtLink 的 key 參數標記為 __stored_key，且 keyDup 的簽名也改為接受 __stored_key，但未檢查 keyDup 實作是否正確。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 339,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "rehashEntriesInBucketAtIndex 中 storedKey 可能為 NULL",
+    "body": "在 rehashEntriesInBucketAtIndex 中，storedKey 從 dictGetKey(de) 取得，但若 de 是 key-only entry（entryIsKey(de) 為真），則 storedKey 可能不是有效的指標。後續呼叫 dictStoredKey2Key(d, storedKey) 可能導致 NULL 解參考。需要確認 entryIsKey 的情況。",
+    "existing_code": "void *storedKey = dictGetKey(de);",
+    "evidence": "diff 中新增了 storedKey 變數，但未檢查 entryIsKey(de) 的情況。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "pauseAutoResize 型別從 bitfield 改為 int16_t 可能影響 ABI",
+    "body": "原本 pauseAutoResize 是 15-bit signed bitfield，現在改為 int16_t。這可能改變 struct dict 的佈局，影響與外部模組的 ABI 相容性。若 Redis 作為動態連結庫使用，可能導致問題。建議確認 ABI 穩定性要求。",
+    "existing_code": "int16_t pauseAutoResize;  /* If >0 automatic resizing is disallowed (<0 indicates coding error) */",
+    "evidence": "diff 中 struct dict 的 pauseAutoResize 欄位型別從 bitfield 改為 int16_t。"
+  }
+]

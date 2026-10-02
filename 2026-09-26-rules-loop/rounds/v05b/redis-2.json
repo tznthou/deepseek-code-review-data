@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "asmCreateImportTask 中 slots 所有權轉移導致 double-free 或 use-after-free",
+    "body": "在 asmCreateImportTask 中，原本使用 slotRangeArrayDup(slots) 複製一份，現在改為直接指派 task->slots = slots，將傳入的 slots 所有權轉移給 task。然而，呼叫端 clusterMigrationCommandImport 在呼叫後不再釋放 slots（已移除 slotRangeArrayFree(slots)），但其他呼叫端（如 clusterAsmProcess）仍可能預期函式不會取得所有權，導致後續釋放時發生 double-free 或 use-after-free。\n\n具體失敗情境：\n1. clusterAsmProcess 在 ASM_EVENT_IMPORT_START 分支中，先 slotRangeArrayDup(arg) 複製一份，再呼叫 asmCreateImportTask(task_id, slots, &errsds)。若 asmCreateImportTask 成功，slots 所有權轉移給 task，但 clusterAsmProcess 之後沒有釋放 slots（原本就沒有），所以不會 double-free。但若 asmCreateImportTask 失敗，它會釋放 slots（goto err），而 clusterAsmProcess 在失敗後也沒有釋放 slots，所以不會 double-free。然而，若未來有其他呼叫端在呼叫後仍釋放 slots，就會 double-free。\n2. 更嚴重的問題是：在 asmCreateImportTask 中，若 task 建立後但在回傳前發生錯誤（例如 sdsnew 失敗），會 goto err 並釋放 slots，但此時 task 已持有 slots 指標，之後 task 若被釋放，會再次釋放 slots，造成 double-free。\n\n建議：明確所有權轉移的契約，並在所有呼叫端一致遵守。或者，保留 slotRangeArrayDup 複製，避免所有權轉移。",
+    "existing_code": "task->slots = slots;",
+    "evidence": "diff 中將原本的 task->slots = slotRangeArrayDup(slots); 改為 task->slots = slots;，且移除了 clusterMigrationCommandImport 中的 slotRangeArrayFree(slots);。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "slotRangeArrayNormalizeAndValidate 錯誤時未釋放 err 字串",
+    "body": "在 parseSlotRangesOrReply 中，原本呼叫 validateSlotRanges 失敗時會 addReplyErrorSds(c, err) 將 err 傳給客戶端並由 addReplyErrorSds 負責釋放。現在改為 slotRangeArrayNormalizeAndValidate，失敗時直接 sdsfree(err) 後 slotRangeArrayFree(slots) 並回傳 NULL，但沒有將錯誤訊息回覆給客戶端。這會導致客戶端收到空回覆或不明錯誤，且 err 字串被釋放後無法使用。\n\n具體失敗情境：當使用者輸入無效的 slot range（例如重疊或超出範圍）時，parseSlotRangesOrReply 會回傳 NULL，但呼叫端可能沒有處理錯誤回覆，導致客戶端收到空回覆或連線中斷。\n\n建議：在釋放 err 之前，先呼叫 addReplyErrorSds(c, err) 將錯誤訊息傳給客戶端，或修改函式介面以傳回錯誤訊息。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n        sdsfree(err);\n        slotRangeArrayFree(slots);\n        return NULL;\n    }",
+    "evidence": "diff 中將原本的 addReplyErrorSds(c, err); 改為 sdsfree(err);，且沒有其他錯誤回覆。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 1012,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "asmCountKeysInSlots 可能導致效能問題",
+    "body": "新增的 asmCountKeysInSlots 函式會對每個 slot 呼叫 kvstoreDictSize，若 slot 範圍很大（例如整個 16384 個 slot），會執行大量函式呼叫，可能造成效能瓶頸。此外，此函式在 asmLogTaskEvent 中被呼叫，而 asmLogTaskEvent 可能在任務生命週期的多個事件中被呼叫，進一步放大效能影響。\n\n具體失敗情境：當 slot 範圍涵蓋大量 slot 時，每次記錄事件都會遍歷所有 slot 並呼叫 kvstoreDictSize，可能導致明顯延遲。\n\n建議：考慮使用更有效率的方式計算 key 數量，例如直接從資料庫統計資訊取得，或快取結果。",
+    "existing_code": "unsigned long long asmCountKeysInSlots(slotRangeArray *slots) {\n    if (!slots) return 0;\n\n    unsigned long long key_count = 0;\n    int total_ranges = slots->num_ranges;\n    for (int i = 0; i < slots->num_ranges; i++) {\n        for (int j = slots->ranges[i].start; j <= slots->ranges[i].end; j++) {\n            key_count += kvstoreDictSize(server.db[0].keys, j);\n        }\n    }\n    return key_count;\n}",
+    "evidence": "diff 中新增的函式，在迴圈中呼叫 kvstoreDictSize。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 2871,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "clusterAsmProcess 中 slotRangeArrayDup 後未在錯誤路徑釋放",
+    "body": "在 clusterAsmProcess 的 ASM_EVENT_IMPORT_START 分支中，先 slotRangeArrayDup(arg) 複製一份 slots，然後呼叫 slotRangeArrayNormalizeAndValidate。若驗證失敗，會 slotRangeArrayFree(slots) 並 break，但此時 ret 設為 C_ERR，errsds 可能已設定。然而，若驗證成功但 asmCreateImportTask 失敗，asmCreateImportTask 會釋放 slots（因為所有權轉移），但 clusterAsmProcess 沒有再釋放 slots，所以不會 double-free。但若 asmCreateImportTask 成功，slots 所有權轉移給 task，clusterAsmProcess 也沒有釋放 slots，所以不會 double-free。然而，若未來 asmCreateImportTask 的實作變更，可能導致 double-free。\n\n具體失敗情境：若 asmCreateImportTask 在成功建立 task 後但在回傳前發生錯誤，會釋放 slots，而 clusterAsmProcess 之後可能仍持有 slots 指標並嘗試釋放，造成 double-free。\n\n建議：明確所有權轉移的契約，並在所有呼叫端一致遵守。",
+    "existing_code": "slotRangeArray *slots = slotRangeArrayDup(arg);\n            if (slotRangeArrayNormalizeAndValidate(slots, &errsds) != C_OK) {\n                slotRangeArrayFree(slots);\n                ret = C_ERR;\n                break;\n            }\n            ret = asmCreateImportTask(task_id, slots, &errsds) ? C_OK : C_ERR;",
+    "evidence": "diff 中新增的程式碼，slotRangeArrayDup 後在驗證失敗時釋放，但成功後所有權轉移給 asmCreateImportTask，若 asmCreateImportTask 失敗會釋放 slots，但 clusterAsmProcess 沒有處理。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1744,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "slotRangeArrayNormalizeAndValidate 中排序與合併可能改變原始陣列",
+    "body": "slotRangeArrayNormalizeAndValidate 現在會呼叫 slotRangeArraySortAndMerge 來排序與合併相鄰範圍，這會修改傳入的 slotRangeArray 結構。若呼叫端預期驗證不會修改資料，可能會導致非預期的行為。\n\n具體失敗情境：若某個呼叫端在驗證後仍使用原始的 slotRangeArray，且依賴其原始順序或範圍，則會得到錯誤的結果。\n\n建議：在文件或函式名稱中明確指出此函式會修改輸入，或提供一個不會修改的驗證版本。",
+    "existing_code": "/* Sort and merge adjacent slot ranges. */\n    slotRangeArraySortAndMerge(slots);",
+    "evidence": "diff 中新增的呼叫，會修改 slots 的內容。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1855,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "slotRangeArraySortAndMerge 未處理重疊範圍",
+    "body": "slotRangeArraySortAndMerge 只合併相鄰範圍（prev.end + 1 == next.start），但未處理重疊範圍。若輸入包含重疊範圍（例如 1000-2000 和 1500-2500），合併後仍會保留重疊，後續驗證會失敗。這可能不是問題，但函式名稱和註解可能讓人誤以為會處理重疊。\n\n具體失敗情境：若使用者輸入重疊範圍，驗證會失敗，但錯誤訊息可能不明確。\n\n建議：在註解中明確說明重疊範圍不會被合併，或考慮在合併時處理重疊。",
+    "existing_code": "/* Sort slot ranges by start slot and merge adjacent ranges.\n * Adjacent means: prev.end + 1 == next.start.\n * e.g. 1000-2000 2001-3000 0-100  =>  0-100 1000-3000\n *\n * Note: Overlapping ranges are not merged.*/",
+    "evidence": "diff 中新增的註解，但未處理重疊。"
+  }
+]

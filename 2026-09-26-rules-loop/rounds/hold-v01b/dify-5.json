@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 199,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R25] 新增 console.log 除錯語句",
+    "body": "在批次輸入驗證前新增了 `console.log('Checking batch inputs:', { dataLength: data.length, headerData })`，這會將資料輸出到瀏覽器主控台，可能洩漏使用者輸入內容，且違反專案規範 R25（禁止 console 語句）。請移除該行。",
+    "existing_code": "console.log('Checking batch inputs:', { dataLength: data.length, headerData })",
+    "evidence": "diff 中新增的 console.log 語句，違反 R25。"
+  },
+  {
+    "path": "web/app/components/app/configuration/prompt-value-panel/index.tsx",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "number 輸入框 type 改為 text 可能破壞數值輸入",
+    "body": "將 number 輸入框的 `type` 從 `\"number\"` 改為 `\"text\"`，這會失去瀏覽器原生的數值輸入行為（如 spinner、行動裝置數字鍵盤），且可能允許非數值字元輸入。若後端預期數值，可能導致提交錯誤。請確認此變更的必要性，或改用 `inputMode=\"numeric\"` 等替代方案。",
+    "existing_code": "type=\"text\"",
+    "evidence": "diff 中 `-                        type=\"number\"` 改為 `+                        type=\"text\"`。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除預設 max_length 後可能導致無限制輸入",
+    "body": "原本使用 `varItem.max_length || DEFAULT_VALUE_MAX_LEN` 作為長度上限，現在改為直接使用 `varItem.max_length`。若後端未提供 `max_length`（例如舊資料或未設定），則 `varItem.max_length` 為 `undefined`，比較 `item[varIndex].length > undefined` 會得到 `false`，因此不會觸發長度錯誤，等同於無限制。請確認後端是否保證提供 `max_length`，或在前端保留預設值作為 fallback。",
+    "existing_code": "if (item[varIndex].length > varItem.max_length) {",
+    "evidence": "diff 中 `-          if (item[varIndex].length > maxLen) {` 改為 `+          if (item[varIndex].length > varItem.max_length) {`，且 `maxLen` 原本有 fallback。"
+  }
+]

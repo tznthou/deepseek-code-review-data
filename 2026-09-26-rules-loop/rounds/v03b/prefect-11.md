@@ -1,0 +1,40 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 💬 有需要留意的問題
+
+此 PR 在 Kubernetes observer 啟動期間加入 semaphore 以限制並發 API 呼叫，避免大量既有 pod/job 造成 API server 過載。主要風險在於 semaphore 初始化與使用的時序：若 initialize_clients 尚未執行或執行失敗，_startup_event_semaphore 可能為 None，導致 _replicate_pod_event 拋出 RuntimeError。此外，刪除了整個測試檔案，可能遺失重要測試覆蓋。建議先確認 semaphore 初始化時機與錯誤處理，並補回必要的測試。
+
+### Findings（3 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| ⚠️ | Major | `src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:132` | Semaphore 可能未初始化而導致 RuntimeError | 0.80 |
+| ⚠️ | Major | `src/integrations/prefect-kubernetes/tests/test_observer.py:1` | 刪除整個測試檔案，可能遺失重要測試覆蓋 | 0.70 |
+| 🔸 | Minor | `src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:137` | Semaphore 範圍可能過大，影響非啟動期間的事件處理 | 0.60 |
+
+<details><summary>⚠️ <b>Major</b> — <code>src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:132</code> Semaphore 可能未初始化而導致 RuntimeError</summary>
+
+在 `_replicate_pod_event` 中，當 `event_type is None` 時，會檢查 `_startup_event_semaphore` 是否為 None，若為 None 則拋出 RuntimeError。但 `_startup_event_semaphore` 是在 `initialize_clients` 中才被設定，而 `initialize_clients` 是 kopf 的 startup handler，可能尚未執行或執行失敗。若此時有 pod 事件進來，就會觸發此錯誤。建議在 semaphore 未初始化時採用 fallback（例如直接執行 API 呼叫，或使用預設並發限制），或確保在事件處理前 semaphore 一定可用。
+
+**判斷依據**：diff 中新增了全域變數 `_startup_event_semaphore`，並在 `initialize_clients` 中賦值，但在 `_replicate_pod_event` 中直接檢查並拋錯，未考慮初始化順序。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/integrations/prefect-kubernetes/tests/test_observer.py:1</code> 刪除整個測試檔案，可能遺失重要測試覆蓋</summary>
+
+此 PR 刪除了 `test_observer.py` 檔案，其中包含多個針對 `_replicate_pod_event` 的測試，包括 deduplication、不同 phase 處理等。這些測試可能仍然有效，刪除後將失去對這些功能的回歸保護。建議確認是否有替代測試，或恢復必要的測試案例。
+
+**判斷依據**：diff 顯示整個測試檔案被刪除，且未新增替代測試。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:137</code> Semaphore 範圍可能過大，影響非啟動期間的事件處理</summary>
+
+Semaphore 包住了整個事件過濾與 API 呼叫區塊，但此區塊在啟動期間（event_type is None）才會執行。若未來有其他呼叫路徑也使用此 semaphore，可能造成不必要的並發限制。目前影響有限，但建議確認 semaphore 僅用於啟動期間的 deduplication 檢查。
+
+**判斷依據**：diff 顯示 semaphore 僅在 event_type is None 分支內使用，但變數名稱與註解暗示可能用於啟動期間，需確認範圍。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 9546 (cache hit 9472) ｜ completion tokens 868 ｜ PR #11</sub>

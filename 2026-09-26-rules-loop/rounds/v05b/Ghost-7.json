@@ -1,0 +1,112 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R19] 重新命名時移除了多行結尾分號",
+    "body": "在將 `members-api.js` 的 require 路徑改為 kebab-case 的同時，多行原本以分號結尾的陳述式被移除了分號（例如 `const {Router} = require('express')`）。這違反了 repo 規範 R19（必須使用分號），且與本次重新命名的目的無關，可能是編輯器或格式化工具誤操作。建議恢復所有被移除的分號。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中 `-const {Router} = require('express');` 變為 `+const {Router} = require('express')`，後續多行也有相同情況。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R17] 重新命名時縮排從 4 空格變為 0 空格",
+    "body": "在 `members-api.js` 的 require 區塊中，原本的 4 空格縮排被移除，導致頂層陳述式沒有縮排。這違反了 repo 規範 R17（4 空格縮排），且與重新命名無關。建議恢復原本的縮排。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中 `-const {Router} = require('express');` 變為 `+const {Router} = require('express')`，且行首沒有空格，而其他 require 行仍保留縮排。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "重新命名時混入非預期的格式變更",
+    "body": "此檔案除了路徑更新外，還包含了移除分號、移除縮排等格式變更，這些變更與 PR 主旨（重新命名為 kebab-case）無關，可能造成 review 噪音。建議將這些格式變更分離到獨立的 commit 或 PR，以維持變更的單一職責。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中除了 require 路徑變更外，還有多行分號被移除、縮排被移除。"
+  },
+  {
+    "path": "ghost/core/core/server/services/audience-feedback/audience-feedback-controller.js",
+    "line": 77,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重新命名時移除了行尾空白",
+    "body": "在 `audience-feedback-controller.js` 中，兩行原本有行尾空白的程式碼被移除了行尾空白（`memberId: member.id, ` → `memberId: member.id,`）。這雖然是好的清理，但與重新命名無關，可能造成不必要的 diff。建議確認是否為有意為之。",
+    "existing_code": "memberId: member.id,\npostId: post.id,",
+    "evidence": "diff 中 `-            memberId: member.id, ` 變為 `+            memberId: member.id,`，行尾空白被移除。"
+  },
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/service.js",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重新命名時移除了多餘空白行",
+    "body": "在 `member-welcome-emails/service.js` 中，有兩處多餘的空白行被移除（例如 `-        ` 變為 `+`）。這與重新命名無關，但屬於合理的清理。建議確認是否為有意為之。",
+    "existing_code": "const row = await AutomatedEmail.findOne({slug});",
+    "evidence": "diff 中 `-        ` 變為 `+`，以及 `-            ` 變為 `+`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/posts-stats-service.js",
+    "line": 151,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重新命名時移除了多餘空白行",
+    "body": "在 `posts-stats-service.js` 中，多處多餘的空白行被移除（例如 `-                            ` 變為 `+`）。這與重新命名無關，但屬於合理的清理。建議確認是否為有意為之。",
+    "existing_code": "subquery1.union(function () {",
+    "evidence": "diff 中多處 `-                            ` 變為 `+`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/posts-stats-service.js",
+    "line": 1571,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重新命名時新增了檔案結尾換行",
+    "body": "在 `posts-stats-service.js` 的結尾，原本沒有換行符號，現在新增了換行符號（`\\ No newline at end of file` 被移除）。這與重新命名無關，但屬於合理的清理。建議確認是否為有意為之。",
+    "existing_code": "module.exports = PostsStatsService;",
+    "evidence": "diff 中 `-module.exports = PostsStatsService;\\ No newline at end of file` 變為 `+module.exports = PostsStatsService;`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/outbox/index.js",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重新命名時新增了檔案結尾換行",
+    "body": "在 `outbox/index.js` 的結尾，原本沒有換行符號，現在新增了換行符號。這與重新命名無關，但屬於合理的清理。建議確認是否為有意為之。",
+    "existing_code": "module.exports = new OutboxServiceWrapper();",
+    "evidence": "diff 中 `-module.exports = new OutboxServiceWrapper();\\ No newline at end of file` 變為 `+module.exports = new OutboxServiceWrapper();`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/outbox/jobs/outbox-job.js",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重新命名時新增了檔案結尾換行",
+    "body": "在 `outbox-job.js` 的結尾，原本沒有換行符號，現在新增了換行符號。這與重新命名無關，但屬於合理的清理。建議確認是否為有意為之。",
+    "existing_code": "})();",
+    "evidence": "diff 中 `-})();\\ No newline at end of file` 變為 `+})();`。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/outbox/index.test.js",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "重新命名時新增了檔案結尾換行",
+    "body": "在 `outbox/index.test.js` 的結尾，原本沒有換行符號，現在新增了換行符號。這與重新命名無關，但屬於合理的清理。建議確認是否為有意為之。",
+    "existing_code": "});",
+    "evidence": "diff 中 `-});\\ No newline at end of file` 變為 `+});`。"
+  }
+]

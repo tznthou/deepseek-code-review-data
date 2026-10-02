@@ -1,0 +1,31 @@
+pair,label,note
+P0006,same,
+P0029,no,
+P0057,same,
+P0061,same,沒引用規則但修法一樣：改回 strict: true
+P0077,no,
+P0083,same,
+P0093,partial,同一個 buffer，講的是未初始化不是越界
+P0102,same,
+P0145,no,zmalloc 規則與 off-by-one 是兩個獨立缺陷
+P0155,no,
+P0194,same,機制講得含糊但指出同一個改動並建議改回
+P0195,partial,同一個函式同一個狀態碼，講的是 log 措辭不是提早離開
+P0208,no,"同一行兩個獨立缺陷（沒用到 vs API 已棄用）；刪掉整行雖然兩者都消失，照邊界慣例判 no"
+P0233,same,
+P0247,same,只抓到 free 那一半，規則要求 malloc/free 都換
+P0253,no,
+P0254,same,
+P0285,no,
+P0298,same,
+P0315,no,
+P0326,same,
+P0370,same,
+P0385,same,嚴重度講輕了（說只是可讀性）但修法相同
+P0389,same,
+P0409,partial,同一個函式的快取寫入，講的是 None 序列化不是 log 計數
+P0505,no,
+P0508,no,
+P0520,same,
+P0535,same,理由不同但修法相同：改回 __REDIS_H
+P0558,no,

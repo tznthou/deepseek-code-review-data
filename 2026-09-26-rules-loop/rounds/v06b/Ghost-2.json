@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "編輯器可編輯性改為依賴 expertise 可能導致無 expertise 成員無法編輯",
+    "body": "原本 `editor.setEditable(!!memberName && progress !== 'sending')` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending')`。這表示若登入成員沒有 expertise（即使有名字），編輯器將被設為不可編輯，使用者無法輸入回覆。這可能不是預期行為，因為回覆不應要求 expertise。建議確認此變更意圖，若僅為修正顯示問題，應保留以 memberName 判斷可編輯性。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`，且 dependency array 也由 `[editor, memberName, progress]` 改為 `[editor, member, progress]`。"
+  },
+  {
+    "path": "apps/comments-ui/test/e2e/actions.test.ts",
+    "line": 679,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中對 member-name 的斷言可能不穩定",
+    "body": "在第二個測試中，斷言 `await expect(memberName).not.toHaveText('Named Author');` 只檢查不包含父作者名稱，但未驗證實際顯示內容。若元件未正確渲染或顯示其他文字，此斷言仍會通過，無法有效捕捉回歸。建議改為更明確的斷言，例如檢查顯示為空、'Anonymous' 或提示輸入名稱。",
+    "existing_code": "await expect(memberName).not.toHaveText('Named Author');",
+    "evidence": "測試程式碼中此斷言僅使用 not.toHaveText，未對預期內容做正向驗證。"
+  }
+]

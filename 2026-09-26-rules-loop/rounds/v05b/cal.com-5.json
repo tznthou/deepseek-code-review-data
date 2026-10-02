@@ -1,0 +1,57 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的顯示前綴",
+    "body": "在 `BasicsTab` 中，從 `bookingUrl` 解析顯示前綴的邏輯假設路徑的最後一段是 slug，並將其移除。但若 `bookingUrl` 包含 query string、hash，或路徑結構不同（例如 `/username/event-type` 但 slug 不在最後），則顯示的前綴會錯誤。此外，若 `bookingUrl` 為相對路徑或格式不合法，`new URL` 會拋出例外，但 catch 區塊僅回退到 `cal.com/${props.username}/`，可能與實際網域不符。\n\n建議：改為直接顯示 `bookingUrl` 的 origin + pathname，或由後端提供明確的 `bookingUrlPrefix` 欄位，避免前端解析。",
+    "existing_code": "const url = new URL(props.bookingUrl);\nconst pathParts = url.pathname.split(\"/\").filter(Boolean);\npathParts.pop(); // Remove slug\nlet prefix = \"/\";\nif (pathParts.length > 0) {\n  prefix = `/${pathParts.join(\"/\")}/`;\n}\nreturn `${url.protocol}//${url.hostname}${prefix}`;",
+    "evidence": "diff 中新增的程式碼片段，位於 BasicsTab.tsx 第 257 行附近。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "handlePreview 依賴 bookingUrl state，但未見設定邏輯",
+    "body": "`handlePreview` 現在直接使用 `bookingUrl` state，但 diff 中僅新增了 state 宣告，未看到任何設定 `bookingUrl` 的程式碼（例如從 API 回應或 props 中取得）。這可能導致 `bookingUrl` 永遠為空字串，使用者點擊預覽時只會看到錯誤訊息。\n\n建議：確認 `bookingUrl` 的來源，並在元件掛載或資料載入時正確設定。",
+    "existing_code": "const [bookingUrl, setBookingUrl] = useState<string>(\"\");",
+    "evidence": "diff 中新增的 state 宣告，但未見 setBookingUrl 呼叫。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "copyBtn 事件處理中未使用 eventType.bookingUrl",
+    "body": "在 `copyBtn` 的 click 事件中，仍使用舊的邏輯建構 bookingUrl，未使用 `eventType.bookingUrl`。這可能導致複製的連結與預覽不一致。\n\n建議：與 previewBtn 一致，改為 `eventType.bookingUrl || 舊邏輯`。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中 copyBtn 事件處理的程式碼片段，未使用 eventType.bookingUrl。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "copyBtn 事件處理中 bookingUrl 建構邏輯重複",
+    "body": "多處重複建構 bookingUrl 的邏輯，建議抽成共用函式以減少維護成本。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中多處出現相同的 bookingUrl 建構邏輯。"
+  },
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "bookingUrl 解析邏輯缺少測試",
+    "body": "新增的 URL 解析邏輯較複雜，但未見對應的單元測試。建議加入測試涵蓋各種 bookingUrl 格式（含 query、hash、無 slug 等）。",
+    "existing_code": "const url = new URL(props.bookingUrl);\nconst pathParts = url.pathname.split(\"/\").filter(Boolean);\npathParts.pop(); // Remove slug",
+    "evidence": "diff 中新增的解析邏輯，但無測試檔案變更。"
+  }
+]

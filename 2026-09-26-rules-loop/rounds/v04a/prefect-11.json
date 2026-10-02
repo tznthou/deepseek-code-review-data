@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-kubernetes/tests/test_observer.py",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "刪除整個測試檔案，降低測試覆蓋率",
+    "body": "此 PR 刪除了 `test_observer.py` 檔案，其中包含多個針對 `_replicate_pod_event` 和 observer 啟動/停止的測試。刪除後，相關功能的測試覆蓋率將大幅下降，且未新增替代測試。建議保留或遷移必要的測試，並新增針對 semaphore 行為的測試。",
+    "existing_code": "deleted file mode 100644\nindex 5041face3a79..000000000000\n--- a/src/integrations/prefect-kubernetes/tests/test_observer.py\n+++ /dev/null",
+    "evidence": "diff 顯示整個測試檔案被刪除，且沒有新增對應的測試檔案。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Semaphore 初始化失敗時會中斷啟動流程",
+    "body": "在 `_replicate_pod_event` 中，若 `_startup_event_semaphore` 為 `None`，會直接拋出 `RuntimeError`。這表示如果 `initialize_clients` 未正確執行或 semaphore 初始化失敗，任何 pod 事件處理都會失敗，可能導致 observer 無法正常運作。建議考慮提供預設值或更優雅的降級處理，例如在 semaphore 未初始化時直接執行 API 呼叫而不限制並發。",
+    "existing_code": "if _startup_event_semaphore is None:\n    raise RuntimeError(\"Startup event semaphore not initialized\")",
+    "evidence": "diff 中新增的檢查邏輯，若 semaphore 為 None 則拋出例外，可能中斷啟動流程。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Semaphore 初始化未處理設定值為零或負數的情況",
+    "body": "`asyncio.Semaphore` 的初始值若為零或負數，會導致所有 `acquire` 永遠阻塞。雖然設定預設值為 5，但使用者可能透過環境變數設定為 0 或負數。建議在初始化時驗證 `startup_event_concurrency` 為正整數，或使用 `max(1, value)` 等方式確保至少為 1。",
+    "existing_code": "_startup_event_semaphore = asyncio.Semaphore(\n    settings.observer.startup_event_concurrency\n)",
+    "evidence": "diff 中新增的 semaphore 初始化，未對設定值進行驗證。"
+  }
+]

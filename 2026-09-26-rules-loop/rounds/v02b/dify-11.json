@@ -1,0 +1,57 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R14] Pydantic v1 語法違反專案規範",
+    "body": "AgentThoughtValidation 使用 `class Config: extra = \"allow\"`，這是 Pydantic v1 的寫法。專案規範 R14 要求使用 Pydantic v2 的 `ConfigDict(extra='forbid')`。此處使用 v1 語法可能導致驗證行為不一致，且允許額外欄位可能引入未預期的資料。建議改為 `model_config = ConfigDict(extra='forbid')`。",
+    "existing_code": "class Config:\n        extra = \"allow\"  # Pydantic v1 syntax - should use ConfigDict(extra='forbid')",
+    "evidence": "diff 中新增的 AgentThoughtValidation 類別使用了 Pydantic v1 的 Config 類別，違反 R14。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 319,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Decimal 型別可能導致既有程式碼相容性問題",
+    "body": "將 `message_unit_price` 等欄位從整數改為 Decimal，但其他程式碼可能仍以整數進行比較或運算，造成型別錯誤或行為不一致。例如，若其他模組預期這些欄位為 int，則可能發生例外。建議全面檢查所有使用這些欄位的地方，確認相容性。",
+    "existing_code": "message_unit_price=Decimal(0),\n            message_price_unit=Decimal(\"0.001\"),",
+    "evidence": "diff 中將原本的整數 0 改為 Decimal(0)，可能影響其他程式碼。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "tool_responses 未被使用，可能導致工具回應內容錯誤",
+    "body": "在 organize_agent_history 中，原本使用 `tool_responses.get(tool, agent_thought.observation)` 取得工具回應，但修改後改為 `str(tool_inputs.get(tool, agent_thought.observation))`，完全忽略了 tool_responses。這可能導致工具回應內容錯誤，特別是在 observation 為 JSON 且包含多個工具回應時。建議確認此變更是否為預期，並修正為使用 tool_responses。",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中將原本的 tool_responses 改為 tool_inputs，且 tool_responses 變數已不再使用。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1846,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "id 欄位同時使用 insert_default 與 default_factory 可能造成混淆",
+    "body": "id 欄位同時指定了 `insert_default` 和 `default_factory`，兩者功能重疊。通常只需使用其中一個。建議確認哪一個是必要的，並移除多餘的設定，以避免未來維護上的混淆。",
+    "existing_code": "id: Mapped[str] = mapped_column(\n        StringUUID, insert_default=lambda: str(uuid4()), default_factory=lambda: str(uuid4()), init=False\n    )",
+    "evidence": "diff 中 id 欄位同時使用了 insert_default 和 default_factory。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1853,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "message_chain_id 欄位型別標記為可選但未設定 default=None",
+    "body": "message_chain_id 欄位型別為 `Mapped[str | None]`，但 mapped_column 中未設定 `default=None`。雖然 nullable=True 允許 NULL，但若未明確設定 default，可能導致插入時需要手動提供值。建議加上 `default=None` 以符合其他可選欄位的模式。",
+    "existing_code": "message_chain_id: Mapped[str | None] = mapped_column(StringUUID, nullable=True, default=None)",
+    "evidence": "diff 中 message_chain_id 的 mapped_column 沒有 default 參數，但其他可選欄位都有。"
+  }
+]

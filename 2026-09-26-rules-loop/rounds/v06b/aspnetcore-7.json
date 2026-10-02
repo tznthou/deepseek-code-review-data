@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "多 host 情境下可能錯誤地允許重新初始化",
+    "body": "原本的檢查 `if (manager)` 會在任何重複呼叫時拋出錯誤，但新邏輯改為 `if (manager && currentRendererId === rendererId)`，這表示當 `manager` 已存在但 `currentRendererId` 與新的 `rendererId` 不同時，不會拋出錯誤，而是繼續執行並覆寫 `manager` 與 `currentRendererId`。這可能導致多 host 情境（例如同時使用 Server 與 WebAssembly renderer）下，後啟動的 renderer 覆蓋先前的 manager，造成動態 root component 的行為異常。建議確認此情境是否為預期支援，若不支援則應保留拋出錯誤的邏輯。",
+    "existing_code": "if (manager && currentRendererId === rendererId) {\n    // A different renderer type (e.g., Server vs WebAssembly) is trying to enable JS root components.\n    // This is a multi-host scenario which is not supported for dynamic root components.\n    throw new Error('Dynamic root components have already been enabled.');\n  }",
+    "evidence": "diff 中將原本的 `if (manager)` 改為 `if (manager && currentRendererId === rendererId)`，且後續直接指派 `currentRendererId = rendererId; manager = managerInstance;`，未對不同 rendererId 的情況做任何防護。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`hasInitializedJsComponents` 旗標可能導致初始化遺漏",
+    "body": "新增的 `hasInitializedJsComponents` 旗標在第一次初始化後設為 `true`，之後即使 `jsComponentInitializers` 內容改變（例如新增了需要初始化的 component type），也不會再執行初始化。若此函式可能在不同時間點被呼叫且 initializer 集合可能動態增加，則此旗標可能造成部分 component 未初始化。建議確認 initializer 集合是否在應用程式生命週期內固定不變，或考慮改為追蹤已初始化的 identifier。",
+    "existing_code": "if (!hasInitializedJsComponents) {\n    // Call the registered initializers. This is an arbitrary subset of the JS component types that are registered\n    // on the .NET side - just those of them that require some JS-side initialization (e.g., to register them\n    // as custom elements).\n    for (const [initializerIdentifier, componentIdentifiers] of Object.entries(jsComponentInitializers)) {\n      const initializerFunc = DotNet.findJSFunction(initializerIdentifier, 0) as JSComponentInitializerCallback;\n      for (const componentIdentifier of componentIdentifiers)\n        initializerFunc(componentIdentifier, jsComponentParameters[componentIdentifier]);\n    }\n\n    hasInitializedJsComponents = true;\n  }",
+    "evidence": "diff 中新增 `hasInitializedJsComponents` 變數，並在初始化迴圈後設為 `true`，之後的呼叫將跳過初始化。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/Tests/StatePersistenceTest.cs",
+    "line": 282,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `PersistentStateIsSupportedInDynamicJSRoots` 未包含 `// Arrange`、`// Act`、`// Assert` 等結構化註解，違反專案規範 R06。建議補上對應註解以提升可讀性與一致性。",
+    "existing_code": "public void PersistentStateIsSupportedInDynamicJSRoots(string renderMode)\n    {\n        Navigate($\"subdir/WasmMinimal/dynamic-js-root.html?renderMode={renderMode}\");\n\n        Browser.Equal(\"Counter\", () => Browser.Exists(By.TagName(\"h1\")).Text);\n        Browser.Equal(\"Current count: 0\", () => Browser.Exists(By.CssSelector(\"p[role='status']\")).Text);\n\n        Browser.Click(By.CssSelector(\"button.btn-primary\"));\n        Browser.Equal(\"Current count: 1\", () => Browser.Exists(By.CssSelector(\"p[role='status']\")).Text);\n    }",
+    "evidence": "diff 中新增的測試方法沒有 AAA 註解，而其他測試方法（如 `StateIsProvidedEveryTimeACircuitGetsCreated`）有使用。"
+  }
+]

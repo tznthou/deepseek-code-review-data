@@ -1,0 +1,57 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "tool_call_response 的 content 誤用 tool_inputs 而非 tool_responses",
+    "body": "在 organize_agent_history 中，建立 ToolPromptMessage 時，content 參數使用了 `tool_inputs.get(tool, agent_thought.observation)`，但此處應為工具的回應內容，應使用 `tool_responses`。這會導致回傳給使用者的內容是工具的輸入而非輸出，造成資訊錯誤。\n\n建議修正為：\n```python\ncontent=str(tool_responses.get(tool, agent_thought.observation)),\n```",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中該行將原本的 `tool_responses.get(tool, agent_thought.observation)` 改為 `tool_inputs.get(...)`，但變數名稱與上下文顯示此處應為回應內容。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R14] AgentThoughtValidation 使用 Pydantic v1 語法且未實際使用",
+    "body": "新增的 `AgentThoughtValidation` 模型使用了 Pydantic v1 的 `class Config` 語法，違反專案規範 R14（應使用 Pydantic v2 的 `ConfigDict`）。此外，該模型在程式碼中並未被使用，可能為冗餘程式碼。\n\n建議：若此模型無實際用途，應移除；若需保留，應改用 Pydantic v2 語法：\n```python\nfrom pydantic import ConfigDict\nclass AgentThoughtValidation(BaseModel):\n    model_config = ConfigDict(extra='forbid')\n```",
+    "existing_code": "class AgentThoughtValidation(BaseModel):\n    \"\"\"\n    Validation model for agent thought data before database persistence.\n    \"\"\"\n\n    message_id: str\n    position: int\n    thought: str | None = None\n    tool: str | None = None\n    tool_input: str | None = None\n    observation: str | None = None\n\n    class Config:\n        extra = \"allow\"  # Pydantic v1 syntax - should use ConfigDict(extra='forbid')",
+    "evidence": "diff 中新增此模型，且未在其他地方引用。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1838,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "MessageAgentThought 繼承 TypeBase 可能改變既有行為",
+    "body": "將 `MessageAgentThought` 的基底類別從 `Base` 改為 `TypeBase`。若 `TypeBase` 有額外的行為（例如自動設定 `id`、`created_at` 或軟刪除），可能影響現有資料的相容性。需確認 `TypeBase` 的定義是否與原本的 `Base` 相容，特別是 `id` 欄位的預設值與 `init=False` 設定是否會影響現有程式碼中手動指定 `id` 的用法（例如測試中已移除 `id=fake.uuid4()`）。",
+    "existing_code": "class MessageAgentThought(TypeBase):",
+    "evidence": "diff 中將 `class MessageAgentThought(Base):` 改為 `class MessageAgentThought(TypeBase):`。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 320,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "message_price_unit 與 answer_price_unit 的預設值不一致",
+    "body": "在 `create_agent_thought` 中，`message_price_unit` 被設為 `Decimal(\"0.001\")`，而 `answer_price_unit` 被設為 `Decimal(0)`。這與模型定義中的預設值（兩者皆為 `0.001`）不一致，可能導致資料不一致。請確認此處的意圖是否正確。",
+    "existing_code": "message_price_unit=Decimal(\"0.001\"),\n            answer_price_unit=Decimal(0),",
+    "evidence": "diff 中將原本的 `message_price_unit=0` 改為 `Decimal(\"0.001\")`，但 `answer_price_unit` 改為 `Decimal(0)`，兩者不對稱。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 365,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "字串串接方式改變可能影響效能與可讀性",
+    "body": "將 `agent_thought.thought += thought` 改為 `agent_thought.thought = f\"{existing_thought}{thought}\"`。雖然功能相同，但 f-string 串接在大量累積時可能產生較多暫存物件。若 `thought` 可能為 `None`，此處的 `existing_thought` 已處理，但 `thought` 本身若為 `None` 會導致錯誤。建議確認 `thought` 參數是否可能為 `None`。",
+    "existing_code": "existing_thought = agent_thought.thought or \"\"\n            agent_thought.thought = f\"{existing_thought}{thought}\"",
+    "evidence": "diff 中將原本的 `agent_thought.thought += thought` 改為上述兩行。"
+  }
+]

@@ -1,0 +1,6 @@
+[info] repo 規範＋範圍說明：repo=firefox-ios、15 條、10078 字元、placement=after_diff、sha256=c387261a82c2
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 97405 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/Tabs/State/TabsPanelState.swift:100 → 143（片段唯一命中）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/Tabs/Views/TabDisplayView.swift:169 → 172（片段唯一命中）
+[info] 重新定位 firefox-ios/Shared/Strings.swift:8458 → 8461（片段唯一命中）
+[info] 完成於 7.6s ｜ findings=4 ｜ relocated=3 ｜ verdict=comment ｜ usage={"prompt_tokens": 28519, "completion_tokens": 989, "total_tokens": 29508, "prompt_tokens_details": {"cached_tokens": 28416}, "prompt_cache_hit_tokens": 28416, "prompt_cache_miss_tokens": 103}

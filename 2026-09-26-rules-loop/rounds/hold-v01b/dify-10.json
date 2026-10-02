@@ -1,0 +1,57 @@
+[
+  {
+    "path": "api/services/billing_service.py",
+    "line": 350,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "快取寫入時使用了錯誤的變數 bulk_plans 而非 plans_to_cache",
+    "body": "在 Step 3 的快取寫入迴圈中，程式碼遍歷的是 `bulk_plans.items()`，但 `bulk_plans` 是從 `get_plan_bulk` 回傳的完整字典，而 `plans_to_cache` 才是經過篩選、只包含需要快取的項目。這會導致即使某個 tenant 的 plan 驗證失敗（在 `get_plan_bulk` 中被設為 `None`），仍然會被寫入快取，造成快取中存有無效資料。\n\n**失敗情境**：假設 `get_plan_bulk` 回傳 `{'tenant-1': valid_plan, 'tenant-2': None}`，則 `plans_to_cache` 只包含 `tenant-1`，但迴圈會將 `tenant-2` 也寫入快取，值為 `None`。下次讀取快取時，`json.loads('null')` 會得到 `None`，然後 `subscription_adapter.validate_python(None)` 會拋出例外，導致該 tenant 被視為 cache miss，但實際上快取中已有無效資料。\n\n**建議修法**：將迴圈改為遍歷 `plans_to_cache.items()`。",
+    "existing_code": "for tenant_id, subscription_plan in bulk_plans.items():",
+    "evidence": "diff 中第 350 行（新增側）顯示 `for tenant_id, subscription_plan in bulk_plans.items():`，而前一行是 `if plans_to_cache:`，且 `plans_to_cache` 是在前一個迴圈中只加入有效 plan 的字典。"
+  },
+  {
+    "path": "api/services/billing_service.py",
+    "line": 376,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "快取寫入時可能將 None 序列化為 'null' 字串",
+    "body": "即使修正了變數名稱，如果 `plans_to_cache` 中包含值為 `None` 的項目（例如 `get_plan_bulk` 回傳的字典中某個 tenant 的值為 `None`），`json.dumps(None)` 會產生字串 `'null'`。之後讀取快取時，`json.loads('null')` 會得到 `None`，然後 `validate_python(None)` 會拋出例外，導致該 tenant 被視為 cache miss，但實際上快取中已有無效資料。\n\n**失敗情境**：`get_plan_bulk` 回傳 `{'tenant-1': None}`，`plans_to_cache` 包含 `tenant-1`，寫入快取的值為 `'null'`。下次讀取時，`json.loads` 得到 `None`，驗證失敗，進入 cache miss，重新呼叫 API，但 API 可能再次回傳 `None`，形成無效快取。\n\n**建議修法**：在寫入快取前，過濾掉值為 `None` 的項目，或確保 `get_plan_bulk` 不會回傳 `None` 值。",
+    "existing_code": "json_str = json.dumps(subscription_plan)",
+    "evidence": "diff 中第 352 行（新增側）顯示 `json_str = json.dumps(subscription_plan)`，而 `subscription_plan` 的型別是 `SubscriptionPlan`，但 `get_plan_bulk` 可能回傳 `None`（在驗證失敗時）。"
+  },
+  {
+    "path": "api/services/billing_service.py",
+    "line": 376,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "快取寫入時未處理 json.dumps 可能拋出的例外",
+    "body": "`json.dumps(subscription_plan)` 可能因為 `subscription_plan` 包含不可序列化的物件而拋出 `TypeError`。雖然 `SubscriptionPlan` 是 `TypedDict`，但實際值可能包含其他型別（例如 `datetime` 物件），導致序列化失敗。此例外會中斷整個 pipeline 的執行，且不會被外層的 `try` 捕捉（因為 `try` 只包住 `pipe.execute()`）。\n\n**失敗情境**：如果 `subscription_plan` 中包含一個 `datetime` 物件，`json.dumps` 會拋出 `TypeError`，導致整個快取寫入失敗，且沒有記錄任何錯誤。\n\n**建議修法**：將 `json.dumps` 移入 `try` 區塊，或使用 `default=str` 參數來處理不可序列化的物件。",
+    "existing_code": "json_str = json.dumps(subscription_plan)",
+    "evidence": "diff 中第 352 行（新增側）顯示 `json_str = json.dumps(subscription_plan)`，且該行不在 `try` 區塊內。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_billing_service.py",
+    "line": 332,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中使用 time.sleep 模擬 TTL 過期可能導致不穩定",
+    "body": "在 `test_get_plan_bulk_with_cache_ttl_expired` 測試中，使用 `time.sleep(2)` 來等待 TTL 過期。這會讓測試執行時間增加，且在某些環境下（例如 Redis 的 TTL 精度或系統負載）可能仍然無法保證 key 已過期，導致測試偶發性失敗。\n\n**建議修法**：使用 `redis_client.delete` 直接刪除 key 來模擬過期，或使用 `unittest.mock.patch` 來模擬 `redis_client.exists` 回傳 0。",
+    "existing_code": "time.sleep(2)",
+    "evidence": "diff 中第 300 行（新增側）顯示 `time.sleep(2)`。"
+  },
+  {
+    "path": "api/services/billing_service.py",
+    "line": 372,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "快取寫入時未使用 pipeline 的上下文管理器",
+    "body": "`redis_client.pipeline()` 通常建議使用 `with` 語句來確保資源正確釋放。雖然目前程式碼在 `try` 區塊中呼叫 `pipe.execute()`，但如果 `pipe.execute()` 拋出例外，pipeline 物件可能不會被正確關閉，導致連線洩漏。\n\n**建議修法**：使用 `with redis_client.pipeline() as pipe:` 來管理 pipeline 的生命週期。",
+    "existing_code": "pipe = redis_client.pipeline()",
+    "evidence": "diff 中第 349 行（新增側）顯示 `pipe = redis_client.pipeline()`，且沒有使用 `with`。"
+  }
+]

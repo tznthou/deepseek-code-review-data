@@ -1,0 +1,5 @@
+[info] repo 規範：repo=dify、25 條、12264 字元、placement=after_diff、sha256=6a3194390e51
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 30402 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 web/test/i18n-mock.ts:12 → 10（片段唯一命中）
+[info] 重新定位 web/app/components/plugins/marketplace/index.spec.tsx:30 → 31（片段唯一命中）
+[info] 完成於 10.3s ｜ findings=3 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 12970, "completion_tokens": 1479, "total_tokens": 14449, "prompt_tokens_details": {"cached_tokens": 12928}, "prompt_cache_hit_tokens": 12928, "prompt_cache_miss_tokens": 42}

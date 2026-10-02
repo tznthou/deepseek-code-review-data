@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "條件判斷錯誤：`association.ext.is_empty()` 應為 `!association.ext.is_empty()`",
+    "body": "在 `create_info_plist` 中，原本的程式碼會將 `CFBundleTypeExtensions` 設定為 `association.ext` 的內容。此 PR 將其包在 `if association.ext.is_empty()` 條件內，但這會導致只有當 `ext` 為空時才加入該鍵，與預期相反。\n\n**失敗情境**：當 `ext` 非空時（例如 `[\"png\"]`），`CFBundleTypeExtensions` 不會被加入 plist，導致 macOS 無法將檔案類型與應用程式關聯。\n\n**建議修法**：將條件改為 `if !association.ext.is_empty()`。",
+    "existing_code": "if association.ext.is_empty() {\n  dict.insert(\n    \"CFBundleTypeExtensions\".into(),\n    plist::Value::Array(\n      association\n        .ext\n        .iter()\n        .map(|ext| ext.to_string().into())\n        .collect(),\n    ),\n  );\n}",
+    "evidence": "diff 中新增的 `if association.ext.is_empty()` 條件與原本無條件插入的程式碼形成對比，且後續 `CFBundleTypeName` 使用 `expect` 假設 `ext` 非空，邏輯矛盾。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "`expect` 可能導致 panic：`association.name` 為 None 且 `ext` 為空時",
+    "body": "原本的程式碼使用 `unwrap_or(&association.ext[0].0)` 來提供預設名稱，但此 PR 改為 `expect(\"File association must have a name\")`。若 `association.name` 為 `None` 且 `association.ext` 為空，則會 panic。\n\n**失敗情境**：使用者設定了一個沒有 `name` 且 `ext` 為空的 file association（例如僅使用 `contentTypes` 來關聯既有型別），打包時會 panic。\n\n**建議修法**：保留原本的 fallback 邏輯，或改為在 `ext` 為空時使用其他預設值（如 `\"File\"`），或直接省略 `CFBundleTypeName`。",
+    "existing_code": "dict.insert(\n  \"CFBundleTypeName\".into(),\n  association\n    .name\n    .as_ref()\n    .expect(\"File association must have a name\")\n    .to_string()\n    .into(),\n);",
+    "evidence": "diff 中將 `unwrap_or(&association.ext[0].0)` 改為 `expect`，且未處理 `ext` 為空的情況。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 1184,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "缺少 `#[serde(default)]` 可能導致向後相容性問題",
+    "body": "新增的 `content_types` 欄位沒有加上 `#[serde(default)]`。若使用者的 `tauri.conf.json` 是舊版格式，沒有此欄位，反序列化時會失敗。\n\n**失敗情境**：現有使用者的設定檔中沒有 `contentTypes` 欄位，升級後執行 `tauri build` 會因缺少欄位而報錯。\n\n**建議修法**：在欄位上加上 `#[serde(default)]`，使其在缺失時預設為 `None`。",
+    "existing_code": "#[serde(alias = \"content-types\")]\npub content_types: Option<Vec<String>>,",
+    "evidence": "diff 中新增的欄位沒有 `#[serde(default)]`，而其他可選欄位（如 `name`）都有。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`UTTypeTagSpecification` 可能缺少必要的 `public.filename-extension`",
+    "body": "在建立 `UTExportedTypeDeclarations` 時，`UTTypeTagSpecification` 中的 `public.filename-extension` 是從 `association.ext` 取得。若 `association.ext` 為空，則會產生一個空的陣列，可能導致 macOS 無法正確識別此型別。\n\n**失敗情境**：使用者定義了一個 exported type 但沒有指定任何副檔名（僅透過 `contentTypes` 關聯），則產生的 plist 中 `public.filename-extension` 為空陣列，可能導致型別無法被系統使用。\n\n**建議修法**：若 `ext` 為空，考慮省略 `public.filename-extension` 或提供其他標籤。",
+    "existing_code": "specification.insert(\n  \"public.filename-extension\".into(),\n  plist::Value::Array(\n    association\n      .ext\n      .iter()\n      .map(|s| s.to_string().into())\n      .collect(),\n  ),\n);",
+    "evidence": "diff 中直接使用 `association.ext` 建立陣列，未檢查是否為空。"
+  }
+]

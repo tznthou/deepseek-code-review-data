@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "sortHosts 函式在移動時反轉了優先權比較邏輯",
+    "body": "在 `isRRWeightsEnabled` 為 true 且權重相同時，原本的排序邏輯是 `return priorityB - priorityA`（優先權較高者在前），但移動後的程式碼變成 `return priorityA - priorityB`，導致排序結果相反。這會影響依賴此排序的所有功能（例如主機選擇、輪詢分配），可能造成錯誤的優先權順序。\n\n**失敗情境**：當啟用 RR 權重且兩個主機權重相同時，優先權較低的主機可能被排到前面，導致分配不符合預期。\n\n**建議修法**：將該行改回 `return priorityB - priorityA;`，並考慮為此函式新增單元測試以鎖定行為。",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中新增的 sortHosts 函式內，在 `if (weightA === weightB)` 分支中，回傳值從原本的 `priorityB - priorityA` 變成了 `priorityA - priorityB`。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 57,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除套件匯出可能造成外部相依性中斷",
+    "body": "此 PR 從 `packages/platform/atoms` 的 `package.json` 中移除了多個匯出路徑，包括 `./add-members-switch/AddMembersWithSwitchWebWrapper`、`./connect/conferencing-apps/ConferencingAppsViewWebWrapper`、`./destination-calendar/wrappers/DestinationCalendarSettingsWebWrapper`、`./event-types/wrappers/EventTypeWebWrapper` 和 `./selected-calendars/wrappers/SelectedCalendarsSettingsWebWrapper`。如果其他套件或外部消費者仍依賴這些路徑，將導致建置失敗或執行時期錯誤。\n\n**失敗情境**：任何未在此 PR 中更新的程式碼若仍從 `@calcom/atoms/...` 匯入這些元件，會在建置時出現模組找不到的錯誤。\n\n**建議修法**：確認所有內部使用都已更新，並考慮保留暫時的相容性匯出（deprecated re-export）或提供遷移指南。",
+    "existing_code": "\"./add-members-switch/AddMembersWithSwitchWebWrapper\": \"./add-members-switch/AddMembersWithSwitchWebWrapper.tsx\",\n    \"./availability/AvailabilitySettings\": \"./availability/AvailabilitySettings.tsx\",\n    \"./booker\": \"./booker/index.ts\",\n    \"./selected-calendars/SelectedCalendarsSettings\": \"./selected-calendars/SelectedCalendarsSettings.tsx\",\n    \"./components/ui/shell\": \"./src/components/ui/shell.tsx\",\n    \"./connect/conferencing-apps/ConferencingAppsViewWebWrapper\": \"./connect/conferencing-apps/ConferencingAppsViewWebWrapper.tsx\",\n    \"./destination-calendar/wrappers/DestinationCalendarSettingsWebWrapper\": \"./destination-calendar/wrappers/DestinationCalendarSettingsWebWrapper.tsx\",\n    \"./dist/index.ts\": \"./index.ts\",\n    \"./dist/index.d.ts\": \"./dist/index.d.ts\",\n    \"./event-types/wrappers/EventTypeWebWrapper\": \"./event-types/wrappers/EventTypeWebWrapper.tsx\",",
+    "evidence": "diff 顯示多個 exports 條目被刪除，且未在 PR 中看到對應的相容性處理。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案最後一行 `export default EventLimitsTabWebWrapper;` 之後沒有換行符（`\\ No newline at end of file`）。這可能違反專案的格式化規範（R03），並可能導致某些工具或 diff 顯示異常。\n\n**建議修法**：在檔案結尾加上換行符。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 顯示 `\\ No newline at end of file`，且新檔案內容與舊檔案僅差在結尾換行。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案最後一行 `export default EventRecurringWebWrapper;` 之後沒有換行符（`\\ No newline at end of file`）。這可能違反專案的格式化規範（R03），並可能導致某些工具或 diff 顯示異常。\n\n**建議修法**：在檔案結尾加上換行符。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 顯示 `\\ No newline at end of file`，且新檔案內容與舊檔案僅差在結尾換行。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用相對路徑匯入跨套件模組，降低可維護性",
+    "body": "此檔案從 `apps/web/components/apps` 使用相對路徑 `../../../../packages/platform/atoms/...` 匯入套件內的模組。這種跨套件的相對路徑容易在檔案移動時斷裂，且不利於重構。專案中其他匯入多使用 `@calcom/...` 別名。\n\n**建議修法**：改用套件別名匯入，例如 `@calcom/atoms/destination-calendar/DestinationCalendar` 或類似路徑（若該套件有匯出）。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 中新增的匯入使用多層相對路徑，而其他檔案多使用 `@calcom/...` 別名。"
+  }
+]

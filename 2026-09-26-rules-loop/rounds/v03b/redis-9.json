@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "複寫指令 HSETEX 的參數順序可能與命令定義不符",
+    "body": "在 `rewriteClientCommandVector` 中，參數順序為 `shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj`。需要確認 HSETEX 命令的語法是否為 `HSETEX key [KEEPTTL] FIELDS numfields field value [field value ...]`。若 KEEPTTL 的位置或 FIELDS 的用法有誤，可能導致 replica 執行失敗或行為錯誤。建議查閱命令定義或測試驗證。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 rewriteClientCommandVector 呼叫，參數順序與常見 HSETEX 語法可能不一致。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 2130,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增 shared object 未確認是否在所有初始化路徑中建立",
+    "body": "新增了 `shared.hsetex` 和 `shared.fields`，但需確認 `createSharedObjects` 是否在所有啟動路徑（如 Sentinel、module）中被呼叫，且沒有遺漏。若某些路徑未初始化這些 shared objects，可能導致 null pointer dereference。",
+    "existing_code": "shared.hsetex = createStringObject(\"HSETEX\",6);",
+    "evidence": "diff 中新增的 shared object 建立，但未見其他初始化路徑的修改。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1972,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試中 HSETEX 使用 PXAT 與 KEEPTTL 的組合可能不合法",
+    "body": "測試中預期複寫指令為 `hsetex h1 PXAT * FIELDS 1 f1 1`，但 PXAT 與 KEEPTTL 是否可同時使用需確認。若命令不允許此組合，測試將失敗或無法驗證預期行為。",
+    "existing_code": "{hsetex h1 PXAT * FIELDS 1 f1 1}",
+    "evidence": "diff 中測試預期的複寫指令包含 PXAT 與 KEEPTTL，但未見命令定義支持此組合。"
+  }
+]

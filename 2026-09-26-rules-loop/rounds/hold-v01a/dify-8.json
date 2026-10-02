@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R25] 使用 console.error 違反前端規範",
+    "body": "此處使用 `console.error` 記錄錯誤，違反專案規範 R25（Frontend Code Must Not Use console Statements）。建議改用專案允許的 logging 機制，或移除該 console 語句。",
+    "existing_code": "console.error('Failed to load React Scan devtools:', error)",
+    "evidence": "diff 中新增的 `console.error` 語句，違反 R25。"
+  },
+  {
+    "path": "web/app/components/devtools/tanstack/loader.tsx",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "lazy import 錯誤處理靜默失敗",
+    "body": "在 lazy import 的 catch 中回傳一個渲染 null 的元件，但未記錄任何錯誤。這可能導致開發工具載入失敗時無法察覺，增加除錯困難。建議至少記錄錯誤訊息。",
+    "existing_code": "}).catch(() => {\n      return { default: () => null }\n    }),",
+    "evidence": "diff 中新增的 catch 區塊未包含任何錯誤處理或 logging。"
+  }
+]

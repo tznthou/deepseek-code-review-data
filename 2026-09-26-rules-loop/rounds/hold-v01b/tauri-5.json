@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/app_paths.rs",
+    "line": 130,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`resolve_dirs` 仍使用 `OnceLock` 全域快取，可能導致路徑解析錯誤",
+    "body": "`resolve_dirs` 內部使用 `TAURI_DIR.get_or_init` 與 `FRONTEND_DIR.get_or_init`，這兩個 `OnceLock` 是全域靜態變數。雖然函式回傳 `Dirs`，但實際上仍依賴全域狀態。若在同一個行程中，先以某個工作目錄呼叫 `resolve_dirs`，之後切換到另一個 Tauri 專案再呼叫，第二次呼叫會回傳第一次解析的結果，造成路徑錯誤。這在測試或嵌入式使用情境下特別危險。\n\n建議：移除 `OnceLock`，改為每次呼叫都重新解析，或將 `Dirs` 的建立改為接受明確的基礎路徑參數，避免隱含的全域狀態。",
+    "existing_code": "pub fn resolve_dirs() -> Dirs {\n  let tauri = TAURI_DIR.get_or_init(|| resolve_tauri_dir().unwrap_or_else(|| {",
+    "evidence": "diff 中 `resolve_dirs` 使用 `TAURI_DIR.get_or_init` 與 `FRONTEND_DIR.get_or_init`，這兩個變數仍為 `static` 的 `OnceLock`。"
+  },
+  {
+    "path": "crates/tauri-cli/src/interface/rust.rs",
+    "line": 595,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`reload_config` 與 `rewrite_manifest` 的鎖定順序可能導致死鎖或資料競爭",
+    "body": "在 `run_dev_watcher` 中，程式碼先對 `config` 的 `Mutex` 進行 `lock()`，然後呼叫 `reload_config(&mut config.lock().unwrap(), ...)`，接著又呼叫 `rewrite_manifest(&config.lock().unwrap(), ...)`。這會在同一個執行緒中多次鎖定同一個 `Mutex`，雖然 `std::sync::Mutex` 不是可重入的，但因為鎖定後立即解鎖（暫時的 guard 被丟棄），所以不會立即死鎖。然而，若 `reload_config` 內部在持有鎖定期間呼叫其他會嘗試鎖定同一個 `Mutex` 的函式，就可能造成死鎖。此外，將 `MutexGuard` 傳遞給其他函式可能導致生命週期問題。\n\n建議：避免在鎖定範圍內呼叫可能再次鎖定的函式，或改用 `try_lock` 並處理錯誤。",
+    "existing_code": "if is_configuration_file(self.app_settings.target_platform, event_path)\n  && reload_config(&mut config.lock().unwrap(), merge_configs, dirs.tauri).is_ok()\n{\n  let (manifest, modified) = rewrite_manifest(&config.lock().unwrap(), dirs.tauri)?;",
+    "evidence": "diff 中 `reload_config` 與 `rewrite_manifest` 的呼叫都使用了 `config.lock().unwrap()`，且 `reload_config` 的第一個參數是 `&mut ConfigMetadata`，但傳入的是 `&mut config.lock().unwrap()`，這會建立一個暫時的 `MutexGuard`，並將其可變引用傳入。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/mod.rs",
+    "line": 434,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "`get_app` 函式內重複宣告 `tauri_dir` 變數，可能造成混淆或編譯錯誤",
+    "body": "在 `get_app` 函式中，參數列已包含 `tauri_dir: &Path`，但函式內又使用 `let tauri_dir = tauri_dir.to_path_buf();` 重新宣告同名變數，遮蔽了參數。這可能導致後續程式碼使用到錯誤的變數（例如在 closure 中），且降低可讀性。\n\n建議：將內部變數改名，例如 `let tauri_dir_buf = tauri_dir.to_path_buf();`，避免遮蔽。",
+    "existing_code": "pub fn get_app(\n  target: Target,\n  config: &TauriConfig,\n  interface: &AppInterface,\n  tauri_dir: &Path,\n) -> App {\n  ...\n  let tauri_dir = tauri_dir.to_path_buf();\n  App::from_raw(tauri_dir.to_path_buf(), raw)",
+    "evidence": "diff 中 `get_app` 的參數列有 `tauri_dir: &Path`，但函式內又出現 `let tauri_dir = tauri_dir.to_path_buf();`，且後續使用 `tauri_dir.to_path_buf()`。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/ios/mod.rs",
+    "line": 272,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`features` 欄位從條件式改為直接 `Some(ios_options.features)`，可能改變行為",
+    "body": "在 `get_config` 中，原本的程式碼是：\n```rust\nfeatures: if ios_options.features.is_empty() {\n  None\n} else {\n  Some(ios_options.features)\n},\n```\n現在改為：\n```rust\nfeatures: Some(ios_options.features),\n```\n這表示即使 `features` 為空，也會傳入 `Some(vec![])`，而不是 `None`。這可能影響下游邏輯，例如某些程式碼會檢查 `features.is_none()` 來決定是否使用預設值。\n\n建議：確認此變更是否為預期，並檢查所有使用 `features` 的地方是否正確處理空 `Some`。",
+    "existing_code": "features: Some(ios_options.features),",
+    "evidence": "diff 中原本的條件式被移除，改為直接 `Some(ios_options.features)`。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 74,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "`fips_compliant` 使用 `var_os` 取代 `var`，可能導致非 UTF-8 值無法正確比對",
+    "body": "原本的程式碼使用 `std::env::var(\"TAURI_BUNDLER_WIX_FIPS_COMPLIANT\").ok().map(|v| v == \"true\")`，現在改為 `std::env::var_os(...).map(|v| v == \"true\")`。`var_os` 回傳 `OsString`，與 `\"true\"`（`&str`）比較時，若環境變數包含非 UTF-8 字元，比較結果可能不如預期。雖然此變數通常只會是 `\"true\"` 或 `\"false\"`，但使用 `var_os` 可能引入不必要的風險。\n\n建議：若確定環境變數一定是 UTF-8，可繼續使用 `var`；否則應使用 `to_str()` 進行明確轉換。",
+    "existing_code": "fips_compliant: std::env::var_os(\"TAURI_BUNDLER_WIX_FIPS_COMPLIANT\")\n  .map(|v| v == \"true\")\n  .unwrap_or(config.fips_compliant),",
+    "evidence": "diff 中 `var` 被改為 `var_os`，且比較對象為 `\"true\"`。"
+  }
+]

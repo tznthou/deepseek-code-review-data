@@ -1,0 +1,68 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "sortHosts 函式在移動時 priority 排序方向被反轉",
+    "body": "在 `packages/lib/bookings/hostGroupUtils.ts` 新增的 `sortHosts` 函式中，當 `isRRWeightsEnabled` 為 true 且權重相同時，回傳 `priorityA - priorityB`；但原始實作（見 `apps/web/modules/event-types/components/HostEditDialogs.tsx` 刪除的程式碼）是回傳 `priorityB - priorityA`。這會導致主持人排序結果相反，可能影響事件類型的主持人顯示順序或指派邏輯。請改回 `priorityB - priorityA`。",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中刪除的原始函式：`return priorityB - priorityA;`；新增的函式：`return priorityA - priorityB;`"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 57,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除多個 exports 可能造成外部依賴中斷",
+    "body": "此 PR 從 `packages/platform/atoms/package.json` 的 `exports` 欄位移除了多個路徑，包括 `./add-members-switch/AddMembersWithSwitchWebWrapper`、`./connect/conferencing-apps/ConferencingAppsViewWebWrapper`、`./destination-calendar/wrappers/DestinationCalendarSettingsWebWrapper`、`./event-types/wrappers/EventTypeWebWrapper` 和 `./selected-calendars/wrappers/SelectedCalendarsSettingsWebWrapper`。如果其他 package 或外部專案仍依賴這些路徑，匯入會失敗。請確認所有使用這些路徑的程式碼都已更新，或考慮保留相容性別名。",
+    "existing_code": "\"./add-members-switch/AddMembersWithSwitchWebWrapper\": \"./add-members-switch/AddMembersWithSwitchWebWrapper.tsx\",",
+    "evidence": "diff 中刪除的 exports 項目"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 檔案結尾缺少換行符",
+    "body": "檔案結尾沒有換行符（`\\ No newline at end of file`），違反 Biome 格式規範（LF line endings）。請在最後一行加上換行。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 顯示 `\\ No newline at end of file`"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 檔案結尾缺少換行符",
+    "body": "檔案結尾沒有換行符（`\\ No newline at end of file`），違反 Biome 格式規範（LF line endings）。請在最後一行加上換行。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 顯示 `\\ No newline at end of file`"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用相對路徑匯入跨 package 的模組",
+    "body": "此檔案從 `apps/web/components/apps` 使用相對路徑 `../../../../packages/platform/atoms/src/components/atoms-wrapper` 匯入 `AtomsWrapper`，以及 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar`。這可能違反專案對 package 匯入的慣例（通常使用 `@calcom/...` 別名），且容易在檔案移動時出錯。建議改用 package 的公開匯入路徑。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";",
+    "evidence": "diff 中新增的相對路徑匯入"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 236,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "縮排不一致",
+    "body": "在 `tabMap` 物件中，`setup` 和 `availability` 的 JSX 縮排從 6 格改為 8 格，與其他 tab 的縮排不一致。這可能違反 Biome 格式規範。請統一縮排。",
+    "existing_code": "<EventSetupTab\n            eventType={eventType}\n            locationOptions={locationOptions}\n            team={team}\n            teamMembers={teamMembers}\n            destinationCalendar={destinationCalendar}\n        />",
+    "evidence": "diff 中縮排變更"
+  }
+]

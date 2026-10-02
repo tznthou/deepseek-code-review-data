@@ -1,0 +1,46 @@
+[
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "全域 mock 行為變更可能導致未修改的測試失敗",
+    "body": "全域 mock 原本在沒有 options 或 ns 時回傳原始 key，現在 `createTFunction` 在沒有 ns 時回傳 `fullKey`（即 key 本身），但若 options 存在且包含 ns，則回傳 `ns.key`。這與原本行為一致，但需確認所有依賴全域 mock 的測試是否預期此行為。此外，原本全域 mock 在 `options.returnObjects` 為真時回傳陣列，但新的 `createTFunction` 未處理此情況，可能導致使用 `returnObjects` 的測試失敗。",
+    "existing_code": "const fullKey = ns ? `${ns}.${key}` : key\n\n    // Check custom translations with namespace first\n    if (translations[fullKey] !== undefined)\n      return translations[fullKey]\n\n    // Check custom translations without namespace\n    if (translations[key] !== undefined)\n      return translations[key]\n\n    // Serialize params (excluding ns) for test assertions\n    const params = { ...options }\n    delete params.ns\n    const suffix = Object.keys(params).length > 0 ? `:${JSON.stringify(params)}` : ''\n    return `${fullKey}${suffix}`",
+    "evidence": "diff 中 `web/vitest.setup.ts` 移除了原本處理 `returnObjects` 的邏輯，改為呼叫 `createReactI18nextMock()`，而 `createTFunction` 未實作 `returnObjects` 分支。"
+  },
+  {
+    "path": "web/app/components/plugins/install-plugin/install-from-local-package/steps/install.spec.tsx",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "自訂 Trans mock 可能與全域 mock 不一致",
+    "body": "此測試檔案覆寫了 `Trans` 元件，但未使用 `createTransMock`，而是自行定義。這可能導致與其他使用 `createReactI18nextMock` 的測試行為不一致。建議改用 `createReactI18nextMock` 並傳入自訂翻譯，或至少使用 `createTransMock` 來保持一致性。",
+    "existing_code": "Trans: ({ i18nKey, components }: { i18nKey: string, components?: Record<string, React.ReactNode> }) => (\n      <span data-testid=\"trans\">\n        {i18nKey}\n        {components?.trustSource}\n      </span>\n    ),",
+    "evidence": "diff 中此處保留了自訂 Trans 實作，而其他檔案已改用輔助函式。"
+  },
+  {
+    "path": "web/app/components/plugins/marketplace/index.spec.tsx",
+    "line": 33,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "i18next-config mock 行為變更可能影響其他測試",
+    "body": "此處修改了 `getFixedT` 的 mock，使其在提供 ns 時回傳 `ns.key`。這與全域 mock 的行為一致，但需確認此 mock 是否僅用於此測試檔案，若其他測試也依賴此 mock，可能受到影響。",
+    "existing_code": "getFixedT: (_locale: string) => (key: string, options?: Record<string, unknown>) => {\n      if (options && options.ns) {\n        return `${options.ns}.${key}`\n      }\n      else {\n        return key\n      }\n    },",
+    "evidence": "diff 中此 mock 的實作被修改，且測試斷言也相應更新。"
+  },
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "TranslationMap 型別可能過於寬鬆",
+    "body": "`TranslationMap` 定義為 `Record<string, string | string[]>`，允許值為陣列，但 `createTFunction` 回傳型別為 `string`，若翻譯值為陣列，回傳值將是陣列而非字串，可能導致型別不符。建議明確翻譯值型別或處理陣列情況。",
+    "existing_code": "interface TranslationMap extends Record<string, string | string[]> {}",
+    "evidence": "diff 中新增的型別定義。"
+  }
+]

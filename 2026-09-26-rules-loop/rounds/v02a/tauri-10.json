@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1315,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "公開 API 更名可能造成破壞性變更",
+    "body": "將公開方法 `with_window_features` 更名為 `window_features` 會破壞現有使用者的程式碼。除非此專案尚未發布穩定版本或已有相應的遷移計畫，否則應保留舊方法作為別名或標記為 deprecated。建議確認是否需要提供相容性措施。",
+    "existing_code": "pub fn window_features(mut self, features: NewWindowFeatures) -> Self {",
+    "evidence": "diff 中將 `pub fn with_window_features` 改為 `pub fn window_features`，且未保留舊方法。這會導致使用舊 API 的程式碼無法編譯。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1317,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 參數傳遞格式不符合 rustfmt 規範",
+    "body": "在 `window_features` 方法中，`inner_size` 和 `position` 的參數傳遞存在多餘空格，例如 `size.width,    size.height` 和 `position.x,position.y`。這會導致 `cargo fmt --check` 失敗。建議執行 `cargo fmt` 修正格式。",
+    "existing_code": "self.window_builder = self.window_builder.inner_size(size.width,    size.height);",
+    "evidence": "diff 中新增的兩行：\n```rust\nself.window_builder = self.window_builder.inner_size(size.width,    size.height);\nself.window_builder = self.window_builder.position(position.x,position.y);\n```\n其中 `size.width,    size.height` 有多餘空格，`position.x,position.y` 缺少空格，違反 rustfmt 規範。"
+  },
+  {
+    "path": "crates/tauri/src/webview/mod.rs",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "重新匯出 Cookie 型別可能造成名稱衝突",
+    "body": "新增 `pub use tauri_runtime::Cookie;` 重新匯出 Cookie 型別，但原本的 `use cookie::Cookie;` 已被移除。這可能導致下游程式碼若同時使用 `tauri::Cookie` 和 `cookie::Cookie` 時產生混淆。建議確認此變更的意圖，並考慮是否需要在文件中說明。",
+    "existing_code": "pub use tauri_runtime::Cookie;",
+    "evidence": "diff 中移除了 `use cookie::Cookie;`，並新增 `pub use tauri_runtime::Cookie;`。這改變了公開 API 的型別來源，可能影響下游。"
+  }
+]

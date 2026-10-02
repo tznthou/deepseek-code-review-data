@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錯誤處理不當：使用 FormatJson 包裝 TOML 解析錯誤",
+    "body": "在 `do_parse_toml` 中，將 `toml::from_str` 的錯誤映射為 `ConfigError::FormatJson`，這可能導致錯誤類型不匹配，使呼叫端無法正確處理 TOML 格式錯誤。建議新增一個 `FormatToml` 變體來包裝 TOML 錯誤，或使用更通用的錯誤類型。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中顯示原本使用 `ConfigError::FormatToml`，但被改為 `ConfigError::FormatJson`，且將 TOML 錯誤轉為字串後再包裝成 `serde_json::Error`，這可能導致錯誤資訊丟失或類型不符。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R07] 新增的 BundleType::Flatpak 缺少文件註解",
+    "body": "新增的 `Flatpak` 變體沒有文件註解，違反了專案規範 R07（Public APIs Must Include Documentation Comments）。建議為該變體添加說明其用途的文件註解。",
+    "existing_code": "/// The Flatpak bundle (.flatpak).\n  Flatpak,",
+    "evidence": "diff 中新增了 `Flatpak` 變體，但沒有文件註解。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "BundleType 的 Display 實作中 Flatpak 大小寫不一致",
+    "body": "在 `Display` 實作中，`Flatpak` 被輸出為 \"Flatpak\"（首字母大寫），而其他變體均為小寫（如 \"nsis\"、\"app\"）。這可能導致序列化後的字串與反序列化期望不一致，建議統一為小寫 \"flatpak\"。",
+    "existing_code": "Self::Flatpak => \"Flatpak\",",
+    "evidence": "diff 中新增的 `Display` 分支使用了 \"Flatpak\"，而其他分支均為小寫。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 209,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "BundleType 的 Deserialize 實作中缺少對 \"Flatpak\" 的處理",
+    "body": "在 `Deserialize` 實作中，僅處理了小寫 \"flatpak\"，但 `Display` 輸出的是 \"Flatpak\"，這可能導致序列化後的字串無法被反序列化。建議統一大小寫，或在反序列化時同時接受兩種形式。",
+    "existing_code": "\"flatpak\" => Ok(Self::Flatpak),",
+    "evidence": "diff 中新增的反序列化分支僅匹配 \"flatpak\"，而 `Display` 輸出 \"Flatpak\"。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "新增 BundleType::Flatpak 可能影響既有程式碼的 exhaustive match",
+    "body": "新增 `Flatpak` 變體可能導致其他 crate 中對 `BundleType` 的 exhaustive match 出現編譯錯誤，需要檢查並更新所有相關 match 分支。",
+    "existing_code": "Flatpak,",
+    "evidence": "diff 中新增了 `Flatpak` 變體，但未提供其他 match 的更新。"
+  }
+]

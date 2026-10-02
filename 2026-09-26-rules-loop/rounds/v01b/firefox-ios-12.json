@@ -1,0 +1,57 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "expectation 在 decisionHandler 外被 fulfill，可能導致測試永遠等待",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`expectation.fulfill()` 被放在 `subject.webView(...)` 呼叫之後，而不是在 `decisionHandler` 閉包內。這會導致 expectation 在 decisionHandler 被呼叫前就 fulfill，使得 `wait(for:)` 可能立即返回，但決策處理器尚未執行，斷言可能未被執行。更糟的是，如果 decisionHandler 從未被呼叫，測試也不會失敗，因為 expectation 已經被 fulfill。應將 `expectation.fulfill()` 移回 `decisionHandler` 閉包內，與其他測試方法一致。",
+    "existing_code": "subject.webView(MockWKWebView(),\n                        requestMediaCapturePermissionFor: origin,\n                        initiatedByFrame: frame,\n                        type: .cameraAndMicrophone,\n                        decisionHandler: decisionHandler)\n        wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中 `testRequestMediaCaptureSuccess` 的 decisionHandler 閉包內已移除 `expectation.fulfill()`，但在 `wait(for:)` 之後新增了一行 `expectation.fulfill()`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴外部網路，可能導致不穩定或失敗",
+    "body": "`captureFrameAndOrigin` 使用 `webView.load(URLRequest(url: url))` 載入 `https://example.com`，這需要實際的網路連線。在 CI 環境或離線狀態下，此請求可能失敗或逾時，導致測試不穩定。建議改用本地 HTML 內容（例如 `loadHTMLString`）或資料 URL，以消除對外部網路的依賴。",
+    "existing_code": "// load a real https URL (use example.com to be safe)\n        webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 helper 方法直接載入傳入的 URL，而測試中傳入的是 `https://example.com`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "XCTWaiter 結果未檢查，可能掩蓋逾時錯誤",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值（`XCTWaiter.Result`）被忽略。如果等待逾時，方法仍會繼續執行並嘗試從 delegate 取得 capturedFrame 和 capturedOrigin，若為 nil 則回傳 nil。這可能導致測試在逾時後才失敗，且錯誤訊息不夠明確。建議檢查 waiter 結果，若為 `.timedOut` 則直接 `XCTFail` 並回傳 nil。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增的 helper 方法呼叫 `XCTWaiter.wait` 但未使用其回傳值。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 5,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R01] 新檔案缺少 Mozilla Public License 標頭",
+    "body": "新增的 `WebKitTestHelpers.swift` 檔案開頭沒有包含 Mozilla Public License v2.0 標頭。根據專案規範 R01，所有 Swift 檔案必須包含標準 MPL 標頭。請在檔案最上方加入：\n```\n// This Source Code Form is subject to the terms of the Mozilla Public\n// License, v. 2.0. If a copy of the MPL was not distributed with this\n// file, You can obtain one at http://mozilla.org/MPL/2.0/\n```",
+    "existing_code": "import WebKit\nimport XCTest",
+    "evidence": "diff 中新增檔案的前兩行是 import 陳述式，沒有 license header。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "FakeWKNavigationDelegate 未標記為 final",
+    "body": "根據專案規範 R12，不應被繼承的類別應標記為 `final`。此處 `FakeWKNavigationDelegate` 是測試輔助類別，沒有繼承需求，建議加上 `final`。",
+    "existing_code": "class FakeWKNavigationDelegate: NSObject, WKNavigationDelegate {",
+    "evidence": "diff 中新增的類別宣告缺少 `final` 修飾詞。"
+  }
+]

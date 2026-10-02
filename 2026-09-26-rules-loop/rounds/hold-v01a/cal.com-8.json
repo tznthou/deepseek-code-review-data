@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "行動裝置上 Popover 可能無法透過點擊開啟",
+    "body": "在行動裝置上（isMobile 為 true），handleMouseEnter 和 handleMouseLeave 都不會觸發 setIsOpen，因此 Popover 只能透過點擊觸發。但 PopoverTrigger 包著一個 Button，點擊 Button 時會觸發 Popover 的 onOpenChange，但因為沒有阻止預設行為，可能導致按鈕的點擊事件與 Popover 的開啟邏輯衝突。此外，PopoverContent 上的 onMouseEnter/onMouseLeave 在行動裝置上也不會觸發，因此點擊外部關閉後，再次點擊按鈕可能無法重新開啟。建議在行動裝置上使用 click 事件來控制 Popover，並確保 PopoverTrigger 的點擊行為正確。",
+    "existing_code": "onMouseEnter={handleMouseEnter}\n              onMouseLeave={handleMouseLeave}>",
+    "evidence": "handleMouseEnter 和 handleMouseLeave 在 isMobile 為 true 時直接 return，不會改變 isOpen 狀態。Popover 的 open 屬性由 isOpen 控制，因此行動裝置上只能依賴 PopoverTrigger 的點擊來觸發 onOpenChange。但 PopoverTrigger 包著 Button，Button 的點擊事件可能與 Popover 的開啟邏輯衝突，導致無法正常開啟。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "鍵盤使用者無法操作 Popover",
+    "body": "PopoverTrigger 包著 Button，但 Button 沒有設定 onClick 處理常式，而是依賴 Popover 的 onOpenChange。鍵盤使用者聚焦到 Button 後按 Enter 或 Space 會觸發 Button 的點擊事件，但 Popover 可能不會因此開啟，因為 PopoverTrigger 的 asChild 會將事件處理器傳遞給 Button，但 Button 本身沒有 onClick，可能導致事件無法正確觸發 Popover 的開啟。建議明確設定 Button 的 onClick 來切換 isOpen，或確保 PopoverTrigger 的事件處理能正確傳遞。",
+    "existing_code": "<Button\n              color=\"minimal\"\n              className=\"h-auto p-0 border-0 hover:border-0\"\n              aria-label={`Show ${hiddenItems.length} more items`}\n              onMouseEnter={handleMouseEnter}\n              onMouseLeave={handleMouseLeave}>",
+    "evidence": "Button 沒有 onClick 屬性，僅依賴 PopoverTrigger 的 asChild 傳遞事件。鍵盤操作時，Button 的點擊事件可能不會觸發 Popover 的開啟，導致鍵盤使用者無法存取隱藏的 badges。"
+  },
+  {
+    "path": "apps/web/modules/users/components/UserTable/UserListTable.tsx",
+    "line": 251,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "合併權重與群組標示可能造成視覺混淆",
+    "body": "原本的實作中，權重（如 80%）和群組標示（如 (group)）是分開的 badge，現在合併成單一 label，例如「Value 80% (group)」。這可能讓使用者難以快速區分權重和群組狀態，且如果 label 過長，在有限的空間中可能被截斷。建議保留原本的分開顯示方式，或提供更清楚的視覺區隔。",
+    "existing_code": "let label = attributeValue.value;\n                    label = `${label} ${weight}`;\n                    label = `${label}${groupIndicator}`;",
+    "evidence": "原本的程式碼將權重和群組標示分別顯示在不同的 Badge 中，現在合併成一個字串。這可能影響可讀性，特別是在權重和群組標示同時存在時。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "items 陣列變動時 Popover 狀態未重置",
+    "body": "當 items 陣列變動（例如從有 hidden items 變成沒有）時，isOpen 狀態可能保持 true，導致 Popover 在沒有 hidden items 時仍然顯示。雖然元件在 items.length === 0 時會回傳 null，但當 hiddenItems 從有變無時，Popover 可能仍然開啟。建議在 items 或 hiddenItems 變化時重置 isOpen。",
+    "existing_code": "const { visibleItems, hiddenItems } = useMemo(\n    () => ({\n      visibleItems: items.slice(0, maxVisible),\n      hiddenItems: items.slice(maxVisible),\n    }),\n    [items, maxVisible]\n  );",
+    "evidence": "isOpen 狀態沒有在 items 或 hiddenItems 變化時重置，可能導致 Popover 在沒有 hidden items 時仍然顯示。"
+  }
+]

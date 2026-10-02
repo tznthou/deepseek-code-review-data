@@ -1,0 +1,13 @@
+[
+  {
+    "path": "src/server.h",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] 變更 include guard 命名，可能違反專案規範",
+    "body": "此 PR 將 `__REDIS_H` 改為 `_REDIS_H`，但專案規範 R03 要求使用雙底線開頭與結尾的 include guard（例如 `__REDIS_H`）。此變更可能導致不符合規範，且若其他檔案依賴原本的 guard 名稱，可能造成重複 include 問題。建議保留原本的 `__REDIS_H`，或確認此變更是否有其他原因。",
+    "existing_code": "#ifndef _REDIS_H\n#define _REDIS_H",
+    "evidence": "diff 中顯示原本為 `#ifndef __REDIS_H` 與 `#define __REDIS_H`，被改為 `_REDIS_H`。"
+  }
+]

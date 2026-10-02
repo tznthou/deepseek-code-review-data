@@ -1,0 +1,8 @@
+[info] repo 規範：repo=Ghost、24 條、10056 字元、placement=after_diff、sha256=0e40722b7ec5
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 29188 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx:100 → 103（片段唯一命中）
+[info] 重新定位 apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx:112 → 104（片段唯一命中）
+[info] 重新定位 apps/activitypub/src/hooks/use-activity-pub-queries.ts:2830 → 2833（片段唯一命中）
+[info] 定位不到 apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx:130（片段多重命中（2 處），不猜）
+[info] 重新定位 apps/activitypub/src/api/activitypub.ts:720 → 723（片段唯一命中）
+[info] 完成於 14.6s ｜ findings=7 ｜ relocated=4 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 11763, "completion_tokens": 1807, "total_tokens": 13570, "prompt_tokens_details": {"cached_tokens": 11648}, "prompt_cache_hit_tokens": 11648, "prompt_cache_miss_tokens": 115}

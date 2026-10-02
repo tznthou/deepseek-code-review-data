@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "日期計算可能因時區或 DST 造成 off-by-one",
+    "body": "`#getDaysSinceFirstEmail` 使用 `Date.now()` 與 `created_at` 的 timestamp 差值除以 86400000 毫秒，再以 `Math.ceil` 取整。若伺服器時區與 UTC 有偏移，或跨越 DST 轉換，可能導致天數計算多一天或少一天，進而影響暖機限制。建議改用 UTC 日曆日差（例如將兩個日期轉為 UTC 日期字串後相減），或明確指定時區。",
+    "existing_code": "return Math.ceil((Date.now() - new Date(res.data[0].get('created_at') as string).getTime()) / (1000 * 60 * 60 * 24));",
+    "evidence": "diff 中新增的這一行直接使用毫秒差除以固定毫秒數，未考慮時區或 DST。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "回傳 Infinity 可能導致呼叫端未預期行為",
+    "body": "當暖機天數超過 `totalDays` 時，`getWarmupLimit` 回傳 `Infinity`。若呼叫端將此值用於後續計算（例如分配郵件數量），可能產生非預期結果。建議回傳一個明確的數值（例如 `emailCount`）或定義一個特殊常數，並在文件說明。",
+    "existing_code": "if (day > this.#warmupConfig.totalDays) {\n    return Infinity\n}",
+    "evidence": "diff 中新增的這段程式碼直接回傳 `Infinity`，未見呼叫端處理此值的邏輯。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 302,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試使用 Math.round 與實作 Math.floor 不一致",
+    "body": "測試中的 `getExpectedLimit` 使用 `Math.round`，但實作使用 `Math.floor`。這可能導致在某些天數下測試期望值與實作結果不同，造成測試脆弱。建議測試與實作使用相同的捨入方式。",
+    "existing_code": "return Math.round(start * Math.pow(end / start, day / (totalDays - 1)));",
+    "evidence": "diff 中測試新增的這一行使用 `Math.round`，而實作在 `DomainWarmingService.ts` 中使用 `Math.floor`。"
+  }
+]

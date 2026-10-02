@@ -1,0 +1,4 @@
+[info] repo 規範＋範圍說明：repo=prefect、15 條、6857 字元、placement=after_diff、sha256=9bbe9499b755
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 57519 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 ui-v2/src/components/schemas/schema-form.snapshot.test.tsx:488 → 489（片段唯一命中）
+[info] 完成於 6.7s ｜ findings=2 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 18298, "completion_tokens": 806, "total_tokens": 19104, "prompt_tokens_details": {"cached_tokens": 18176}, "prompt_cache_hit_tokens": 18176, "prompt_cache_miss_tokens": 122}

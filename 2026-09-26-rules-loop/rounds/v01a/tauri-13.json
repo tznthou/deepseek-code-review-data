@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 錯誤類型未使用 thiserror，違反專案規範",
+    "body": "此 PR 將原本使用 `#[derive(Debug, thiserror::Error)]` 的 `Error` 枚舉改為手動實作 `Display` 和 `Error` trait。根據專案規範 R08，所有自訂錯誤類型應使用 thiserror 以維持一致的錯誤處理。手動實作容易出錯且增加維護成本。建議改回使用 thiserror derive，並保留原有的 `#[error(...)]` 屬性。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中顯示 `-#[derive(Debug, thiserror::Error)]` 被移除，改為 `+#[derive(Debug)]`，並新增手動的 `impl std::fmt::Display for Error` 和 `impl std::error::Error for Error`。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R09] 公開錯誤枚舉缺少 #[non_exhaustive]",
+    "body": "`Error` 是公開的錯誤枚舉，但未標記 `#[non_exhaustive]`。根據專案規範 R09，公開錯誤枚舉應標記為 non_exhaustive，以便未來新增變體而不造成破壞性變更。建議在 `pub enum Error` 上方加上 `#[non_exhaustive]`。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中 `Error` 枚舉為公開且未見 `#[non_exhaustive]` 屬性。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "notarize_inner 條件判斷邏輯可能反轉",
+    "body": "原本的條件 `submit_output.status.map_or(!wait, |s| s == \"Accepted\")` 改為 `submit_output.status.map_or(wait, |s| s == \"Accepted\")`。這會改變當 `status` 為 `None` 時的行為：原本在 `wait` 為 false 時會進入 if 區塊，現在則是在 `wait` 為 true 時才會進入。這可能導致在非等待模式下跳過必要的處理，或在等待模式下執行不該執行的程式碼。請確認此變更是否為預期行為，並補充測試。",
+    "existing_code": "if submit_output.status.map_or(wait, |s| s == \"Accepted\") {",
+    "evidence": "diff 中顯示 `-    if submit_output.status.map_or(!wait, |s| s == \"Accepted\") {` 改為 `+    if submit_output.status.map_or(wait, |s| s == \"Accepted\") {`。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 173,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "參數順序變更可能影響可讀性",
+    "body": "在 `notarize_inner` 中，`app_bundle_path` 和 `zip_path` 的參數順序被調換。雖然功能上可能無影響，但這可能導致呼叫端混淆，建議確認所有呼叫點都已同步更新，並考慮是否為必要變更。",
+    "existing_code": "zip_path\n      .to_str()\n      .expect(\"failed to convert zip_path to string\"),\n    app_bundle_path\n      .to_str()\n      .expect(\"failed to convert bundle_path to string\"),",
+    "evidence": "diff 中顯示原本 `app_bundle_path` 在前，`zip_path` 在後，現在順序對調。"
+  }
+]

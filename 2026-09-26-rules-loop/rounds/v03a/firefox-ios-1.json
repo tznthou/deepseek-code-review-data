@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6260,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "Rollouts 設定訊息使用 %1$@ 佔位符，與其他字串的 %@ 不一致",
+    "body": "在 `RolloutsSettingMessage` 的 value 中使用了 `%1$@`，而其他字串（如 `StudiesSettingMessageV3`）使用 `%@`。在 iOS 的本地化字串中，`%1$@` 是有效的格式說明符，但若程式碼使用 `String(format:)` 搭配單一參數，兩者皆可運作；然而，若使用 `String.localizedStringWithFormat` 或某些本地化機制，`%1$@` 可能無法正確解析，導致顯示原始佔位符或崩潰。建議統一使用 `%@`，除非有明確的多參數排序需求。",
+    "existing_code": "value: \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\",",
+    "evidence": "diff 中新增的 `RolloutsSettingMessage` 字串 value 包含 `%1$@`，而其他字串使用 `%@`。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R12] SettingsTextFormatter 類別未標記為 final",
+    "body": "新增的 `SettingsTextFormatter` 類別未標記為 `final`。根據專案規範 R12，不打算被繼承的類別應標記為 `final`，以利編譯器最佳化並明確設計意圖。此類別僅作為格式化輔助工具，無需繼承，建議加上 `final`。",
+    "existing_code": "class SettingsTextFormatter {",
+    "evidence": "diff 中新增的類別宣告缺少 `final` 關鍵字。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R09] SettingsTextFormatter 的方法未標記 @MainActor",
+    "body": "`formatStudiesText` 和 `formatRolloutsText` 方法用於產生 UI 顯示文字，但未標記 `@MainActor`。根據專案規範 R09，涉及 UI 的程式碼應標記 `@MainActor` 以確保在主執行緒執行。雖然這些方法僅進行字串格式化，但若未來在其中加入 UI 相關操作，可能導致執行緒問題。建議將類別或方法標記為 `@MainActor`。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {",
+    "evidence": "diff 中新增的方法未加上 `@MainActor` 屬性。"
+  }
+]

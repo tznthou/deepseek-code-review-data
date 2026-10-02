@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ghost/i18n/locales/zh/comments.json",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除 comments.json 可能導致缺少翻譯鍵",
+    "body": "此 PR 刪除了整個 comments.json 檔案，但未提供替代檔案。如果應用程式仍會載入此檔案，將導致缺少翻譯鍵，可能顯示鍵名或英文原文。建議確認是否有其他檔案提供相同翻譯，或保留此檔案。",
+    "existing_code": "{\n    \"{amount} characters left\": \"还剩{amount}字\",",
+    "evidence": "diff 顯示整個檔案被刪除，沒有新增對應檔案。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "翻譯變更可能不符合繁體中文習慣",
+    "body": "將「新聞信」改為「邮件通讯」等用語，可能不符合繁體中文使用者的習慣。建議確認目標受眾，若為繁體中文使用者，應保留原有用語。",
+    "existing_code": "\"{memberEmail} will no longer receive {newsletterName} newsletter.\": \"{memberEmail}将不会再收到新闻信。\"",
+    "evidence": "diff 中多處將「新聞信」改為「邮件通讯」等中國大陸用語。"
+  }
+]

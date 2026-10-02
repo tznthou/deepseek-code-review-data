@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/A11yUtils.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R01] 缺少 Mozilla Public License 標頭",
+    "body": "此檔案原本有 MPL 2.0 授權標頭，但在本次 diff 中被移除。根據規範 R01，所有 Swift 檔案必須包含 Mozilla Public License 標頭。請恢復授權標頭。",
+    "existing_code": "import XCTest\n\n@MainActor\nclass A11yUtils: XCTestCase {",
+    "evidence": "diff 顯示刪除了以下三行：\n- // This Source Code Form is subject to the terms of the Mozilla Public\n- // License, v. 2.0. If a copy of the MPL was not distributed with this\n- // file, You can obtain one at http://mozilla.org/MPL/2.0/"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 510,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "IpadOnlyTestCase.setUp 中誤用 await 呼叫 super.setUp()",
+    "body": "在 IpadOnlyTestCase 的 setUp 中，呼叫 super.setUp() 時使用了 `await super.setUp()`，但 super.setUp() 是 async throws 函式，應使用 `try await super.setUp()`。這會導致編譯錯誤。",
+    "existing_code": "if iPad() {\n    await super.setUp()\n}",
+    "evidence": "diff 中顯示：\n-            super.setUp()\n+            await super.setUp()\n而 super.setUp() 的簽章已改為 `override func setUp() async throws`，因此必須使用 try await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/TodayWidgetTests.swift",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "全域變數標註 @MainActor 可能導致初始化時機問題",
+    "body": "多個全域變數（如 goToCopiedLink、newPrivateSearch 等）從 `nonisolated(unsafe)` 改為 `@MainActor`。這些變數在檔案載入時即初始化，而 @MainActor 隔離的全域變數在 Swift 6 中可能延遲初始化，若在非主執行緒存取可能導致 crash 或資料競爭。請確認這些變數的存取皆在主執行緒，或考慮改為其他安全方式。",
+    "existing_code": "@MainActor\nvar goToCopiedLink = springboard.buttons[\"Go to Copied Link\"]",
+    "evidence": "diff 顯示原本使用 nonisolated(unsafe)，現在改為 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "setUp 中呼叫順序變更可能影響測試行為",
+    "body": "原本的順序是 `setUpExperimentVariables()` 在 `setUpApp()` 之前，現在被調換為 `setUpApp()` 在前。如果 setUpExperimentVariables 依賴 setUpApp 所設定的某些狀態，或反之，此變更可能導致測試失敗。請確認此順序變更是有意為之且不會造成問題。",
+    "existing_code": "setUpApp()\nsetUpExperimentVariables()",
+    "evidence": "diff 顯示：\n-        setUpExperimentVariables()\n         setUpApp()\n+        setUpExperimentVariables()\n順序被調換。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/registerSettingsNavigation.swift",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "SwiftLint 停用註解位置可能失效",
+    "body": "原本的 `// swiftlint:disable:next function_body_length` 被改為 `@MainActor // swiftlint:disable:next function_body_length`。SwiftLint 的 disable:next 指令必須單獨一行，若與其他程式碼在同一行可能無法正確停用規則，導致 lint 警告。建議將註解移至 @MainActor 的下一行。",
+    "existing_code": "@MainActor // swiftlint:disable:next function_body_length",
+    "evidence": "diff 顯示此行變更。"
+  }
+]

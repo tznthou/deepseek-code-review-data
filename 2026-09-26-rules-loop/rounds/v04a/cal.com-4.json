@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getDisplayEmail 的 regex 過於脆弱，可能無法正確移除 CUID 後綴",
+    "body": "`getDisplayEmail` 使用 `/\\+[a-zA-Z0-9]{25}/` 來移除 CUID 後綴，但 CUID 的長度可能不是固定 25 個字元，或未來可能變更。若長度不同，此 regex 將無法匹配，導致 displayEmail 仍包含後綴；若郵件 local part 中出現符合此模式的合法字串（例如 `user+1234567890123456789012345@example.com`），也會被誤刪。建議改用更精確的 CUID 格式（例如 `/\\+[a-z0-9]{25}/i` 或直接使用 CUID 驗證函式），或從資料來源直接取得原始郵件，避免依賴字串操作。",
+    "existing_code": "return email.replace(/\\+[a-zA-Z0-9]{25}/, \"\");",
+    "evidence": "diff 中新增的 `getDisplayEmail` 方法，使用固定長度 25 的 regex。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 recurring seated bookings 的排序可能導致輸出順序不穩定",
+    "body": "原本 `getOutputRecurringSeatedBookings` 會依 `start` 時間排序，但此 PR 移除了排序邏輯，直接回傳 `transformed`。若 `bookingsIds` 的順序未保證依時間排序，API 回傳的陣列順序可能不穩定，影響前端顯示或測試。建議確認呼叫端是否已排序，或保留排序以維持既有行為。",
+    "existing_code": "return transformed;",
+    "evidence": "diff 中將 `return transformed.sort(...)` 改為 `return transformed;`。"
+  }
+]

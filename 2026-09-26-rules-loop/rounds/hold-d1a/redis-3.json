@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1110,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 使用 malloc/free 而非 zmalloc/zfree",
+    "body": "在 `extractSlotFromKeysResult` 中使用了 `malloc` 與 `free`，違反專案規範 R02（應使用 `zmalloc`/`zfree`）。此外，迴圈條件 `j <= keys_result->numkeys` 會導致越界寫入 `slot_buffer`，因為 `slot_buffer` 只配置了 `numkeys` 個元素。這可能造成記憶體損毀。建議改用 `zmalloc`/`zfree`，並將迴圈條件改為 `j < keys_result->numkeys`。",
+    "existing_code": "int *slot_buffer = malloc(sizeof(int) * keys_result->numkeys);\n\n    for (int j = 0; j <= keys_result->numkeys; j++) {",
+    "evidence": "diff 中新增的 `malloc` 呼叫與 `j <= keys_result->numkeys` 迴圈條件。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1112,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "extractSlotFromKeysResult 迴圈越界寫入",
+    "body": "迴圈條件 `j <= keys_result->numkeys` 會讓 `j` 等於 `numkeys`，但 `slot_buffer` 只配置了 `numkeys` 個 `int`，因此 `slot_buffer[j] = this_slot;` 會寫入超出配置的記憶體，造成未定義行為。應改為 `j < keys_result->numkeys`。",
+    "existing_code": "for (int j = 0; j <= keys_result->numkeys; j++) {",
+    "evidence": "diff 中新增的迴圈條件。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R20] 使用 var 宣告變數",
+    "body": "在 multiselect 的 onSelect 處理中，將原本的 `const newValues` 改為 `var newValues`，違反專案規範 R20（應使用 let 或 const）。var 可能導致作用域問題，建議改回 const。",
+    "existing_code": "var newValues = [...effectiveValues, option.value] as T[];",
+    "evidence": "diff 中第 1125 行將 const 改為 var。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 105,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "預設 i18n 字串設為空可能導致按鈕無文字",
+    "body": "將 `addFilter` 與 `addFilterTitle` 的預設值從 'Add filter' 改為空字串，若使用此預設值且未提供自訂 i18n，按鈕將沒有可讀文字，影響可用性。建議保留非空預設值，或確認所有使用處都有提供自訂文字。",
+    "existing_code": "addFilter: '',",
+    "evidence": "diff 中第 105 行將原本的 'Add filter' 改為空字串。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1134,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "autoCloseOnSelect 關閉邏輯可能與既有流程不一致",
+    "body": "在 multiselect 的 onSelect 中新增 autoCloseOnSelect 時直接呼叫 `onClose?.()`，但未呼叫 `setOpen(false)` 或 `setSearchInput('')`，可能導致 popover 狀態未完全重置。建議統一使用 `handleClose()` 來關閉，以確保狀態一致。",
+    "existing_code": "if (field.autoCloseOnSelect) {\n    onClose?.();\n}",
+    "evidence": "diff 中第 1134-1136 行新增的關閉邏輯。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1276,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "select 類型關閉時未清除搜尋輸入",
+    "body": "在 select 類型的 onSelect 中，原本呼叫 `handleClose()` 會清除搜尋輸入，但修改後改為直接 `setOpen(false)`，未清除搜尋輸入。若使用者再次開啟 popover，搜尋文字可能殘留。建議改回呼叫 `handleClose()`。",
+    "existing_code": "onChange([option.value] as T[]);\nsetOpen(false);",
+    "evidence": "diff 中第 1271-1272 行移除了 handleClose() 呼叫。"
+  },
+  {
+    "path": "apps/stats/src/views/Stats/components/stats-filter.tsx",
+    "line": 498,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "addButtonText 條件表達式無效",
+    "body": "`addButtonText={filters.length ? '' : ''}` 無論 filters.length 為何都回傳空字串，等同於永遠空字串。若意圖是根據是否有 filters 顯示不同文字，此寫法有誤；若確定要空字串，可直接寫 `addButtonText=''`。",
+    "existing_code": "addButtonText={filters.length ? '' : ''}",
+    "evidence": "diff 中第 497 行。"
+  }
+]

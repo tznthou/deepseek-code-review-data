@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 458,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "變數作用域錯誤導致 V1 UI 無法正常運作",
+    "body": "在 `create_ui_app` 函式中，`source_static_path` 和 `static_subpath` 在 `if v2_enabled` 區塊內被賦值，但後續的 `create_ui_static_subpath` 函式（第 506 行）使用了 `source_static_path`，而該函式是在 `if` 區塊外呼叫的。若 `v2_enabled` 為 False，則 `source_static_path` 未定義，會拋出 `NameError`。\n\n建議將變數初始化移到 `if` 區塊之前，或確保在所有路徑下都有賦值。",
+    "existing_code": "if v2_enabled:\n        source_static_path = prefect.__ui_v2_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v2:{prefect.__version__}:{base_url}\"\n    else:\n        source_static_path = prefect.__ui_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v1:{prefect.__version__}:{base_url}\"",
+    "evidence": "diff 中新增的程式碼片段顯示變數在條件分支內賦值，但後續使用點在分支外。"
+  },
+  {
+    "path": "Dockerfile",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "安裝 Chromium 可能大幅增加映像檔大小且未說明必要性",
+    "body": "在 `ui-v2-builder` 階段安裝了 `chromium`，這可能導致最終映像檔體積顯著增加。若僅為了建置時執行測試或特定工具，應考慮使用多階段建置或僅在建置階段安裝，並在最終階段移除。請確認是否真的需要 Chromium，或是否有更輕量的替代方案。",
+    "existing_code": "RUN apt-get update && \\\n    apt-get install --no-install-recommends -y \\\n    # Required for arm64 builds\n    chromium \\\n    && apt-get clean && rm -rf /var/lib/apt/lists/*",
+    "evidence": "diff 中新增的安裝步驟，且註解僅說明為 arm64 建置所需，未提供其他細節。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 531,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "日誌記錄器未遵循標準初始化模式",
+    "body": "在 `create_ui_app` 函式中，使用 `logging.getLogger(\"ui_server\")` 直接取得 logger，違反了專案規範 R03（Logger 實例必須遵循標準初始化模式）。應使用 `get_logger(\"ui_server\")` 並加上型別註解。",
+    "existing_code": "ui_logger = logging.getLogger(\"ui_server\")",
+    "evidence": "diff 中新增的程式碼行，且專案規範 R03 明確要求使用 `get_logger`。"
+  }
+]

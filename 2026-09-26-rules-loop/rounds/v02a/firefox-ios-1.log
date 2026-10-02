@@ -1,0 +1,10 @@
+[info] repo 規範：repo=firefox-ios、15 條、10004 字元、placement=before_diff、sha256=031933b1d311
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 11807 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 firefox-ios/Shared/Strings.swift:6248 → 6260（片段唯一命中）
+[info] 重新定位 firefox-ios/Shared/Strings.swift:6239 → 6245（片段唯一命中）
+[info] 重新定位 focus-ios/Blockzilla/UIComponents/UIConstants.swift:416 → 418（片段唯一命中）
+[info] 重新定位 focus-ios/Blockzilla/UIComponents/UIConstants.swift:417 → 419（片段唯一命中）
+[info] 重新定位 focus-ios/Blockzilla/UIComponents/UIConstants.swift:421 → 423（片段唯一命中）
+[info] 重新定位 focus-ios/Blockzilla/UIComponents/UIConstants.swift:422 → 427（片段唯一命中）
+[info] 重新定位 focus-ios/Blockzilla/UIComponents/UIConstants.swift:424 → 427（片段唯一命中）
+[info] 完成於 14.8s ｜ findings=9 ｜ relocated=7 ｜ verdict=comment ｜ usage={"prompt_tokens": 6745, "completion_tokens": 1877, "total_tokens": 8622, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 5209}

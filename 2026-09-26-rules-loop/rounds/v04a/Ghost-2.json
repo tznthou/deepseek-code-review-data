@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "editor.setEditable 改為依賴 member?.expertise 可能導致編輯器在 member 為 null 時無法編輯",
+    "body": "原本的條件是 `!!memberName && progress !== 'sending'`，其中 memberName 可能來自 member 或 comment。現在改為 `!!member?.expertise && progress !== 'sending'`，這表示如果目前登入的 member 沒有 expertise（或 member 為 null），編輯器將永遠無法編輯。這可能不是預期行為，因為使用者即使沒有 expertise 也應該能輸入回覆內容。建議確認此變更是否符合產品需求，或改回使用 memberName 作為判斷條件。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`，且依賴陣列由 `[editor, memberName, progress]` 改為 `[editor, member, progress]`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 299,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 FormWrapper 的 comment prop 可能影響其他使用此元件的程式碼",
+    "body": "FormWrapper 的 props 型別移除了 `comment?: Comment`，且元件內不再使用 `comment`。但此元件可能被其他檔案引用並傳入 comment prop，若未同步更新所有使用處，將導致型別錯誤或執行期錯誤。建議搜尋整個程式碼庫確認所有使用 FormWrapper 的地方都已移除 comment prop。",
+    "existing_code": "const FormWrapper: React.FC<FormWrapperProps> = ({\n    editor,\n    isOpen,\n    reduced,",
+    "evidence": "diff 中 FormWrapperProps 型別移除了 `comment?: Comment;`，且元件參數解構移除了 `comment,`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/reply-form.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "回覆目標改為 parent.id 可能影響巢狀回覆的正確性",
+    "body": "原本使用 `openForm.in_reply_to_id` 作為回覆目標，現在改為 `parent.id`。這可能改變巢狀回覆的行為：如果 openForm 代表的是對某個回覆的回覆，則原本的 in_reply_to_id 會指向該回覆，而 parent.id 可能指向頂層留言。需確認此變更是否符合預期，特別是在巢狀回覆的情境下。",
+    "existing_code": "in_reply_to_id: parent.id,",
+    "evidence": "diff 中此行由 `in_reply_to_id: openForm.in_reply_to_id,` 改為 `in_reply_to_id: parent.id,`，且依賴陣列移除了 openForm。"
+  }
+]

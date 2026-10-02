@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "多主機情境下 rendererId 檢查可能不完整",
+    "body": "在 enableJSRootComponents 中，條件 `if (manager && currentRendererId === rendererId)` 僅在 manager 已存在且 rendererId 相同時拋出錯誤。若 manager 已存在但 rendererId 不同（例如先啟用 Server renderer，再啟用 WebAssembly renderer），則不會拋出錯誤，而是直接覆寫 manager 和 currentRendererId。這可能導致舊 renderer 的 manager 被意外取代，且舊 manager 的資源未正確釋放。建議在 manager 存在且 rendererId 不同時也拋出錯誤，或明確處理多主機情境。",
+    "existing_code": "if (manager && currentRendererId === rendererId) {\n    // A different renderer type (e.g., Server vs WebAssembly) is trying to enable JS root components.\n    // This is a multi-host scenario which is not supported for dynamic root components.\n    throw new Error('Dynamic root components have already been enabled.');\n  }",
+    "evidence": "diff 中新增的條件僅檢查 rendererId 是否相同，未處理不同 rendererId 的情況。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "hasInitializedJsComponents 全域旗標可能導致初始化遺漏",
+    "body": "hasInitializedJsComponents 是模組層級的全域變數，一旦設為 true，後續即使有新的 renderer 或新的 component 類型需要初始化，也不會再執行初始化邏輯。若未來支援多主機或動態新增 component 類型，此旗標可能導致初始化遺漏。建議考慮將初始化狀態與 renderer 或 component 類型綁定，或提供重置機制。",
+    "existing_code": "let hasInitializedJsComponents = false;",
+    "evidence": "diff 中新增的全域旗標，且初始化邏輯僅在旗標為 false 時執行。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "jsComponentParametersByIdentifier 未在重新初始化時更新",
+    "body": "在 enableJSRootComponents 中，原本會更新 jsComponentParametersByIdentifier，但修改後僅在首次初始化時設定。若後續呼叫帶有不同的 jsComponentParameters，該變數不會更新，可能導致使用過時的參數。建議確認此變數是否需要在每次啟用時更新。",
+    "existing_code": "if (!hasInitializedJsComponents) {\n    // Call the registered initializers...\n    for (const [initializerIdentifier, componentIdentifiers] of Object.entries(jsComponentInitializers)) {\n      const initializerFunc = DotNet.findJSFunction(initializerIdentifier, 0) as JSComponentInitializerCallback;\n      for (const componentIdentifier of componentIdentifiers)\n        initializerFunc(componentIdentifier, jsComponentParameters[componentIdentifier]);\n    }\n\n    hasInitializedJsComponents = true;\n  }",
+    "evidence": "diff 中移除了原本的 `jsComponentParametersByIdentifier = jsComponentParameters;` 指派，且未在別處更新。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/Tests/StatePersistenceTest.cs",
+    "line": 282,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 PersistentStateIsSupportedInDynamicJSRoots 未包含 // Arrange、// Act、// Assert 註解，違反專案規範 R06。建議補上對應的階段註解以提升可讀性。",
+    "existing_code": "public void PersistentStateIsSupportedInDynamicJSRoots(string renderMode)\n    {\n        Navigate($\"subdir/WasmMinimal/dynamic-js-root.html?renderMode={renderMode}\");\n\n        Browser.Equal(\"Counter\", () => Browser.Exists(By.TagName(\"h1\")).Text);\n        Browser.Equal(\"Current count: 0\", () => Browser.Exists(By.CssSelector(\"p[role='status']\")).Text);\n\n        Browser.Click(By.CssSelector(\"button.btn-primary\"));\n        Browser.Equal(\"Current count: 1\", () => Browser.Exists(By.CssSelector(\"p[role='status']\")).Text);\n    }",
+    "evidence": "diff 中新增的測試方法，未見 AAA 註解。"
+  },
+  {
+    "path": "src/Components/test/testassets/Components.TestServer/RazorComponentEndpointsStartup.cs",
+    "line": 54,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "無條件註冊動態 JS root component 可能影響其他測試",
+    "body": "原本僅在設定 RegisterDynamicJSRootComponent 為 true 時才註冊動態 JS root component，現在改為無條件註冊。這可能導致其他使用 RazorComponentEndpointsStartup 的測試意外載入此 component，增加測試干擾。建議確認此變更是否會影響其他測試情境。",
+    "existing_code": "options.RootComponents.RegisterForJavaScript<TestContentPackage.PersistentComponents.ComponentWithPersistentState>(\"dynamic-js-root-counter\");",
+    "evidence": "diff 中移除了條件判斷，改為直接註冊。"
+  }
+]

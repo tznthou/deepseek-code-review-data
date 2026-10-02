@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "排程條件反轉導致重複排程或功能停用",
+    "body": "原條件 `!hasScheduled.processOutbox` 確保只排程一次，但改為 `hasScheduled.processOutbox` 後，當 `hasScheduled.processOutbox` 為 true 時才會排程，這與變數名稱語意相反。若 `hasScheduled.processOutbox` 初始為 false，則永遠不會排程；若在某處被設為 true，則每次呼叫都會重複排程。\n\n建議改回 `!hasScheduled.processOutbox`，或將變數名稱改為 `hasScheduled` 並正確設定其值。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中將 `!hasScheduled.processOutbox` 改為 `hasScheduled.processOutbox`，但變數名稱仍為 `hasScheduled`，邏輯矛盾。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 342,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "條件判斷從 AND 改為 OR 可能導致非預期發送歡迎郵件",
+    "body": "原條件 `this._labsService.isSet('welcomeEmails') && WELCOME_EMAIL_SOURCES.includes(source)` 要求兩者皆真，但改為 `welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)` 後，只要來源在允許清單中（例如 'member'），即使 config 未設定也會觸發歡迎郵件。這可能導致在未設定測試收件匣時，所有符合來源的成員建立都會嘗試發送歡迎郵件，造成非預期的郵件發送。\n\n建議改為 `welcomeEmailConfig && WELCOME_EMAIL_SOURCES.includes(source)`，或明確說明為何要放寬條件。",
+    "existing_code": "if (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)) {",
+    "evidence": "diff 中將 `&&` 改為 `||`，且 `welcomeEmailConfig` 來自 config，可能為空字串或 undefined。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R20] 使用 var 宣告變數",
+    "body": "此處將原本的 `let member;` 改為 `var member;`，違反專案規範 R20（應使用 let 或 const）。var 有函數作用域與提升問題，可能導致非預期行為。\n\n建議改回 `let member;`。",
+    "existing_code": "var member;",
+    "evidence": "diff 中明確將 `let member;` 改為 `var member;`。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "eng/Versions.props",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ValidateBaseline 設為 false 可能隱藏 API 相容性問題",
+    "body": "將 `<ValidateBaseline>true</ValidateBaseline>` 改為 `false` 會停用 API 基準驗證。在 servicing 更新中，這可能導致意外的 API 變更未被偵測，進而破壞與先前版本的相容性。建議確認此變更的必要性，或僅在特定條件下停用（例如僅在 patch version 為 1 時）。",
+    "existing_code": "<ValidateBaseline>false</ValidateBaseline>",
+    "evidence": "diff 中 `-    <ValidateBaseline>true</ValidateBaseline>` 與 `+    <ValidateBaseline>false</ValidateBaseline>`"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R02] 違反 file-scoped namespace 規範",
+    "body": "此檔案將原本的 file-scoped namespace 改為 block-scoped namespace（`namespace ... { ... }`），違反 repo 規範 R02。請改回 file-scoped namespace 宣告。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中 `-namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;` 與 `+namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\\n+{`"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試標記為隔離但未提供明確原因",
+    "body": "新增 `[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/64305\")]` 將測試隔離，但未在 PR 描述或程式碼註解中說明隔離原因與預計解除時間。建議補充相關資訊，以便追蹤。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/64305\")]",
+    "evidence": "diff 中新增的 `[QuarantinedTest(...)]` 屬性"
+  }
+]

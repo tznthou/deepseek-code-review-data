@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 414,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R07] 直接存取 process.env 判斷 webhook 是否啟用",
+    "body": "在 handleCancelBooking.ts 中直接使用 `process.env.ENABLE_WEBHOOKS !== \"false\"` 來決定是否發送 webhook，違反 R07（環境變數不應在非設定程式碼中直接存取）。這會降低可測試性，且可能因環境變數未正確設定而導致行為不一致。建議將此判斷移至設定模組或透過依賴注入傳入。",
+    "existing_code": "const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";",
+    "evidence": "diff 中新增的這一行直接讀取 process.env，且位於業務邏輯 handler 中。"
+  },
+  {
+    "path": "packages/features/webhooks/lib/factory/versioned/v2021-10-20/BookingPayloadBuilder.ts",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "requestReschedule 預設值不一致可能導致下游誤判",
+    "body": "在 BookingPayloadBuilder 中，`requestReschedule` 使用 `dto.requestReschedule ?? true` 作為預設值，但在 BookingWebhookFactory 中則使用 `params.requestReschedule ?? false`。這兩個地方對同一欄位的預設值不同，可能導致不同路徑產生的 webhook payload 不一致，進而影響下游系統的判斷。建議統一預設值，並明確其語意。",
+    "existing_code": "requestReschedule: dto.requestReschedule ?? true,",
+    "evidence": "diff 中新增的這一行，與 BookingWebhookFactory.ts 中的 `requestReschedule: params.requestReschedule ?? false` 形成對比。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 416,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "webhooksEnabled 判斷可能影響既有行為",
+    "body": "新增的 `webhooksEnabled` 判斷會在環境變數為 \"false\" 時跳過所有 webhook 發送。若此環境變數未設定，行為不變；但若設定為 \"false\"，則會完全停用 webhook，可能影響依賴 webhook 的功能。建議確認此變更是否為預期行為，並考慮提供更明確的設定方式。",
+    "existing_code": "const promises = webhooksEnabled ? webhooks.map((webhook) =>",
+    "evidence": "diff 中將原本的 `webhooks.map` 改為條件式，新增了環境變數判斷。"
+  }
+]

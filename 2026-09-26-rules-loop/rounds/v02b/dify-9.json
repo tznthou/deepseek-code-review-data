@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 使用 any 型別違反 TypeScript 型別安全規範",
+    "body": "selector 參數的型別從具體的函式型別改為 any，這會失去型別檢查，可能導致 runtime 錯誤。應保留原本的函式型別，或使用更精確的型別定義。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中將 selector 的型別從 (value: PluginPageContextValue) => any 改為 any。"
+  },
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "query key 從 'category' 改為 'tab' 可能破壞既有 URL 相容性",
+    "body": "原本使用 'category' 作為 query parameter 來保存 activePluginType，現在改為 'tab'。這會導致任何已分享或書籤的 URL（例如 ?category=xxx）失效，使用者會回到預設的 'all' 分類。若此變更是有意為之，應考慮加入相容性處理（例如同時讀取 'category' 與 'tab'，或進行 redirect）。",
+    "existing_code": "export function useActivePluginType() {\n  return useQueryState('tab', marketplaceSearchParamsParsers.category)\n}",
+    "evidence": "diff 中將 useQueryState 的第一個參數從 'category' 改為 'tab'。"
+  }
+]

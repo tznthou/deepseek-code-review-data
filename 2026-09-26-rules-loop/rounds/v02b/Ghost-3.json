@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "findPage 回傳結構假設可能導致執行時期錯誤",
+    "body": "`#getHighestCount` 假設 `findPage` 回傳的 `data` 是陣列且每個元素都有 `get` 方法。若 `findPage` 的實作或 mock 回傳 `{data: null}` 或 `{data: [{}]}`，則 `result.data.length` 或 `result.data[0].get(...)` 會拋出錯誤。建議加入防禦性檢查，例如 `if (!result?.data?.length) return 0;` 並確認 `result.data[0]` 存在且 `get` 為函式。",
+    "existing_code": "const result = await this.#emailModel.findPage({\n            filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,\n            order: 'csd_email_count DESC',\n            limit: 1\n        });\n\n        if (!result.data.length) {\n            return 0;\n        }\n\n        const count = result.data[0].get('csd_email_count');",
+    "evidence": "diff 中新增的 `findPage` 呼叫與後續對 `result.data` 的直接存取，未檢查 `result.data` 是否為陣列或元素是否具有 `get` 方法。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試未驗證 findPage 的呼叫參數",
+    "body": "在 `should query for emails created before today` 測試中，僅驗證了 `filter`、`order` 和 `limit` 的存在，但未驗證 `filter` 是否正確使用 `<=` 而非 `<`，也未驗證 `limit` 是否為 1。建議加入更精確的斷言，例如 `assert.equal(callArgs.limit, 1)` 和 `assert.ok(callArgs.filter.includes('created_at:<=<today>'))`。",
+    "existing_code": "assert.ok(callArgs.filter);\n            assert.ok(callArgs.filter.includes(`created_at:<${today}`));\n            assert.equal(callArgs.order, 'csd_email_count DESC');\n            assert.equal(callArgs.limit, 1);",
+    "evidence": "diff 中測試僅檢查 `filter` 包含 `created_at:<`，但實際程式碼使用 `<=`，可能導致測試通過但實作錯誤。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "高量寄送上限計算可能產生非預期結果",
+    "body": "在 `lastCount >= 400_000` 時，`scaledIncrease = Math.ceil(lastCount * 1.2)` 與 `absoluteIncrease = lastCount + 75_000` 取最小值。若 `lastCount` 極大（例如 10,000,000），`scaledIncrease` 為 12,000,000，`absoluteIncrease` 為 10,075,000，取最小值為 10,075,000，仍可能造成單日寄送量大幅增加。建議確認此上限是否符合業務需求，或考慮更嚴格的絕對上限。",
+    "existing_code": "if (lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold) {\n            const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);\n            const absoluteIncrease = lastCount + WARMUP_SCALING_TABLE.highVolume.maxAbsoluteIncrease;\n            return Math.min(scaledIncrease, absoluteIncrease);\n        }",
+    "evidence": "diff 中新增的高量處理邏輯，未對 `lastCount` 設定絕對上限，僅以比例與絕對增量取最小值。"
+  }
+]

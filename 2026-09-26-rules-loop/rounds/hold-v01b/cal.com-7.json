@@ -1,0 +1,24 @@
+[
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.ts",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "當 genericCalendarSuffixes 為空陣列時，Prisma 查詢包含 `AND: undefined`",
+    "body": "在 `findNextSubscriptionBatch` 方法中，`AND` 條件被設置為 `genericCalendarSuffixes?.length ? ... : undefined`。當 `genericCalendarSuffixes` 為空陣列或未提供時，`AND` 將為 `undefined`。雖然 Prisma 通常會忽略 `undefined` 的條件，但這可能導致生成的 SQL 包含不必要的 `AND` 子句，影響查詢效能或可讀性。建議在建構 where 物件時，僅在需要時才加入 `AND` 屬性，例如使用條件展開。",
+    "existing_code": "AND: genericCalendarSuffixes?.length\n          ? genericCalendarSuffixes?.map((suffix) => ({\n              NOT: { externalId: { endsWith: suffix } },\n            }))\n          : undefined,",
+    "evidence": "diff 中新增的 `AND` 條件使用了三元運算符，當條件不滿足時賦值為 `undefined`。"
+  },
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.test.ts",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試中對 `AND: undefined` 的斷言可能過於脆弱",
+    "body": "在測試中，當未提供 `genericCalendarSuffixes` 時，斷言 `AND: undefined`。這依賴於 Prisma 查詢物件的內部表示，如果未來 Prisma 版本或程式碼重構改變了 `undefined` 的處理方式，測試可能會失敗。建議改為驗證查詢結果的正確性，或使用更寬鬆的匹配器（如 `expect.objectContaining`）來忽略 `AND` 屬性。",
+    "existing_code": "AND: undefined,",
+    "evidence": "測試中多次出現 `AND: undefined` 的斷言，這可能過度耦合於實作細節。"
+  }
+]

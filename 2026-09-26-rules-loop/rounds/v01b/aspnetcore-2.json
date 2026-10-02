@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "斷言邏輯變更可能掩蓋 CSP 錯誤",
+    "body": "原本測試預期日誌訊息符合單一正規表達式 `ParseErrorMessage()`，現在改為同時符合 `ParseErrorMessageRegexOld` 和 `ParseErrorMessageRegexNew`。這可能導致測試永遠失敗，因為單一訊息不可能同時符合兩種格式；或者若兩種格式都可能出現，則應使用 OR 條件而非 AND。請確認實際預期的錯誤訊息格式，並修正斷言邏輯。",
+    "existing_code": "Assert.True(\n    ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n    ParseErrorMessageRegexNew.IsMatch(logs[0].Message),\n    $\"Expected log message to match one of the CSP error patterns: {ParseErrorMessageRegexOld} or {ParseErrorMessageRegexNew}. Actual: {logs[0].Message}\");",
+    "evidence": "diff 中新增的 Assert.True 使用 && 運算子同時檢查兩個 regex，但錯誤訊息不可能同時符合兩種格式。"
+  },
+  {
+    "path": "eng/common/core-templates/job/source-index-stage1.yml",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "來源索引條件變更可能影響非 main 分支",
+    "body": "原本 condition 為空字串（表示永遠執行），現在改為 `eq(variables['Build.SourceBranch'], 'refs/heads/main')`。這會導致在 release 分支或其他分支上，來源索引階段被略過。若來源索引用於符號伺服器或來源連結，這可能影響除錯體驗。請確認此變更是否符合預期。",
+    "existing_code": "condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')",
+    "evidence": "diff 中 condition 從空字串改為特定分支條件。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增 QuarantinedTest 屬性可能隱藏測試失敗",
+    "body": "在兩個測試方法上新增 `[QuarantinedTest]` 屬性，這會將測試標記為隔離，可能導致 CI 中跳過或延遲報告失敗。請確認這些測試確實不穩定，並有追蹤修復的 issue。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/59991\")]",
+    "evidence": "diff 中新增 QuarantinedTest 屬性。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 213,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "DisposeAsync 順序變更可能影響資源釋放",
+    "body": "原本先釋放 `connection` 再釋放 `secondConnection`，現在順序相反。若兩個連線有相依性，可能導致釋放時發生例外或資源洩漏。請確認此變更的必要性。",
+    "existing_code": "await secondConnection.DisposeAsync().DefaultTimeout();\nawait connection.DisposeAsync().DefaultTimeout();",
+    "evidence": "diff 中 DisposeAsync 呼叫順序對調。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 408,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "ReceiveAsync 中 _receiveTcs 重置位置變更可能影響並行",
+    "body": "原本在複製資料後才重置 `_receiveTcs`，現在改為在 await 後立即重置。若有多個並行 ReceiveAsync 呼叫，可能導致競爭條件。請確認此變更的執行緒安全性。",
+    "existing_code": "var res = await _receiveTcs.Task;\n_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);",
+    "evidence": "diff 中 _receiveTcs 重置位置從複製後移至 await 後。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 362,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "移除 sealed 關鍵字可能違反專案規範",
+    "body": "`WebSocketWrapper` 類別從 `internal sealed class` 改為 `internal class`，可能違反專案規範 R14（內部實作類別應為 sealed）。若此類別不預期被繼承，建議保留 sealed。",
+    "existing_code": "internal class WebSocketWrapper : WebSocket",
+    "evidence": "diff 中移除 sealed 關鍵字。"
+  }
+]

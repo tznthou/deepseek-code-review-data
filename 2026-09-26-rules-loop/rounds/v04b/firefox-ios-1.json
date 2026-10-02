@@ -1,0 +1,46 @@
+[
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R12] SettingsTextFormatter 應標記為 final",
+    "body": "新增的 `SettingsTextFormatter` 類別未標記為 `final`。根據專案規範 R12，不應被繼承的類別應標記為 `final` 以利編譯器最佳化並防止意外繼承。建議加上 `final` 修飾詞。",
+    "existing_code": "class SettingsTextFormatter {",
+    "evidence": "diff 中新增的類別宣告 `class SettingsTextFormatter {` 缺少 `final` 關鍵字。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.85,
+    "title": "[R14] 公開 API 缺少文件註解",
+    "body": "`SettingsTextFormatter` 類別及其方法 `formatStudiesText(appName:)` 和 `formatRolloutsText(appName:)` 為公開 API，但缺少文件註解。根據專案規範 R14，公開 API 應包含說明其用途、參數與用法的文件註解。建議補上。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {",
+    "evidence": "diff 中新增的公開方法沒有文件註解。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R09] UI 相關程式碼應標註 @MainActor",
+    "body": "`SettingsTextFormatter` 的方法用於格式化 UI 顯示文字，可能涉及 UI 相關操作。根據專案規範 R09，UI 相關程式碼應標註 `@MainActor` 以確保執行緒安全。建議在類別或方法上加上 `@MainActor`。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {",
+    "evidence": "diff 中新增的方法未標註 @MainActor，且其用途與 UI 顯示相關。"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6261,
+    "side": "RIGHT",
+    "severity": "nit",
+    "confidence": 0.6,
+    "title": "字串註解格式不一致",
+    "body": "`RolloutsSettingMessage` 的註解使用了 `%1$@`，但其他類似字串使用 `%@`。雖然可能不影響功能，但建議統一格式以避免混淆。",
+    "existing_code": "comment: \"A short description that explains that Mozilla may change features remotely. %1$@ is the app name (e.g. Firefox).\")",
+    "evidence": "diff 中該行註解包含 `%1$@`，而其他字串註解使用 `%@`。"
+  }
+]

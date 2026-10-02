@@ -1,0 +1,6 @@
+[info] repo 規範：repo=prefect、15 條、6783 字元、placement=after_diff、sha256=70829c92a5ae
+[info] 套用補充規則：github-workflows.md, python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 8118 字元、thinking=disabled、max_tokens=8192）
+[info] 定位不到 src/prefect/server/api/server.py:462（片段多重命中（2 處），不猜）
+[info] 重新定位 src/prefect/server/api/server.py:527 → 531（片段唯一命中）
+[info] 完成於 8.7s ｜ findings=3 ｜ relocated=1 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 7264, "completion_tokens": 1062, "total_tokens": 8326, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 5728}

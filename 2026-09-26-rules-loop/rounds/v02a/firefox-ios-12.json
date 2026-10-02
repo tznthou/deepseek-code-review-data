@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "測試中 expectation 使用錯誤，可能導致測試永遠等待或提前通過",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`decisionHandler` 內不再呼叫 `expectation.fulfill()`，而是在 `wait(for:)` 之後才呼叫。這會造成 `wait(for:)` 等待的 expectation 永遠不會被 fulfill，導致測試逾時失敗。此外，`wait(for:)` 之後的 `expectation.fulfill()` 是多餘的，且可能掩蓋非同步完成的問題。\n\n建議將 `expectation.fulfill()` 移回 `decisionHandler` 內，並移除 `wait(for:)` 之後的呼叫。",
+    "existing_code": "let decisionHandler = { (decision: WKPermissionDecision) in\n            XCTAssertEqual(decision, .prompt)\n        }\n\n        let expectation = expectation(description: \"Wait for the decision handler to be called\")\n        subject.webView(MockWKWebView(),\n                        requestMediaCapturePermissionFor: origin,\n                        initiatedByFrame: frame,\n                        type: .cameraAndMicrophone,\n                        decisionHandler: decisionHandler)\n        wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中 `decisionHandler` 閉包內沒有 `expectation.fulfill()`，且 `wait(for:)` 之後才呼叫 `expectation.fulfill()`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴真實網路與 WebKit 行為，可能導致不穩定或逾時",
+    "body": "`captureFrameAndOrigin` 使用真實的 `WKWebView` 載入 `https://example.com`，這引入了對網路連線和 WebKit 內部實作的依賴。在 CI 環境中，網路可能不可用或速度緩慢，導致測試逾時或失敗。此外，WebKit 的導航行為可能因版本而異，降低測試的可靠性。\n\n建議考慮使用更可控的方式取得 `WKFrameInfo` 和 `WKSecurityOrigin`，例如使用 `WKWebView` 的 `loadHTMLString` 搭配自訂 scheme，或使用其他 mock 策略。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 `WebKitTestHelpers` 使用 `webView.load(URLRequest(url: url))` 載入真實 URL。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "XCTWaiter.wait 的結果未檢查，可能掩蓋逾時錯誤",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值（`XCTWaiter.Result`）未被檢查。如果等待逾時，`capturedFrame` 和 `capturedOrigin` 可能為 nil，函式會回傳 nil，但測試中會以 `XCTFail` 處理。然而，未檢查結果可能導致測試在逾時後仍繼續執行，浪費時間。\n\n建議檢查 `waiter` 的結果，若為 `.timedOut` 則直接回傳 nil 或觸發失敗。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中 `let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)` 未使用回傳值。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "FakeWKNavigationDelegate 未標記為 final，可能被意外繼承",
+    "body": "`FakeWKNavigationDelegate` 是一個測試輔助類別，不應被繼承。根據專案規範 R12，應標記為 `final`。",
+    "existing_code": "class FakeWKNavigationDelegate: NSObject, WKNavigationDelegate {",
+    "evidence": "diff 中 `class FakeWKNavigationDelegate` 缺少 `final` 修飾詞。"
+  }
+]

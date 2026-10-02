@@ -1,0 +1,6 @@
+[info] repo 規範：repo=prefect、15 條、6783 字元、placement=after_diff、sha256=70829c92a5ae
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 22539 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py:60 → 63（片段唯一命中）
+[info] 定位不到 src/integrations/prefect-kubernetes/tests/test_observer.py:1（片段與模型行號都定不到）
+[info] 完成於 8.2s ｜ findings=3 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 9536, "completion_tokens": 822, "total_tokens": 10358, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 8000}

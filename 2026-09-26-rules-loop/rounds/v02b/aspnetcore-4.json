@@ -1,0 +1,112 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "Hot Reload 後顯示名稱可能未更新",
+    "body": "`ClearCache` 方法僅清除 `_memberInfoCache`，未清除 `_displayNameCache`。當 Hot Reload 套用中繼資料變更（例如修改屬性的 `[Display]` 屬性）時，`_displayNameCache` 仍保留舊的顯示名稱，導致 UI 顯示過時資訊。\n\n**失敗情境**：開發者在 Hot Reload 期間變更屬性的 `[Display(Name = \"...\")]` 值，重新載入後元件仍顯示舊名稱。\n\n**建議**：在 `ClearCache` 中同時清除 `_displayNameCache`。",
+    "existing_code": "private static void ClearCache()\n    {\n        _memberInfoCache.Clear();\n    }",
+    "evidence": "diff 中 `ClearCache` 方法只呼叫 `_memberInfoCache.Clear()`，未清除 `_displayNameCache`。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R02] 使用傳統命名空間宣告而非檔案範圍命名空間",
+    "body": "此檔案使用傳統的區塊式命名空間宣告（`namespace Microsoft.AspNetCore.Components.Forms { ... }`），違反專案規範 R02。應改為檔案範圍命名空間（`namespace Microsoft.AspNetCore.Components.Forms;`）。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms\n{",
+    "evidence": "diff 中顯示 `namespace Microsoft.AspNetCore.Components.Forms` 後有 `{`，而非分號。"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/Login.razor",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "缺少 [Display] 屬性可能導致顯示名稱回歸",
+    "body": "在 `Login.razor` 中，`Input.Password` 屬性原本有標籤「Password」，但未新增 `[Display(Name = \"Password\")]`。使用 `<DisplayName For=\"() => Input.Password\" />` 後，若無 Display 屬性，將回退到屬性名稱「Password」，可能仍正確，但若屬性名稱與顯示名稱不同（例如「Password」與「Password」相同），則無影響。然而，其他範本如 `Register.razor` 的 `Input.ConfirmPassword` 原本標籤為「Confirm Password」，但屬性名稱為 `ConfirmPassword`，若未加 `[Display]`，將顯示「ConfirmPassword」而非「Confirm Password」，造成回歸。",
+    "existing_code": "<InputText type=\"password\" @bind-Value=\"Input.Password\" id=\"Input.Password\" class=\"form-control\" autocomplete=\"current-password\" aria-required=\"true\" placeholder=\"password\" />\n                <label for=\"Input.Password\" class=\"form-label\">\n                    <DisplayName For=\"() => Input.Password\" />\n                </label>",
+    "evidence": "diff 中顯示 `Input.Password` 未新增 `[Display]` 屬性，而其他檔案如 `Register.razor` 的 `Input.ConfirmPassword` 也未新增，但原本標籤為「Confirm Password」。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "類別未標記為 sealed",
+    "body": "`DisplayName<TValue>` 是公開類別，但未標記為 `sealed`。雖然它可能被視為可擴充的元件，但根據專案規範 R14，內部實作類別應為 sealed。此處為公開 API，可能不適用，但若無意讓使用者繼承，建議加上 `sealed`。",
+    "existing_code": "public class DisplayName<TValue> : IComponent",
+    "evidence": "diff 中類別宣告為 `public class DisplayName<TValue> : IComponent`，沒有 `sealed` 修飾詞。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.75,
+    "title": "欄位命名不符合規範",
+    "body": "私有欄位 `_renderHandle`、`_previousFieldAccessor`、`_displayName` 使用底線前綴加 camelCase，符合規範 R03。但 `_previousFieldAccessor` 和 `_displayName` 未初始化，可能導致 null 參考。建議在宣告時初始化或使用 nullable 並檢查。",
+    "existing_code": "private RenderHandle _renderHandle;\n        private Expression<Func<TValue>>? _previousFieldAccessor;\n        private string? _displayName;",
+    "evidence": "diff 中欄位宣告未初始化。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "參數驗證可改用 ThrowHelper",
+    "body": "在 `SetParametersAsync` 中，對 `For` 為 null 的檢查使用手動拋出 `InvalidOperationException`。雖然不是 `ArgumentNullException`，但可考慮使用 `ArgumentNullException.ThrowIfNull` 或自訂 helper 以符合規範 R04 的精神。",
+    "existing_code": "if (For is null)\n            {\n                throw new InvalidOperationException($\"{GetType()} requires a value for the \" +\n                    $\"{nameof(For)} parameter.\");\n            }",
+    "evidence": "diff 中顯示手動 null 檢查並拋出例外。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "靜態建構函式訂閱 HotReload 事件可能導致記憶體洩漏",
+    "body": "靜態建構函式中訂閱 `HotReloadManager.Default.OnDeltaApplied` 事件，但沒有取消訂閱的機制。由於是靜態類別，應用程式生命週期內不會釋放，可能不是問題，但若 HotReloadManager 被重新建立，可能導致多個訂閱。",
+    "existing_code": "static ExpressionMemberAccessor()\n    {\n        if (HotReloadManager.Default.MetadataUpdateSupported)\n        {\n            HotReloadManager.Default.OnDeltaApplied += ClearCache;\n        }\n    }",
+    "evidence": "diff 中顯示靜態建構函式訂閱事件。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R05] 測試類別命名不符合規範",
+    "body": "測試類別名稱為 `DisplayNameTest`，符合規範 R05（以 Test 結尾）。但檔案位於 `test/Forms` 目錄，符合規範。無需變更。",
+    "existing_code": "public class DisplayNameTest",
+    "evidence": "diff 中類別名稱以 Test 結尾。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 `ThrowsIfNoForParameterProvided` 使用 `// Arrange` 和 `// Act & Assert` 註解，符合規範 R06。但其他測試方法如 `DisplaysPropertyNameWhenNoAttributePresent` 有 `// Arrange`、`// Act`、`// Assert`，符合。整體符合。",
+    "existing_code": "// Arrange\n        var rootComponent = new TestHostComponent",
+    "evidence": "diff 中顯示測試方法有 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 188,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試輔助方法可能無法正確取得文字內容",
+    "body": "`RenderAndGetOutput` 方法中，使用 `batch.ReferenceFrames.First(f => f.FrameType == RenderTree.RenderTreeFrameType.Text)` 取得第一個文字框架，但可能不是 DisplayName 元件的輸出。若元件輸出包含其他文字，可能導致測試不穩定。建議更精確地定位。",
+    "existing_code": "var textFrame = batch.ReferenceFrames\n            .First(f => f.FrameType == RenderTree.RenderTreeFrameType.Text);",
+    "evidence": "diff 中顯示使用 First 取得文字框架。"
+  }
+]

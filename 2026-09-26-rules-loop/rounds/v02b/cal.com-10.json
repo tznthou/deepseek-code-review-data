@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 411,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "單筆 booking 的 oldStatus 硬編碼為 ACCEPTED，導致 audit log 錯誤",
+    "body": "在 `handleConfirmation` 的非 recurring 分支中，`acceptedBookings` 被設定為 `[{ oldStatus: BookingStatus.ACCEPTED, uid: booking.uid }]`。但此時 booking 尚未更新，其狀態可能是 `PENDING` 或其他非 `ACCEPTED` 狀態。這會導致 audit log 中的 `status.old` 永遠是 `ACCEPTED`，而非實際的舊狀態。\n\n**失敗情境**：當一個 `PENDING` booking 被確認時，audit log 會記錄 `{ old: ACCEPTED, new: ACCEPTED }`，無法反映狀態變更。\n\n**建議**：在更新前先取得 booking 的原始狀態，例如從 `booking` 物件中讀取 `booking.status`，並使用該值作為 `oldStatus`。",
+    "existing_code": "acceptedBookings = [\n      {\n        oldStatus: BookingStatus.ACCEPTED,\n        uid: booking.uid,\n      },\n    ];",
+    "evidence": "diff 中新增的 `acceptedBookings` 賦值，在 `handleConfirmation` 的非 recurring 分支，且未先讀取 `booking.status`。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts",
+    "line": 468,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "reject 流程中 oldStatus 取自更新後的 booking，導致 audit log 錯誤",
+    "body": "在 `confirmHandler` 的 reject 分支中，`rejectedBookings` 的 `oldStatus` 是從 `booking.status` 取得，但此時 `booking` 物件已在前面被更新為 `REJECTED`（透過 `prisma.booking.update`）。因此 `oldStatus` 會是 `REJECTED`，而非更新前的狀態（例如 `PENDING`）。\n\n**失敗情境**：當一個 `PENDING` booking 被拒絕時，audit log 會記錄 `{ old: REJECTED, new: REJECTED }`，無法反映狀態變更。\n\n**建議**：在更新前先保存原始狀態，例如在更新前讀取 `booking.status` 並存入變數，再於更新後使用該變數。",
+    "existing_code": "rejectedBookings = [\n        {\n          uid: booking.uid,\n          oldStatus: booking.status,\n        },\n      ];",
+    "evidence": "diff 中 `rejectedBookings` 的賦值位於 `prisma.booking.update` 之後，且 `booking.status` 已被更新為 `REJECTED`。"
+  },
+  {
+    "path": "packages/features/booking-audit/lib/actions/RejectedAuditActionService.ts",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "rejectionReason schema 從 change object 改為純字串，可能破壞既有資料相容性",
+    "body": "`fieldsSchemaV1` 中的 `rejectionReason` 從 `StringChangeSchema`（包含 `old` 和 `new` 的物件）改為 `z.string().nullable()`。這會導致已儲存的 audit log 資料（如果存在）無法通過新的 schema 驗證，因為它們的 `rejectionReason` 是物件而非字串。\n\n**失敗情境**：如果系統中已有使用舊 schema 儲存的 audit log，當嘗試讀取或顯示這些記錄時，`parseStored` 會拋出 Zod 驗證錯誤。\n\n**建議**：若需要變更 schema，應提供 migration 或向後相容的解析方式，例如保留 `StringChangeSchema` 或使用 union 型別。",
+    "existing_code": "rejectionReason: z.string().nullable(),",
+    "evidence": "diff 中 `rejectionReason` 的型別從 `StringChangeSchema` 改為 `z.string().nullable()`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 263,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "recurring booking 的 oldStatus 可能不準確",
+    "body": "在 recurring 分支中，`acceptedBookings` 是從 `unconfirmedRecurringBookings` 映射而來，使用 `booking.status` 作為 `oldStatus`。但 `unconfirmedRecurringBookings` 是在更新前查詢的，因此其 `status` 應為 `PENDING`（因為查詢條件是 `status: BookingStatus.PENDING`）。這部分看起來正確，但需確認查詢條件是否涵蓋所有應更新的 booking。\n\n**失敗情境**：如果某些 booking 的狀態不是 `PENDING` 但仍需更新（例如 `ACCEPTED` 但需要重新確認），則不會被包含在 `unconfirmedRecurringBookings` 中，導致 audit log 遺漏。\n\n**建議**：確認查詢條件是否正確，或考慮使用更廣泛的條件並在更新前記錄狀態。",
+    "existing_code": "acceptedBookings = unconfirmedRecurringBookings.map((booking) => ({\n      oldStatus: booking.status,\n      uid: booking.uid,\n    }));",
+    "evidence": "diff 中 `acceptedBookings` 的映射，依賴於 `unconfirmedRecurringBookings` 的查詢條件。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 413,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "非 recurring 分支中 acceptedBookings 的 oldStatus 應從 booking 物件取得",
+    "body": "與第一個 finding 相關，但此處強調程式碼可讀性：直接使用 `booking.status` 會比硬編碼 `BookingStatus.ACCEPTED` 更清晰且不易出錯。",
+    "existing_code": "oldStatus: BookingStatus.ACCEPTED,",
+    "evidence": "diff 中該行位於 `acceptedBookings` 陣列內。"
+  }
+]

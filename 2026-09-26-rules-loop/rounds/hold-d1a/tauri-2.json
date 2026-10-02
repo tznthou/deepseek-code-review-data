@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R01] 缺少版權與 SPDX 授權標頭",
+    "body": "新增的 shell 腳本檔案未包含專案要求的版權與 SPDX 授權標頭。根據規範 R01，所有新原始碼檔案必須以 'Copyright 2019-2024 Tauri Programme within The Commons Conservancy' 開頭，並包含 'SPDX-License-Identifier: Apache-2.0' 和 'SPDX-License-Identifier: MIT'。請在檔案頂端加入符合規範的標頭。",
+    "existing_code": "#! /bin/bash\n\n# abort on all errors\nset -e",
+    "evidence": "diff 中新增檔案的第一行是 shebang，之後直接是註解與指令，未見任何版權或 SPDX 標頭。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R01] 缺少版權與 SPDX 授權標頭",
+    "body": "新增的 shell 腳本檔案未包含專案要求的版權與 SPDX 授權標頭。根據規範 R01，所有新原始碼檔案必須以 'Copyright 2019-2024 Tauri Programme within The Commons Conservancy' 開頭，並包含 'SPDX-License-Identifier: Apache-2.0' 和 'SPDX-License-Identifier: MIT'。請在檔案頂端加入符合規範的標頭。",
+    "existing_code": "#! /usr/bin/env bash\n\n# GTK3 environment variables: https://developer.gnome.org/gtk3/stable/gtk-running.html",
+    "evidence": "diff 中新增檔案的第一行是 shebang，之後直接是註解，未見任何版權或 SPDX 標頭。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 自訂錯誤型別未使用 thiserror",
+    "body": "新增的 FileWriteError 列舉手動實作了 Display 和 Error trait，但專案規範 R08 要求所有自訂錯誤型別必須使用 thiserror 衍生。請改用 `#[derive(thiserror::Error)]` 並加上適當的 `#[error(...)]` 屬性，以簡化程式碼並確保一致性。",
+    "existing_code": "impl std::fmt::Display for FileWriteError {\n  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {\n    match self {\n      FileWriteError::Write(e) => write!(f, \"Failed to write file: {}\", e),\n      FileWriteError::Permissions(e) => write!(f, \"Failed to set permissions: {}\", e),\n    }\n  }\n}\n\nimpl std::error::Error for FileWriteError {\n  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {\n    match self {\n      FileWriteError::Write(e) => Some(e),\n      FileWriteError::Permissions(e) => Some(e),\n    }\n  }\n}",
+    "evidence": "diff 中新增了手動的 Display 和 Error 實作，未使用 thiserror。"
+  }
+]

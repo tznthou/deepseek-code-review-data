@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "moduleLoader.token 指派錯誤，可能導致 DI 解析失敗",
+    "body": "在 `moduleLoader` 中，`token` 屬性被指派為 `moduleToken`，但其他模組（如 `FeatureOptInService.ts`）的慣例是將 `token` 指派為實際的服務 token（例如 `FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE`）。這可能導致依賴此模組的容器在解析時使用錯誤的 token，造成執行期錯誤。\n\n建議將 `token` 改為 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY`，與其他模組保持一致。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeaturesRepository.ts` 第 20 行顯示 `token: moduleToken`，而其他模組（如 `FeatureOptInService.ts`）使用服務 token。"
+  },
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "型別匯出可能造成名稱衝突",
+    "body": "檔案結尾使用 `export type { FeaturesRepository };` 匯出型別，但同檔案中已從 `@calcom/features/flags/features.repository` 匯入 `FeaturesRepository` 類別。這可能造成型別與值的名稱衝突，導致型別混淆或編譯錯誤。\n\n建議移除重複的型別匯出，或改用明確的型別別名。",
+    "existing_code": "export type { FeaturesRepository };",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeaturesRepository.ts` 第 24 行顯示 `export type { FeaturesRepository };`，而第 2 行已匯入同名類別。"
+  },
+  {
+    "path": "packages/features/di/modules/FeatureOptInService.ts",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "不必要的型別匯出",
+    "body": "檔案結尾的 `export type { FeatureOptInService };` 可能是不必要的，因為 `FeatureOptInService` 類別已經透過 `bindModuleToClassOnToken` 綁定，且其他模組通常不直接匯出型別。這可能造成多餘的匯出，增加維護負擔。\n\n若無其他檔案需要此型別，建議移除。",
+    "existing_code": "export type { FeatureOptInService };",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeatureOptInService.ts` 第 24 行顯示 `export type { FeatureOptInService };`。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/IFeatureOptInService.ts",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "多餘的空白字元",
+    "body": "在 `orgAutoOptIn: boolean;` 行尾有多餘的空白字元，可能違反格式規範（R03）。建議移除。",
+    "existing_code": "orgAutoOptIn: boolean;",
+    "evidence": "diff 中新增的 `packages/features/feature-opt-in/services/IFeatureOptInService.ts` 第 10 行顯示行尾有三個空格。"
+  }
+]

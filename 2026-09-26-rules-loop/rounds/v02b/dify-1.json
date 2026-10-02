@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 2,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R04] 型別註記使用了舊式 typing 語法",
+    "body": "在 Python 3.12+ 中，應使用內建的 `set` 和 `tuple` 而非從 `typing` 導入的 `Set` 和 `Tuple`。此處導入 `Set` 和 `Tuple` 違反了專案規範 R04（使用現代型別語法）。建議改為：\n```python\nfrom typing import TYPE_CHECKING, Any\n```\n並在方法簽名中使用 `set[tuple[str, ...]]`。",
+    "existing_code": "from typing import TYPE_CHECKING, Any, Set, Tuple",
+    "evidence": "diff 中新增了 `Set` 和 `Tuple` 的導入，但專案規範 R04 要求使用 Python 3.12+ 的現代型別語法（如 `set`、`tuple`）。"
+  },
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "blocks_variable_output 方法缺少型別註記",
+    "body": "方法 `blocks_variable_output` 的參數 `variable_selectors` 使用了 `Set[Tuple[str, ...]]`，但未使用現代型別語法。此外，方法回傳型別為 `bool`，但未明確標註。建議使用 `set[tuple[str, ...]]` 並加上回傳型別 `-> bool`。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的方法使用了舊式型別語法，且回傳型別未明確標註。"
+  },
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "CLEAR 模式下結果輸入值可能不正確",
+    "body": "在 `write_mode == WriteMode.CLEAR` 時，`result_input_value` 被設為 `updated_variable.to_object()`。但 `updated_variable` 是清除後的空值，這可能導致結果輸入值為空，而非原始輸入值。需確認此行為是否符合預期。",
+    "existing_code": "if self.node_data.write_mode == WriteMode.CLEAR:\n    result_input_value = updated_variable.to_object()\nelse:\n    result_input_value = income_value.to_object()",
+    "evidence": "diff 中新增的條件判斷，在 CLEAR 模式下使用清除後的值作為結果輸入。"
+  }
+]

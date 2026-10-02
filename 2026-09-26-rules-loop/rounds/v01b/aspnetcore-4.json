@@ -1,0 +1,79 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "DisplayName 元件在 For 參數變更時不會重新渲染",
+    "body": "在 `SetParametersAsync` 中，只有當 `For != _previousFieldAccessor` 時才會呼叫 `_renderHandle.Render`。然而，`For` 是 `Expression<Func<TValue>>`，其相等性比較是參考相等。如果父元件重新渲染並傳入一個新的表達式實例（即使語意相同），`For != _previousFieldAccessor` 會為 true，導致不必要的重新渲染。但更嚴重的問題是：如果父元件傳入相同的表達式實例，但該表達式所引用的成員的顯示名稱因資料變更而改變（例如，模型屬性值變更導致 `DisplayAttribute` 的 `Name` 屬性動態變化），元件將不會重新渲染，因為 `For` 參考未變。這可能導致顯示名稱過時。建議在每次 `SetParametersAsync` 時都重新計算顯示名稱並渲染，或使用更精確的變更檢測機制。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中新增的 DisplayName.cs 第 45-53 行顯示條件渲染邏輯。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Hot Reload 後快取未完全清除",
+    "body": "`ClearCache` 方法只清除了 `_memberInfoCache`，但未清除 `_displayNameCache`。在 Hot Reload 套用中繼資料變更後，`_displayNameCache` 可能仍保留舊的顯示名稱，導致顯示名稱不正確。建議同時清除兩個快取。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 ExpressionMemberAccessor.cs 第 82-85 行顯示 ClearCache 方法僅清除 _memberInfoCache。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R02] 應使用檔案範圍命名空間宣告",
+    "body": "檔案使用傳統的區塊命名空間宣告，但專案規範要求使用檔案範圍命名空間（file-scoped namespace）。建議改為 `namespace Microsoft.AspNetCore.Components.Forms;` 並移除大括號。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms\n{\n    /// <summary>\n    /// Displays the display name for a specified field, reading from <see cref=\"DisplayAttribute\"/>\n    /// or <see cref=\"DisplayNameAttribute\"/> if present, or falling back to the property name.\n    /// </summary>\n    /// <typeparam name=\"TValue\">The type of the field.</typeparam>\n    public class DisplayName<TValue> : IComponent\n    {",
+    "evidence": "diff 中 DisplayName.cs 第 8-14 行顯示區塊命名空間。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R03] 私有欄位應使用底線前綴 camelCase",
+    "body": "私有欄位 `_renderHandle`、`_previousFieldAccessor`、`_displayName` 已符合底線前綴 camelCase，但 `For` 屬性是公開屬性，不受此規範限制。此 finding 可能不適用，請忽略。",
+    "existing_code": "private RenderHandle _renderHandle;\nprivate Expression<Func<TValue>>? _previousFieldAccessor;\nprivate string? _displayName;",
+    "evidence": "diff 中 DisplayName.cs 第 18-20 行顯示私有欄位。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R14] 內部類別應標記為 sealed",
+    "body": "`ExpressionMemberAccessor` 是內部靜態類別，但未標記為 `sealed`。雖然靜態類別隱含 sealed，但明確標記可提高可讀性。建議加上 `sealed` 修飾詞。",
+    "existing_code": "internal static class ExpressionMemberAccessor",
+    "evidence": "diff 中 ExpressionMemberAccessor.cs 第 13 行。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "DisplayName 元件未處理 For 為 null 以外的無效表達式",
+    "body": "`SetParametersAsync` 中僅檢查 `For` 是否為 null，但未驗證表達式是否為簡單成員存取。如果傳入複雜表達式（如方法呼叫），`ExpressionMemberAccessor.GetDisplayName` 會拋出 `ArgumentException`，但此例外會在渲染過程中傳播，可能導致未處理的例外。建議在設定參數時驗證表達式，或提供更明確的錯誤訊息。",
+    "existing_code": "if (For is null)\n{\n    throw new InvalidOperationException($\"{GetType()} requires a value for the \" +\n        $\"{nameof(For)} parameter.\");\n}",
+    "evidence": "diff 中 DisplayName.cs 第 31-35 行。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "快取鍵使用 Expression 可能導致記憶體洩漏",
+    "body": "`_memberInfoCache` 使用 `Expression` 作為鍵，而表達式可能捕獲外部物件（如模型實例），導致這些物件無法被垃圾回收。如果應用程式動態建立許多表達式，快取可能無限增長。建議使用表達式的字串表示或結構化鍵，或限制快取大小。",
+    "existing_code": "private static readonly ConcurrentDictionary<Expression, MemberInfo> _memberInfoCache = new();",
+    "evidence": "diff 中 ExpressionMemberAccessor.cs 第 30 行。"
+  }
+]

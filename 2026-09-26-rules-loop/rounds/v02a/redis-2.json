@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "驗證失敗時未回覆錯誤給客戶端",
+    "body": "在 `parseSlotRangesOrReply` 中，當 `slotRangeArrayNormalizeAndValidate` 回傳錯誤時，程式碼僅釋放 `err` 和 `slots` 並回傳 `NULL`，但沒有呼叫 `addReplyErrorSds` 或類似函式將錯誤訊息回覆給客戶端。這會導致客戶端在輸入無效的 slot range 時收到空回覆，而不是明確的錯誤訊息。\n\n建議在釋放 `err` 之前，先呼叫 `addReplyErrorSds(c, err)` 將錯誤訊息回覆給客戶端，然後再釋放 `err`。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n        sdsfree(err);\n        slotRangeArrayFree(slots);\n        return NULL;\n    }",
+    "evidence": "diff 中顯示原本的程式碼是 `addReplyErrorSds(c, err);`，但修改後被移除，僅留下 `sdsfree(err);`。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "記憶體所有權轉移不明確，可能導致 double-free 或 use-after-free",
+    "body": "在 `asmCreateImportTask` 中，原本使用 `slotRangeArrayDup(slots)` 複製一份 slot range 陣列，但修改後直接將傳入的 `slots` 指標指派給 `task->slots`。這表示呼叫端傳入的 `slots` 記憶體所有權被轉移給 task，但呼叫端可能不知道這件事，導致後續釋放時發生 double-free 或 use-after-free。\n\n例如，在 `clusterMigrationCommandImport` 中，原本在呼叫 `asmCreateImportTask` 後會呼叫 `slotRangeArrayFree(slots)`，但修改後移除了這個呼叫，這表示 `slots` 的所有權已轉移給 task。然而，在 `clusterAsmProcess` 中，傳入的 `arg` 是從外部傳入的指標，若該指標在呼叫後仍被使用，就可能發生問題。\n\n建議明確所有權轉移的規則，並在文件或註解中說明。或者，保留原本的複製行為，避免所有權轉移。",
+    "existing_code": "task->slots = slots;",
+    "evidence": "diff 中顯示原本是 `task->slots = slotRangeArrayDup(slots);`，修改後改為 `task->slots = slots;`。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 1012,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "asmCountKeysInSlots 未檢查 slots 指標是否為 NULL",
+    "body": "`asmCountKeysInSlots` 函式在開頭檢查 `if (!slots) return 0;`，但後續的迴圈中直接使用 `slots->num_ranges` 和 `slots->ranges`，若 `slots` 為 NULL，則會導致 segmentation fault。雖然函式開頭有檢查，但若呼叫端傳入 NULL，仍會進入函式並在迴圈中崩潰。\n\n建議在函式開頭明確檢查 `slots` 是否為 NULL，並回傳 0。",
+    "existing_code": "unsigned long long asmCountKeysInSlots(slotRangeArray *slots) {\n    if (!slots) return 0;\n\n    unsigned long long key_count = 0;\n    int total_ranges = slots->num_ranges;\n    for (int i = 0; i < slots->num_ranges; i++) {\n        for (int j = slots->ranges[i].start; j <= slots->ranges[i].end; j++) {\n            key_count += kvstoreDictSize(server.db[0].keys, j);\n        }\n    }\n    return key_count;\n}",
+    "evidence": "函式開頭有 `if (!slots) return 0;`，但後續仍直接使用 `slots->num_ranges` 和 `slots->ranges`，若 `slots` 為 NULL，則會崩潰。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 1019,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "asmCountKeysInSlots 僅統計 db[0] 的 key 數量",
+    "body": "`asmCountKeysInSlots` 函式僅統計 `server.db[0]` 的 key 數量，但 Redis 支援多個資料庫（預設 16 個），且 slot 可能分佈在不同的資料庫中。若 slot 中的 key 存在於其他資料庫，則統計結果會不準確。\n\n建議確認此函式的使用情境，若需要統計所有資料庫的 key 數量，應迭代所有資料庫。",
+    "existing_code": "key_count += kvstoreDictSize(server.db[0].keys, j);",
+    "evidence": "程式碼中明確使用 `server.db[0]`，僅統計第一個資料庫。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1994,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "參數驗證條件可能過於嚴格",
+    "body": "在 `parseSlotRangesOrReply` 中，新增的參數驗證條件為 `if (argc < 0 || pos < 0 || pos >= argc || (argc - pos) < 2 || ((argc - pos) % 2) != 0)`。其中 `argc < 0` 和 `pos < 0` 的檢查可能永遠不會成立，因為 `argc` 和 `pos` 通常是從命令解析而來，不會是負數。但這不會造成問題，只是多餘的檢查。\n\n建議確認這些檢查是否必要，若無必要可移除。",
+    "existing_code": "if (argc < 0 || pos < 0 || pos >= argc || (argc - pos) < 2 || ((argc - pos) % 2) != 0) {",
+    "evidence": "diff 中新增的條件包含 `argc < 0` 和 `pos < 0`，但這兩個變數通常不會是負數。"
+  }
+]

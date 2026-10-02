@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較使用 OrdinalIgnoreCase 在 Linux 上可能導致誤判",
+    "body": "在檢查 SSL_CERT_DIR 是否已包含憑證目錄時，使用 `StringComparison.OrdinalIgnoreCase` 進行路徑比較。在 Linux 上，檔案路徑是區分大小寫的，因此若 SSL_CERT_DIR 中包含大小寫不同的相同路徑（例如 `/home/user/.dotnet/corefx/cryptography/x509stores/my` 與 `/home/user/.dotnet/corefx/cryptography/x509stores/My`），此比較會錯誤地視為相同，導致程式誤判憑證目錄已存在，而略過必要的設定。建議改用 `StringComparison.Ordinal` 以符合 Unix 檔案系統的語意。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的程式碼片段：`return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);`"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 994,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R11] NssDb 類別應使用 primary constructor 而非傳統建構函式",
+    "body": "此變更將原本使用 primary constructor 的 `NssDb` 類別改為傳統建構函式，違反了專案規範 R11（Use Primary Constructor Syntax Where Appropriate）。該類別僅有簡單的參數指派，符合 primary constructor 的使用情境。建議改回 primary constructor 寫法以維持一致性。",
+    "existing_code": "private sealed class NssDb\n    {\n        private readonly string _path;\n        private readonly bool _isFirefox;\n\n        public NssDb(string path, bool isFirefox)\n        {\n            _path = path;\n            _isFirefox = isFirefox;\n        }\n\n        public string Path => _path;\n        public bool IsFirefox => _isFirefox;\n    }",
+    "evidence": "diff 中將原本的 `private sealed class NssDb(string path, bool isFirefox)` 改為傳統建構函式寫法。"
+  },
+  {
+    "path": "src/Tools/dotnet-dev-certs/src/Program.cs",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "非 verbose 模式下啟用 LogAlways 可能導致過多輸出",
+    "body": "原本只有在 verbose 模式下才啟用事件監聽器，現在改為非 verbose 模式下也啟用，且等級為 `EventLevel.LogAlways`。這可能導致在一般使用情境下輸出過多訊息，影響使用者體驗。建議確認這些 LogAlways 事件是否真的需要在非 verbose 模式下顯示，或考慮使用較低的等級（如 Informational）。",
+    "existing_code": "listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);",
+    "evidence": "diff 中新增的程式碼片段：`listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);`"
+  }
+]

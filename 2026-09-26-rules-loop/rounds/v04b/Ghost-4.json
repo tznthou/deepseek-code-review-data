@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "使用 dangerouslySetInnerHTML 渲染未消毒的評論 HTML，可能導致 XSS",
+    "body": "`CommentContent` 元件直接使用 `dangerouslySetInnerHTML={{__html: item.html || ''}}` 渲染評論內容。如果 `item.html` 來自使用者輸入且未經伺服器端消毒，攻擊者可以注入任意 HTML/JavaScript，造成儲存型 XSS。請確認後端在儲存評論時已進行嚴格的 HTML 消毒（例如使用 DOMPurify 或類似工具），或在前端渲染前進行消毒。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 `CommentContent` 元件內含此行，且無任何消毒處理。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "useEffect 依賴陣列缺少 item.html，可能導致 clamp 狀態未更新",
+    "body": "`CommentContent` 的 `useEffect` 依賴陣列為空 `[]`，但內部使用了 `item.html` 來判斷內容是否被截斷。當 `item.html` 改變時（例如評論被編輯或載入不同評論），`isClamped` 不會重新計算，可能導致「Show more」按鈕顯示錯誤。建議將 `item.html` 加入依賴陣列，或改用 `useLayoutEffect` 並在依賴中列出相關變數。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "diff 中新增的 `CommentContent` 元件，`useEffect` 依賴陣列為空，但函式內使用了 `item.html`。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 dangerouslySetInnerHTML 時未提供 fallback 內容",
+    "body": "當 `item.html` 為空字串時，`dangerouslySetInnerHTML` 會渲染空內容，但元件仍會顯示。建議在 `item.html` 為空時顯示替代文字（例如「此評論無內容」），以提升使用者體驗。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中該行直接使用 `item.html || ''`，未處理空值情況。"
+  }
+]

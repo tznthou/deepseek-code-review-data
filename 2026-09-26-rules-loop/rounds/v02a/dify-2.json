@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "handleJSONSchemaChange 回傳 Python 風格的 `True` 而非 TypeScript 的 `true`",
+    "body": "在 `handleJSONSchemaChange` 中，成功解析 JSON 後回傳了 `True`（大寫 T）。這在 TypeScript 中不是有效的布林值，會導致型別錯誤（若啟用 strict mode）或執行時產生 ReferenceError（若未定義 `True`）。應改為 `return true`。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的 `return True` 行，TypeScript 中布林值為小寫 `true`。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "jsonSchemaStr 對空字串的處理可能產生多餘的引號",
+    "body": "`jsonSchemaStr` 現在直接 `JSON.stringify(JSON.parse(tempPayload.json_schema), null, 2)`。若 `tempPayload.json_schema` 為空字串，`JSON.parse('')` 會拋錯，進入 catch 回傳空字串，這沒問題。但若 schema 為 `'\"\"'`（即字串內容為空字串的 JSON），則會回傳 `'\"\"'`（帶引號的空字串），可能導致 textarea 顯示 `\"\"` 而非空。建議在 stringify 前檢查是否為空字串或直接回傳原始值。",
+    "existing_code": "return JSON.stringify(JSON.parse(tempPayload.json_schema), null, 2)",
+    "evidence": "diff 中將原本的 `.properties` 改為直接 stringify 整個 schema，未處理空字串情況。"
+  }
+]

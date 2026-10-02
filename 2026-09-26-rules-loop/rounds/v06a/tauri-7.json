@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "generate_github_alternative_url 不再回傳替代 URL，可能導致下載失敗",
+    "body": "在 `generate_github_alternative_url` 函式中，原本會將計算出的替代 URL (`alt_url`) 回傳，但修改後改為回傳原始 URL (`url.to_owned()`)。這使得函式失去其替代 URL 的用途，當原始 GitHub URL 無法存取時，將無法使用鏡像站進行下載，可能導致建置流程失敗。\n\n建議確認此變更是否為預期行為。若需保留替代 URL 功能，應回傳 `alt_url`；若不再需要替代 URL，則應考慮移除整個函式或調整其邏輯。",
+    "existing_code": "url.to_owned()",
+    "evidence": "diff 中將原本的 `alt_url` 改為 `url.to_owned()`，且函式名稱仍為 `generate_github_alternative_url`，暗示其應回傳替代 URL。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 120,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 Sha256 的 Windows 條件編譯，可能影響跨平台行為",
+    "body": "原本 `HashAlgorithm::Sha256` 僅在 Windows 平台啟用，現在移除 `#[cfg(target_os = \"windows\")]` 後，Sha256 將在所有平台可用。這可能是有意的跨平台支援，但也可能導致非 Windows 平台出現未預期的行為或編譯問題。\n\n請確認此變更是否為預期，並確保所有平台皆能正確處理 Sha256 雜湊。",
+    "existing_code": "Sha256,",
+    "evidence": "diff 中移除了 `#[cfg(target_os = \"windows\")]` 屬性，使 `Sha256` 變體不再受限於 Windows。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "快取未清除可能導致記憶體洩漏",
+    "body": "`_memberInfoCache` 和 `_displayNameCache` 是靜態 ConcurrentDictionary，但 `ClearCache` 方法僅清除 `_memberInfoCache`，未清除 `_displayNameCache`。在 Hot Reload 或動態載入情境下，舊的 MemberInfo 可能仍被快取，導致記憶體洩漏或顯示過時的名稱。建議在 `ClearCache` 中同時清除兩個快取。",
+    "existing_code": "private static readonly ConcurrentDictionary<Expression, MemberInfo> _memberInfoCache = new();\nprivate static readonly ConcurrentDictionary<MemberInfo, string> _displayNameCache = new();",
+    "evidence": "diff 中新增的 `ClearCache` 方法僅呼叫 `_memberInfoCache.Clear()`，未處理 `_displayNameCache`。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "參數變更時未重新渲染",
+    "body": "在 `SetParametersAsync` 中，僅當 `For` 表達式與 `_previousFieldAccessor` 不同時才重新計算並渲染。若 `For` 表達式相同但其他參數（如 `ChildContent`）變更，元件不會重新渲染，可能導致 UI 未更新。建議移除 `_previousFieldAccessor` 檢查，或改為比較所有參數。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中顯示僅在表達式變更時才呼叫 `_renderHandle.Render`。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "未處理非成員存取運算式",
+    "body": "`GetMemberInfo` 方法僅處理 `MemberExpression`，若傳入的運算式不是成員存取（例如方法呼叫或常數），會拋出 `ArgumentException`。但此例外未在 `DisplayName` 元件中捕獲，可能導致元件渲染失敗。建議在元件中捕獲並提供更友善的錯誤訊息，或放寬限制。",
+    "existing_code": "if (accessorBody is not MemberExpression memberExpression)\n{\n    throw new ArgumentException(\n        $\"The provided expression contains a {accessorBody.GetType().Name} which is not supported. \" +\n        $\"Only simple member accessors (fields, properties) of an object are supported.\");\n}",
+    "evidence": "diff 中顯示僅支援 MemberExpression，且未在呼叫端處理例外。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 159,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法未遵循 Arrange-Act-Assert 模式",
+    "body": "`SupportsLocalizationWithResourceType` 測試方法缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解，違反了專案規範 R06。建議補齊三段式註解以提升可讀性。",
+    "existing_code": "public async Task SupportsLocalizationWithResourceType()\n{\n    var model = new TestModel();\n    var rootComponent = new TestHostComponent\n    {\n        InnerContent = builder =>\n        {\n            builder.OpenComponent<DisplayName<string>>(0);\n            builder.AddComponentParameter(1, \"For\", (System.Linq.Expressions.Expression<Func<string>>)(() => model.PropertyWithResourceBasedDisplay));\n            builder.CloseComponent();\n        }\n    };\n\n    var output = await RenderAndGetOutput(rootComponent);\n    Assert.Equal(\"Localized Display Name\", output);\n}",
+    "evidence": "diff 中該方法缺少 AAA 註解。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/Tests/FormsTest.cs",
+    "line": 580,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "E2E 測試可能因資源檔問題而失敗",
+    "body": "E2E 測試 `DisplayNameReadsAttributesCorrectly` 檢查本地化標籤時，預期顯示 \"Product Name\"，但若測試環境的語言不是英文，或資源檔未正確載入，測試可能失敗。建議在測試中明確設定文化特性，或使用不依賴本地化的屬性。",
+    "existing_code": "var localizedLabel = appElement.FindElement(By.Id(\"localized-label\"));\nBrowser.Equal(\"Product Name\", () => localizedLabel.Text);",
+    "evidence": "diff 中顯示測試依賴於資源檔的英文內容。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 208,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "移除 @MainActor 可能導致 GCDWebServer 初始化於背景執行緒而崩潰",
+    "body": "原本的註解明確指出 GCDWebServer 必須在主執行緒初始化，否則測試單獨執行時會崩潰。移除 @MainActor 後，startMockImageServer 可能從背景執行緒呼叫，導致崩潰。建議保留 @MainActor 或確保呼叫端在主執行緒。",
+    "existing_code": "func startMockImageServer(imageData: Data, forAssetType assetType: AssetType) throws -> URL {",
+    "evidence": "diff 中移除了 @MainActor 與相關註解，且測試方法已改為同步，可能從非主執行緒呼叫。"
+  },
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R01] 移除 MPL 標頭違反專案規範",
+    "body": "此檔案移除了 Mozilla Public License 標頭，違反專案規範 R01。請保留標頭。",
+    "existing_code": "import ContentBlockingGenerator",
+    "evidence": "diff 中刪除了 MPL 標頭。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 expectation 可能導致測試提前結束而未驗證結果",
+    "body": "在 testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase 中，原本使用 expectation 等待非同步下載完成，但移除後測試方法立即返回，下載結果可能未被驗證。建議保留 expectation 或改用 async/await。",
+    "existing_code": "siteDownloader.downloadImage(with: mockedURL, options: [.processor(SVGImageProcessor())]) { result in",
+    "evidence": "diff 中移除了 expectation 的建立與 fulfillment，且測試方法改為同步。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 expectation 可能導致測試未等待非同步呼叫",
+    "body": "在 testRequestMediaCaptureSuccess 中，原本使用 expectation 等待 decisionHandler 被呼叫，但移除後測試可能提前結束。建議保留 expectation 或改用 async/await。",
+    "existing_code": "subject.requestMediaCapturePermission(decisionHandler: decisionHandler)",
+    "evidence": "diff 中移除了 expectation 的建立與 wait。"
+  }
+]

@@ -1,0 +1,5 @@
+[info] repo 規範＋範圍說明：repo=dify、25 條、12290 字元、placement=after_diff、sha256=cff508848ce8
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 15572 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 web/app/components/app/configuration/config-var/config-modal/index.tsx:200 → 198（片段唯一命中）
+[info] 重新定位 web/app/components/rag-pipeline/components/panel/input-field/editor/form/hooks.ts:89 → 87（片段唯一命中）
+[info] 完成於 9.4s ｜ findings=6 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 8352, "completion_tokens": 1278, "total_tokens": 9630, "prompt_tokens_details": {"cached_tokens": 8320}, "prompt_cache_hit_tokens": 8320, "prompt_cache_miss_tokens": 32}

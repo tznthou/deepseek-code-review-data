@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試斷言改為同時符合新舊 Regex 可能導致測試永遠失敗或失去驗證意義",
+    "body": "原本斷言 `Assert.Matches(ParseErrorMessage(), logs[0].Message)` 只驗證單一錯誤訊息格式。修改後改為 `Assert.True(ParseErrorMessageRegexOld.IsMatch(...) && ParseErrorMessageRegexNew.IsMatch(...))`，要求同一則日誌同時符合兩個不同的 Regex。這兩個 Regex 分別對應不同的錯誤訊息格式（'Refused to frame' 與 'Framing ... violates'），同一則日誌不可能同時符合兩者，因此此斷言將永遠失敗，或若日誌內容恰好包含兩種模式則可能誤判。建議改為 `Assert.True(ParseErrorMessageRegexOld.IsMatch(...) || ParseErrorMessageRegexNew.IsMatch(...))`，或分別驗證不同日誌。",
+    "existing_code": "Assert.True(\n    ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n    ParseErrorMessageRegexNew.IsMatch(logs[0].Message),\n    $\"Expected log message to match one of the CSP error patterns: {ParseErrorMessageRegexOld} or {ParseErrorMessageRegexNew}. Actual: {logs[0].Message}\");",
+    "evidence": "diff 中新增的 `Assert.True` 使用 `&&` 運算子，但兩個 Regex 模式互斥，不可能同時匹配同一字串。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 408,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "WebSocketWrapper.ReceiveAsync 中 _receiveTcs 重置時機可能導致競態或遺失資料",
+    "body": "原本在複製資料後才重置 `_receiveTcs`，現在改為在 await 之後立即重置。若 `buffer.Count == 0` 的分支直接返回，則 `_receiveTcs` 已被重置，但呼叫端可能預期後續呼叫能取得相同結果。此外，若 `res.Item2.CopyTo(buffer)` 拋出例外，`_receiveTcs` 已重置，但資料未完整複製，可能導致狀態不一致。建議將重置邏輯移至 finally 區塊或確保在所有路徑中正確處理。",
+    "existing_code": "var res = await _receiveTcs.Task;\n_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);\n// Handle zero-byte reads\nif (buffer.Count == 0)\n{\n    return res.Item1;\n}\nres.Item2.CopyTo(buffer);\nreturn res.Item1;",
+    "evidence": "diff 顯示 `_receiveTcs = new(...)` 被移至 `if (buffer.Count == 0)` 之前，且未在例外路徑中恢復。"
+  },
+  {
+    "path": "eng/common/core-templates/job/source-index-stage1.yml",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "source-index-stage1 條件變更可能影響非 main 分支的索引行為",
+    "body": "原本 `condition: ''` 表示無條件執行，現在改為 `eq(variables['Build.SourceBranch'], 'refs/heads/main')`，僅在 main 分支執行。若其他分支（如 release 分支）也需要 source indexing，此變更將導致功能遺失。請確認此限制是否符合預期。",
+    "existing_code": "condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')",
+    "evidence": "diff 顯示 condition 從空字串改為特定分支條件。"
+  },
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "LocateVisualStudio 中 $vsRequirements 可能為 $null 但後續未完全防護",
+    "body": "新增了當 `$GlobalJson.tools` 缺少 `vs` 屬性時將 `$vsRequirements` 設為 `$null` 的邏輯，並在後續 `Get-Member` 檢查中加入 `$vsRequirements -and` 條件。但若 `$vsRequirements` 為 `$null`，`$args` 陣列仍會包含 `-requires Microsoft.Component.MSBuild` 等參數，可能導致 vswhere 執行失敗。建議在 `$vsRequirements` 為 `$null` 時提前返回或調整參數。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n        $vsRequirements = $GlobalJson.tools.vs\n    } else {\n        $vsRequirements = $null\n    }\n}",
+    "evidence": "diff 顯示新增的 null 處理，但後續 `$args` 建構未考慮 null 情況。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 213,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "DisposeAsync 順序調整可能影響測試穩定性",
+    "body": "原本先釋放 `connection` 再釋放 `secondConnection`，現在順序相反。若兩個連線之間存在相依性（例如共用資源），此變更可能導致測試行為改變。建議確認此調整是否為解決特定問題所需，並確保不會引入新的不穩定因素。",
+    "existing_code": "await secondConnection.DisposeAsync().DefaultTimeout();\nawait connection.DisposeAsync().DefaultTimeout();",
+    "evidence": "diff 顯示兩行順序對調。"
+  }
+]

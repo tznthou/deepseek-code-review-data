@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getDisplayEmail 正規表達式可能誤刪合法 email 中的加號部分",
+    "body": "`getDisplayEmail` 使用 `/\\+[a-zA-Z0-9]{25}/` 來移除後綴，但此模式會匹配任何 email 中加號後緊接 25 個英數字的片段。若使用者的 email 本身包含加號（例如 `john+work@example.com`），且加號後的字串長度剛好為 25 個英數字，則會被錯誤移除。建議改用更精確的模式，例如只移除符合特定格式（如 CUID）的後綴，或使用更嚴格的邊界條件。",
+    "existing_code": "private getDisplayEmail(email: string): string {\n    return email.replace(/\\+[a-zA-Z0-9]{25}/, \"\");\n  }",
+    "evidence": "diff 中新增的 getDisplayEmail 方法使用正規表達式 /\\+[a-zA-Z0-9]{25}/，未考慮 email 中原本就存在加號的情況。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除排序邏輯可能導致回傳順序不穩定",
+    "body": "原本 `getOutputRecurringSeatedBookings` 會依開始時間排序，但此 PR 移除了排序，直接回傳 `transformed`。這可能導致 API 回傳的預訂順序不固定，影響前端顯示或測試的穩定性。若排序並非必要，應在 PR 描述中說明原因；否則建議保留排序。",
+    "existing_code": "return transformed;",
+    "evidence": "diff 中將原本的排序邏輯 `return transformed.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());` 改為 `return transformed;`。"
+  },
+  {
+    "path": "docs/api-reference/v2/openapi.json",
+    "line": 31715,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增必填欄位可能造成向後相容性問題",
+    "body": "在 OpenAPI 規格中，`displayEmail` 被加入多個 schema 的 `required` 陣列，但此欄位是新增的。若既有客戶端依賴舊的 schema 驗證，可能會因為缺少此欄位而失敗。建議將 `displayEmail` 標記為選用（非 required），或提供預設值，以維持向後相容性。",
+    "existing_code": "\"required\": [\n          \"id\",\n          \"name\",\n          \"email\",\n          \"displayEmail\",\n          \"username\",\n          \"timeZone\"\n        ]",
+    "evidence": "diff 中在 required 陣列新增了 \"displayEmail\"。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 164,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "displayGuests 的 map 回呼可能遺失 this 綁定",
+    "body": "在 `bookingTransformed.bookingFieldsResponses.displayGuests = bookingTransformed.bookingFieldsResponses.guests.map(this.getDisplayEmail);` 中，直接傳遞 `this.getDisplayEmail` 作為 map 的回呼。若 `getDisplayEmail` 內部使用 `this`，則會因為失去綁定而拋出錯誤。目前 `getDisplayEmail` 未使用 `this`，但未來若修改可能造成問題。建議改為 `map((guest) => this.getDisplayEmail(guest))` 以確保安全。",
+    "existing_code": "bookingTransformed.bookingFieldsResponses.displayGuests = bookingTransformed.bookingFieldsResponses.guests.map(\n        this.getDisplayEmail\n      );",
+    "evidence": "diff 中出現 `map(this.getDisplayEmail)` 的寫法。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 318,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "displayGuests 的 map 回呼型別不一致",
+    "body": "在另一個方法中，`displayGuests` 的 map 回呼使用了箭頭函式 `(guest: string) => this.getDisplayEmail(guest)`，與前一個方法不一致。雖然功能相同，但建議統一寫法以提升可讀性。",
+    "existing_code": "bookingTransformed.bookingFieldsResponses.displayGuests = bookingTransformed.bookingFieldsResponses.guests.map(\n        (guest: string) => this.getDisplayEmail(guest)\n      );",
+    "evidence": "diff 中出現兩種不同的 map 回呼寫法。"
+  }
+]

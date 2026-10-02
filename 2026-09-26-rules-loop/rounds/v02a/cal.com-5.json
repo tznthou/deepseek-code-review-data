@@ -1,0 +1,57 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的顯示前綴",
+    "body": "在 BasicsTab 中，解析 bookingUrl 以取得顯示前綴的邏輯使用 `new URL(props.bookingUrl)`，但若 bookingUrl 是相對路徑（例如 `/username/slug`）或缺少 protocol，則會拋出例外並 fallback 到 `cal.com/${props.username}/`。這可能導致顯示的前綴與實際 bookingUrl 不一致。建議明確處理相對路徑，或直接使用 API 提供的完整 URL 進行顯示。",
+    "existing_code": "const url = new URL(props.bookingUrl);",
+    "evidence": "diff 中新增的程式碼片段：`const url = new URL(props.bookingUrl);` 位於 BasicsTab.tsx 的 URL 顯示區塊。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 949,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "bookingUrl 狀態可能未正確更新，導致預覽/複製功能失效",
+    "body": "在 event-type-detail.tsx 中，新增了 `bookingUrl` state，但未看到從 API 或 props 設定此 state 的程式碼。若此 state 一直為空，則 handlePreview 和 handleCopyLink 會直接顯示錯誤，使用者無法使用預覽或複製連結功能。建議確認 bookingUrl 的來源並在取得資料後更新 state。",
+    "existing_code": "if (!bookingUrl) {\n  showErrorAlert(\"Error\", \"Booking URL not available. Please save the event type first.\");\n  return;\n}",
+    "evidence": "diff 中 handlePreview 和 handleCopyLink 的修改，新增了對 bookingUrl 的空值檢查，但未見設定 bookingUrl 的程式碼。"
+  },
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 257,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "URL 前綴計算邏輯重複且可讀性差",
+    "body": "在 BasicsTab 中，使用 IIFE 來計算 URL 前綴，邏輯較為複雜且不易閱讀。建議將此邏輯提取為獨立的函式，並加上單元測試，以確保各種 bookingUrl 格式（含相對路徑、有無 protocol、有無 slug 等）都能正確處理。",
+    "existing_code": "{(() => {\n  // Parse bookingUrl to get domain prefix (e.g., \"i.cal.com/\" or \"cal.com/username/\")\n  if (props.bookingUrl) {\n    try {\n      const url = new URL(props.bookingUrl);\n      // Get path without the last segment (slug)\n      const pathParts = url.pathname.split(\"/\").filter(Boolean);\n      pathParts.pop(); // Remove slug\n      // Compute prefix outside try/catch for React Compiler\n      let prefix = \"/\";\n      if (pathParts.length > 0) {\n        prefix = `/${pathParts.join(\"/\")}/`;\n      }\n      return `${url.protocol}//${url.hostname}${prefix}`;\n    } catch {\n      // fallback\n    }\n  }\n  return `cal.com/${props.username}/`;\n})()}",
+    "evidence": "diff 中 BasicsTab.tsx 的 URL 顯示區塊，新增了 IIFE 來計算前綴。"
+  },
+  {
+    "path": "companion/components/event-type-list-item/EventTypeListItemParts.tsx",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "getDisplayUrl 函式可能回傳不一致的格式",
+    "body": "getDisplayUrl 函式在 bookingUrl 存在時回傳 `url.hostname + url.pathname`，但 fallback 時回傳 `/${username}/${slug}`（以斜線開頭）。這可能導致 UI 顯示不一致（例如有時有前導斜線，有時沒有）。建議統一格式，或明確區分顯示用途。",
+    "existing_code": "function getDisplayUrl(bookingUrl?: string, username?: string, slug?: string): string {\n  if (bookingUrl) {\n    try {\n      const url = new URL(bookingUrl);\n      // Return domain + pathname (e.g., \"i.cal.com/keith/30min\")\n      return url.hostname + url.pathname;\n    } catch {\n      // fallback if URL parsing fails\n    }\n  }\n  return username ? `/${username}/${slug}` : `/${slug}`;\n}",
+    "evidence": "diff 中 EventTypeListItemParts.tsx 新增的 getDisplayUrl 函式。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1122,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "copyBtn 的 bookingUrl 未使用 eventType.bookingUrl",
+    "body": "在 content.ts 的 copyBtn 事件處理中，bookingUrl 的建構方式仍為手動拼接 `https://cal.com/...`，未使用新增的 `eventType.bookingUrl` 欄位。這可能導致複製的連結與實際 bookingUrl 不一致（例如使用自訂網域時）。建議與 previewBtn 一樣，優先使用 `eventType.bookingUrl`。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中 content.ts 的 copyBtn 事件處理，bookingUrl 仍為手動拼接，未使用 eventType.bookingUrl。"
+  }
+]

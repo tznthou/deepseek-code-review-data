@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R03] 使用 print 而非 logging",
+    "body": "在 propagate_skip_from_edge 方法中新增了 print 陳述式，違反專案規範 R03（Backend Code Must Use Logging Instead of Print Statements）。print 會直接輸出到 stdout，無法被日誌系統收集，且可能造成效能問題。應改用 logging 模組，並在模組頂部宣告 logger。",
+    "existing_code": "print(f\"Starting execution for node: {downstream_node_id}\")",
+    "evidence": "diff 中新增的 print 陳述式，位於 skip_propagator.py 第 62 行。"
+  },
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "mark_edge_skipped 順序變更可能導致狀態不一致",
+    "body": "在 _propagate_skip_to_node 中，原本先呼叫 mark_edge_skipped 再遞迴 propagate_skip_from_edge，現在順序對調。這可能導致在遞迴過程中，邊的狀態尚未標記為 skipped，若遞迴中發生錯誤或依賴邊狀態的邏輯，可能造成不一致。需要確認此變更的必要性與影響。",
+    "existing_code": "self._state_manager.mark_edge_skipped(edge.id)\n            # Recursively propagate skip\n            self.propagate_skip_from_edge(edge.id)",
+    "evidence": "diff 中顯示順序對調，原本 mark_edge_skipped 在前，現在在後。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/graph_traversal/test_skip_propagator.py",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中使用 MagicMock 而非 create_autospec",
+    "body": "在測試中，部分 mock 物件使用 MagicMock(spec=Edge) 而非 create_autospec(Edge)。MagicMock 不會自動驗證方法簽名，可能導致測試通過但實際程式碼有誤。建議改用 create_autospec 以確保 mock 物件符合介面。",
+    "existing_code": "mock_edge = MagicMock(spec=Edge)",
+    "evidence": "測試檔案中多處使用 MagicMock(spec=Edge)，例如第 12 行。"
+  }
+]

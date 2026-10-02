@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R01] blocks_variable_output 方法缺少回傳型別標註",
+    "body": "根據專案規範 R01，所有 Python 函式參數與回傳值都必須有型別標註。此方法參數已有標註，但回傳值缺少 `-> bool`。建議補上。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的方法定義，回傳型別未標註。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言可能過於嚴格，導致未來實作變更時脆弱",
+    "body": "測試中斷言所有 conversation variable chunk events 的 chunk 都等於 input_query。若未來串流實作改為分批傳送（例如先傳部分字串再傳完整值），此測試會失敗。建議放寬為檢查最後一個 chunk 或合併後的值。",
+    "existing_code": "assert all(event.chunk == input_query for event in conv_var_chunk_events), (\n        \"Expected streamed conversation variable value to match the input query\"\n    )",
+    "evidence": "diff 中新增的測試斷言。"
+  }
+]

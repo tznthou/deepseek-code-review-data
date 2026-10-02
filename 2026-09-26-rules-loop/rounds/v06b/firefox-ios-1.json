@@ -1,0 +1,57 @@
+[
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "格式化字串的格式符與參數數量不符",
+    "body": "`formatStudiesText(appName:)` 使用 `String(format: strings.detailTextStudies, appName)`，但 `strings.detailTextStudies` 的值為 `\"%@ may install and run studies from time to time.\"`，只有一個 `%@`，傳入一個參數是正確的。然而，`formatRolloutsText(appName:)` 使用 `String(format: strings.detailTextRollouts, appName)`，而 `strings.detailTextRollouts` 的值為 `\"%@ will improve features, performance, and stability between updates. Changes applied remotely.\"`，同樣只有一個 `%@`，傳入一個參數也是正確的。但請注意，若未來字串中新增其他格式符（例如 `%d`），此處的參數數量可能不符，導致執行期錯誤。建議改用 `String.localizedStringWithFormat` 或直接使用字串插值，以避免格式符問題。",
+    "existing_code": "return String(format: strings.detailTextStudies, appName)",
+    "evidence": "diff 中新增的 `formatStudiesText` 方法使用 `String(format:)`，而對應的字串值包含 `%@`，目前參數數量相符，但此寫法對未來變更較脆弱。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R12] SettingsTextFormatter 類別未標記為 final",
+    "body": "新增的 `SettingsTextFormatter` 類別未標記為 `final`，且其設計上不應被繼承（僅作為格式化輔助工具）。根據規範 R12，不應被繼承的類別應標記為 `final`，以利編譯器最佳化並明確設計意圖。建議加上 `final` 修飾詞。",
+    "existing_code": "class SettingsTextFormatter {",
+    "evidence": "diff 中新增 `class SettingsTextFormatter {`，未使用 `final`。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R14] 公用類別與方法缺少文件註解",
+    "body": "`SettingsTextFormatter` 類別及其方法 `formatStudiesText`、`formatRolloutsText` 均為 internal 或 public（此處為 internal，但作為共用輔助類別可能被其他模組使用），但缺少文件註解。根據規範 R14，公用 API 應包含 `///` 文件註解，說明用途、參數與回傳值。建議補上文件註解。",
+    "existing_code": "class SettingsTextFormatter {",
+    "evidence": "diff 中新增的類別與方法均無文件註解。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 417,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R03] 缺少 MARK 註解來組織程式碼區段",
+    "body": "新增的 `SettingsTextFormatter` 類別位於 `UIConstants` 結構的尾端，但未使用 `// MARK:` 註解來標示此區段。根據規範 R03，應使用 MARK 註解來組織程式碼，提升可讀性。建議加上 `// MARK: - Settings Text Formatter` 之類的註解。",
+    "existing_code": "// Helper class for formatting Study and Rollout settings text for display",
+    "evidence": "diff 中新增的類別前僅有一般註解，未使用 MARK。"
+  },
+  {
+    "path": "firefox-ios/Shared/Supporting Files/en-GB.lproj/Settings.strings",
+    "line": 311,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾刪除換行可能造成格式不一致",
+    "body": "在 en-GB.lproj/Settings.strings 的 diff 中，最後一行 `\"Settings.Translation.ToggleTitle.v145\" = \"Enable Translations\";` 之後的換行被刪除。這可能導致檔案結尾缺少換行，與其他檔案不一致，也可能影響某些編輯器或工具。建議保留檔案結尾的換行。",
+    "existing_code": "\"Settings.Translation.ToggleTitle.v145\" = \"Enable Translations\";",
+    "evidence": "diff 顯示最後一行之後的換行被移除（`-` 行）。"
+  }
+]

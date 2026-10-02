@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 201,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "條件判斷邏輯錯誤導致驗證被跳過",
+    "body": "原本的條件是 `extension == json || extension == json5`，現在改成 `extension == json && extension == json5`，這永遠為 false，因此 JSON 設定檔將不會進行 schema 驗證。這會讓無效的設定檔通過驗證，可能導致後續執行錯誤。建議改回 `||` 或使用 `matches!(extension, \"json\" | \"json5\")`。",
+    "existing_code": "if config_path.extension() == Some(OsStr::new(\"json\"))\n    && config_path.extension() == Some(OsStr::new(\"json5\"))",
+    "evidence": "diff 中將 `||` 改為 `&&`，且兩個條件互斥，導致永遠不成立。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 289,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "merge_with 不再合併設定，可能導致後續使用到未合併的資料",
+    "body": "原本 `merge_with` 會將 `merge_config` 合併到 `config_metadata.inner` 並重新解析，現在改為將 `merge_config` 存入 `extensions`。這可能導致其他程式碼讀取 `inner` 時拿到未合併的設定，造成行為不一致。需要確認所有使用 `inner` 的地方是否預期已合併，或是否應改為讀取 extensions 中的合併結果。",
+    "existing_code": "config_metadata.extensions.insert(MERGE_CONFIG_EXTENSION_NAME.into(), merge_config);",
+    "evidence": "diff 中刪除了 `merge(&mut value, &merge_config);` 和 `config_metadata.inner = serde_json::from_value(value)...`，改為插入 extensions。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 151,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 OnceLock 延遲初始化驗證器可能隱藏初始化錯誤",
+    "body": "`config_schema_validator` 使用 `OnceLock` 並在初始化時 `expect`，若 schema 無效會 panic。雖然 schema 是內建的，但若未來修改 schema 導致無效，此處會在執行時 panic 而非回傳錯誤。建議考慮回傳 `Result` 或使用 `LazyLock` 搭配錯誤處理。",
+    "existing_code": "static CONFIG_SCHEMA_VALIDATOR: OnceLock<jsonschema::Validator> = OnceLock::new();\n  CONFIG_SCHEMA_VALIDATOR.get_or_init(|| {\n    let schema: JsonValue = serde_json::from_str(include_str!(\"../../config.schema.json\")).expect(\"Failed to parse config schema bundled in the tauri-cli\");\n    jsonschema::validator_for(&schema).expect(\"Config schema bundled in the tauri-cli is invalid\")\n  })",
+    "evidence": "使用 expect 在初始化失敗時直接 panic，而非回傳錯誤。"
+  }
+]

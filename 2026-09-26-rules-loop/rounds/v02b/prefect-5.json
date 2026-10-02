@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R08] 跨欄位驗證應使用 model_validator 而非 field_validator",
+    "body": "在 `_bucket_folder_suffix` 中新增了對 `bucket` 欄位的驗證，但此驗證依賴另一個欄位 `bucket`，屬於跨欄位驗證。使用 `field_validator` 時，`info.data` 可能尚未包含 `bucket`（取決於欄位定義順序），導致驗證不穩定或失敗。應改用 `@model_validator(mode='after')` 進行跨欄位驗證。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的 `if info.data.get(\"bucket\")...` 位於 `@field_validator(\"bucket_folder\")` 內，違反 R08 規範。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "路徑前綴檢查使用子字串比對可能誤判",
+    "body": "`if self.bucket_folder and self.bucket_folder in path:` 使用子字串比對，若 `path` 中其他位置包含 `bucket_folder` 字串（例如檔名或中間目錄），會錯誤地視為已前綴而跳過處理。應改為檢查 `path` 是否以 `bucket_folder` 開頭（例如 `path.startswith(self.bucket_folder)`），或使用 `PurePosixPath` 比較前綴。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中新增的檢查使用 `in` 運算子，而非前綴比對。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/tests/test_cloud_storage.py",
+    "line": 153,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試未涵蓋 bucket_folder 為空字串的情境",
+    "body": "測試 `test_resolve_path_no_double_nesting` 在 `bucket_folder` 為空時會 skip，但未驗證當 `bucket_folder` 為空時 `_resolve_path` 的行為是否正確（應直接返回原路徑）。建議增加一個測試案例，確認空 `bucket_folder` 時不會誤加前綴。",
+    "existing_code": "if not bucket_folder:\n            pytest.skip(\"Test only applies when bucket_folder is set\")",
+    "evidence": "diff 中測試僅在 bucket_folder 存在時執行，未涵蓋空值情境。"
+  }
+]

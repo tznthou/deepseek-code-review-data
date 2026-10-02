@@ -1,0 +1,57 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "Suspense 缺少 fallback，可能導致空白畫面",
+    "body": "元件使用 `useSuspenseQuery` 取得資料，但外層的 `<Suspense>` 沒有提供 `fallback` prop。當查詢處於 pending 狀態時，React 會暫停渲染並尋找最近的 Suspense boundary；如果沒有 fallback，使用者會看到空白內容，直到資料載入完成。建議提供一個載入中的 UI，例如 `<Suspense fallback={<Skeleton />}>`，以改善使用者體驗。",
+    "existing_code": "<Suspense>\n\t\t\t<FlowIconTextImplementation flowId={flowId} />\n\t\t</Suspense>",
+    "evidence": "diff 中第 13-15 行顯示 `<Suspense>` 沒有 fallback 屬性，而 `FlowIconTextImplementation` 使用了 `useSuspenseQuery`。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "查詢函式名稱拼寫錯誤：buildFLowDetailsQuery",
+    "body": "匯入的查詢建構函式名稱為 `buildFLowDetailsQuery`，其中 `FLow` 的大小寫可能不符合命名慣例（應為 `buildFlowDetailsQuery`）。這可能導致可讀性問題，且若其他程式碼使用正確拼寫，會造成不一致。建議確認函式名稱並修正。",
+    "existing_code": "const { data: flow } = useSuspenseQuery(buildFLowDetailsQuery(flowId));",
+    "evidence": "diff 中第 20 行顯示使用了 `buildFLowDetailsQuery`，而匯入來源為 `@/api/flows`。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Storybook decorator 中的 QueryClient 可能造成快取污染",
+    "body": "在 `createTestRouter` 中，每次呼叫都會建立一個新的 `QueryClient` 並傳入 router context，但 decorator 外層的 `QueryClientProvider` 使用的是模組層級的 `queryClient`。這可能導致不同 story 之間共用快取，造成測試資料互相干擾。建議在 decorator 內建立新的 `QueryClient` 並傳遞給 `QueryClientProvider`，以確保每個 story 有獨立的查詢客戶端。",
+    "existing_code": "const queryClient = new QueryClient({\n\tdefaultOptions: {\n\t\tqueries: {\n\t\t\tretry: false,\n\t\t},\n\t},\n});",
+    "evidence": "diff 中第 8-14 行定義了模組層級的 `queryClient`，並在第 38 行用於 `QueryClientProvider`，而 `createTestRouter` 內又建立了新的 `QueryClient`。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "未使用的匯入：Skeleton",
+    "body": "檔案中匯入了 `Skeleton` 元件，但在程式碼中並未使用。這可能違反 R12（未使用的匯入應自動移除），並增加 bundle 大小。建議移除未使用的匯入。",
+    "existing_code": "import { Skeleton } from \"@/components/ui/skeleton\";",
+    "evidence": "diff 中第 5 行匯入了 `Skeleton`，但整個檔案中沒有使用到它。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "缺少對應的測試檔案（R10）",
+    "body": "根據規範 R10，每個 React 元件檔案應有同目錄下的測試檔案（`flow-icon-text.test.tsx`）。此 PR 新增了元件但未包含測試，可能降低測試覆蓋率。建議補上測試，涵蓋載入狀態、成功渲染和錯誤處理。",
+    "existing_code": "import { useSuspenseQuery } from \"@tanstack/react-query\";",
+    "evidence": "diff 中只新增了元件檔案，沒有對應的測試檔案。"
+  }
+]

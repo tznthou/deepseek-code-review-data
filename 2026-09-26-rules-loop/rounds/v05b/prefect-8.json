@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 509,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`source_static_path` 在 `create_ui_static_subpath` 中未定義",
+    "body": "`source_static_path` 是在 `create_ui_app` 函式內定義的區域變數，但 `create_ui_static_subpath` 函式嘗試使用它，導致 `NameError`。\n\n失敗情境：當 `PREFECT_UI_ENABLED` 為 True 且 `ephemeral` 為 False 時，呼叫 `create_ui_static_subpath` 會立即拋出 `NameError`。\n\n建議：將 `source_static_path` 作為參數傳遞給 `create_ui_static_subpath`，或將其設為模組層級變數。",
+    "existing_code": "copy_directory(str(source_static_path), str(static_dir))",
+    "evidence": "diff 中 `create_ui_static_subpath` 函式內使用了 `source_static_path`，但該變數僅在 `create_ui_app` 中定義。"
+  },
+  {
+    "path": "src/prefect/settings/models/server/ui.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`v2_enabled` 預設為 True 可能造成未預期的行為變更",
+    "body": "新設定 `v2_enabled` 預設為 `True`，這表示所有現有使用者升級後將預設使用實驗性的 V2 UI。若 V2 UI 尚未穩定，可能導致使用者遇到未預期的問題。\n\n建議：將預設值設為 `False`，並在 V2 UI 穩定後再考慮變更預設值。",
+    "existing_code": "v2_enabled: bool = Field(\n        default=True,\n        description=\"Whether to serve the experimental V2 UI instead of the default V1 UI.\",\n    )",
+    "evidence": "diff 中新增的設定欄位 `v2_enabled` 預設值為 `True`。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 458,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`static_subpath` 變數指派可能造成混淆",
+    "body": "在 `create_ui_app` 中，`static_subpath` 被指派為 `prefect.__ui_static_subpath__` 或 `prefect.__ui_v2_static_subpath__`，但後續使用 `static_subpath` 時可能造成混淆。\n\n建議：重新命名變數以清楚表達其用途，或直接使用對應的模組屬性。",
+    "existing_code": "if v2_enabled:\n        source_static_path = prefect.__ui_v2_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v2:{prefect.__version__}:{base_url}\"\n    else:\n        source_static_path = prefect.__ui_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v1:{prefect.__version__}:{base_url}\"",
+    "evidence": "diff 中 `static_subpath` 的指派與後續使用可能造成閱讀上的混淆。"
+  }
+]

@@ -1,0 +1,4 @@
+[info] repo 規範＋範圍說明：repo=aspnetcore、20 條、10512 字元、placement=after_diff、sha256=03cfa3548ec0
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 30311 字元、thinking=disabled、max_tokens=8192）
+[info] 定位不到 src/Validation/src/ValidationOptions.cs:68（片段多重命中（2 處），不猜）
+[info] 完成於 6.9s ｜ findings=3 ｜ relocated=0 ｜ verdict=comment ｜ usage={"prompt_tokens": 11375, "completion_tokens": 819, "total_tokens": 12194, "prompt_tokens_details": {"cached_tokens": 11264}, "prompt_cache_hit_tokens": 11264, "prompt_cache_miss_tokens": 111}

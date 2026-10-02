@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "generate_github_alternative_url 可能忽略替代 URL 並使用原始 URL",
+    "body": "在 `generate_github_alternative_url` 中，原本使用 `alt_url`（替代 URL）作為回傳值，但修改後改為 `url.to_owned()`（原始 URL）。這可能導致函式失去其設計目的（提供替代下載來源），並在原始 URL 失效時無法 fallback。請確認此變更是否為預期行為，並考慮保留替代 URL 的邏輯。",
+    "existing_code": "url.to_owned(),",
+    "evidence": "diff 中將 `alt_url` 改為 `url.to_owned()`，且參數名稱改為 `_alt_url`，暗示不再使用替代 URL。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 100,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 HashAlgorithm::Sha256 的 Windows 條件編譯可能影響跨平台行為",
+    "body": "原本 `Sha256` 變體僅在 Windows 上可用，現在移除 `#[cfg(target_os = \"windows\")]` 後，所有平台皆可使用。這可能是有意為之，但需確認其他平台是否已正確處理 SHA-256 驗證，避免在非 Windows 平台出現未預期的行為。",
+    "existing_code": "Sha256,",
+    "evidence": "diff 中移除了 `#[cfg(target_os = \"windows\")]` 屬性。"
+  }
+]

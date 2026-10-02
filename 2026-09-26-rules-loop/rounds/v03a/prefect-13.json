@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 114,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "並行限制輸入可能產生 NaN",
+    "body": "在 onChange 處理中，將輸入值轉為 Number，但未檢查轉換結果是否為 NaN。若使用者輸入非數字字元（例如 'e'、'-'、'+'），Number(value) 會回傳 NaN，導致表單狀態包含 NaN，可能造成後端 API 收到無效的 concurrency_limit。建議在轉換前驗證輸入是否為有效數字，或使用 zod schema 的 number 驗證來攔截。",
+    "existing_code": "field.onChange(value === \"\" ? null : Number(value));",
+    "evidence": "diff 中新增的 onChange 處理直接將 e.target.value 轉為 Number，未檢查 NaN。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "表單提交未處理驗證失敗",
+    "body": "handleSubmit 直接呼叫 updateWorkPool，但未檢查表單驗證是否通過。若使用者輸入無效資料（例如非數字並行限制），zodResolver 會阻止提交，但此處沒有處理驗證失敗的 UI 回饋。建議使用 form.handleSubmit 的回傳值或搭配 onInvalid 來顯示錯誤訊息。",
+    "existing_code": "const handleSubmit = (data: WorkPoolEditFormValues) => {",
+    "evidence": "handleSubmit 函式未檢查 form.formState.errors 或使用 form.handleSubmit 的錯誤處理。"
+  }
+]

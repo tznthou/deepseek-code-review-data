@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ghost/i18n/locales/zh/comments.json",
+    "line": 0,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除整個 comments.json 可能導致翻譯缺失",
+    "body": "此 PR 刪除了 `ghost/i18n/locales/zh/comments.json` 檔案，但未提供替代檔案。若應用程式仍會載入此翻譯檔，將導致所有評論相關字串回退到英文或顯示鍵名。請確認此刪除是否為預期行為，或是否應保留檔案並更新內容。",
+    "existing_code": "deleted file mode 100644\nindex 1de6b189e68..00000000000\n--- a/ghost/i18n/locales/zh/comments.json\n+++ /dev/null",
+    "evidence": "diff 中顯示整個檔案被刪除，且沒有新增對應的替代檔案。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "翻譯中遺漏變數 {newsletterName}",
+    "body": "原翻譯 `\"{memberEmail}将不会再收到{newsletterName}的新闻信。\"` 包含變數 `{newsletterName}`，但新翻譯 `\"{memberEmail}将不会再收到新闻信。\"` 移除了該變數。這可能導致顯示時缺少新聞信名稱，或造成 i18n 函式庫因缺少變數而拋出錯誤。請確認是否應保留變數。",
+    "existing_code": "\"{memberEmail} will no longer receive {newsletterName} newsletter.\": \"{memberEmail}将不会再收到新闻信。\"",
+    "evidence": "diff 中此行將原本包含 `{newsletterName}` 的翻譯改為不含該變數。"
+  }
+]

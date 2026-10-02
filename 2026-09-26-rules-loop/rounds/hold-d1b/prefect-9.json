@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R12] 未使用的 import：Skeleton",
+    "body": "檔案中匯入了 `Skeleton`，但在元件中並未使用。這違反了 R12（未使用的 import 必須自動移除），且會增加 bundle size。建議移除該 import。",
+    "existing_code": "import { Skeleton } from \"@/components/ui/skeleton\";",
+    "evidence": "diff 中新增的 flow-icon-text.tsx 第 6 行匯入了 Skeleton，但整個檔案中沒有使用到 Skeleton 元件。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R10] 缺少同目錄測試檔",
+    "body": "R10 要求每個 React 元件檔案（component.tsx）都必須在同目錄下有對應的測試檔（component.test.tsx）。此 PR 新增了 flow-icon-text.tsx，但沒有提供 flow-icon-text.test.tsx。建議補上測試檔。",
+    "existing_code": "import { useSuspenseQuery } from \"@tanstack/react-query\";",
+    "evidence": "diff 中只新增了 flow-icon-text.tsx、flow-icon-text.stories.tsx 和 index.ts，沒有 flow-icon-text.test.tsx。"
+  }
+]

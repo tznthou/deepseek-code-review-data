@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "active_defrag_enabled 未正確還原為原始值",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 儲存至 `orig_active_defrag`，然後設為 0，但在 `emptyData` 呼叫後，卻直接設為 1，而非還原為 `orig_active_defrag`。這會導致原本停用 active defrag 的伺服器在執行複製同步後，意外啟用 active defrag，可能造成非預期的記憶體整理行為與效能影響。\n\n建議修正：\n```c\nserver.active_defrag_enabled = orig_active_defrag;\n```",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```c\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n+\n     emptyData(-1, empty_db_flags, replicationEmptyDbCallback);\n+\n+    /* Restore the original active defragmentation setting. */\n+    server.active_defrag_enabled = 1;\n```\n註解聲稱要還原原始設定，但實際卻寫死為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "streamEntryIsReferenced 在無 cgroups_ref 時回傳 1 可能誤導呼叫者",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 避免了 null 指標解參考，但回傳 1 表示該 entry 被引用，這可能導致呼叫者認為該 entry 仍被 consumer group 參考，而無法刪除。然而，若 `cgroups_ref` 為 null，表示沒有任何 consumer group 參考此 stream，因此該 entry 實際上並未被任何 group 參考，回傳 0 可能更為正確。需要確認此函式的呼叫者如何處理回傳值，以判斷此行為是否會造成問題。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的一行：\n```c\n+    if (!s->cgroups_ref) return 1;\n```\n此函式名稱暗示回傳值代表 entry 是否被引用，但回傳 1 可能與實際狀態不符。"
+  }
+]

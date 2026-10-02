@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1509,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "BookingRepository.update 回傳型別與 IBookingRepository 介面不符",
+    "body": "`update` 方法回傳 `this.prismaClient.booking.update(...)`，其型別為 `Prisma.Prisma__BookingClient<Booking>`，但介面 `IBookingRepository` 宣告回傳 `Promise<Booking>`。這會導致型別錯誤，且若呼叫端依賴 Promise 的行為（例如 `await` 後直接使用屬性），可能因回傳的是 Prisma Promise 而非原生 Promise 而產生非預期行為。建議將介面回傳型別改為 `Prisma.Prisma__BookingClient<Booking>` 或將實作改為 `return await this.prismaClient.booking.update(...)` 以回傳 `Promise<Booking>`。",
+    "existing_code": "async update({ where, data }: { where: BookingWhereUniqueInput; data: BookingUpdateData }) {\n    return await this.prismaClient.booking.update({\n      where,\n      data,\n    });\n  }",
+    "evidence": "diff 中新增的 `update` 方法回傳 `await this.prismaClient.booking.update(...)`，但介面 `IBookingRepository` 定義回傳 `Promise<Booking>`。"
+  },
+  {
+    "path": "packages/features/bookingReference/repositories/BookingReferenceRepository.ts",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "BookingReferenceRepository 的既有靜態方法仍使用全域 prisma 實例",
+    "body": "此 PR 將 `BookingReferenceRepository` 改為依賴注入 `prismaClient`，但既有的靜態方法（如 `findDailyVideoReferenceByRoomName`）仍使用全域 `prisma` 實例，而非注入的 `this.prismaClient`。這會導致在測試或需要隔離資料庫的環境中，這些方法仍存取全域連線，無法透過 DI 替換。建議將這些靜態方法改為實例方法，並使用 `this.prismaClient`。",
+    "existing_code": "static async findDailyVideoReferenceByRoomName({ roomName }: { roomName: string }) {\n    return prisma.bookingReference.findFirst({",
+    "evidence": "diff 中新增建構子注入 `prismaClient`，但既有靜態方法仍使用 `prisma`。"
+  },
+  {
+    "path": "packages/features/profile/repositories/ProfileRepository.ts",
+    "line": 1034,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ProfileRepository 的既有方法仍使用全域 prisma 實例",
+    "body": "`ProfileRepository` 新增了建構子注入 `prismaClient`，但既有的方法（如 `create`、`update` 等）仍使用全域 `prisma` 實例，而非注入的 `this.prismaClient`。這會導致在需要隔離資料庫的環境中，這些方法無法使用注入的連線。建議將所有方法改為使用 `this.prismaClient`。",
+    "existing_code": "async findFirstByUserId({ userId }: { userId: number }) {\n    return this.prismaClient.profile.findFirst({\n      where: {\n        userId,\n      },\n      select: profileSelect,\n    });\n  }",
+    "evidence": "diff 中新增 `findFirstByUserId` 使用 `this.prismaClient`，但其他方法仍使用全域 `prisma`。"
+  },
+  {
+    "path": "packages/lib/server/repository/dto/IBookingRepository.ts",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "IBookingRepository 介面未包含所有既有方法",
+    "body": "介面 `IBookingRepository` 僅定義了 `updateMany`、`update`、`findManyIncludeWorkflowRemindersAndReferences`，但 `BookingRepository` 類別還有許多其他方法（如 `getBookingForCalEventBuilder`、`findByIdIncludeDestinationCalendar` 等）。這會導致型別不安全，且未來若有人依賴此介面，可能無法存取完整功能。建議補齊所有方法簽章，或使用 `Pick` 等方式明確介面範圍。",
+    "existing_code": "export interface IBookingRepository {\n  // ... Add existing methods as well here\n  updateMany(params: { where: BookingWhereInput; data: BookingUpdateData }): Promise<{ count: number }>;\n\n  update(params: { where: BookingWhereUniqueInput; data: BookingUpdateData }): Promise<Booking>;\n\n  findManyIncludeWorkflowRemindersAndReferences(params: {\n    where: BookingWhereInput;\n  }): Promise<BookingWithWorkflowReminders[]>;\n}",
+    "evidence": "介面中註解 `// ... Add existing methods as well here` 顯示未完整定義。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 500,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "updateMany 呼叫未處理回傳值",
+    "body": "`bookingRepository.updateMany` 的回傳值（`{ count: number }`）被忽略，未檢查是否成功更新任何記錄。若因條件不符導致 count 為 0，程式仍會繼續執行，可能造成後續邏輯錯誤。建議檢查回傳值並在必要時拋出錯誤或記錄警告。",
+    "existing_code": "await bookingRepository.updateMany({\n      where: {\n        recurringEventId,\n        startTime: {\n          gte: cancelSubsequentBookings ? bookingToDelete.startTime : new Date(),\n        },\n      },\n      data: {\n        status: BookingStatus.CANCELLED,\n        cancellationReason: cancellationReason,\n        cancelledBy: cancelledBy,\n      },\n    });",
+    "evidence": "diff 中將原本的 `prisma.booking.updateMany` 改為 `bookingRepository.updateMany`，但未使用回傳值。"
+  }
+]

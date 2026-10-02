@@ -1,0 +1,16 @@
+group,pr,verdict,rules_pass_rule_hit,reason
+hold-v01a#1,aspnetcore-5,重複,是,都要求改回 file-scoped namespace（一般 pass 信心 0.6、規範 pass 0.95）
+hold-v01a#2,cal.com-11,不同問題,是,規範 pass：不該直接讀 process.env（R07）；一般 pass：ENABLE_WEBHOOKS 可能撞到既有設定而靜默停用 webhook。搬進設定模組修不掉命名風險，反之亦然
+hold-v01a#3,dify-13,重複,是,都是 print 改 logging 或移除
+hold-v01a#4,dify-5,重複,是,都是移除 console.log（一般 pass 從外洩角度講）
+hold-v01a#5,dify-8,重複,是,一般 pass #1 的修法（別直接輸出到 console）涵蓋 R25；同組一般 pass #2 是另一件事（catch 靜默），還建議加 console.error，跟 R25 相反
+hold-v01a#6,prefect-10,重複,是,都是 strict 改回 true
+hold-v01a#7,redis-3,不同問題,是,規範 pass：malloc/free 改 zmalloc/zfree（R02）；一般 pass 三則是 off-by-one 溢位（第 1112 行）、malloc 沒檢查 NULL、多餘配置，都沒講 R02
+hold-v01a#8,tauri-2,不同問題,否,規範 pass：公開函式缺文件註解（R07，信心 0.6，不在標準答案）；一般 pass：先設權限再寫入（功能性 GT）
+hold-v01a#9,tauri-2,不同問題,否,規範 pass 自相矛盾：標題說用了 expect 會 panic，內文承認沒用 expect（R16，信心 0.6）→ 雜訊；一般 pass 同上一組
+hold-v01b#1,cal.com-11,不同問題,是,同 hold-v01a#2
+hold-v01b#2,dify-13,重複,是,跟一般 pass #2 都是 print 改 logging；一般 pass #1 是另一件事（start_execution 順序，功能性 GT）
+hold-v01b#3,dify-5,重複,是,都是移除 console.log
+hold-v01b#4,prefect-10,重複,是,都是 strict 改回 true
+hold-v01b#5,redis-3,不同問題,是,同 hold-v01a#7（一般 pass：off-by-one、NULL 檢查）
+hold-v01b#6,redis-7,重複,是,都是 include guard 改回 __REDIS_H（一般 pass 信心 0.5、規範 pass 0.99）

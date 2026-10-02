@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中改用 assert 可能導致測試在 Release 建置中失效",
+    "body": "將原本的 XCTAssertTrue 改為 Swift 標準庫的 assert，這在 Release 建置（-O）中會被編譯器移除，導致測試永遠通過，失去驗證效果。建議改回 XCTest 的斷言，或使用 XCTAssertTrue 並搭配適當的訊息。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\nassert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將 XCTAssertTrue 改為 assert，且 assert 在 Release 模式下會被優化掉。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/StoriesFeed/StoriesFeedDiffableDataSourceTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "async setUp 中呼叫 super.setUp() 的順序可能影響測試狀態",
+    "body": "在 async setUp 中，先呼叫 try await super.setUp() 再進行其他設定。若 super.setUp() 中有非同步操作，可能導致後續設定延遲。建議確認 super.setUp() 的實作，或考慮將 super.setUp() 放在最後呼叫。",
+    "existing_code": "override func setUp() async throws {\n    try await super.setUp()\n    collectionView = UICollectionView(frame: .zero, collectionViewLayout: UICollectionViewFlowLayout())",
+    "evidence": "diff 顯示 setUp 改為 async throws，並先呼叫 super.setUp()。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/SyncContentSettingsViewControllerTests.swift",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "async tearDown 中呼叫 super.tearDown() 的順序可能影響資源釋放",
+    "body": "在 async tearDown 中，先執行自訂清理再呼叫 try await super.tearDown()。若 super.tearDown() 中有非同步操作，可能導致資源釋放延遲。建議確認 super.tearDown() 的實作，或考慮將 super.tearDown() 放在最後呼叫。",
+    "existing_code": "override func tearDown() async throws {\n    DependencyHelperMock().reset()\n    profile = nil\n    syncContentSettingsVC = nil\n    try await super.tearDown()\n}",
+    "evidence": "diff 顯示 tearDown 改為 async throws，並在最後呼叫 super.tearDown()。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/Bookmarks/EditBookmarkViewModelTests.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 @MainActor 可能導致測試在背景執行緒執行 UI 操作",
+    "body": "原本類別有 @MainActor 標註，但在此 PR 中被移除。若測試中有 UI 相關操作，可能導致執行緒安全問題。建議確認此測試類別是否真的不需要 @MainActor，或考慮保留標註。",
+    "existing_code": "class EditBookmarkViewModelTests: XCTestCase {",
+    "evidence": "diff 顯示移除了 @MainActor 標註。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Mocks/MockProfile.swift",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "completion handler 標註 @Sendable 可能造成不必要的限制",
+    "body": "將 completion handler 標註為 @Sendable，但若 handler 內部不需要跨 actor 傳遞，可能造成不必要的限制。建議確認此變更是否為 Swift 6 編譯器要求，或可考慮其他解決方案。",
+    "existing_code": "func getQueuedTabs(completion: @MainActor @Sendable @escaping ([ShareItem]) -> Void) {",
+    "evidence": "diff 顯示新增 @Sendable 標註。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "generate_github_alternative_url 可能忽略鏡像 URL 並使用原始 URL",
+    "body": "在 `generate_github_alternative_url` 中，原本使用 `alt_url`（鏡像 URL）作為回傳值，但修改後改為 `url.to_owned()`（原始 URL）。這可能導致下載時仍使用原始 GitHub URL，而非預期的鏡像 URL，特別是在 GitHub 無法存取或需要鏡像的環境中。請確認此變更是否為預期行為，若非預期，應保留 `alt_url`。",
+    "existing_code": "url.to_owned(),",
+    "evidence": "diff 中將 `alt_url` 改為 `url.to_owned()`，且變數 `_alt_url` 被忽略，顯示鏡像 URL 未被使用。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 120,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 HashAlgorithm::Sha256 的 cfg(target_os = \"windows\") 可能影響跨平台編譯",
+    "body": "原本 `HashAlgorithm::Sha256` 僅在 Windows 上啟用，移除 cfg 後將在所有平台啟用。若其他平台未使用 Sha256，可能導致 dead_code 警告或增加編譯大小。請確認此變更是否必要，或考慮保留 cfg 並在需要時啟用。",
+    "existing_code": "Sha256,",
+    "evidence": "diff 中移除了 `#[cfg(target_os = \"windows\")]` 屬性。"
+  }
+]

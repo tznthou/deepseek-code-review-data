@@ -1,0 +1,5 @@
+[info] repo 規範：repo=dify、25 條、12216 字元、placement=after_diff、sha256=6839ceb7740d
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 7792 字元、thinking=disabled、max_tokens=8192）
+[info] 定位不到 api/libs/smtp.py:28（片段多重命中（2 處），不猜）
+[info] 完成於 9.9s ｜ findings=3 ｜ relocated=0 ｜ verdict=comment ｜ usage={"prompt_tokens": 7614, "completion_tokens": 1261, "total_tokens": 8875, "prompt_tokens_details": {"cached_tokens": 7552}, "prompt_cache_hit_tokens": 7552, "prompt_cache_miss_tokens": 62}

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "sortHosts 函式優先權比較邏輯被反轉",
+    "body": "在將 `sortHosts` 從 `HostEditDialogs.tsx` 移至 `hostGroupUtils.ts` 時，原本的 `return priorityB - priorityA;` 被改成了 `return priorityA - priorityB;`。這會導致當權重相同時，主機的排序順序完全相反，可能影響依賴此排序的功能（例如指派主機的優先順序）。請將該行改回 `return priorityB - priorityA;`。",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中新增的 sortHosts 函式內，在 isRRWeightsEnabled 且 weightA === weightB 的分支中，回傳值由原本的 priorityB - priorityA 變為 priorityA - priorityB。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R03] 檔案結尾缺少換行符",
+    "body": "檔案結尾缺少換行符（newline at end of file），這可能違反專案的格式化規範（Biome 通常會要求）。建議在最後一行後加上換行。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 顯示該行結尾沒有換行符號（\\ No newline at end of file）。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R03] 檔案結尾缺少換行符",
+    "body": "檔案結尾缺少換行符（newline at end of file），這可能違反專案的格式化規範（Biome 通常會要求）。建議在最後一行後加上換行。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 顯示該行結尾沒有換行符號（\\ No newline at end of file）。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用相對路徑匯入跨套件模組",
+    "body": "此檔案使用相對路徑 `../../../../packages/platform/atoms/...` 匯入其他套件的模組，這可能違反專案對匯入路徑的慣例（通常使用別名如 `@calcom/...`）。建議改用套件別名以維持一致性與可維護性。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";",
+    "evidence": "diff 中新增的匯入使用相對路徑，而其他匯入多使用 `@calcom/` 別名。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除公開匯出可能造成 breaking change",
+    "body": "從 `package.json` 的 exports 中移除了多個路徑（如 `./add-members-switch/AddMembersWithSwitchWebWrapper`、`./booker` 等），這可能導致依賴這些路徑的外部套件無法再匯入。若這些路徑是公開 API，應考慮保留或提供替代方案。",
+    "existing_code": "\"./add-members-switch/AddMembersWithSwitchWebWrapper\": \"./add-members-switch/AddMembersWithSwitchWebWrapper.tsx\",",
+    "evidence": "diff 顯示多個 exports 條目被刪除。"
+  }
+]

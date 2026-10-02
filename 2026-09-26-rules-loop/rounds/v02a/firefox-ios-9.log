@@ -1,0 +1,6 @@
+[info] repo 規範：repo=firefox-ios、15 條、10004 字元、placement=before_diff、sha256=031933b1d311
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 25040 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/BrowserViewController/State/BrowserViewControllerState.swift:563 → 566（片段唯一命中）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift:482 → 485（片段唯一命中）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift:521 → 524（片段唯一命中）
+[info] 完成於 11.0s ｜ findings=4 ｜ relocated=3 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 10422, "completion_tokens": 1293, "total_tokens": 11715, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 8886}

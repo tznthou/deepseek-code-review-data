@@ -1,0 +1,5 @@
+[info] repo 規範：repo=prefect、15 條、6831 字元、placement=after_diff、sha256=b4fd8ec4abc5
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 32360 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/prefect/server/events/actions.py:199 → 202（片段唯一命中）
+[info] 完成於 6.8s ｜ findings=2 ｜ relocated=1 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 12062, "completion_tokens": 889, "total_tokens": 12951, "prompt_tokens_details": {"cached_tokens": 9728}, "prompt_cache_hit_tokens": 9728, "prompt_cache_miss_tokens": 2334}

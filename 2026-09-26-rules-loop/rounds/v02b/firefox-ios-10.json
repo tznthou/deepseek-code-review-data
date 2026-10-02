@@ -1,0 +1,35 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 expectation 可能導致測試提前結束，無法驗證非同步結果",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase` 中，原本使用 `expectation` 與 `await fulfillment` 等待非同步下載完成，但此次修改移除了 expectation 的建立與等待，且方法不再是 async。這可能導致測試在非同步 callback 執行前就結束，使得斷言永遠不會被執行，測試失去驗證效果。\n\n建議：保留 expectation 並使用 `wait(for:timeout:)` 等待，或將方法改回 async 並使用 `await fulfillment`。",
+    "existing_code": "let siteDownloader = DefaultSiteImageDownloader()\nsiteDownloader.downloadImage(with: mockedURL, options: [.processor(SVGImageProcessor())]) { result in\n    switch result {\n    case .success(let result):\n        XCTAssertEqual(result.originalData, imageData)\n        XCTAssertEqual(result.url, mockedURL)\n        XCTAssertEqual(result.image.size, expectedRasterSize)\n    case .failure(let error):\n        XCTFail(\"Should not have an error: \\(error) \\(error.errorDescription ?? \"\")\")\n    }\n}",
+    "evidence": "diff 中移除了 `let exp = expectation(description: \"Image download and parse\")` 與 `await fulfillment(of: [exp], timeout: 2.0)`，且方法簽名從 `async` 改為同步。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 expectation 可能導致測試提前結束，無法驗證 decisionHandler 被呼叫",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本建立 expectation 並在 decisionHandler 中 fulfill，最後以 `wait(for:)` 等待。此次修改移除了 expectation 的建立與等待，且 decisionHandler 僅包含斷言。這可能導致測試在非同步呼叫 decisionHandler 前就結束，使得斷言不會被執行。\n\n建議：保留 expectation 並使用 `wait(for:timeout:)`，或改為 async 測試並使用 `await fulfillment`。",
+    "existing_code": "let decisionHandler: @Sendable (WKPermissionDecision) -> Void = { (decision: WKPermissionDecision) in\n    XCTAssertEqual(decision, .prompt)\n}\n\nsubject.requestMediaCapturePermission(decisionHandler: decisionHandler)",
+    "evidence": "diff 中移除了 `let expectation = expectation(description: \"Wait for the decision handler to be called\")` 與 `wait(for: [expectation])`。"
+  },
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 nonisolated(unsafe) 可能隱藏執行緒安全問題",
+    "body": "將 `static let generator` 標註為 `nonisolated(unsafe)` 以繞過 Swift 6 的 concurrency 檢查，但註解指出 `ContentBlockerGenerator` 並非執行緒安全。若此 generator 可能被多個執行緒同時使用，可能導致資料競爭。建議確認使用情境是否真的安全，或考慮將 generator 改為 actor 或使用鎖保護。",
+    "existing_code": "nonisolated(unsafe) static let generator = ContentBlockerGenerator.factory()",
+    "evidence": "diff 中新增 `nonisolated(unsafe)` 並加上註解 `// FXIOS-14548 ContentBlockerGenerator is not thread safe`。"
+  }
+]

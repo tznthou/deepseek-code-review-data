@@ -1,0 +1,13 @@
+[
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R10] 新增 hook 檔案缺少對應測試檔",
+    "body": "新增了 `use-state-favicon.ts`，但未見同目錄下的 `use-state-favicon.test.ts`。R10 要求 React 元件測試檔需與元件共置，雖然此檔案為 hook 而非元件，但若專案慣例將 hook 視為需要測試的邏輯單元，則可能違反此規範。建議確認是否需補上測試。",
+    "existing_code": "import { useEffect } from \"react\";",
+    "evidence": "diff 中新增了 `ui-v2/src/hooks/use-state-favicon.ts`，但沒有對應的 `.test.ts` 檔案。"
+  }
+]

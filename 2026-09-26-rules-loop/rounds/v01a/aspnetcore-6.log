@@ -1,0 +1,4 @@
+[info] repo 規範：repo=aspnetcore、20 條、10438 字元、placement=after_diff、sha256=3feef6acc67f
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 55567 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs:38 → 44（片段唯一命中）
+[info] 完成於 8.0s ｜ findings=3 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 16939, "completion_tokens": 947, "total_tokens": 17886, "prompt_tokens_details": {"cached_tokens": 14720}, "prompt_cache_hit_tokens": 14720, "prompt_cache_miss_tokens": 2219}

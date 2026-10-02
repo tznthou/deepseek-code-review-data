@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-kubernetes/tests/test_observer.py",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "刪除整個測試檔案，降低測試覆蓋率",
+    "body": "此 PR 刪除了 `test_observer.py`，其中包含多個針對 `_replicate_pod_event` 和 observer 啟動/停止的測試。刪除後，新增的 semaphore 邏輯沒有任何測試覆蓋，且原有功能也失去回歸測試。建議保留測試檔案並新增針對 semaphore 行為的測試。",
+    "existing_code": "deleted file mode 100644\nindex 5041face3a79..000000000000\n--- a/src/integrations/prefect-kubernetes/tests/test_observer.py\n+++ /dev/null",
+    "evidence": "diff 顯示整個測試檔案被刪除，且沒有新增替代測試。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Semaphore 初始化失敗時會拋出 RuntimeError，可能導致 observer 啟動失敗",
+    "body": "在 `_replicate_pod_event` 中，當 `_startup_event_semaphore` 為 `None` 時直接拋出 `RuntimeError`。如果 `initialize_clients` 因為某些原因沒有成功建立 semaphore（例如設定值無效），所有啟動期間的事件複製都會失敗，可能導致 observer 無法正常啟動。建議在 `initialize_clients` 中確保 semaphore 一定被建立，或在此處提供 fallback（例如使用預設值或記錄警告後繼續）。",
+    "existing_code": "if _startup_event_semaphore is None:\n            raise RuntimeError(\"Startup event semaphore not initialized\")",
+    "evidence": "diff 中新增的檢查：`if _startup_event_semaphore is None: raise RuntimeError(...)`，且 `_startup_event_semaphore` 僅在 `initialize_clients` 中設定，若該函式未執行或失敗，此處會拋出例外。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Semaphore 建立時未處理設定值可能為 0 或負數的情況",
+    "body": "`asyncio.Semaphore(settings.observer.startup_event_concurrency)` 若設定值為 0 或負數，會導致 semaphore 永遠無法取得，所有啟動事件複製都會卡住。建議在建立 semaphore 前驗證設定值為正整數，或使用 `max(1, value)` 確保至少為 1。",
+    "existing_code": "_startup_event_semaphore = asyncio.Semaphore(\n        settings.observer.startup_event_concurrency\n    )",
+    "evidence": "diff 中新增的 semaphore 建立程式碼，未見對設定值的驗證。"
+  }
+]

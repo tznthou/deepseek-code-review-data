@@ -1,0 +1,13 @@
+[info] repo 規範＋範圍說明：repo=Ghost、24 條、10121 字元、placement=after_diff、sha256=45d3e705339b
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 22755 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 ghost/core/core/server/services/email-service/DomainWarmingService.ts:78 → 84（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/services/email-service/DomainWarmingService.ts:88 → 89（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/services/email-service/DomainWarmingService.ts:90 → 97（片段唯一命中）
+[info] 重新定位 ghost/core/test/integration/services/email-service/domain-warming.test.js:198 → 201（片段唯一命中）
+[info] 重新定位 ghost/core/test/integration/services/email-service/domain-warming.test.js:200 → 203（片段唯一命中）
+[info] 重新定位 ghost/core/test/integration/services/email-service/domain-warming.test.js:224 → 315（片段唯一命中）
+[info] 重新定位 ghost/core/test/integration/services/email-service/domain-warming.test.js:225 → 316（片段唯一命中）
+[info] 重新定位 ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts:113 → 112（片段唯一命中）
+[info] 重新定位 ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts:114 → 113（片段唯一命中）
+[info] 重新定位 ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts:115 → 114（片段唯一命中）
+[info] 完成於 10.6s ｜ findings=10 ｜ relocated=10 ｜ verdict=comment ｜ usage={"prompt_tokens": 9937, "completion_tokens": 1774, "total_tokens": 11711, "prompt_tokens_details": {"cached_tokens": 9856}, "prompt_cache_hit_tokens": 9856, "prompt_cache_miss_tokens": 81}

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "測試 expectation 在 decisionHandler 外被 fulfill，可能導致測試提前通過",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本的 `expectation.fulfill()` 被移出 decisionHandler，改在 `wait(for:)` 之後呼叫。這使得測試不再等待 decisionHandler 被呼叫，即使 `subject.webView` 從未呼叫 decisionHandler，測試也會通過。這會讓測試失去驗證功能，可能隱藏回歸。\n\n建議將 `expectation.fulfill()` 移回 decisionHandler 內，並移除 `wait` 之後的 fulfill。",
+    "existing_code": "wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中顯示原本在 decisionHandler 內的 `expectation.fulfill()` 被刪除，並在 `wait(for:)` 之後新增 `expectation.fulfill()`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "XCTWaiter 的結果未被檢查，可能導致測試在超時後仍繼續執行",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值被忽略。如果等待超時（例如網路問題或 WebKit 未觸發 delegate），`capturedFrame` 和 `capturedOrigin` 可能為 nil，但函式仍會回傳 nil，呼叫端會以 `XCTFail` 處理。然而，若 delegate 在超時後才被呼叫，可能造成非預期的狀態。建議檢查 waiter 結果，若為 `.timedOut` 則直接回傳 nil 或記錄錯誤。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)\n        if let frame = delegate.capturedFrame, let origin = delegate.capturedOrigin {\n            return (frame, origin)\n        }\n        return nil",
+    "evidence": "diff 中新增的 `WebKitTestHelpers.swift` 第 43 行呼叫 `XCTWaiter.wait` 但未使用回傳值。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴外部網路與真實 WebKit 行為，可能導致不穩定",
+    "body": "`captureFrameAndOrigin` 會載入 `https://example.com`，這需要網路連線。在 CI 或離線環境中，此請求可能失敗或超時，導致測試不穩定。此外，WebKit 的導航行為可能因系統版本而異，增加測試的脆弱性。建議考慮使用 local HTML 或 data URL 來避免外部依賴，或使用其他方式建立所需的 frame/origin。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 `WebKitTestHelpers.swift` 第 38 行載入外部 URL。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "FakeWKNavigationDelegate 未實作所有必要的 WKNavigationDelegate 方法",
+    "body": "`FakeWKNavigationDelegate` 僅實作 `decidePolicyFor`，但未實作其他 delegate 方法（如 `didFinish`、`didFail`）。在某些情況下，WebKit 可能要求 delegate 處理其他回呼，若未實作可能導致行為未定義或錯誤。建議至少實作 `didFail` 以處理載入失敗，並在失敗時 fulfill expectation 以避免測試卡住。",
+    "existing_code": "class FakeWKNavigationDelegate: NSObject, WKNavigationDelegate {",
+    "evidence": "diff 中新增的 `FakeWKNavigationDelegate` 類別僅包含一個 delegate 方法。"
+  }
+]

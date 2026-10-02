@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 465,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`source_static_path` 未在函式內定義，可能導致 NameError",
+    "body": "在 `create_ui_app` 函式中，`source_static_path` 在 if/else 區塊內被賦值，但該變數未在函式開頭初始化。若 `v2_enabled` 為 False，則 `source_static_path` 會被賦值為 `prefect.__ui_static_path__`，但若 `v2_enabled` 為 True，則 `source_static_path` 會被賦值為 `prefect.__ui_v2_static_path__`。然而，在後續的 `create_ui_static_subpath` 函式中使用了 `source_static_path`，但該函式是獨立的，無法存取 `create_ui_app` 中的區域變數。這會導致 `NameError: name 'source_static_path' is not defined`。\n\n建議將 `source_static_path` 的決定邏輯移到 `create_ui_static_subpath` 函式內，或將 `source_static_path` 作為參數傳遞。",
+    "existing_code": "if v2_enabled:\n        source_static_path = prefect.__ui_v2_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v2:{prefect.__version__}:{base_url}\"\n    else:\n        source_static_path = prefect.__ui_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v1:{prefect.__version__}:{base_url}\"",
+    "evidence": "diff 中新增的 if/else 區塊在 `create_ui_app` 內定義了 `source_static_path`，但後續的 `create_ui_static_subpath` 函式（未在 diff 中顯示，但根據上下文推測）使用了 `source_static_path`，而該變數不在其作用域內。"
+  },
+  {
+    "path": "src/prefect/settings/models/server/ui.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`v2_enabled` 預設為 True 可能導致所有使用者預設使用實驗性 V2 UI",
+    "body": "新增的 `v2_enabled` 設定預設值為 `True`，這表示所有使用者升級後將預設使用實驗性的 V2 UI。如果 V2 UI 尚未完全穩定或與現有功能不相容，可能導致使用者遇到問題。建議將預設值設為 `False`，並在 V2 UI 穩定後再考慮更改預設值。",
+    "existing_code": "v2_enabled: bool = Field(\n        default=True,\n        description=\"Whether to serve the experimental V2 UI instead of the default V1 UI.\",\n    )",
+    "evidence": "diff 中新增的設定欄位 `v2_enabled` 預設為 `True`，且描述中標明為 experimental。"
+  },
+  {
+    "path": ".github/workflows/python-package.yaml",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "`npm ci` 未指定 Node 版本，可能因環境預設版本不符而失敗",
+    "body": "在新增的 `Build UI v2` step 中，直接執行 `npm ci`，但未指定 Node.js 版本。V2 UI 需要 Node 22+（如 Dockerfile 中所示），而 GitHub Actions 的預設 Node 版本可能較低，導致建置失敗。建議在 workflow 中設定 Node 版本，例如使用 `actions/setup-node` 並指定版本。",
+    "existing_code": "- name: Build UI v2\n        working-directory: ui-v2\n        run: |\n          npm ci\n          npm run build\n          cp -r dist ../src/prefect/server/ui-v2",
+    "evidence": "diff 中新增的 step 未包含 Node 版本設定，而 Dockerfile 中明確指出 V2 UI 需要 Node 22+。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 465,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`static_subpath` 變數在 if/else 中賦值但未使用",
+    "body": "在 `create_ui_app` 中，`static_subpath` 被賦值為 `prefect.__ui_static_subpath__` 或 `prefect.__ui_v2_static_subpath__`，但後續程式碼並未使用該變數（而是使用 `static_dir`）。這可能是冗餘程式碼，建議移除或確認其用途。",
+    "existing_code": "static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v2:{prefect.__version__}:{base_url}\"\n    else:\n        source_static_path = prefect.__ui_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v1:{prefect.__version__}:{base_url}\"",
+    "evidence": "diff 中 `static_subpath` 被賦值，但後續未見使用。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "使用 hash() 產生 advisory lock key 會因 PYTHONHASHSEED 隨機化而失效",
+    "body": "`lock_key = hash(str(trigger.id)) % (2**63)` 使用 Python 內建 hash()，但 hash() 對字串的結果會受到 PYTHONHASHSEED 環境變數影響，在不同程序間可能不同。這會導致不同 worker 對同一個 trigger 取得不同的 lock key，使 advisory lock 無法序列化，競態條件依然存在。\n\n建議改用穩定的整數表示，例如直接使用 UUID 的 int 值（`trigger.id.int`）或將其轉換為 64 位元整數（例如取前 8 bytes）。",
+    "existing_code": "lock_key = hash(str(trigger.id)) % (2**63)",
+    "evidence": "diff 中新增的這一行使用 hash()，而 Python 文件明確指出 hash() 對 str、bytes 和 datetime 物件會使用隨機的 salt，且該 salt 在每次 Python 啟動時可能不同。"
+  },
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "advisory lock 取得時機太晚，無法完全序列化",
+    "body": "`acquire_composite_trigger_lock` 在 `evaluate_composite_trigger` 中於讀取 child firings 之後才呼叫。這表示兩個並行交易可能都先讀取了相同的 child firings，然後才嘗試取得 lock。雖然 lock 會序列化後續的刪除與觸發，但讀取階段仍可能看到不一致的狀態。\n\n建議在讀取 child firings 之前就取得 lock，以確保整個評估過程的序列化。",
+    "existing_code": "await acquire_composite_trigger_lock(session, trigger)\n\n    # If we're only looking within a certain time horizon, remove any older firings that",
+    "evidence": "在 triggers.py 的 diff 中，lock 的取得位於 `get_child_firings` 呼叫之後（從上下文可看出）。"
+  },
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 154,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "SQLite 不支援 DELETE ... RETURNING，可能導致錯誤",
+    "body": "`clear_child_firings` 使用 `sa.delete(...).returning(...)`，但 SQLite 在較舊版本（<3.35）不支援 RETURNING 子句。如果專案支援的 SQLite 版本較舊，這會導致執行時期錯誤。\n\n建議檢查專案支援的 SQLite 版本，或改用其他方式取得刪除的 ID（例如先 SELECT 再 DELETE）。",
+    "existing_code": ".returning(db.CompositeTriggerChildFiring.child_trigger_id)",
+    "evidence": "diff 中新增了 `.returning(...)`，而 SQLite 的 RETURNING 支援是 3.35.0 才加入。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] Logger 初始化方式與專案慣例不一致",
+    "body": "原本使用 `get_logger(__name__)`，但被改為 `logging.getLogger(__name__)`。這可能違反專案規範 R03（Logger Instances Must Follow Standard Initialization Pattern），且可能失去 Prefect 自訂的 logging 設定。\n\n建議改回 `get_logger(__name__)`。",
+    "existing_code": "logger = logging.getLogger(__name__)",
+    "evidence": "diff 中將 `logger: \"logging.Logger\" = get_logger(__name__)` 改為 `logger = logging.getLogger(__name__)`。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 396,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "比較 deleted_ids 與 firing_ids 的長度可能不足以偵測競態",
+    "body": "`if len(deleted_ids) != len(firing_ids)` 假設每個 firing_id 都是唯一的，且刪除的數量差異就代表競態。但如果 firing_ids 中有重複的 ID，或者刪除條件可能刪除多個相同 child_trigger_id 的記錄，這個比較可能誤判。\n\n建議改為比較集合是否相等，或使用更精確的條件。",
+    "existing_code": "if len(deleted_ids) != len(firing_ids):",
+    "evidence": "diff 中新增的這一行使用長度比較，但 firing_ids 的來源可能包含重複。"
+  }
+]

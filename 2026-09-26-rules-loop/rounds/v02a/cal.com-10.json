@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 411,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "acceptedBookings 的 oldStatus 固定為 ACCEPTED，導致 audit log 記錄錯誤",
+    "body": "在非 recurring 的單一 booking 確認流程中，`acceptedBookings` 被設定為 `[{ oldStatus: BookingStatus.ACCEPTED, uid: booking.uid }]`。但此時 booking 的實際狀態可能是 PENDING（或甚至其他狀態），因為尚未執行更新。這會讓 audit log 中的 `status.old` 永遠是 ACCEPTED，而非實際的舊狀態。\n\n**失敗情境**：當一個 PENDING booking 被確認時，audit log 會顯示 `{ old: ACCEPTED, new: ACCEPTED }`，失去稽核意義。\n\n**建議**：在更新前先取得 booking 的原始狀態，例如從 `booking` 物件中讀取（如果已包含）或先查詢，然後使用該值作為 `oldStatus`。",
+    "existing_code": "acceptedBookings = [\n      {\n        oldStatus: BookingStatus.ACCEPTED,\n        uid: booking.uid,\n      },\n    ];",
+    "evidence": "diff 中新增的程式碼片段，位於 handleConfirmation.ts 的 411 行附近。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 263,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "recurring 流程中 fireBookingAcceptedEvent 在更新前呼叫，且 oldStatus 可能不準確",
+    "body": "在 recurring 確認流程中，`acceptedBookings` 是從 `unconfirmedRecurringBookings` 取得，其 `oldStatus` 是 `booking.status`。但 `fireBookingAcceptedEvent` 是在 `prisma.booking.updateMany` 之前呼叫，因此 `oldStatus` 應為 PENDING（正確）。然而，`fireBookingAcceptedEvent` 內會呼叫 `getBookingEventHandlerService().onBulkBookingsAccepted`，這可能會觸發非同步的 audit 任務，而此時資料庫中的 booking 狀態尚未更新為 ACCEPTED。如果 audit 任務在更新前執行，可能會讀到舊狀態，導致 audit log 不一致。\n\n**失敗情境**：audit 任務在 booking 更新前執行，記錄到 PENDING 而非 ACCEPTED。\n\n**建議**：將 `fireBookingAcceptedEvent` 移到 `updateMany` 之後，並確保傳入的 `oldStatus` 是更新前的狀態。",
+    "existing_code": "acceptedBookings = unconfirmedRecurringBookings.map((booking) => ({\n      oldStatus: booking.status,\n      uid: booking.uid,\n    }));\n\n    const teamId = await getTeamIdFromEventType({\n      eventType: {\n        team: { id: eventType?.teamId ?? null },\n        parentId: eventType?.parentId ?? null,\n      },\n    });\n\n    const triggerForUser = !teamId || (teamId && eventType?.parentId);\n    const userId = triggerForUser ? booking.userId : null;\n    const orgId = await getOrgIdFromMemberOrTeamId({ memberId: userId, teamId });\n\n    await fireBookingAcceptedEvent({\n      actor,\n      acceptedBookings,\n      organizationId: orgId ?? null,\n      actionSource,\n      tracingLogger,\n    });",
+    "evidence": "diff 中新增的程式碼片段，位於 handleConfirmation.ts 的 260 行附近。"
+  },
+  {
+    "path": "packages/features/booking-audit/lib/actions/RejectedAuditActionService.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "RejectedAuditActionService 的 schema 變更可能導致既有資料解析失敗",
+    "body": "`fieldsSchemaV1` 中的 `rejectionReason` 從 `StringChangeSchema` 改為 `z.string().nullable()`，且 `status` 改為 `BookingStatusChangeSchema`。這表示舊的 audit 資料（如果有）可能包含 `rejectionReason` 為 `{ old, new }` 的物件，現在會被 Zod 解析失敗，導致 `parseStored` 拋出錯誤。\n\n**失敗情境**：如果資料庫中已有舊格式的 REJECTED audit 記錄，當使用者查看 audit log 時，`parseStored` 會拋出 ZodError，可能導致頁面錯誤。\n\n**建議**：確認是否有舊資料需要遷移，或提供向後相容的 schema（例如 union 或 preprocess）。",
+    "existing_code": "const fieldsSchemaV1 = z.object({\n  rejectionReason: z.string().nullable(),\n  status: BookingStatusChangeSchema,\n});",
+    "evidence": "diff 中 RejectedAuditActionService.ts 的變更。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/_router.tsx",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少逗號可能導致語法錯誤",
+    "body": "在 `_router.tsx` 中，`input` 物件的最後一個屬性 `actionSource: \"WEBAPP\"` 後面缺少逗號，這在 JavaScript/TypeScript 中會導致語法錯誤。\n\n**失敗情境**：建置或執行時拋出 SyntaxError。\n\n**建議**：在 `actionSource: \"WEBAPP\"` 後加上逗號。",
+    "existing_code": "input: {\n        ...input,\n        actor: makeUserActor(ctx.user.uuid),\n        actionSource: \"WEBAPP\",\n      }",
+    "evidence": "diff 中 _router.tsx 的變更。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 411,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "非 recurring 流程中 acceptedBookings 的 oldStatus 應從 booking 取得",
+    "body": "在非 recurring 的單一 booking 確認流程中，`acceptedBookings` 的 `oldStatus` 被硬編碼為 `BookingStatus.ACCEPTED`，但實際上 booking 在更新前可能是其他狀態（如 PENDING）。這會導致 audit log 的 `status.old` 不正確。\n\n**建議**：從 `booking` 物件中取得原始狀態，例如 `booking.status`（如果已包含在查詢中）。",
+    "existing_code": "acceptedBookings = [\n      {\n        oldStatus: BookingStatus.ACCEPTED,\n        uid: booking.uid,\n      },\n    ];",
+    "evidence": "diff 中 handleConfirmation.ts 的變更。"
+  }
+]

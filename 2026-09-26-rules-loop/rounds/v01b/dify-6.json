@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "重構後 SMTP 連線建立邏輯可能改變行為",
+    "body": "原本程式碼依 `use_tls` 與 `opportunistic_tls` 的組合，分別建立 `SMTP` 或 `SMTP_SSL` 實例，並在 opportunistic TLS 模式下先以 `self.server` 作為 HELO 參數呼叫 `ehlo`。重構後，所有模式都使用同一個三元運算式建立連線，且 opportunistic TLS 模式下改以 `local_host`（可能為空字串）呼叫 `ehlo`。這可能導致：\n1. 當 `SMTP_LOCAL_HOSTNAME` 未設定時，`local_host` 為空字串，傳入 `ehlo` 可能導致某些 SMTP 伺服器拒絕連線（原本是傳入 `self.server`）。\n2. 三元運算式在 `use_tls=True` 且 `opportunistic_tls=False` 時會建立 `SMTP_SSL`，但原本的程式碼在 `use_tls=True` 且 `opportunistic_tls=True` 時會先建立 `SMTP` 再升級，現在則直接建立 `SMTP`（因為條件 `self.use_tls and not self.opportunistic_tls` 為 False），行為一致。\n建議：保留原本的分支邏輯，僅在需要時傳入 `local_hostname`，並確認 `ehlo` 的參數應為有效主機名稱或保留原本的 `self.server`。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)\n\nassert smtp is not None\nif self.use_tls and self.opportunistic_tls:\n    smtp.ehlo(local_host)\n    smtp.starttls()\n    smtp.ehlo(local_host)",
+    "evidence": "diff 中原本的 if-else 分支被替換為單一三元運算式，且 opportunistic TLS 分支的 ehlo 參數從 self.server 改為 local_host。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "local_hostname 傳入空字串可能導致 SMTP 連線失敗",
+    "body": "當 `SMTP_LOCAL_HOSTNAME` 未設定時，`local_host` 為空字串，但程式碼使用 `local_host or None` 將空字串轉為 `None`，因此 `local_hostname` 參數會是 `None`，這與原本未傳入該參數的行為相同（smtplib 預設使用 socket.getfqdn()）。然而，在 opportunistic TLS 模式下，`ehlo(local_host)` 直接傳入空字串，可能導致某些 SMTP 伺服器拒絕。建議在呼叫 `ehlo` 時也使用 `local_host or None` 或保留原本的 `self.server`。",
+    "existing_code": "smtp.ehlo(local_host)",
+    "evidence": "diff 中新增的 `local_host = dify_config.SMTP_LOCAL_HOSTNAME or \"\"` 以及後續的 `smtp.ehlo(local_host)` 呼叫。"
+  },
+  {
+    "path": "api/tests/unit_tests/libs/test_smtp_client.py",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試僅驗證 local_hostname 參數存在，未驗證實際值",
+    "body": "測試中將 `local_hostname` 的期望值改為 `ANY`，這使得測試無法驗證傳入的值是否正確（例如是否為設定的主機名稱或 None）。建議增加測試案例，明確驗證當 `SMTP_LOCAL_HOSTNAME` 設定時，傳入的值為該設定值；未設定時，傳入的值為 None 或預設行為。",
+    "existing_code": "mock_smtp_cls.assert_called_once_with(\"smtp.example.com\", 25, timeout=10, local_hostname=ANY)",
+    "evidence": "diff 中測試斷言從原本不檢查 local_hostname 改為使用 ANY，未驗證實際值。"
+  }
+]

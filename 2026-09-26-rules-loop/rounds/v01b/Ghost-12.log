@@ -1,0 +1,3 @@
+[info] repo 規範：repo=Ghost、24 條、10047 字元、placement=after_diff、sha256=b100898f200a
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 35598 字元、thinking=disabled、max_tokens=8192）
+[info] 完成於 9.3s ｜ findings=5 ｜ relocated=0 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 15938, "completion_tokens": 1230, "total_tokens": 17168, "prompt_tokens_details": {"cached_tokens": 15872}, "prompt_cache_hit_tokens": 15872, "prompt_cache_miss_tokens": 66}

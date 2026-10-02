@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "tearDown 提前 return 可能略過清理步驟",
+    "body": "在 `tearDown()` 中，當條件成立時直接 `return`，導致後續的 `app.terminate()` 和 `super.tearDown()` 不會被執行。這可能造成測試狀態殘留，影響後續測試的可靠性。建議改為使用 `if` 條件包住主題切換，但不要提前 return，確保清理步驟總會執行。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 中新增的 `return` 位於 `app.terminate()` 之前，若條件成立則跳過後續清理。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試方法改名為 verify 開頭可能導致不被 XCTest 執行",
+    "body": "將 `testBookmarksShareNormalWebsiteReminders` 改名為 `verifyBookmarksShareNormalWebsiteReminders`。XCTest 預設只會執行以 `test` 開頭的方法，因此這個方法可能不再被當作測試執行。若這是刻意為之（例如改為輔助方法），請確認沒有其他測試呼叫它；否則應保留 `test` 前綴。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中方法名稱從 `testBookmarksShareNormalWebsiteReminders` 改為 `verifyBookmarksShareNormalWebsiteReminders`，違反 XCTest 命名慣例。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 471,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "貼上後處理系統提示的時機可能不穩定",
+    "body": "新增 `springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)` 來處理 iOS 的貼上權限提示。但此提示可能延遲出現，0.5 秒的等待可能不足，導致測試偶發失敗。建議增加等待時間或使用更可靠的等待機制。",
+    "existing_code": "springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)",
+    "evidence": "diff 中新增的這一行使用固定 0.5 秒 timeout，可能不足以等待系統提示出現。"
+  }
+]

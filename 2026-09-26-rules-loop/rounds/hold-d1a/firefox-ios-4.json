@@ -1,0 +1,13 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/DisplaySettingsTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試斷言可能使用錯誤的 accessibility identifier",
+    "body": "在 testCheckSystemThemeChanges 中，原本檢查 lightThemeView 的 value，現在改為檢查 darkThemeView 的 value，但變數名稱仍為 lightIsSelected，且後續斷言仍預期值為 \"1\"。這可能導致測試永遠失敗或無法正確驗證主題切換。建議確認正確的 identifier 並修正變數名稱與斷言。",
+    "existing_code": "let lightIsSelected = app.buttons[AccessibilityIdentifiers.Settings.Appearance.darkThemeView].value",
+    "evidence": "diff 中此行由 lightThemeView 改為 darkThemeView，但變數名稱與後續 XCTAssertEqual 未同步調整。"
+  }
+]

@@ -1,0 +1,65 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 重新設計了評論管理清單的版面，將原本的多欄表格改為單一主欄位，整合作者、文章、日期與操作按鈕，並新增文章特色圖片縮圖。後端在 comments API 的 post 欄位中加入了 feature_image。整體方向合理，但存在幾個需要修正的問題：最嚴重的是 `dangerouslySetInnerHTML` 直接渲染 `item.html`，若內容未經徹底消毒，可能造成 XSS；此外，`CommentContent` 的 `useEffect` 依賴陣列為空，導致在資料更新時無法重新計算是否截斷；`formatDate` 的正規表達式可能因時區或格式差異而失效；最後，`onAddFilter` 改為必填後，呼叫端若未傳入會導致執行錯誤。建議優先處理 XSS 風險與 effect 依賴問題。
+
+### Findings（4 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `apps/posts/src/views/comments/components/comments-list.tsx:110` | 使用 dangerouslySetInnerHTML 渲染未消毒的 HTML 可能導致 XSS | 0.90 |
+| ⚠️ | Major | `apps/posts/src/views/comments/components/comments-list.tsx:92` | useEffect 依賴陣列為空，導致內容更新時無法重新計算截斷狀態 | 0.85 |
+| ⚠️ | Major | `apps/posts/src/views/comments/components/comments-list.tsx:135` | onAddFilter 改為必填，但呼叫端可能未傳入導致執行錯誤 | 0.80 |
+| 🔸 | Minor | `apps/posts/src/views/comments/components/comments-list.tsx:70` | formatDate 的正規表達式可能因時區或格式差異而失效 | 0.70 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>apps/posts/src/views/comments/components/comments-list.tsx:110</code> 使用 dangerouslySetInnerHTML 渲染未消毒的 HTML 可能導致 XSS</summary>
+
+`dangerouslySetInnerHTML={{__html: item.html || ''}}` 直接將評論內容的 HTML 插入 DOM。如果 `item.html` 來自使用者輸入且未經過伺服器端徹底消毒（例如移除 `<script>`、事件處理器、`javascript:` URL 等），攻擊者可以注入任意腳本，竊取管理員 session 或執行未授權操作。
+
+**失敗情境**：攻擊者提交包含 `<img src=x onerror=alert(document.cookie)>` 的評論，管理員在後台查看評論時，腳本即在其瀏覽器中執行。
+
+**建議**：確認 `item.html` 在伺服器端已使用嚴格的 sanitizer（如 DOMPurify）處理，並移除所有危險標籤與屬性。若無法保證，請改用安全的渲染方式（例如將 HTML 轉為純文字或使用 React 元件建構內容）。
+
+**判斷依據**：diff 中新增的 `CommentContent` 元件使用了 `dangerouslySetInnerHTML`，且未見任何消毒步驟。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>apps/posts/src/views/comments/components/comments-list.tsx:92</code> useEffect 依賴陣列為空，導致內容更新時無法重新計算截斷狀態</summary>
+
+`useEffect` 的依賴陣列為 `[]`，只在元件掛載時執行一次。當 `item.html` 因資料更新而改變時（例如從 API 重新取得），`checkIfClamped` 不會重新執行，`isClamped` 可能保持過時的值，導致「Show more」按鈕顯示與否不正確。
+
+**失敗情境**：虛擬滾動清單重複使用元件，或評論內容被編輯後，新內容超出兩行但 `isClamped` 仍為 `false`，使用者無法展開查看完整內容。
+
+**建議**：將 `item.html` 加入依賴陣列，或使用 `useLayoutEffect` 確保在 DOM 更新後立即檢查。
+
+**判斷依據**：diff 中 `useEffect` 的依賴陣列為空，但內部使用了 `item.html`（透過 ref 間接依賴）。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>apps/posts/src/views/comments/components/comments-list.tsx:135</code> onAddFilter 改為必填，但呼叫端可能未傳入導致執行錯誤</summary>
+
+`CommentsList` 的 props 型別將 `onAddFilter` 從可選改為必填，但未檢查呼叫端是否都有傳入。若某個使用此元件的地方未提供 `onAddFilter`，則在點擊作者或文章按鈕時會嘗試呼叫 `undefined`，導致執行錯誤。
+
+**失敗情境**：任何未傳入 `onAddFilter` 的頁面（例如未來新增的嵌入場景）中，使用者點擊作者名稱時會拋出 `TypeError: onAddFilter is not a function`。
+
+**建議**：保留可選型別，並在使用前檢查 `onAddFilter` 是否存在；或確保所有呼叫端都傳入此 prop，並在元件內加入防禦性檢查。
+
+**判斷依據**：diff 中將 `onAddFilter` 的型別從 `onAddFilter?:` 改為 `onAddFilter:`，且元件內多處直接呼叫 `onAddFilter(...)`。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>apps/posts/src/views/comments/components/comments-list.tsx:70</code> formatDate 的正規表達式可能因時區或格式差異而失效</summary>
+
+`formatted.replace(/(\d+),(\s+\d{4})/, '$1$2')` 假設日期格式為「月 日, 年」，但 `Intl.DateTimeFormat` 的輸出會因執行環境的 locale 或時區而異。例如某些地區可能使用不同的分隔符號或順序，導致逗號未被移除，或誤刪其他逗號。
+
+**失敗情境**：使用者的瀏覽器 locale 設定為 `en-GB` 時，日期可能顯示為「17 Dec 2025」，此正規表達式不會匹配，逗號仍存在。
+
+**建議**：使用 `formatToParts` 方法取得日期各部分，再自行組裝，避免依賴字串格式。
+
+**判斷依據**：diff 中新增的 `formatDate` 函式使用正規表達式移除逗號，但未考慮 locale 差異。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 11228 (cache hit 8960) ｜ completion tokens 1626 ｜ PR #4</sub>

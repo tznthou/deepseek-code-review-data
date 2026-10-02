@@ -1,0 +1,112 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 dangerouslySetInnerHTML 渲染評論內容可能導致 XSS",
+    "body": "此處直接使用 `dangerouslySetInnerHTML` 渲染 `item.html`。若評論內容未經徹底消毒（例如後端僅做基本過濾），攻擊者可能注入 `<script>` 或事件處理器，造成儲存型 XSS。\n\n失敗情境：攻擊者提交包含 `<img src=x onerror=alert(document.cookie)>` 的評論，管理員在後台查看評論時觸發。\n\n建議：確認後端在儲存評論時已使用嚴格的 HTML sanitizer（如 DOMPurify）移除所有危險標籤與屬性；若無法保證，應在前端渲染前進行消毒，或改用安全的渲染方式（如純文字或 React 元件）。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 CommentContent 元件使用 dangerouslySetInnerHTML 直接輸出 item.html，且未見任何消毒處理。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 355,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "文章特色圖片來源未驗證，可能造成追蹤或內容注入",
+    "body": "新增的 `<img>` 直接使用 `item.post.feature_image` 作為 src。若該 URL 由使用者控制（例如文章作者可設定任意圖片 URL），管理員查看評論時會載入該圖片，可能洩漏管理員 IP、User-Agent 等資訊，或利用圖片 URL 進行 CSRF 攻擊。\n\n失敗情境：惡意作者將文章特色圖片設為 `http://attacker.com/track?admin=1`，管理員查看評論時瀏覽器請求該 URL，洩漏管理員資訊。\n\n建議：限制圖片來源為同源或受信任的網域，或使用代理伺服器載入圖片；若無法限制，至少加入 `referrerPolicy=\"no-referrer\"` 並考慮使用 `loading=\"lazy\"`。",
+    "existing_code": "<img\n                                            alt={item.post.title || 'Post feature image'}\n                                            className=\"hidden aspect-video w-32 rounded object-cover lg:block\"\n                                            src={item.post.feature_image}\n                                        />",
+    "evidence": "diff 中新增的 img 標籤直接使用 item.post.feature_image，無任何來源驗證或安全屬性。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R19] 缺少分號",
+    "body": "此處 `const contentRef = useRef<HTMLDivElement>(null)` 缺少結尾分號，違反專案規範 R19（Code Must Always Use Semicolons）。\n\n建議：在行尾加上分號。",
+    "existing_code": "const contentRef = useRef<HTMLDivElement>(null)",
+    "evidence": "diff 中新增的該行沒有分號，與專案其他程式碼風格不一致。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 89,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R19] 缺少分號",
+    "body": "此處 `const [isClamped, setIsClamped] = useState(false)` 缺少結尾分號，違反專案規範 R19。\n\n建議：在行尾加上分號。",
+    "existing_code": "const [isClamped, setIsClamped] = useState(false)",
+    "evidence": "diff 中新增的該行沒有分號。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 90,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R19] 缺少分號",
+    "body": "此處 `const [isExpanded, setIsExpanded] = useState(false)` 缺少結尾分號，違反專案規範 R19。\n\n建議：在行尾加上分號。",
+    "existing_code": "const [isExpanded, setIsExpanded] = useState(false)",
+    "evidence": "diff 中新增的該行沒有分號。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R13] Button 缺少 type 屬性",
+    "body": "此處 `<Button>` 元件未指定 `type` 屬性。若此按鈕位於表單內，預設 type 為 submit，可能導致非預期的表單提交。\n\n失敗情境：若未來將此按鈕放入表單中，點擊「Show more」會觸發表單提交。\n\n建議：明確加上 `type=\"button\"`。",
+    "existing_code": "<Button\n            className=\"shrink-0 gap-0.5 self-start p-0 text-muted-foreground hover:bg-transparent\"\n            size=\"sm\"\n            variant=\"ghost\"\n            onClick={onClick}\n        >",
+    "evidence": "diff 中新增的 ExpandButton 元件使用 Button 但未指定 type。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 203,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R13] Button 缺少 type 屬性",
+    "body": "此處 `<Button>` 元件未指定 `type` 屬性，可能導致非預期的表單提交行為。\n\n建議：明確加上 `type=\"button\"`。",
+    "existing_code": "<Button\n                                                        className={`flex h-auto items-center gap-1.5 truncate p-0 font-semibold text-primary hover:opacity-70 ${item.status === 'hidden' && 'text-muted-foreground'}`}\n                                                        variant='link'\n                                                        onClick={() => {\n                                                            onAddFilter('author', item.member!.id);\n                                                        }}\n                                                    >",
+    "evidence": "diff 中新增的作者按鈕未指定 type。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R13] Button 缺少 type 屬性",
+    "body": "此處 `<Button>` 元件未指定 `type` 屬性，可能導致非預期的表單提交行為。\n\n建議：明確加上 `type=\"button\"`。",
+    "existing_code": "<Button\n                                                        className=\"block h-auto truncate p-0 font-medium  text-primary hover:opacity-70\"\n                                                        variant=\"link\"\n                                                        onClick={() => onAddFilter('post', item.post!.id)}\n                                                    >",
+    "evidence": "diff 中新增的文章標題按鈕未指定 type。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R12] JSX props 順序不符合標準",
+    "body": "此處 `<Button>` 的 props 順序為 `className`、`size`、`variant`、`onClick`，但根據規範 R12，callbacks 應放在最後，且 regular props 應按字母順序排列。\n\n建議：調整為 `className`、`size`、`variant`、`onClick` 的順序（onClick 已在最後，但 className 應在 size 之前？實際標準需參考專案設定）。",
+    "existing_code": "<Button size=\"sm\" variant=\"outline\" onClick={() => hideComment({id: item.id})}>",
+    "evidence": "diff 中新增的 Hide 按鈕 props 順序可能不符合規範。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 270,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R12] JSX props 順序不符合標準",
+    "body": "此處 `<Button>` 的 props 順序為 `size`、`variant`、`onClick`，但根據規範 R12，callbacks 應放在最後，且 regular props 應按字母順序排列。\n\n建議：調整為 `size`、`variant`、`onClick` 的順序（onClick 已在最後，但 size 應在 variant 之前？實際標準需參考專案設定）。",
+    "existing_code": "<Button size=\"sm\" variant=\"outline\" onClick={() => showComment({id: item.id})}>",
+    "evidence": "diff 中新增的 Show 按鈕 props 順序可能不符合規範。"
+  }
+]

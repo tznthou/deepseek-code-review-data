@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 510,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "IpadOnlyTestCase.setUp 呼叫 super.setUp() 缺少 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp` 中，`super.setUp()` 現在是 `async throws`，但呼叫時沒有加上 `try`。這會導致編譯錯誤。\n\n```swift\noverride func setUp() async throws {\n    specificForPlatform = .pad\n    if iPad() {\n        await super.setUp()\n    }\n}\n```\n\n應改為 `try await super.setUp()`。",
+    "existing_code": "if iPad() {\n            await super.setUp()\n        }",
+    "evidence": "diff 中 BaseTestCase.swift 的 IpadOnlyTestCase.setUp 區塊，新增的 `await super.setUp()` 缺少 `try`，而 super.setUp() 已改為 `async throws`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/A11yUtils.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R01] 移除 MPL 授權標頭",
+    "body": "此檔案原本有 Mozilla Public License 標頭，但在此 PR 中被移除。根據專案規範 R01，所有 Swift 檔案必須包含 MPL 標頭。請恢復標頭。",
+    "existing_code": "import XCTest\n\n@MainActor\nclass A11yUtils: XCTestCase {",
+    "evidence": "diff 顯示 A11yUtils.swift 刪除了三行 MPL 標頭，且未新增替代內容。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "全域變數加上 @MainActor 可能造成初始化時機問題",
+    "body": "`urlBarAddress` 和 `homepageSearchBar` 是全域變數，加上 `@MainActor` 後，其初始化將在主執行緒上進行。若這些變數在非主執行緒環境中被存取，可能導致 runtime crash。需確認所有存取點皆已在 MainActor 隔離的環境中。",
+    "existing_code": "@MainActor\nlet urlBarAddress = XCUIApplication().textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]\n@MainActor\nlet homepageSearchBar = XCUIApplication().cells[AccessibilityIdentifiers.FirefoxHomepage.SearchBar.itemCell]",
+    "evidence": "diff 中 BaseTestCase.swift 頂部新增了 @MainActor 於兩個全域 let 變數上。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/TodayWidgetTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "全域變數改為 @MainActor 可能導致跨執行緒存取問題",
+    "body": "多個全域變數（如 `goToCopiedLink`、`newPrivateSearch` 等）從 `nonisolated(unsafe)` 改為 `@MainActor`。這雖然提升了安全性，但若這些變數在非主執行緒的 context 中被使用，會觸發 Swift concurrency 檢查錯誤。需確認所有使用這些變數的函式或閉包皆已標註 @MainActor 或透過 await 存取。",
+    "existing_code": "@MainActor\nvar goToCopiedLink = springboard.buttons[\"Go to Copied Link\"]\n@MainActor\nvar newPrivateSearch = springboard.buttons[\"New Private Search\"]\n@MainActor\nvar newSearch = springboard.buttons[\"New Search\"]\n@MainActor\nvar clearPrivateTabs = springboard.buttons[\"Clear Private Tabs\"]",
+    "evidence": "diff 中 TodayWidgetTests.swift 將原本的 nonisolated(unsafe) 改為 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "setUp 中呼叫順序變更可能影響測試行為",
+    "body": "原本 `setUpExperimentVariables()` 在 `setUpApp()` 之前呼叫，現在順序對調。若 `setUpApp()` 依賴實驗變數已設定，可能導致測試行為改變。請確認此順序變更是有意為之且不會造成問題。",
+    "existing_code": "continueAfterFailure = false\n        setUpApp()\n        setUpExperimentVariables()\n        setUpLaunchArguments()\n        setUpScreenGraph()",
+    "evidence": "diff 中 FeatureFlaggedTestBase.swift 的 setUp 方法內，呼叫順序由 setUpExperimentVariables() 在 setUpApp() 之前改為之後。"
+  }
+]

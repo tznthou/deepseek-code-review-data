@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1502,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "updateMany 回傳型別與介面 IBookingRepository 不符",
+    "body": "`BookingRepository.updateMany` 實作呼叫 `this.prismaClient.booking.updateMany`，其回傳型別為 `Prisma.BatchPayload`（包含 `count`），但介面 `IBookingRepository` 定義此方法應回傳 `Promise<{ count: number }>`。目前實作未明確標註回傳型別，TypeScript 可能推斷為 `Promise<Prisma.BatchPayload>`，導致型別不相容。\n\n**失敗情境**：當其他程式碼依賴 `IBookingRepository` 介面並期望 `updateMany` 回傳 `{ count: number }` 時，若實作回傳 `BatchPayload`（可能包含其他屬性），可能造成型別錯誤或執行期意外。\n\n**建議**：在 `updateMany` 方法上明確標註回傳型別為 `Promise<{ count: number }>`，並確保回傳值符合介面。",
+    "existing_code": "async updateMany({ where, data }: { where: BookingWhereInput; data: BookingUpdateData }) {\n    await this.prismaClient.booking.updateMany({\n      where: where,\n      data,\n    });\n  }",
+    "evidence": "diff 中新增的 `updateMany` 方法沒有回傳值，但介面 `IBookingRepository` 定義 `updateMany(params: { where: BookingWhereInput; data: BookingUpdateData }): Promise<{ count: number }>;`"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 724,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "BookingCancelService 的相依注入可能未正確傳遞",
+    "body": "`BookingCancelService` 的建構子現在接受多個 repository 參數，並將它們傳給 `super`。但 `handler` 函式在沒有提供 `dependencies` 時會自行建立預設 repository 實例。若 `BookingCancelService` 的 `deps` 未正確設定，可能導致使用全域 `prisma` 而非注入的 client。\n\n**失敗情境**：在測試或特定環境中，若 `BookingCancelService` 未正確注入 repository，取消流程可能使用錯誤的資料庫連線，導致資料不一致。\n\n**建議**：確認 `BookingCancelService` 的 DI 設定正確，並考慮在 `handler` 中強制要求 `dependencies` 參數，避免意外使用全域 prisma。",
+    "existing_code": "return handler(cancelBookingInput, this.deps);",
+    "evidence": "diff 中 `BookingCancelService` 的 `cancel` 方法呼叫 `handler(cancelBookingInput, this.deps)`，但 `handler` 的 `dependencies` 參數是可選的，若未傳入會使用全域 prisma。"
+  },
+  {
+    "path": "packages/features/users/repositories/UserRepository.ts",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 userSelect 中的 locale 欄位可能影響取消流程的翻譯",
+    "body": "`UserRepository` 的 `userSelect` 移除了 `locale` 欄位。在取消流程中，`organizer` 是透過 `userRepository.findByIdOrThrow` 取得，並使用 `organizer.locale` 來決定翻譯語言。若 `locale` 不再被選取，`organizer.locale` 將為 `undefined`，導致翻譯回退到預設語言。\n\n**失敗情境**：當 organizer 的 locale 非預設語言時，取消通知的翻譯可能不正確。\n\n**建議**：確認 `findByIdOrThrow` 的回傳型別是否包含 `locale`，若需要則保留此欄位，或改用其他方式取得 locale。",
+    "existing_code": "createdDate: true,\n  trialEndsAt: true,\n  completedOnboarding: true,\n  timeFormat: true,",
+    "evidence": "diff 中 `userSelect` 移除了 `locale: true`，但 `handleCancelBooking.ts` 中仍使用 `organizer.locale`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 500,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "updateMany 呼叫未處理回傳值，可能遺漏錯誤",
+    "body": "`bookingRepository.updateMany` 的回傳值未被使用。若更新失敗（例如資料庫錯誤），錯誤可能被忽略，導致取消流程繼續執行，造成資料不一致。\n\n**失敗情境**：當大量取消 recurring bookings 時，若 `updateMany` 因故失敗，程式不會拋出錯誤，後續步驟仍會執行，可能導致部分 booking 未被取消。\n\n**建議**：檢查 `updateMany` 的回傳值（例如 `count`），或確保錯誤會被正確拋出並處理。",
+    "existing_code": "await bookingRepository.updateMany({\n      where: {\n        recurringEventId,\n        startTime: {\n          gte: cancelSubsequentBookings ? bookingToDelete.startTime : new Date(),\n        },\n      },\n      data: {\n        status: BookingStatus.CANCELLED,\n        cancellationReason: cancellationReason,\n        cancelledBy: cancelledBy,\n      },\n    });",
+    "evidence": "diff 中 `updateMany` 呼叫沒有接住回傳值或錯誤處理。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 546,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "取消單一 booking 時改用 uid 作為 where 條件，可能忽略 id",
+    "body": "原本的 `where` 條件是 `uid ? { uid } : { id }`，現在改為固定使用 `{ uid: bookingToDelete.uid }`。若 `bookingToDelete.uid` 為空或未定義，可能導致查詢失敗。\n\n**失敗情境**：若 booking 的 uid 為 null（例如舊資料），取消時會嘗試以 `uid: null` 查詢，可能找不到 booking 或拋出錯誤。\n\n**建議**：保留原本的條件邏輯，或確保 `bookingToDelete.uid` 一定存在。",
+    "existing_code": "const updatedBooking = await bookingRepository.updateIncludeWorkflowRemindersAndReferences({\n      where: {\n        uid: bookingToDelete.uid,\n      },",
+    "evidence": "diff 中 `where` 條件從 `uid ? { uid } : { id }` 改為固定 `{ uid: bookingToDelete.uid }`。"
+  }
+]

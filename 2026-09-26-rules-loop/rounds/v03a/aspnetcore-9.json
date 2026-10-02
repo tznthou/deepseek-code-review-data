@@ -1,0 +1,79 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R02] 使用傳統命名空間宣告而非檔案範圍命名空間",
+    "body": "此檔案將原本的檔案範圍命名空間（`namespace ...;`）改為傳統的區塊命名空間（`namespace ... { ... }`），違反專案規範 R02。請改回檔案範圍命名空間宣告。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中將 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;` 改為 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests` 並加上 `{`，且檔案結尾新增對應的 `}`。"
+  },
+  {
+    "path": "eng/Versions.props",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "停用 ValidateBaseline 可能隱藏套件參考變更",
+    "body": "將 `ValidateBaseline` 從 `true` 改為 `false`，可能導致未預期的套件參考變更未被偵測，增加 servicing 更新的風險。請確認此變更的必要性，並考慮在 CI 中保留驗證。",
+    "existing_code": "<ValidateBaseline>false</ValidateBaseline>",
+    "evidence": "diff 中將 `<ValidateBaseline>true</ValidateBaseline>` 改為 `<ValidateBaseline>false</ValidateBaseline>`。"
+  },
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "macOS 映像升級至 macOS-15 可能導致建置失敗",
+    "body": "將 macOS 映像從 macOS-13 升級至 macOS-15，但 Xcode 版本仍指定為 15.2.0（未同步更新）。macOS-15 可能不包含 Xcode 15.2.0，導致 `xcode-select` 失敗。請確認 macOS-15 映像中是否有 Xcode 15.2.0，或一併更新 Xcode 版本。",
+    "existing_code": "vmImage: macOS-15",
+    "evidence": "diff 中將 `vmImage: macOS-13` 改為 `vmImage: macOS-15`，但後續的 `xcode-select` 仍指向 `/Applications/Xcode_15.2.0.app`。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R18] 命名空間的開括號未換行",
+    "body": "命名空間宣告的開括號 `{` 與命名空間名稱在同一行，違反 Allman 風格（R18）。應將開括號移至下一行。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中新增的命名空間宣告行 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests` 後緊接著 `{`，未換行。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.85,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的 `[QuarantinedTest]` 屬性所標記的測試方法 `EmbeddingServerAppInsideIframe_WithCompressionEnabled_Fails` 未包含 `// Arrange`、`// Act`、`// Assert` 註解，違反專案規範 R06。請補上對應的結構註解。",
+    "existing_code": "[Fact]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/64305\")]\n    public void EmbeddingServerAppInsideIframe_WithCompressionEnabled_Fails()",
+    "evidence": "diff 中新增 `[QuarantinedTest]` 屬性，但未見該方法內新增 AAA 註解。"
+  },
+  {
+    "path": "eng/targets/ResolveReferences.targets",
+    "line": 211,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "條件式錯誤檢查可能過度限制",
+    "body": "在 `Error` 條件中新增 `AND '$(AspNetCorePatchVersion)' == '1'`，可能導致其他 patch 版本（如 2、3）的 servicing build 不再檢查未使用的 baseline 套件參考。請確認此限制是否符合預期。",
+    "existing_code": "Condition=\" '$(IsServicingBuild)' == 'true' AND '@(UnusedBaselinePackageReference->Count())' != '0' AND '$(AspNetCorePatchVersion)' == '1'\"",
+    "evidence": "diff 中在 `Error` 的 `Condition` 屬性中新增了 `AND '$(AspNetCorePatchVersion)' == '1'`。"
+  },
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Xcode 版本更新可能與 macOS 映像不相容",
+    "body": "將 Xcode 版本從 15.2.0 更新至 16.4.0，但 macOS 映像仍為 macOS-13（或 macOS-15）。Xcode 16.4.0 可能不支援 macOS-13，導致建置失敗。請確認映像與 Xcode 版本的相容性。",
+    "existing_code": "displayName: Use XCode 16.4.0",
+    "evidence": "diff 中將 `displayName: Use XCode 15.2.0` 改為 `displayName: Use XCode 16.4.0`，但未同步更新映像。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R08] 自訂錯誤型別未使用 thiserror，違反專案規範",
+    "body": "此變更將原本使用 `#[derive(Debug, thiserror::Error)]` 的 Error enum 改為手動實作 `Display` 與 `std::error::Error`。專案規範 R08 明確要求所有自訂錯誤型別必須使用 thiserror 來維持一致的錯誤處理與清晰的錯誤訊息。手動實作容易遺漏 `source()` 的正確回傳（例如 `Error::Plist` 的 `error` 欄位未回傳為 source），且未來新增 variant 時需同步修改多處，增加維護成本。建議改回使用 thiserror 並保留原有的 `#[error(...)]` 屬性。",
+    "existing_code": "pub enum Error {\n  TempDir(std::io::Error),\n  ResolveHomeDir,\n  ResolveSigningIdentity,\n  FailedToDecodeProvisioningProfile,\n  FailedToFindProvisioningProfileUuid,\n  Plist {\n    context: &'static str,\n    path: PathBuf,\n    error: plist::Error,\n  },\n  FailedToUploadApp { error: std::io::Error },\n  Notarize(String),\n  ParseNotarytoolOutput { output: String },\n  CommandFailed {\n    command: String,\n    error: std::io::Error,\n  },\n  Fs {\n    context: &'static str,\n    path: PathBuf,\n    error: std::io::Error,\n  },\n  X509Certificate {\n    error: x509_certificate::X509CertificateError,\n  },\n  FailedToCreatePFX,\n  FailedToCreateSelfSignedCertificate {\n    error: Box<apple_codesign::AppleCodesignError>,\n  },\n  FailedToEncodeDER { error: std::io::Error },\n  CertificateMissingCommonName,\n  CertificateMissingOrganizationUnit { common_name: String },\n}",
+    "evidence": "diff 中移除了 `#[derive(Debug, thiserror::Error)]` 及所有 `#[error(...)]` 屬性，改為手動實作 `Display` 與 `Error` trait。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 公開 Error enum 未標記 #[non_exhaustive]",
+    "body": "此 Error enum 為公開 API，且 changelog 中標示為 **Potentially breaking change**。若未來需要新增錯誤 variant，下游使用 exhaustive match 的程式碼將無法編譯。建議加上 `#[non_exhaustive]` 屬性，以允許向後相容地擴充錯誤型別。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中新增的 `pub enum Error {` 沒有 `#[non_exhaustive]` 屬性，且 changelog 明確指出此變更為 potentially breaking。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "notarize_inner 條件判斷邏輯可能反轉",
+    "body": "原本的條件 `submit_output.status.map_or(!wait, |s| s == \"Accepted\")` 在 `wait` 為 true 時，若 status 為 None 會回傳 false（不進入 if），若 status 為 Some(\"Accepted\") 則回傳 true。修改後變成 `map_or(wait, |s| s == \"Accepted\")`，在 `wait` 為 true 且 status 為 None 時會回傳 true，導致進入 if 區塊。這可能造成在未等待 notarization 完成時誤判為成功，進而執行後續邏輯。請確認此變更是否為預期行為，並補充測試。",
+    "existing_code": "if submit_output.status.map_or(wait, |s| s == \"Accepted\") {",
+    "evidence": "diff 中此行由 `map_or(!wait, ...)` 改為 `map_or(wait, ...)`，邏輯相反。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 173,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "參數順序變更可能影響命令列參數語意",
+    "body": "在 `notarize_inner` 中，`app_bundle_path` 與 `zip_path` 的參數順序被對調。若 `ditto` 命令對參數位置敏感，可能導致壓縮內容錯誤。請確認此變更是否為修正先前錯誤，並驗證產生的 zip 內容正確。",
+    "existing_code": "zip_path\n      .to_str()\n      .expect(\"failed to convert zip_path to string\"),\n    app_bundle_path\n      .to_str()\n      .expect(\"failed to convert bundle_path to string\"),",
+    "evidence": "diff 中兩行參數順序互換。"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R02] 使用區塊式命名空間宣告，應改為檔案範圍命名空間",
+    "body": "此檔案將原本的檔案範圍命名空間 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;` 改為區塊式命名空間，違反 R02 規範。請改回檔案範圍命名空間宣告。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中顯示命名空間宣告從 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;` 改為 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests` 加上 `{`，且檔案結尾新增 `}`。"
+  }
+]

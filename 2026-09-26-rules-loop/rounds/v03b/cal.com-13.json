@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "moduleLoader.token 設定為 moduleToken 而非 token，導致容器解析失敗",
+    "body": "在 `moduleLoader` 中，`token` 屬性被設定為 `moduleToken`，但 `bindModuleToClassOnToken` 綁定的是 `token`（`FLAGS_DI_TOKENS.FEATURES_REPOSITORY`）。這會造成 `getFeaturesRepository()` 中 `container.get(featuresRepositoryModuleLoader.token)` 嘗試以 `moduleToken` 取得實例，但容器中註冊的 key 是 `token`，導致解析失敗。\n\n**失敗情境**：呼叫 `getFeaturesRepository()` 時，會拋出「找不到對應 token」的錯誤。\n\n**建議**：將 `moduleLoader.token` 改為 `token`。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeaturesRepository.ts` 第 18 行明確將 `token` 設為 `moduleToken`，而 `bindModuleToClassOnToken` 使用的 `token` 是 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY`。"
+  },
+  {
+    "path": "packages/features/di/modules/FeatureOptInService.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "moduleLoader.token 設定為 token 而非 moduleToken，可能導致容器解析失敗",
+    "body": "在 `moduleLoader` 中，`token` 屬性被設定為 `token`（`FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE`），但 `bindModuleToClassOnToken` 綁定的是 `token`，而 `moduleToken` 用於載入模組。這與其他模組的慣例不一致（例如 `FeaturesRepository` 的 `moduleLoader.token` 是 `moduleToken`）。雖然 `getFeatureOptInService()` 使用 `featureOptInServiceModuleLoader.token` 來取得服務，但若其他程式碼嘗試以 `moduleToken` 載入模組，可能會失敗。\n\n**失敗情境**：若有程式碼依賴 `moduleToken` 來載入此模組，會因為 `moduleLoader.token` 不是 `moduleToken` 而無法正確載入。\n\n**建議**：將 `moduleLoader.token` 改為 `moduleToken`，並確認 `getFeatureOptInService()` 使用正確的 token 取得服務。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeatureOptInService.ts` 第 20 行將 `token` 設為 `token`，而 `bindModuleToClassOnToken` 的 `moduleToken` 是 `FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE_MODULE`。"
+  },
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 2,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R01] 檔案名稱與類別名稱不符，違反命名慣例",
+    "body": "專案規範 R01 要求 repository 檔案名稱應為 `Prisma<Entity>Repository.ts`，但此檔案命名為 `FeaturesRepository.ts`，且匯出的類別為 `FeaturesRepository`。這可能導致不一致性，並影響自動化工具或開發者搜尋。\n\n**建議**：將檔案重新命名為 `PrismaFeaturesRepository.ts`，並相應調整匯入路徑。",
+    "existing_code": "import { FeaturesRepository } from \"@calcom/features/flags/features.repository\";",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeaturesRepository.ts` 第 1 行匯入了 `FeaturesRepository`，但檔案名稱未遵循 `Prisma<Entity>Repository` 模式。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 82,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試改用全域容器取得服務，可能造成測試隔離問題",
+    "body": "原本測試直接建立 `FeaturesRepository` 和 `FeatureOptInService`，現在改為使用 `getFeaturesRepository()` 和 `getFeatureOptInService()`。這些函式會建立新的容器並載入模組，但若模組內部有共享狀態（例如 Prisma client），可能導致測試之間的資料污染。此外，若容器建立成本高，可能拖慢測試。\n\n**失敗情境**：若多個測試同時執行，且容器內的服務具有可變狀態，可能互相影響。\n\n**建議**：考慮在測試中使用獨立的容器實例，或確保容器內的服務是無狀態的。",
+    "existing_code": "const featuresRepository = getFeaturesRepository();\n  const service = getFeatureOptInService();",
+    "evidence": "diff 中 `FeatureOptInService.integration-test.ts` 第 82 行改為使用全域容器取得服務，取代原本的直接實例化。"
+  },
+  {
+    "path": "packages/features/di/tokens.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 spread 運算子合併 token 物件，可能造成屬性覆蓋或型別混淆",
+    "body": "在 `DI_TOKENS` 中使用 `...FLAGS_DI_TOKENS` 和 `...FEATURE_OPT_IN_DI_TOKENS` 來合併 token。如果未來這些 token 物件有重複的屬性名稱，後面的 spread 會覆蓋前面的，可能導致非預期的行為。此外，這也可能讓型別推斷變得複雜。\n\n**建議**：考慮使用 `Object.assign` 或明確列出所有 token，以增加可讀性和安全性。",
+    "existing_code": "...FLAGS_DI_TOKENS,\n  ...FEATURE_OPT_IN_DI_TOKENS,",
+    "evidence": "diff 中 `packages/features/di/tokens.ts` 第 39 行使用 spread 運算子合併 token 物件。"
+  }
+]

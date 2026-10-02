@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_renderer.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "render_template 可能回傳 None，導致呼叫端 len() 失敗",
+    "body": "在 `CodeExecutorJinja2TemplateRenderer.render_template` 中，若 `result.get(\"result\")` 回傳 `None`，函式會直接回傳 `None`。呼叫端 `TemplateTransformNode._run` 接著執行 `len(rendered)`，會拋出 `TypeError: object of type 'NoneType' has no len()`。建議在 renderer 中檢查 `rendered is None` 並拋出 `TemplateRenderError`，或確保回傳值一定為字串。",
+    "existing_code": "rendered = result.get(\"result\")\n        if rendered is not None and not isinstance(rendered, str):\n            raise TemplateRenderError(\"Template render result must be a string.\")\n        return rendered",
+    "evidence": "diff 中新增的 render_template 方法回傳 `rendered`，但未處理 `None` 情況；而 template_transform_node.py 中新增的 `len(rendered)` 呼叫會因此失敗。"
+  },
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_renderer.py",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "建構子未驗證 code_executor 參數，可能導致後續執行錯誤",
+    "body": "`CodeExecutorJinja2TemplateRenderer.__init__` 接受 `code_executor: type[CodeExecutor] | None`，若傳入 `None` 則使用預設 `CodeExecutor`。但若呼叫端傳入非 `None` 但無效的類別，後續 `execute_workflow_code_template` 可能失敗。建議在建構時檢查傳入的類別是否具有必要方法，或明確限制型別。",
+    "existing_code": "def __init__(self, code_executor: type[CodeExecutor] | None = None) -> None:\n        self._code_executor = code_executor or CodeExecutor",
+    "evidence": "diff 中新增的建構子直接指派 `self._code_executor`，未做任何驗證。"
+  }
+]

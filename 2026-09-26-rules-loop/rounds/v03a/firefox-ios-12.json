@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "重複呼叫 expectation.fulfill() 可能導致測試失敗",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`decisionHandler` 內已呼叫 `expectation.fulfill()`，但測試結尾又再次呼叫 `expectation.fulfill()`。XCTest 的 expectation 只能 fulfill 一次，重複呼叫會導致 API 違規錯誤（通常會 crash 或測試失敗）。請移除多餘的 `expectation.fulfill()`。",
+    "existing_code": "wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中新增了 `expectation.fulfill()` 於 `wait(for:)` 之後，而 `decisionHandler` 內已有 `expectation.fulfill()`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴真實網路與 WebKit 內部行為，可能不穩定",
+    "body": "`captureFrameAndOrigin` 使用真實的 `WKWebView` 載入 `https://example.com`，這使得測試依賴外部網路連線與 WebKit 的實際導航行為。在 CI 環境中若無網路或 example.com 無法存取，測試將逾時失敗；且 WebKit 的內部實作可能隨版本變動，導致測試脆弱。建議改以注入 mock 的方式提供 `WKFrameInfo` 與 `WKSecurityOrigin`，或使用其他不需真實載入的替代方案。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增了 `webView.load(URLRequest(url: url))`，且 helper 的註解說明其依賴真實載入。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "XCTWaiter.wait 的結果未檢查，可能掩蓋逾時",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值（`XCTWaiter.Result`）未被檢查。若等待逾時，`capturedFrame` 與 `capturedOrigin` 可能為 nil，函式會回傳 nil，但測試端僅以 `XCTFail` 處理，無法區分是逾時還是其他錯誤。建議檢查 waiter 結果並在逾時情況下提供更明確的錯誤訊息。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增了 `let waiter = XCTWaiter.wait(...)`，但未使用回傳值。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R03] 缺少 MARK 註解來組織程式碼區段",
+    "body": "新檔案 `WebKitTestHelpers.swift` 包含多個邏輯區塊（如 helper class、static method），但未使用 `// MARK:` 註解來分隔。根據專案規範 R03，應使用 MARK 註解來組織程式碼，提升可讀性。",
+    "existing_code": "final class WebKitTestHelpers {",
+    "evidence": "整個新檔案未見任何 `// MARK:` 註解。"
+  }
+]

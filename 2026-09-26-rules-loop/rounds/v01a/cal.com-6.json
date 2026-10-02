@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳 identifier 而非 token 導致邀請連結失效",
+    "body": "在 createInvite 方法中，原本回傳 `token`（隨機產生的 64 字元 hex 字串），現在改為回傳 `newToken.identifier`。但 `identifier` 的值是 `invite-link-for-teamId-${teamId}`，這是一個固定且可預測的字串，並非隨機 token。這會導致：\n1. 邀請連結中的 token 參數變成固定值，任何人都可以猜測並存取邀請連結，喪失安全性。\n2. 前端或後續流程若依賴 token 的唯一性來驗證邀請，將無法正確運作。\n建議改回回傳 `token`，或確認 `identifier` 的用途後修正。",
+    "existing_code": "token: newToken.identifier,",
+    "evidence": "diff 中原本的 `token,` 被改為 `token: newToken.identifier,`，而 `newToken` 是 `prisma.verificationToken.create` 的結果，其 `identifier` 欄位在建立時被設定為 `invite-link-for-teamId-${teamId}`。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "buildInviteLink 條件判斷反轉",
+    "body": "原本的條件是 `if (!isOrgContext)`，現在改為 `if (isOrgContext)`。這會導致：\n- 當 `isOrgContext` 為 true（組織或組織中的團隊）時，回傳的邀請連結是 `/teams?token=...`，但這可能不是預期的組織邀請連結格式。\n- 當 `isOrgContext` 為 false（非組織團隊）時，會進入 `OnboardingPathService.getGettingStartedPathWhenInvited` 分支，產生帶有 callbackUrl 的連結，但這可能不適用於非組織團隊。\n需要確認此條件反轉是否為預期行為，否則應修正。",
+    "existing_code": "if (isOrgContext) {",
+    "evidence": "diff 中 `if (!isOrgContext)` 被改為 `if (isOrgContext)`，且後續的 return 邏輯未變更。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "缺少 teamId 的權限驗證",
+    "body": "控制器使用 `@Roles(\"TEAM_MEMBER\")` 來限制只有團隊成員可以呼叫，但沒有驗證目前使用者是否屬於 `teamId` 指定的團隊。這可能導致任何已驗證的使用者（具有 TEAM_MEMBER 角色）可以為任意團隊建立邀請連結，只要他們知道 teamId。建議在服務層或控制器中加入團隊成員資格的檢查。",
+    "existing_code": "@Roles(\"TEAM_MEMBER\")",
+    "evidence": "控制器中只有 `@Roles(\"TEAM_MEMBER\")` 裝飾器，沒有使用 `@GetUser()` 取得使用者資訊，也沒有呼叫任何服務來驗證團隊成員資格。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.e2e-spec.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試使用 Jest 而非 Vitest",
+    "body": "此測試檔案使用 `describe`、`it`、`beforeAll` 等 Jest 風格的 API，但專案規範 [R08] 要求所有測試使用 Vitest。雖然 Vitest 相容 Jest API，但若專案已全面遷移至 Vitest，此檔案可能不符合規範。建議確認測試框架並調整。",
+    "existing_code": "import { bootstrap } from \"@/bootstrap\";",
+    "evidence": "檔案中使用了 Jest 風格的 import 與測試結構，且未見 Vitest 特有的 import（如 `import { describe, it, expect } from 'vitest'`）。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 567,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾缺少換行符",
+    "body": "diff 顯示檔案結尾的 `}` 之後沒有換行符（`\\ No newline at end of file`）。這可能違反專案的格式化規範 [R03]（使用 LF 行尾）。建議在檔案結尾加上換行符。",
+    "existing_code": "}",
+    "evidence": "diff 中最後一行顯示 `-}` 和 `+}` 且標記 `\\ No newline at end of file`。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "使用 hash() 產生 advisory lock key 會因 PYTHONHASHSEED 導致跨程序不一致",
+    "body": "`lock_key = hash(str(trigger.id)) % (2**63)` 使用 Python 內建 `hash()`。對於字串，`hash()` 的輸出會受到環境變數 `PYTHONHASHSEED` 的影響，每次啟動程序時可能不同。這表示不同的 worker 程序（或不同的服務實例）在處理同一個 trigger 時，會計算出不同的 lock key，導致 advisory lock 無法正確序列化，競態條件仍然存在。\n\n建議改用穩定且跨程序一致的演算法，例如直接使用 UUID 的整數表示（`trigger.id.int`）並取模，或使用 `hashlib.sha256` 等加密雜湊後再轉為整數。",
+    "existing_code": "lock_key = hash(str(trigger.id)) % (2**63)",
+    "evidence": "diff 中新增的 `acquire_composite_trigger_lock` 函式內，使用 `hash(str(trigger.id))` 來產生 lock key。Python 的 `hash()` 對字串的輸出依賴於 `PYTHONHASHSEED`，預設為隨機，因此不同程序間不一致。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R03] Logger 初始化違反專案規範，未使用 get_logger 且型別註記不一致",
+    "body": "此處將原本符合規範的 `logger: \"logging.Logger\" = get_logger(__name__)` 改為 `logger = logging.getLogger(__name__)`，違反了專案規範 R03（Logger Instances Must Follow Standard Initialization Pattern）。規範要求使用 `get_logger(\"module_name\")` 並加上型別註記。此外，原本的 `import logging` 被移出 `TYPE_CHECKING` 區塊，但 `logging` 僅用於型別註記，應保留在 `TYPE_CHECKING` 中。\n\n建議改回 `logger: \"logging.Logger\" = get_logger(__name__)`，並將 `import logging` 移回 `TYPE_CHECKING` 區塊。",
+    "existing_code": "logger = logging.getLogger(__name__)",
+    "evidence": "diff 中將 `logger: \"logging.Logger\" = get_logger(__name__)` 改為 `logger = logging.getLogger(__name__)`，且將 `import logging` 從 `TYPE_CHECKING` 區塊移至模組層級。"
+  },
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "非 PostgreSQL 資料庫完全沒有鎖定機制，競態條件仍可能存在",
+    "body": "`acquire_composite_trigger_lock` 僅在 `dialect.name == \"postgresql\"` 時取得 advisory lock，對於其他資料庫（如 SQLite）則直接跳過。雖然註解提到 SQLite 會序列化寫入，但這並不能完全防止競態條件，特別是在多程序或多執行緒環境下。如果專案支援其他資料庫，此修復將無法涵蓋所有情況。\n\n建議至少記錄警告，或考慮使用其他跨資料庫的鎖定機制（例如樂觀鎖定或基於資料表的鎖）。",
+    "existing_code": "if dialect.name == \"postgresql\":\n        # Use the trigger's UUID as the lock key\n        # pg_advisory_xact_lock takes a bigint, so we use the UUID's int representation\n        # truncated to fit (collision is extremely unlikely and benign)\n        lock_key = hash(str(trigger.id)) % (2**63)\n        await session.execute(\n            sa.text(\"SELECT pg_advisory_xact_lock(:key)\"), {\"key\": lock_key}\n        )\n    # SQLite doesn't support advisory locks, but SQLite also serializes writes\n    # at the database level, so the race condition is less likely to occur",
+    "evidence": "diff 中 `acquire_composite_trigger_lock` 函式僅在 PostgreSQL 時執行鎖定，其他資料庫無任何處理。"
+  },
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 hash() 可能導致 lock key 碰撞，雖然機率低但可避免",
+    "body": "即使 `hash()` 的輸出是穩定的，將 UUID 雜湊後取模 2^63 仍有可能發生碰撞。雖然註解提到「collision is extremely unlikely and benign」，但碰撞會導致兩個不同的 trigger 意外地互相阻塞，可能造成不必要的延遲。\n\n建議直接使用 UUID 的整數表示（`trigger.id.int`）並取模，這樣可以保證唯一性（在 2^63 範圍內）。",
+    "existing_code": "lock_key = hash(str(trigger.id)) % (2**63)",
+    "evidence": "diff 中 `lock_key` 的計算方式。"
+  }
+]

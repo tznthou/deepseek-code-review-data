@@ -1,0 +1,13 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "不同 renderer 啟用時仍會覆寫 manager 與 currentRendererId",
+    "body": "在 `enableJSRootComponents` 中，當 `manager` 已存在且 `currentRendererId !== rendererId` 時，程式碼會拋出錯誤，但接下來的程式碼仍會執行 `currentRendererId = rendererId;` 和 `manager = managerInstance;`。這表示即使拋出錯誤，狀態仍會被覆寫，可能導致後續呼叫使用錯誤的 manager。\n\n失敗情境：假設先以 rendererId=1 啟用，之後以 rendererId=2 呼叫，會拋出錯誤，但 `currentRendererId` 變成 2，`manager` 變成新的 managerInstance。之後若再以 rendererId=1 呼叫，條件 `manager && currentRendererId === rendererId` 不成立（因為 currentRendererId 是 2），因此不會拋錯，而會再次覆寫狀態，造成不一致。\n\n建議：將拋出錯誤的邏輯改為直接 return，或將狀態更新移至條件判斷之後，確保只有合法路徑會更新狀態。",
+    "existing_code": "if (manager && currentRendererId === rendererId) {\n    // A different renderer type (e.g., Server vs WebAssembly) is trying to enable JS root components.\n    // This is a multi-host scenario which is not supported for dynamic root components.\n    throw new Error('Dynamic root components have already been enabled.');\n  }\n\n  // When the same renderer type re-enables (e.g., circuit restart or new circuit on same page),\n  // accept the new manager. The old manager's DotNetObjectReference is no longer valid anyway\n  // because the old circuit is gone. We don't dispose the old manager - doing so would cause\n  // JSDisconnectedException because the circuit that created it no longer exists.\n  currentRendererId = rendererId;\n  manager = managerInstance;",
+    "evidence": "diff 中新增的條件判斷與後續的狀態更新位於同一函式，且沒有 return 或 else 區塊，因此錯誤拋出後仍會執行更新。"
+  }
+]

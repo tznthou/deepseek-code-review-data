@@ -1,0 +1,7 @@
+[info] repo 規範：repo=firefox-ios、15 條、10052 字元、placement=after_diff、sha256=9f866ca89970
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 21146 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift:205 → 208（片段唯一命中）
+[info] 重新定位 BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift:30 → 27（片段唯一命中）
+[info] 重新定位 BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift:6 → 1（片段唯一命中）
+[info] 重新定位 BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift:38 → 42（片段唯一命中）
+[info] 完成於 8.1s ｜ findings=4 ｜ relocated=4 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 8963, "completion_tokens": 914, "total_tokens": 9877, "prompt_tokens_details": {"cached_tokens": 6912}, "prompt_cache_hit_tokens": 6912, "prompt_cache_miss_tokens": 2051}

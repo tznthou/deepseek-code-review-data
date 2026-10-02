@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/signup-form/src/components/pages/form-page.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 setLoading(false) 可能導致 loading 狀態卡住",
+    "body": "在 minimal 模式下，成功提交後原本會呼叫 setLoading(false) 來停止載入狀態，但此 PR 移除了該呼叫。若 submit 流程中 loading 狀態被設為 true，且沒有其他機制將其設回 false，則 UI 可能永遠顯示載入中。請確認是否有其他路徑會重設 loading，否則應保留此呼叫。",
+    "existing_code": "setSuccess(true);",
+    "evidence": "diff 中刪除了 `setLoading(false);` 這一行，且上下文顯示此處為 minimal 模式的成功分支。"
+  },
+  {
+    "path": "apps/signup-form/src/components/pages/form-view.tsx",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "email trim 未同步更新驗證邏輯",
+    "body": "提交時對 email 進行 trim，但驗證函式 isValidEmail 可能仍使用未 trim 的值。若使用者輸入前後有空白，驗證可能通過但提交的是 trim 後的值，或驗證失敗但 trim 後其實有效。建議在驗證前也進行 trim，或確認 isValidEmail 內部已處理。",
+    "existing_code": "onSubmit({email: email.trim()});",
+    "evidence": "diff 中此行將 email.trim() 傳入 onSubmit，但未見對應的驗證邏輯變更。"
+  },
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 45,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "getUrlHistory 回傳型別可能包含 undefined",
+    "body": "原本的程式碼在 history 為 falsy 時會繼續執行後續邏輯，但現在直接回傳 history。若 getDefaultUrlHistory() 回傳 undefined，則此函式可能回傳 undefined，與宣告的回傳型別 URLHistory 不符。請確認呼叫端是否能處理 undefined，或調整型別定義。",
+    "existing_code": "return history;",
+    "evidence": "diff 中刪除了 if (history) 檢查，直接回傳 history。"
+  },
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "nit",
+    "confidence": 0.9,
+    "title": "[R18] 字串應使用單引號",
+    "body": "此專案規範要求使用單引號，但此處將原本的單引號改為雙引號。請改回單引號以符合規範。",
+    "existing_code": "const STORAGE_KEY = \"ghost-history\";",
+    "evidence": "diff 中將 'ghost-history' 改為 \"ghost-history\"，違反 R18。"
+  }
+]

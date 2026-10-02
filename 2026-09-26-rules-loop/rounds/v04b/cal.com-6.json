@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳的 token 是 identifier 而非隨機 token，導致邀請連結失效",
+    "body": "`createInvite` 原本回傳 `token`（隨機產生的 64 字元 hex），現在改成回傳 `newToken.identifier`。但 `identifier` 是固定格式 `invite-link-for-teamId-${teamId}`，並非隨機值。這會讓 API 回傳的 `token` 欄位變成可預測的字串，且 `inviteLink` 中的 token 參數仍使用原始的隨機 token，兩者不一致，導致邀請連結無法使用。\n\n**失敗情境**：呼叫 `POST /v2/teams/:teamId/invite` 後，回應中的 `data.token` 會是 `invite-link-for-teamId-123`，而 `data.inviteLink` 中的 `token` 參數是隨機 hex。使用者點擊連結後，系統會用隨機 hex 查詢資料庫，但資料庫中儲存的 token 是隨機 hex，而 identifier 是固定字串，因此驗證會失敗。\n\n**建議**：改回回傳 `token`（隨機值），不要回傳 `identifier`。",
+    "existing_code": "token: newToken.identifier,",
+    "evidence": "diff 中 `-    await prisma.verificationToken.create({` 改為 `+    const newToken = await prisma.verificationToken.create({`，且回傳物件中 `-      token,` 改為 `+      token: newToken.identifier,`。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "buildInviteLink 的條件判斷反轉，可能產生錯誤的邀請連結",
+    "body": "原本的邏輯是 `if (!isOrgContext) { return teamInviteLink; }`，代表非組織情境直接回傳基本連結；組織情境則會加上 getting started 路徑。現在改成 `if (isOrgContext) { return teamInviteLink; }`，變成組織情境回傳基本連結，非組織情境反而會執行後面的 getting started 邏輯。這與預期行為相反，可能導致非組織團隊的邀請連結帶有錯誤的 callback 路徑。\n\n**失敗情境**：當 `isOrgContext` 為 `false`（非組織團隊）時，程式會進入 `OnboardingPathService.getGettingStartedPathWhenInvited` 並產生帶有 `callbackUrl=/getting-started` 的連結，但這可能不是非組織團隊想要的行為。\n\n**建議**：將條件改回 `if (!isOrgContext) { return teamInviteLink; }`。",
+    "existing_code": "if (isOrgContext) {",
+    "evidence": "diff 中 `-    if (!isOrgContext) {` 改為 `+    if (isOrgContext) {`。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "缺少 teamId 的權限檢查，任何 team member 都能為任意 team 建立邀請",
+    "body": "Controller 使用 `@Roles(\"TEAM_MEMBER\")` 來限制只有 team member 可以呼叫，但沒有驗證目前使用者是否屬於 `:teamId` 指定的團隊。這表示任何已驗證的使用者（具有 TEAM_MEMBER 角色）都可以為任意 teamId 建立邀請連結，只要他們知道該 teamId。\n\n**失敗情境**：攻擊者取得一個有效的 API key（即使是某個團隊的 member），然後呼叫 `POST /v2/teams/999/invite`，就能為 team 999 建立邀請連結，進而取得加入該團隊的權限。\n\n**建議**：在 controller 或 service 中加入檢查，確認目前使用者是該 team 的 member（且可能是 admin）才能建立邀請。",
+    "existing_code": "@Roles(\"TEAM_MEMBER\")",
+    "evidence": "diff 中新增的 controller 只有 `@Roles(\"TEAM_MEMBER\")`，沒有其他權限檢查。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.e2e-spec.ts",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試使用隨機 email，可能造成測試資料殘留",
+    "body": "測試中使用 `randomString()` 產生唯一的 email，但 `afterAll` 只刪除了 user 和 team，沒有刪除 membership。這可能導致測試資料殘留在資料庫中，影響後續測試或造成資料污染。\n\n**失敗情境**：如果測試中途失敗，`afterAll` 可能不會執行，導致測試資料永久殘留。\n\n**建議**：使用 transaction 或確保在 `afterAll` 中刪除所有相關資料，包括 membership。",
+    "existing_code": "const userEmail = `teams-invite-admin-${randomString()}@api.com`;",
+    "evidence": "diff 中新增的測試檔案，`afterAll` 只刪除 user 和 team，沒有刪除 membership。"
+  }
+]

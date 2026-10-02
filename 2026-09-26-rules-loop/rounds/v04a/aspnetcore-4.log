@@ -1,0 +1,11 @@
+[info] repo 規範：repo=aspnetcore、20 條、4495 字元、placement=after_diff、sha256=928e84820c5d
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 34991 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/Components/Web/src/Forms/DisplayName.cs:44 → 46（片段唯一命中）
+[info] 重新定位 src/Components/Web/src/Forms/ExpressionMemberAccessor.cs:80 → 83（片段唯一命中）
+[info] 重新定位 src/Components/Web/src/Forms/DisplayName.cs:1 → 9（片段唯一命中）
+[info] 重新定位 src/Components/Web/src/Forms/DisplayName.cs:17 → 19（片段唯一命中）
+[info] 重新定位 src/Components/Web/src/Forms/DisplayName.cs:30 → 26（片段唯一命中）
+[info] 重新定位 src/Components/Web/test/Forms/DisplayNameTest.cs:1 → 11（片段唯一命中）
+[info] 重新定位 src/Components/Web/test/Forms/DisplayNameTest.cs:15 → 14（片段唯一命中）
+[info] 重新定位 src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/Login.razor:31 → 35（片段唯一命中）
+[info] 完成於 17.1s ｜ findings=8 ｜ relocated=8 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 11271, "completion_tokens": 2132, "total_tokens": 13403, "prompt_tokens_details": {"cached_tokens": 10240}, "prompt_cache_hit_tokens": 10240, "prompt_cache_miss_tokens": 1031}

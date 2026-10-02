@@ -1,0 +1,11 @@
+[info] repo 規範：repo=tauri、17 條、4988 字元、placement=after_diff、sha256=c63fb6bebf4d
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 91098 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt:30 → 35（片段唯一命中）
+[info] 重新定位 crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt:26 → 32（片段唯一命中）
+[info] 重新定位 crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt:20 → 46（片段唯一命中）
+[info] 重新定位 crates/tauri/src/app/plugin.rs:139 → 148（片段唯一命中）
+[info] 重新定位 packages/api/src/app.ts:255 → 258（片段唯一命中）
+[info] 重新定位 crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt:1 → 5（片段唯一命中）
+[info] 重新定位 crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt:15 → 14（片段唯一命中）
+[info] 重新定位 crates/tauri/src/app/plugin.rs:137 → 138（片段唯一命中）
+[info] 完成於 16.8s ｜ findings=10 ｜ relocated=8 ｜ verdict=comment ｜ usage={"prompt_tokens": 32791, "completion_tokens": 1980, "total_tokens": 34771, "prompt_tokens_details": {"cached_tokens": 31616}, "prompt_cache_hit_tokens": 31616, "prompt_cache_miss_tokens": 1175}

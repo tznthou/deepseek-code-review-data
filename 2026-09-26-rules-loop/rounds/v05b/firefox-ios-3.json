@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Client/Coordinators/Launch/LaunchCoordinator.swift",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "onActionTap 閉包改為非同步執行可能造成行為差異",
+    "body": "原本 onActionTap 閉包直接呼叫 onboardingService.handleAction，現在包在 `Task { ... }` 中，使得 handleAction 變成非同步執行。若 handleAction 內部有依賴呼叫順序或需要立即完成的邏輯（例如 completion 必須在特定時序前被呼叫），可能導致行為改變。此外，Task 未指定優先權或取消處理，可能造成不必要的延遲或資源浪費。建議確認 handleAction 是否為非同步設計，或考慮使用 `Task { @MainActor in ... }` 明確標註執行緒，並評估是否需保留同步行為。",
+    "existing_code": "Task {\n    onboardingService.handleAction(\n        action,\n        from: cardName,\n        cards: onboardingModel.cards,\n        with: activityEventHelper,\n        completion: completion\n    )\n}",
+    "evidence": "diff 中 onActionTap 閉包內容由直接呼叫改為包在 Task 中，且未見其他同步機制。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift",
+    "line": 192,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R13] 魔法數字 40 應定義於 UX 結構中",
+    "body": "原本使用 `UX.buttonSize` 常數，現改為直接寫死 `40`，違反專案規範 R13（UI 常數應定義於巢狀 UX struct）。建議保留 `UX.buttonSize` 常數，或將 40 定義於 DownloadToast 的 UX struct 中。",
+    "existing_code": "closeButton.heightAnchor.constraint(equalToConstant: 40),\ncloseButton.widthAnchor.constraint(equalToConstant: 40),",
+    "evidence": "diff 中刪除了 `struct UX { static let buttonSize: CGFloat = 40 }`，並將使用處改為直接寫 40。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/WebEngineIntegration/BrowserWebUIDelegate.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "completionHandler 缺少 @Sendable 標註可能導致 Swift 6 編譯警告",
+    "body": "在 BrowserWebUIDelegate 中，`runJavaScriptAlertPanelWithMessage` 的 completionHandler 參數從 `@escaping @MainActor @Sendable () -> Void` 改為 `@escaping @MainActor () -> Void`，移除了 @Sendable。若此方法實作 WKUIDelegate 協定，而協定要求 @Sendable，可能導致編譯錯誤或警告。建議確認協定定義，若需要則保留 @Sendable。",
+    "existing_code": "completionHandler: @escaping @MainActor () -> Void",
+    "evidence": "diff 中該行由 `@escaping @MainActor @Sendable () -> Void` 改為 `@escaping @MainActor () -> Void`。"
+  }
+]

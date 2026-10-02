@@ -1,0 +1,79 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "validateStoredKeyConversion 函式未使用且邏輯可能錯誤",
+    "body": "新增的 `validateStoredKeyConversion` 函式在整個 diff 中沒有被呼叫，且其邏輯有問題：當 `keyFromStoredKey` 存在時，它只檢查回傳值是否為 NULL，但 NULL 可能是合法的 key 值（例如空字串指標？），且未驗證轉換後 key 的正確性。建議移除此函式，或若需驗證，應在 dict 初始化或除錯模式中呼叫，並修正判斷邏輯。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}",
+    "evidence": "diff 中新增此函式，但未見任何呼叫點。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 342,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "rehash 時使用 dictStoredKey2Key 轉換 storedKey 可能導致 hash 不一致",
+    "body": "在 `rehashEntriesInBucketAtIndex` 中，原本直接使用 storedKey 計算 hash（透過 storedHashFunction），現在改為先呼叫 `dictStoredKey2Key` 取得 key 再計算 hash。若 `keyFromStoredKey` 回呼有副作用或依賴 dict 狀態，可能導致 rehash 時 hash 值與插入時不同，造成 key 遺失或重複。需確認所有 dictType 的 `keyFromStoredKey` 實作是純函式且與插入時使用的 hashFunction 一致。",
+    "existing_code": "const void *key = dictStoredKey2Key(d, storedKey);\nh = dictGetHash(d, key) & DICTHT_SIZE_MASK(d->ht_size_exp[1]);",
+    "evidence": "diff 中此處由原本的 `dictHashKey(d, key, 1)` 改為先轉換再 hash。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 913,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "dictSetKeyAtLink 中新增的 dictFindLink 呼叫可能使用錯誤的 key",
+    "body": "在 `dictSetKeyAtLink` 中，當 `*link == NULL` 時，原本使用 `key` 呼叫 `dictFindLink`，現在改為使用 `addedKey`。但 `addedKey` 是經過 `keyDup` 處理後的 key，可能與原始 key 不同（例如 keyDup 會複製或轉換）。若 `keyDup` 不是簡單複製，可能導致找不到正確的 link。需確認所有 dictType 的 keyDup 行為。",
+    "existing_code": "if (*link == NULL) {\n    *link = dictFindLink(d, addedKey, NULL);\n    assert(*link != NULL);\n}",
+    "evidence": "diff 中此處由 `dictFindLink(d, key, NULL)` 改為 `dictFindLink(d, addedKey, NULL)`。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 316,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "kvGetKey 回呼可能回傳 NULL 或非預期指標",
+    "body": "`kvGetKey` 直接呼叫 `kvobjGetKey` 並回傳其結果。若 `kvobjGetKey` 可能回傳 NULL（例如某些特殊 kvobj 類型），則 `dictStoredKey2Key` 會回傳 NULL，後續 hash 或比較可能崩潰。需確認所有使用此 dictType 的 kvobj 都保證有有效的 key。",
+    "existing_code": "static const void *kvGetKey(const void *kv) {\n    sds sdsKey = kvobjGetKey((kvobj *) kv);\n    return sdsKey;\n}",
+    "evidence": "diff 中新增此函式作為 keyFromStoredKey。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 1257,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "hashTypeDelete 簽名變更後，呼叫點可能傳入錯誤的 key 類型",
+    "body": "`hashTypeDelete` 移除了 `isSdsField` 參數，現在假設傳入的 `field` 一定是 sds。但原本有些呼叫點傳入的是 `Entry*`（例如 `onFieldExpire` 中 `hashTypeDelete(expCtx->hashObj, field, 0)`），現在改為 `hashTypeDelete(expCtx->hashObj, field)`，但 `field` 的型別是 `eItem`，可能不是 sds。需檢查所有呼叫點，確保傳入的是 sds 字串。",
+    "existing_code": "int hashTypeDelete(robj *o, void *field) {",
+    "evidence": "diff 中函式簽名由 `int hashTypeDelete(robj *o, void *key, int isSdsField)` 改為 `int hashTypeDelete(robj *o, void *key)`，且呼叫點 `onFieldExpire` 原本傳入 `0` 表示非 sds，現在直接傳入 `field`。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "pauseAutoResize 型別從 bitfield 改為 int16_t 可能影響 ABI 或行為",
+    "body": "原本 `pauseAutoResize` 是 15-bit signed bitfield，現在改為 `int16_t`。雖然大小相同，但 bitfield 的符號性和溢位行為可能不同。若程式碼依賴其溢位行為（例如遞增到最大值後變負數），可能產生差異。需確認沒有此類依賴。",
+    "existing_code": "int16_t pauseAutoResize;  /* If >0 automatic resizing is disallowed (<0 indicates coding error) */",
+    "evidence": "diff 中此處由 `signed pauseAutoResize: 15;` 改為 `int16_t pauseAutoResize;`。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "新增 __stored_key 巨集但未用於所有相關參數",
+    "body": "新增了 `#define __stored_key` 作為標記，但並非所有 stored-key 參數都加上此標記（例如 `dictFindLink` 的 key 參數沒有）。這可能導致標記不一致，降低可讀性。建議全面套用或移除。",
+    "existing_code": "#define __stored_key",
+    "evidence": "diff 中新增此巨集，但僅部分函式參數使用。"
+  }
+]

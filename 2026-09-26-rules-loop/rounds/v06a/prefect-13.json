@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "handleSubmit 未處理非同步錯誤",
+    "body": "`handleSubmit` 呼叫 `updateWorkPool` 但未 `await` 或回傳其 Promise。若 `updateWorkPool` 內部拋出同步錯誤或回傳 rejected Promise（例如網路層錯誤未由 onError 捕捉），將導致未捕捉的 Promise rejection，可能造成應用程式不穩定。建議將 `handleSubmit` 改為 async 並 `await updateWorkPool(...)`，或確保 `updateWorkPool` 的實作會捕捉所有錯誤並呼叫 onError。",
+    "existing_code": "const handleSubmit = (data: WorkPoolEditFormValues) => {\n\t\tconst trimmedDescription = data.description?.trim();\n\t\tupdateWorkPool(",
+    "evidence": "diff 中新增的 handleSubmit 函式未使用 await 或回傳 updateWorkPool 的 Promise，且未包覆 try/catch。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "mockUpdateWorkPool 型別可能與實際 API 不符",
+    "body": "測試中定義的 `mockUpdateWorkPool` 型別為 `(data: unknown, options: UpdateWorkPoolOptions) => void`，但實際 `useUpdateWorkPool` 回傳的 `updateWorkPool` 可能接受不同參數型別（例如 `WorkPoolUpdate` 與 `UseMutationOptions`）。若型別不符，測試可能在編譯階段通過但無法正確模擬行為，或導致測試脆弱。建議從 `@/api/work-pools` 匯入實際型別並使用 `Parameters<ReturnType<typeof useUpdateWorkPool>['updateWorkPool']>` 來定義 mock 型別。",
+    "existing_code": "const mockUpdateWorkPool =\n\tvi.fn<(data: unknown, options: UpdateWorkPoolOptions) => void>();",
+    "evidence": "diff 中 mockUpdateWorkPool 的型別定義使用自訂的 UpdateWorkPoolOptions，而非從 API 模組匯入。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 158,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試斷言依賴實作細節",
+    "body": "測試「handles empty concurrency limit as null」直接檢查 `mockUpdateWorkPool.mock.calls[0]` 的參數結構，這與元件內部如何呼叫 `updateWorkPool` 的實作細節耦合。若未來重構參數傳遞方式（例如改為單一物件），測試將失敗。建議改為驗證使用者可見的行為（例如成功 toast 或導航），或使用更穩定的 mock 驗證方式。",
+    "existing_code": "const callArgs = mockUpdateWorkPool.mock.calls[0] as [\n\t\t\t\t{ name: string; workPool: { concurrency_limit: number | null } },\n\t\t\t\tUpdateWorkPoolOptions,\n\t\t\t];\n\t\t\texpect(callArgs[0].workPool.concurrency_limit).toBeNull();",
+    "evidence": "diff 中測試直接存取 mock 呼叫的參數陣列並斷言其結構。"
+  }
+]

@@ -1,0 +1,112 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R19] 缺少分號",
+    "body": "`return Infinity` 陳述式結尾缺少分號，違反專案規範 R19（必須使用分號）。自動分號插入（ASI）通常會正確處理，但明確加上分號可避免潛在的解析問題並維持一致性。",
+    "existing_code": "return Infinity",
+    "evidence": "diff 中新增的 `return Infinity` 行末沒有分號。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 89,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R19] 缺少分號",
+    "body": "`const limit = Math.floor(...)` 陳述式結尾缺少分號，違反專案規範 R19。",
+    "existing_code": "const limit = Math.floor(\n            this.#warmupConfig.start *\n            Math.pow(\n                this.#warmupConfig.end / this.#warmupConfig.start,\n                day / (this.#warmupConfig.totalDays - 1)\n            )\n        )",
+    "evidence": "diff 中新增的 `const limit = Math.floor(...)` 區塊結尾沒有分號。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R19] 缺少分號",
+    "body": "`return Math.min(emailCount, limit)` 陳述式結尾缺少分號，違反專案規範 R19。",
+    "existing_code": "return Math.min(emailCount, limit)",
+    "evidence": "diff 中新增的 `return Math.min(emailCount, limit)` 行末沒有分號。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R18] 使用雙引號",
+    "body": "字串 `'csd_email_count:-null'` 使用了單引號，符合規範；但 `new Date(res.data[0].get('created_at') as string)` 中的 `'created_at'` 也是單引號，沒有違規。此 finding 可能不成立，請確認是否有其他雙引號字串。",
+    "existing_code": "filter: 'csd_email_count:-null',",
+    "evidence": "diff 中新增的 filter 字串使用單引號，符合規範。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 111,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R19] 缺少分號",
+    "body": "`function daysAgo(days: number): string {` 函式宣告後缺少分號，但函式宣告不需要分號，此 finding 可能不成立。",
+    "existing_code": "function daysAgo(days: number): string {",
+    "evidence": "diff 中新增的函式宣告行末沒有分號，但函式宣告通常不需要分號。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R19] 缺少分號",
+    "body": "`const date = new Date('2024-01-15T12:00:00Z');` 陳述式結尾缺少分號，違反專案規範 R19。",
+    "existing_code": "const date = new Date('2024-01-15T12:00:00Z');",
+    "evidence": "diff 中新增的該行結尾沒有分號。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R19] 缺少分號",
+    "body": "`date.setDate(date.getDate() - days);` 陳述式結尾缺少分號，違反專案規範 R19。",
+    "existing_code": "date.setDate(date.getDate() - days);",
+    "evidence": "diff 中新增的該行結尾沒有分號。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 114,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R19] 缺少分號",
+    "body": "`return date.toISOString();` 陳述式結尾缺少分號，違反專案規範 R19。",
+    "existing_code": "return date.toISOString();",
+    "evidence": "diff 中新增的該行結尾沒有分號。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 117,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R19] 缺少分號",
+    "body": "`Email = createModelClass({` 陳述式結尾缺少分號，違反專案規範 R19。",
+    "existing_code": "Email = createModelClass({",
+    "evidence": "diff 中新增的該行結尾沒有分號。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R17] 縮排不一致",
+    "body": "新增的 `#getDaysSinceFirstEmail` 方法內縮排似乎使用了 4 個空格，但與檔案其他部分的縮排風格可能不一致。請確認是否遵循專案的 4 空格縮排規範。",
+    "existing_code": "async #getDaysSinceFirstEmail(): Promise<number> {\n        const res = await this.#emailModel.findPage({",
+    "evidence": "diff 中新增的方法縮排為 8 個空格（兩個層級），但檔案其他部分可能使用不同縮排。"
+  }
+]

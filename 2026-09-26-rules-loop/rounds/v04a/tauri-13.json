@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 公開 Error enum 未標記 #[non_exhaustive]",
+    "body": "此 Error enum 為公開 API，且此 PR 將其從 thiserror 衍生改為手動實作，但未加上 #[non_exhaustive]。這會讓下游使用者在 match 此 enum 時，未來新增 variant 會造成 breaking change。建議加上 #[non_exhaustive] 屬性。",
+    "existing_code": "pub enum Error {",
+    "evidence": "diff 中顯示 `pub enum Error {`，且無 `#[non_exhaustive]` 屬性。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "notarize_inner 條件邏輯變更可能導致行為錯誤",
+    "body": "原本 `if submit_output.status.map_or(!wait, |s| s == \"Accepted\")` 改為 `if submit_output.status.map_or(wait, |s| s == \"Accepted\")`。此變更反轉了當 status 為 None 時的行為：原本在 wait=false 時會進入 if，現在變成 wait=true 時才會進入。需確認此變更是否符合預期，否則可能導致在非等待模式下跳過必要的處理。",
+    "existing_code": "if submit_output.status.map_or(wait, |s| s == \"Accepted\") {",
+    "evidence": "diff 中此行由 `map_or(!wait, ...)` 改為 `map_or(wait, ...)`。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 173,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "引數順序變更可能影響 ditto 命令行為",
+    "body": "在 notarize_inner 中，`app_bundle_path` 與 `zip_path` 的順序被調換。若 ditto 命令對引數順序敏感，可能導致壓縮內容錯誤。需確認此變更是否為修正或意外。",
+    "existing_code": "zip_path\n      .to_str()\n      .expect(\"failed to convert zip_path to string\"),\n    app_bundle_path\n      .to_str()\n      .expect(\"failed to convert bundle_path to string\"),",
+    "evidence": "diff 顯示原本 app_bundle_path 在前，現在 zip_path 在前。"
+  }
+]

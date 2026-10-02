@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 510,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "IpadOnlyTestCase.setUp 呼叫 super.setUp() 時缺少 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp` 中，`super.setUp()` 現在是 `async throws`，但呼叫處沒有加上 `try`。這會導致編譯錯誤。\n\n```swift\noverride func setUp() async throws {\n    specificForPlatform = .pad\n    if iPad() {\n        await super.setUp()\n    }\n}\n```\n\n應改為 `try await super.setUp()`。",
+    "existing_code": "if iPad() {\n            await super.setUp()\n        }",
+    "evidence": "diff 中 BaseTestCase.swift 的 IpadOnlyTestCase.setUp 內，`super.setUp()` 前只有 `await`，沒有 `try`，而父類別的 `setUp` 已改為 `async throws`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/A11yUtils.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R01] 移除 Mozilla Public License 標頭",
+    "body": "此 PR 刪除了 A11yUtils.swift 開頭的 MPL 授權標頭，違反專案規範 R01。所有 Swift 檔案必須包含標準 MPL 標頭。請恢復該標頭。",
+    "existing_code": "import XCTest\n\n@MainActor\nclass A11yUtils: XCTestCase {",
+    "evidence": "diff 顯示 A11yUtils.swift 的開頭從 MPL 標頭改為直接 import XCTest，且未新增其他授權標頭。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "setUp 中 setUpApp() 與 setUpExperimentVariables() 順序變更",
+    "body": "原本 `setUpExperimentVariables()` 在 `setUpApp()` 之前呼叫，現在順序對調。若 `setUpApp()` 依賴實驗變數已設定，可能導致測試行為改變。請確認此順序變更是有意且安全的。",
+    "existing_code": "setUpApp()\n        setUpExperimentVariables()",
+    "evidence": "diff 顯示 FeatureFlaggedTestBase.swift 中，`setUpApp()` 被移到 `setUpExperimentVariables()` 之前。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "全域變數 urlBarAddress 與 homepageSearchBar 的 @MainActor 標註可能不必要",
+    "body": "這兩個全域變數初始化時建立 `XCUIApplication()` 並存取其屬性，可能已隱含 main actor 隔離。加上 `@MainActor` 可能導致其他未標註的程式碼在存取時產生編譯錯誤。請確認是否真的需要，或改用其他方式（如 lazy var 或函式）。",
+    "existing_code": "@MainActor\nlet urlBarAddress = XCUIApplication().textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]\n@MainActor\nlet homepageSearchBar = XCUIApplication().cells[AccessibilityIdentifiers.FirefoxHomepage.SearchBar.itemCell]",
+    "evidence": "diff 中 BaseTestCase.swift 為這兩個全域變數加上 @MainActor，但未見其他程式碼因缺少 @MainActor 而無法存取。"
+  }
+]

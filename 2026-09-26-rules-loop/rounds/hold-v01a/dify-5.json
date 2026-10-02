@@ -1,0 +1,46 @@
+[
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 199,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R25] 新增 console.log 違反前端禁止 console 語句規範",
+    "body": "在生產程式碼中新增了 `console.log('Checking batch inputs:', { dataLength: data.length, headerData })`，違反 R25 規範。應移除或改用適當的 logging 機制。",
+    "existing_code": "console.log('Checking batch inputs:', { dataLength: data.length, headerData })",
+    "evidence": "diff 中新增的 console.log 行，違反 R25。"
+  },
+  {
+    "path": "web/app/components/app/configuration/prompt-value-panel/index.tsx",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "將 number 輸入的 type 從 'number' 改為 'text' 可能導致非數字輸入",
+    "body": "原本使用 `type=\"number\"` 可限制輸入為數字，改為 `type=\"text\"` 後，使用者可以輸入任意字元，可能導致後續處理錯誤。若目的是移除 maxLength 限制，應保留 type=\"number\" 並移除 maxLength 屬性。",
+    "existing_code": "type=\"text\"",
+    "evidence": "diff 中將 type=\"number\" 改為 type=\"text\"。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "當 max_length 未定義時，比較邏輯可能失效",
+    "body": "原本使用 `varItem.max_length || DEFAULT_VALUE_MAX_LEN` 提供預設值，移除後若 `varItem.max_length` 為 undefined，則 `item[varIndex].length > varItem.max_length` 會變成 `length > undefined`，結果為 false，導致長度檢查失效。應保留預設值或明確處理 undefined 情況。",
+    "existing_code": "if (item[varIndex].length > varItem.max_length) {",
+    "evidence": "diff 中移除了 `|| DEFAULT_VALUE_MAX_LEN`，且未處理 undefined。"
+  },
+  {
+    "path": "web/utils/var.ts",
+    "line": 33,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "解構賦值沒有實際作用",
+    "body": "`const { ...rest } = VAR_ITEM_TEMPLATE_IN_WORKFLOW` 只是複製整個物件，與直接使用 `VAR_ITEM_TEMPLATE_IN_WORKFLOW` 無異。若目的是移除 max_length，應明確排除該屬性，例如 `const { max_length, ...rest } = VAR_ITEM_TEMPLATE_IN_WORKFLOW`。",
+    "existing_code": "const { ...rest } = VAR_ITEM_TEMPLATE_IN_WORKFLOW",
+    "evidence": "diff 中將 `const { max_length: _maxLength, ...rest }` 改為 `const { ...rest }`，但未排除任何屬性。"
+  }
+]

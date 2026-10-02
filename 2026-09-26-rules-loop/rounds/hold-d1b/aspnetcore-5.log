@@ -1,0 +1,11 @@
+[info] repo 規範＋範圍說明：repo=aspnetcore、20 條、10512 字元、placement=after_diff、sha256=03cfa3548ec0
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 13301 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:7 → 10（片段唯一命中）
+[info] 重新定位 src/Components/Endpoints/test/EndpointHtmlRendererTest.cs:735 → 739（片段唯一命中）
+[info] 重新定位 src/Components/Endpoints/test/EndpointHtmlRendererTest.cs:770 → 778（片段唯一命中）
+[info] 重新定位 src/Components/Endpoints/test/EndpointHtmlRendererTest.cs:805 → 817（片段唯一命中）
+[info] 重新定位 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:79 → 80（片段唯一命中）
+[info] 重新定位 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:91 → 94（片段唯一命中）
+[info] 重新定位 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:103 → 108（片段唯一命中）
+[info] 重新定位 src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs:119 → 128（片段唯一命中）
+[info] 完成於 11.5s ｜ findings=10 ｜ relocated=8 ｜ verdict=comment ｜ usage={"prompt_tokens": 6993, "completion_tokens": 1991, "total_tokens": 8984, "prompt_tokens_details": {"cached_tokens": 6912}, "prompt_cache_hit_tokens": 6912, "prompt_cache_miss_tokens": 81}

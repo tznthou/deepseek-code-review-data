@@ -1,0 +1,8 @@
+[info] repo 規範：repo=tauri、17 條、9751 字元、placement=after_diff、sha256=c39280b11b8b
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 22181 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh:85 → 75（片段唯一命中）
+[info] 重新定位 crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh:327 → 316（片段唯一命中）
+[info] 重新定位 crates/tauri-bundler/src/bundle/linux/appimage/mod.rs:281 → 312（片段唯一命中）
+[info] 重新定位 crates/tauri-bundler/src/bundle/linux/appimage/mod.rs:281 → 291（片段唯一命中）
+[info] 重新定位 crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh:327 → 326（片段唯一命中）
+[info] 完成於 11.0s ｜ findings=5 ｜ relocated=5 ｜ verdict=comment ｜ usage={"prompt_tokens": 11492, "completion_tokens": 1513, "total_tokens": 13005, "prompt_tokens_details": {"cached_tokens": 11392}, "prompt_cache_hit_tokens": 11392, "prompt_cache_miss_tokens": 100}

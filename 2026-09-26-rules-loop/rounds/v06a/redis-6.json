@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "硬編碼恢復 active_defrag_enabled 可能覆蓋原始設定",
+    "body": "在 rdbLoadEmptyDbFunc 中，暫時停用主動碎片整理後，恢復時直接設定 `server.active_defrag_enabled = 1;`，但原始值可能為 0（例如使用者明確停用）。這會導致複製同步後主動碎片整理被意外啟用，可能影響效能或造成非預期行為。建議改為 `server.active_defrag_enabled = orig_active_defrag;`。",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的兩行程式碼：`int orig_active_defrag = server.active_defrag_enabled;` 與 `server.active_defrag_enabled = 1;`。變數 orig_active_defrag 被儲存但未使用，且恢復值硬編碼為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "streamEntryIsReferenced 在 cgroups_ref 為 NULL 時回傳 1 可能導致記憶體洩漏或錯誤保留",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 會在沒有消費者群組參考時直接回傳 1（表示被參考），這可能導致某些清理邏輯（如 XADD MAXLEN 修剪）無法刪除實際上未被參考的條目，造成記憶體使用增加。需要確認此行為是否符合預期，並考慮是否應回傳 0。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的一行，位於 streamEntryIsReferenced 函式內，在原本的 raxFind 之前。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試輔助函式 discard_replies_every 的參數名稱與用途不符",
+    "body": "函式參數 `discard_num` 在呼叫時傳入的值（如 10000、20000）代表要丟棄的回覆總數，但函式內部的迴圈是 `for {set k 0} {$k < $discard_num} {incr k}`，這會丟棄 `discard_num` 次回覆，而不是每 `frequency` 次丟棄 `discard_num` 個。這可能導致測試行為與預期不同，特別是在 `discard_num` 大於 `frequency` 時。建議重新命名參數或調整邏輯。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {\n        if {$count % $frequency != 0} {\n            for {set k 0} {$k < $discard_num} {incr k} {\n                $rd read ; # Discard replies\n            }\n        }\n    }",
+    "evidence": "diff 中新增的函式定義，以及後續呼叫如 `discard_replies_every $rd $count 10000 10000`。"
+  }
+]

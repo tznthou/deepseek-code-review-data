@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "local_host 為空字串時可能導致 SMTP 連線失敗",
+    "body": "當 SMTP_LOCAL_HOSTNAME 未設定時，local_host 為空字串 \"\"，但程式碼將 local_hostname 設為 local_host or None，因此會傳入空字串而非 None。smtplib 在建構時若 local_hostname 為空字串，可能導致 HELO/EHLO 命令使用空字串，某些 SMTP 伺服器會拒絕此類連線。建議改為：local_hostname=local_host if local_host else None，或直接使用 local_host or None（但需確認 smtplib 對空字串的處理）。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中新增的 local_host = dify_config.SMTP_LOCAL_HOSTNAME or \"\"，以及 local_hostname=local_host or None。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 31,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "ehlo 呼叫傳入空字串可能導致錯誤",
+    "body": "在 opportunistic TLS 模式下，smtp.ehlo(local_host) 會將 local_host 作為參數傳入，若 local_host 為空字串，可能導致 EHLO 命令格式錯誤。建議改為 smtp.ehlo(local_host or None) 或僅在 local_host 非空時傳入。",
+    "existing_code": "smtp.ehlo(local_host)\nsmtp.starttls()\nsmtp.ehlo(local_host)",
+    "evidence": "diff 中新增的兩行 ehlo 呼叫，local_host 可能為空字串。"
+  },
+  {
+    "path": "api/tests/unit_tests/libs/test_smtp_client.py",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試僅驗證 local_hostname 參數存在，未驗證其值",
+    "body": "測試使用 ANY 來匹配 local_hostname，無法驗證實際傳入的值是否正確。建議增加測試案例，明確設定 SMTP_LOCAL_HOSTNAME 並驗證傳入的值。",
+    "existing_code": "mock_smtp_cls.assert_called_once_with(\"smtp.example.com\", 25, timeout=10, local_hostname=ANY)",
+    "evidence": "diff 中測試斷言使用 ANY。"
+  }
+]

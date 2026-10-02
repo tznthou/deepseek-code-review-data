@@ -1,0 +1,13 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 部分 require 陳述式缺少分號",
+    "body": "在 members-api.js 中，前 10 行左右的 require 陳述式結尾沒有分號，違反專案規範 R19（所有陳述式必須以分號結尾）。雖然 JavaScript 的自動分號插入（ASI）通常能正確處理，但明確加上分號可避免潛在的 ASI 陷阱並維持程式碼一致性。\n\n建議將這些行補上分號，例如：\n```js\nconst {Router} = require('express');\nconst body = require('body-parser');\nconst errors = require('@tryghost/errors');\nconst logging = require('@tryghost/logging');\n\nconst PaymentsService = require('./services/payments-service');\nconst TokenService = require('./services/token-service');\nconst GeolocationService = require('./services/geolocation-service');\nconst MemberBREADService = require('./services/member-bread-service');\nconst MemberRepository = require('./repositories/member-repository');\n```",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')\n\nconst PaymentsService = require('./services/payments-service')\nconst TokenService = require('./services/token-service')\nconst GeolocationService = require('./services/geolocation-service')\nconst MemberBREADService = require('./services/member-bread-service')\nconst MemberRepository = require('./repositories/member-repository')",
+    "evidence": "diff 中顯示這些行從原本有分號的版本改為無分號，且專案規範 R19 明確要求所有陳述式以分號結尾。"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.ts",
+    "line": 5,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R01] 類別名稱變更可能導致其他檔案引用錯誤",
+    "body": "將 `SelectedCalendarRepository` 更名為 `PrismaSelectedCalendarRepository` 符合命名規範，但此變更可能影響其他未修改的檔案。請確認所有引用此類別的地方都已同步更新，否則會造成編譯錯誤或執行時期錯誤。",
+    "existing_code": "export class PrismaSelectedCalendarRepository implements ISelectedCalendarRepository {",
+    "evidence": "diff 中顯示類別名稱從 `SelectedCalendarRepository` 改為 `PrismaSelectedCalendarRepository`，但未見其他檔案的相應修改。"
+  }
+]

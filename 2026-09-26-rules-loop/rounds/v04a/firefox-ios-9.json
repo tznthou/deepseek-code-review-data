@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "cancelEditMode 條件反轉可能導致 URL 遺失",
+    "body": "原本條件為 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，現在改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會讓非網頁但為 Reader Mode 的 URL（例如 `about:reader?url=...`）也被保留，而原本應被清除。這可能導致取消編輯時 URL 欄顯示錯誤內容。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&& !` 改為 `||`，邏輯完全相反。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "readerModeState 條件反轉可能導致遙測錯誤",
+    "body": "原本 `case .available: true` 改為 `case .available: false`，且 `default: false` 改為 `default: true`。這會使遙測事件中的 `isEnabled` 值完全相反，影響數據準確性。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中兩行條件值互換。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/State/BrowserViewControllerState.swift",
+    "line": 566,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "displayView 變更可能導致錯誤畫面顯示",
+    "body": "原本 `displayView: .readerMode` 改為 `displayView: .readerModeLongPressAction`。此變更與 QR code 移除無關，可能影響長按閱讀模式按鈕時顯示的畫面，需確認是否為預期行為。",
+    "existing_code": "displayView: .readerModeLongPressAction,",
+    "evidence": "diff 中此行由 `.readerMode` 改為 `.readerModeLongPressAction`。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/ToolbarTelemetry.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R11] gleanWrapper 屬性存取控制變更",
+    "body": "`gleanWrapper` 從 `private let` 改為 `let`（internal）。若無外部使用需求，建議維持 `private` 以符合資訊隱藏原則。",
+    "existing_code": "let gleanWrapper: GleanWrapper",
+    "evidence": "diff 中此行由 `private let` 改為 `let`。"
+  }
+]

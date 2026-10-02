@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "JWT token 儲存型別不一致可能導致驗證失敗",
+    "body": "`_serverToken` 原本儲存 token 字串，現在改存整個 token 物件（`this._serverToken = tokenData;`），但 `_isJWTExpired` 仍以字串參數呼叫 `jwt.decode(token)`。若 `tokenData` 是物件，`jwt.decode` 會收到非字串而拋出錯誤或回傳 null，導致 token 永遠被視為過期，每次請求都重新產生 token。\n\n建議：確認 `_generateToken` 回傳的 `token` 欄位是字串，並將 `_serverToken` 設為 `tokenData.token`，或調整 `_isJWTExpired` 以接受物件。",
+    "existing_code": "this._serverToken = tokenData;",
+    "evidence": "diff 中 `-                this._serverToken = tokenData.token;` 改為 `+                this._serverToken = tokenData;`，而 `_isJWTExpired` 仍呼叫 `jwt.decode(token)`，型別不符。"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 noTimestamp 可能導致 JWT 簽章驗證失敗",
+    "body": "`jwt.sign` 原本使用 `{noTimestamp: true}` 來避免加入 `iat` claim，現在移除了該選項，導致 token 包含 `iat`。若 Tinybird 端驗證 token 時預期沒有 `iat`，可能導致驗證失敗。\n\n建議：確認 Tinybird 對 token 的驗證邏輯，若需要無 `iat` 則保留 `noTimestamp: true`。",
+    "existing_code": "const token = jwt.sign(payload, this.tinybirdConfig.adminToken);",
+    "evidence": "diff 中 `-        const token = jwt.sign(payload, this.tinybirdConfig.adminToken, {noTimestamp: true});` 改為 `+        const token = jwt.sign(payload, this.tinybirdConfig.adminToken);`"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 164,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 jwt.decode 取代 jwt.verify 可能接受無效 token",
+    "body": "`_isJWTExpired` 原本使用 `jwt.verify` 驗證簽章，現在改用 `jwt.decode` 僅解碼不驗證。這可能導致攻擊者偽造 token 或使用過期 token 通過檢查，造成安全風險。\n\n建議：保留 `jwt.verify` 以確保 token 完整性，或明確說明為何不需要驗證簽章。",
+    "existing_code": "const decoded = jwt.decode(token);",
+    "evidence": "diff 中 `-            const decoded = jwt.verify(token, this.tinybirdConfig.adminToken);` 改為 `+            const decoded = jwt.decode(token);`"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "編輯器可編輯性判斷改為依賴 member.expertise 可能導致無 expertise 成員無法編輯",
+    "body": "原本 `editor.setEditable(!!memberName && progress !== 'sending')` 使用 memberName 判斷，現在改為 `!!member?.expertise`。若登入成員沒有 expertise（例如一般使用者），編輯器將永遠不可編輯，導致無法輸入回覆內容。建議改回使用 memberName 或改用其他代表成員身分的欄位。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`，且 dependency array 由 `[editor, memberName, progress]` 改為 `[editor, member, progress]`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 comment prop 後需確認無其他使用處",
+    "body": "FormWrapper 的 props 型別移除了 `comment`，且不再傳入。需確認沒有其他元件依賴此 prop，否則可能造成型別錯誤或功能缺失。",
+    "existing_code": "type FormWrapperProps = {\n    editor: Editor | null;\n    isOpen: boolean;\n    reduced: boolean;",
+    "evidence": "diff 中移除了 `comment?: Comment;` 以及解構中的 `comment`，且 reply-form.tsx 中不再傳入 `comment={parent}`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/reply-form.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "in_reply_to_id 改為 parent.id 可能影響回覆串接邏輯",
+    "body": "原本使用 `openForm.in_reply_to_id`，現在改為 `parent.id`。需確認 `parent` 是否為直接父評論，若 `openForm` 可能代表回覆到回覆的情境，此變更可能導致回覆層級錯誤。",
+    "existing_code": "in_reply_to_id: parent.id,",
+    "evidence": "diff 中此行由 `in_reply_to_id: openForm.in_reply_to_id,` 改為 `in_reply_to_id: parent.id,`，且 dependency array 移除 `openForm`。"
+  }
+]

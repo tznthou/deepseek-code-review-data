@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 368,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "scheduling.init() 呼叫方式變更可能導致排程服務初始化失敗",
+    "body": "原本 `scheduling.init()` 傳入 `{apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true)}`，現在改為無參數呼叫。若 `scheduling.init()` 依賴 `apiUrl` 參數來設定內部 API 端點，移除後可能導致排程服務無法正常運作（例如無法觸發 webhook 或執行排程任務）。請確認 `scheduling.init()` 的實作是否已改為從其他來源取得 `apiUrl`，或此變更是否為預期行為。",
+    "existing_code": "scheduling.init(),",
+    "evidence": "diff 中 `-        scheduling.init({\n-            apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true)\n-        }),\n+        scheduling.init(),`"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 368,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 slack.listen() 可能導致 Slack 通知功能失效",
+    "body": "原本在 `Promise.all` 中有 `slack.listen()`，現在被移除。若 Slack 服務需要透過 `listen()` 註冊事件監聽器來處理通知，移除後將導致 Slack 通知無法發送。請確認 Slack 服務是否已改為其他初始化方式，或此功能是否已棄用。",
+    "existing_code": "scheduling.init(),",
+    "evidence": "diff 中 `-        slack.listen(),\n` 被移除，且未見替代呼叫。"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 313,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的註解可能誤導開發者使用 npm 而非 yarn",
+    "body": "新增註解 `// NOTE: If you need to add dependencies for services, use npm install <package>`，但專案規範 R23 要求使用 Yarn v1。此註解可能導致開發者誤用 npm，違反專案慣例。建議改為 `yarn add <package>` 或移除。",
+    "existing_code": "// NOTE: If you need to add dependencies for services, use npm install <package>",
+    "evidence": "diff 中新增的註解行。"
+  }
+]

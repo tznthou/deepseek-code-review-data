@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "複寫指令參數順序可能錯誤",
+    "body": "`rewriteClientCommandVector` 的參數順序為 `(c, argc, ...)`，此處傳入 6 個參數，但實際需要的參數數量可能不符。HSETEX 語法為 `HSETEX key [EX seconds|PX milliseconds|EXAT unix-time|PXAT unix-time|KEEPTTL] FIELDS numfields field value [field value ...]`，此處建構的指令為 `HSETEX key KEEPTTL FIELDS 1 field value`，共 7 個 token（含指令本身），但 `argc` 傳入 6，可能導致參數截斷或錯誤。建議確認 `rewriteClientCommandVector` 的 argc 計算方式，並驗證產生的指令是否完整。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 `rewriteClientCommandVector` 呼叫，argc 為 6，但後續傳入 7 個參數（hsetex, key, keepttl, fields, 1, field, value），可能導致指令建構錯誤。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1980,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中 TTL 斷言可能因時間誤差而不穩定",
+    "body": "`assert_range [r httl h1 FIELDS 1 f1] 90 100` 假設 TTL 在 90 到 100 秒之間，但測試執行時間可能超過 10 秒，導致 TTL 低於 90 而失敗。建議放寬範圍或使用 `assert_morethan` 搭配較低門檻。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "測試中對 TTL 的範圍斷言，若測試執行時間較長，TTL 可能低於 90。"
+  }
+]

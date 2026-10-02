@@ -1,0 +1,13 @@
+[info] repo 規範＋範圍說明：repo=firefox-ios、15 條、10078 字元、placement=after_diff、sha256=c387261a82c2
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 71923 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift:18 → 19（片段唯一命中）
+[info] 定位不到 firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift:28（片段跨 44 個檔案命中，不猜）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift:13 → 14（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift:17 → 18（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/Homepage/PrivateHomepageViewControllerTests.swift:15 → 16（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/Homepage/PrivateHomepageViewControllerTests.swift:19 → 20（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/DownloadsPanelTests.swift:14 → 16（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/DownloadsPanelTests.swift:18 → 21（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/ReadingListPanelTests.swift:14 → 15（片段唯一命中）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/ClientTests/Library/ReadingListPanelTests.swift:18 → 20（片段唯一命中）
+[info] 完成於 12.3s ｜ findings=10 ｜ relocated=9 ｜ verdict=comment ｜ usage={"prompt_tokens": 23685, "completion_tokens": 2144, "total_tokens": 25829, "prompt_tokens_details": {"cached_tokens": 23552}, "prompt_cache_hit_tokens": 23552, "prompt_cache_miss_tokens": 133}

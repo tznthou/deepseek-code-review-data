@@ -1,0 +1,57 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的 prefix",
+    "body": "在 `BasicsTab.tsx` 中，從 `bookingUrl` 解析 prefix 的邏輯假設 URL 的最後一個 path segment 是 slug，並將其移除。但若 bookingUrl 包含 query string、hash，或 slug 並非最後一個 segment（例如有 trailing slash），則可能產生錯誤的 prefix。例如 `https://cal.com/user/event?foo=bar` 會得到 `https://cal.com/user/`，但預期可能是 `https://cal.com/user/event/`。建議改為從後端直接取得 prefix，或使用更可靠的解析方式。",
+    "existing_code": "const url = new URL(props.bookingUrl);\nconst pathParts = url.pathname.split(\"/\").filter(Boolean);\npathParts.pop(); // Remove slug\nlet prefix = \"/\";\nif (pathParts.length > 0) {\n  prefix = `/${pathParts.join(\"/\")}/`;\n}\nreturn `${url.protocol}//${url.hostname}${prefix}`;",
+    "evidence": "diff 中新增的程式碼片段，行號約 257-268。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 949,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "bookingUrl 可能為空，導致預覽/複製功能失效",
+    "body": "`handlePreview` 和 `handleCopyLink` 現在直接使用 `bookingUrl` state，但該 state 的初始值為空字串，且未看到何處被設定。若使用者尚未儲存 event type 或後端未回傳 bookingUrl，則會顯示錯誤訊息，但使用者可能不清楚如何取得 bookingUrl。建議在載入 event type 時一併取得 bookingUrl，或提供明確的引導。",
+    "existing_code": "if (!bookingUrl) {\n  showErrorAlert(\"Error\", \"Booking URL not available. Please save the event type first.\");\n  return;\n}",
+    "evidence": "diff 中 `handlePreview` 和 `handleCopyLink` 的修改，行號約 949-960。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1122,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "copyBtn 的 bookingUrl 未使用 eventType.bookingUrl",
+    "body": "在 `copyBtn` 的 click handler 中，bookingUrl 的建構方式仍為手動拼接，未使用 `eventType.bookingUrl`，與其他地方的修改不一致。這可能導致複製的連結與實際 bookingUrl 不同。建議統一使用 `eventType.bookingUrl || fallback` 的模式。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中 copyBtn 的修改，行號約 1122-1125。"
+  },
+  {
+    "path": "companion/services/calcom.ts",
+    "line": 1655,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "getUsername 的錯誤處理可能隱藏原始錯誤",
+    "body": "`getUsername` 函式在 catch 中拋出一個新的 Error，但未保留原始錯誤資訊，不利於除錯。建議使用 `throw new Error(\"Failed to get username\", { cause: error })` 或直接 rethrow。",
+    "existing_code": "async function getUsername(): Promise<string> {\n  try {\n    const profile = await getUserProfile();\n    return profile.username;\n  } catch (error) {\n    throw new Error(\"Failed to get username\");\n  }\n}",
+    "evidence": "diff 中新增的 getUsername 函式，行號約 1654-1661。"
+  },
+  {
+    "path": "companion/components/event-type-list-item/EventTypeListItemParts.tsx",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "getDisplayUrl 的 fallback 邏輯可能產生不一致的顯示",
+    "body": "`getDisplayUrl` 在 bookingUrl 存在時回傳 `url.hostname + url.pathname`，但若 bookingUrl 包含 protocol 以外的資訊（如 port），則顯示可能不完整。此外，fallback 邏輯在 username 存在時回傳 `/${username}/${slug}`，但若 slug 為空則可能產生 `//`。建議統一處理 edge cases。",
+    "existing_code": "function getDisplayUrl(bookingUrl?: string, username?: string, slug?: string): string {\n  if (bookingUrl) {\n    try {\n      const url = new URL(bookingUrl);\n      return url.hostname + url.pathname;\n    } catch {\n      // fallback if URL parsing fails\n    }\n  }\n  return username ? `/${username}/${slug}` : `/${slug}`;\n}",
+    "evidence": "diff 中新增的 getDisplayUrl 函式，行號約 7-18。"
+  }
+]

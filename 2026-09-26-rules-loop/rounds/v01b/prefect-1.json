@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 182,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除型別檢查可能導致非 dict 值被指派給 job_vars_schema",
+    "body": "原本程式碼檢查 `variables` 是否為 dict 才指派，現在直接指派 `base_job_template[\"variables\"]`。如果 `variables` 不是 dict（例如是 list 或 None），後續使用 `job_vars_schema` 的地方（例如產生 SDK 型別提示）可能會出錯。建議保留型別檢查，或明確處理非 dict 的情況。",
+    "existing_code": "job_vars_schema = base_job_template[\"variables\"]",
+    "evidence": "diff 中移除了 `if isinstance(variables, dict):` 的檢查，直接指派。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 397,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "部署名稱過濾邏輯變更可能導致錯誤排除",
+    "body": "原本使用 `full_name` 與 `deployment_names` 比較，現在改為 `dep.name`。如果使用者提供的過濾條件包含 flow 名稱（例如 `my-flow/production`），則 `dep.name` 只有 `production`，永遠不會等於 `my-flow/production`，導致所有部署都被排除。請確認此變更是否符合預期，或應同時檢查 `full_name` 和 `dep.name`。",
+    "existing_code": "if deployment_names and dep.name not in deployment_names:",
+    "evidence": "diff 中將 `full_name not in deployment_names` 改為 `dep.name not in deployment_names`。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R03] Logger 初始化不符合專案標準",
+    "body": "專案規範要求使用 `get_logger(\"module_name\")` 並加上型別註解，但此處使用 `logging.getLogger(__name__)`。建議改為 `from prefect.logging import get_logger` 並使用 `logger: \"logging.Logger\" = get_logger(__name__)`。",
+    "existing_code": "logger = logging.getLogger(__name__)",
+    "evidence": "diff 中新增了 `logger = logging.getLogger(__name__)`，違反 R03。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 220,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 `strict=True` 可能掩蓋長度不一致問題",
+    "body": "原本 `zip(..., strict=True)` 會在 `pool_names_list` 和 `results` 長度不同時拋出錯誤，現在移除後若長度不一致，多餘的元素會被忽略，可能導致部分工作池未被處理且沒有警告。建議保留 `strict=True` 或明確處理長度不一致的情況。",
+    "existing_code": "for name, result in zip(pool_names_list, results):",
+    "evidence": "diff 中移除了 `strict=True`。"
+  }
+]

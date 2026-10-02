@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "handleSubmit 未 await updateWorkPool，可能導致未捕獲的 Promise rejection",
+    "body": "在 `handleSubmit` 中，`updateWorkPool` 被呼叫但沒有 `await` 或回傳其 Promise。如果 `updateWorkPool` 內部拋出同步錯誤或回傳 rejected Promise，這個錯誤將不會被捕獲，可能導致 unhandled promise rejection。建議將 `handleSubmit` 改為 async 並 `await updateWorkPool(...)`，或至少回傳該 Promise 讓 react-hook-form 處理。",
+    "existing_code": "const handleSubmit = (data: WorkPoolEditFormValues) => {\n\t\tconst trimmedDescription = data.description?.trim();\n\t\tupdateWorkPool(",
+    "evidence": "diff 中 `handleSubmit` 函式內呼叫 `updateWorkPool` 但未處理其回傳值，且函式未宣告為 async。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試中 mock 的 useUpdateWorkPool 回傳值可能與實際 hook 不符",
+    "body": "測試中 mock 的 `useUpdateWorkPool` 回傳物件包含 `updateWorkPool` 和 `isPending`，但實際 hook 可能回傳不同的屬性名稱（例如 `mutate` 或 `isLoading`）。這可能導致測試通過但實際使用時出錯。建議確認 `useUpdateWorkPool` 的實際 API，並調整 mock 以符合。",
+    "existing_code": "vi.mock(\"@/api/work-pools\", async () => {\n\tconst actual = await vi.importActual(\"@/api/work-pools\");\n\treturn {\n\t\t...actual,\n\t\tuseUpdateWorkPool: () => ({\n\t\t\tupdateWorkPool: mockUpdateWorkPool,\n\t\t\tisPending: false,\n\t\t}),\n\t};\n});",
+    "evidence": "diff 中 mock 回傳的物件結構可能與實際 hook 不一致，需查證。"
+  }
+]

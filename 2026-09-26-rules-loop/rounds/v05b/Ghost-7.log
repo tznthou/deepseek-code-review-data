@@ -1,0 +1,6 @@
+[info] repo 規範：repo=Ghost、24 條、9975 字元、placement=after_diff、sha256=9ac79838eeb4
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 181237 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 ghost/core/core/server/services/member-welcome-emails/service.js:102 → 103（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/services/stats/posts-stats-service.js:150 → 151（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/services/stats/posts-stats-service.js:1568 → 1571（片段唯一命中）
+[info] 完成於 13.8s ｜ findings=10 ｜ relocated=3 ｜ verdict=comment ｜ usage={"prompt_tokens": 48966, "completion_tokens": 2152, "total_tokens": 51118, "prompt_tokens_details": {"cached_tokens": 48896}, "prompt_cache_hit_tokens": 48896, "prompt_cache_miss_tokens": 70}

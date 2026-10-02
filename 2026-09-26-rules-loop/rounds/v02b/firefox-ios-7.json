@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Sources/Common/Utilities/DispatchQueueHelper.swift",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 @Sendable 可能導致非主執行緒呼叫時的資料競爭",
+    "body": "`ensureMainThread` 的泛型版本移除了 `@Sendable`，但此函式可能在非主執行緒被呼叫，並透過 `DispatchQueue.main.async` 將 closure 傳遞到主執行緒。若 closure 捕獲了非 Sendable 的狀態，可能導致資料競爭。建議保留 `@Sendable` 或確保所有呼叫端都在主執行緒。",
+    "existing_code": "public func ensureMainThread<T>(execute work: @escaping @MainActor () -> T) -> T? {",
+    "evidence": "diff 中將 `@escaping @MainActor @Sendable () -> T` 改為 `@escaping @MainActor () -> T`，但函式內仍使用 `DispatchQueue.main.async`，可能跨執行緒傳遞 closure。"
+  },
+  {
+    "path": "BrowserKit/Sources/Common/Utilities/DispatchQueueHelper.swift",
+    "line": 31,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "ensureMainThread 泛型版本回傳值變更可能破壞呼叫端",
+    "body": "原本的 `ensureMainThread<T>` 不回傳值，現在改為回傳 `T?`。這可能導致現有呼叫端出現編譯錯誤或行為改變，尤其是那些依賴非同步執行且不預期回傳值的程式碼。建議確認所有呼叫端並更新。",
+    "existing_code": "return nil",
+    "evidence": "diff 中新增了 `return nil`，且函式簽名改為 `-> T?`。"
+  },
+  {
+    "path": "firefox-ios/Client/Application/WebServer.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "[R12] WebServer 類別移除 final 修飾詞",
+    "body": "`WebServer` 類別原本是 `final`，現在移除了 `final`。根據專案規範 R12，不應被子類別化的類別應標記為 `final`。除非有明確的繼承需求，否則建議保留 `final`。",
+    "existing_code": "class WebServer: WebServerProtocol, @unchecked Sendable {",
+    "evidence": "diff 中將 `final class WebServer` 改為 `class WebServer`。"
+  },
+  {
+    "path": "firefox-ios/Client/Utils/MainThreadThrottler.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "throttle 方法中 guard 順序變更可能影響行為",
+    "body": "原本的 `guard` 在設定 `lastExecutionTime` 之前，現在移到之後。這可能導致在 `threshold <= 0` 或時間未超過 threshold 時，`lastExecutionTime` 仍被更新，影響後續 throttle 判斷。建議確認此變更是否為預期行為。",
+    "existing_code": "lastExecutionTime = Date()\n        guard threshold <= 0 || lastExecutionTime.timeIntervalSinceNow < -threshold else { return }",
+    "evidence": "diff 中將 `lastExecutionTime = Date()` 移到 `guard` 之前。"
+  }
+]

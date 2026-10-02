@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R04] 使用舊式 typing 語法 Set 和 Tuple",
+    "body": "此專案要求使用 Python 3.12+ 的現代型別語法（R04），但此處使用了 `Set[Tuple[str, ...]]`。應改為 `set[tuple[str, ...]]`。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的方法使用了 `Set` 和 `Tuple`，違反 R04。"
+  },
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "blocks_variable_output 可能因 assigned_variable_selector 為 None 而拋出例外",
+    "body": "`self.node_data.assigned_variable_selector` 的型別可能為 None，但此處直接使用 `in` 運算子，若為 None 會拋出 TypeError。建議先檢查是否為 None，或確保該屬性永遠有值。",
+    "existing_code": "assigned_selector = self.node_data.assigned_variable_selector\n        return assigned_selector in variable_selectors",
+    "evidence": "diff 中新增的程式碼直接使用 `assigned_selector in variable_selectors`，未檢查 None。"
+  },
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "result_input_value 的計算可能與預期不符",
+    "body": "當 write_mode 為 CLEAR 時，使用 `updated_variable.to_object()` 作為輸入值；否則使用 `income_value.to_object()`。但 `updated_variable` 在 CLEAR 模式下可能是 None 或空值，需確認 `to_object()` 是否安全。",
+    "existing_code": "if self.node_data.write_mode == WriteMode.CLEAR:\n            result_input_value = updated_variable.to_object()\n        else:\n            result_input_value = income_value.to_object()",
+    "evidence": "diff 中新增的條件分支，需確認 updated_variable 在 CLEAR 模式下的狀態。"
+  }
+]

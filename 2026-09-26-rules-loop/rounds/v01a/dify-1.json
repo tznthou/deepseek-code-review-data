@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R04] 使用舊式 typing.Set 與 typing.Tuple 而非現代型別語法",
+    "body": "在 `blocks_variable_output` 方法的型別標註中，使用了 `Set[Tuple[str, ...]]`，這違反了專案規範 R04（Python Code Must Use Modern Type Syntax for Python 3.12+）。應改用內建的 `set[tuple[str, ...]]`。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的這一行使用了 `Set` 和 `Tuple`，而檔案開頭已從 `typing` 匯入 `Set, Tuple`。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R08] 測試函式缺少 Arrange 區塊",
+    "body": "測試函式 `test_streaming_conversation_variables_v1_overwrite_waits_for_assignment` 直接建立 `WorkflowTestCase` 並執行，沒有明確的 Arrange 區塊（例如先設定 fixture 或 mock）。建議將測試資料的準備與執行分開，以符合 AAA 模式。",
+    "existing_code": "def test_streaming_conversation_variables_v1_overwrite_waits_for_assignment():\n    fixture_name = \"test_streaming_conversation_variables_v1_overwrite\"\n    input_query = \"overwrite-value\"\n\n    case = WorkflowTestCase(",
+    "evidence": "diff 中新增的測試函式從 fixture_name 設定到建立 case 一氣呵成，沒有明顯的 Arrange 區塊。"
+  }
+]

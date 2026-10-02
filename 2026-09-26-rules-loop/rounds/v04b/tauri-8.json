@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "MouseButtonState 的 From 轉換反轉了 Up/Down 對應",
+    "body": "在 `From<tray_icon::MouseButtonState>` 的實作中，原本的對應是 `Up => Up`、`Down => Down`，但此變更將其反轉為 `Up => Down`、`Down => Up`。這會導致所有從 `tray_icon` 轉換而來的滑鼠按鈕狀態被錯誤地反轉，可能造成 UI 行為錯誤（例如按下和釋放事件被交換）。\n\n建議：將對應改回原本的正確順序：\n```rust\ntray_icon::MouseButtonState::Up => MouseButtonState::Up,\ntray_icon::MouseButtonState::Down => MouseButtonState::Down,\n```",
+    "existing_code": "tray_icon::MouseButtonState::Up => MouseButtonState::Down,\ntray_icon::MouseButtonState::Down => MouseButtonState::Up,",
+    "evidence": "diff 中顯示原本的 `Up => Up` 和 `Down => Down` 被改為 `Up => Down` 和 `Down => Up`，這明顯是錯誤的。"
+  },
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 140,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "new_click 方法使用未公開的欄位型別，可能導致 API 不相容",
+    "body": "新增的 `new_click` 方法在建構 `TrayIconEvent::Click` 時，使用了 `PhysicalPosition`、`Rect`、`PhysicalSize` 等型別。這些型別可能不是公開 API 的一部分，或者其建構方式在未來可能變更。如果這些型別未公開，下游使用者將無法呼叫此方法，或者在建構時遇到型別不匹配的問題。\n\n建議：確認這些型別是否公開且穩定，或者考慮提供更簡單的建構方式（例如使用 `Default` 或提供必要的參數）。",
+    "existing_code": "pub fn new_click(id: TrayIconId) -> Self {\n    TrayIconEvent::Click {\n      id,\n      position: PhysicalPosition { x: 0.0, y: 0.0 },\n      rect: Rect {\n        position: PhysicalPosition { x: 0.0, y: 0.0 },\n        size: crate::PhysicalSize {\n          width: 0.0,\n          height: 0.0,\n        },\n      },\n      button: MouseButton::default(),\n      button_state: MouseButtonState::default(),\n    }\n  }",
+    "evidence": "diff 中新增的 `new_click` 方法直接使用了 `PhysicalPosition`、`Rect`、`PhysicalSize` 等型別，這些型別可能不是公開 API 的一部分。"
+  }
+]

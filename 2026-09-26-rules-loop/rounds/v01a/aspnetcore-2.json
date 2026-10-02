@@ -1,0 +1,24 @@
+[
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "LocateVisualStudio 中 $vsRequirements 可能為 null 導致後續 Get-Member 失敗",
+    "body": "在 `LocateVisualStudio` 函式中，當 `$GlobalJson.tools` 沒有 `vs` 屬性時，`$vsRequirements` 被設為 `$null`。後續的 `Get-Member -InputObject $vsRequirements -Name 'version'` 在 `$vsRequirements` 為 null 時會拋出錯誤，因為 `Get-Member` 不接受 null 輸入。雖然程式碼已加上 `$vsRequirements -and` 的條件，但條件評估順序可能導致在 `$vsRequirements` 為 null 時仍嘗試執行 `Get-Member`。建議改為先檢查 `$null -ne $vsRequirements` 再呼叫 `Get-Member`，或使用 `if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' -ErrorAction SilentlyContinue))` 的寫法（目前已是如此，但需確認 PowerShell 版本是否支援此語法）。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n      $vsRequirements = $GlobalJson.tools.vs\n    } else {\n      $vsRequirements = $null\n    }\n  }\n\n  $args = @('-latest', '-format', 'json', '-requires', 'Microsoft.Component.MSBuild', '-products', '*')\n\n  if (!$excludePrereleaseVS) {\n    $args += '-prerelease'\n  }\n\n  if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' -ErrorAction SilentlyContinue)) {\n    $args += '-version'\n    $args += $vsRequirements.version\n  }\n\n  if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'components' -ErrorAction SilentlyContinue)) {\n    foreach ($component in $vsRequirements.components) {\n      $args += '-requires'\n      $args += $component\n    }\n  }",
+    "evidence": "diff 中新增了 `$vsRequirements = $null` 的分支，且後續的 `Get-Member` 呼叫使用了 `$vsRequirements -and` 條件。但若 `$vsRequirements` 為 null，`$vsRequirements -and (Get-Member ...)` 的評估順序可能導致 `Get-Member` 被執行（取決於 PowerShell 版本）。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 408,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "WebSocketWrapper.ReceiveAsync 中 _receiveTcs 重設時機變更可能影響測試行為",
+    "body": "在 `ReceiveAsync` 方法中，`_receiveTcs` 的重設從原本在複製資料後移至 await 之後、複製資料之前。這可能導致在 zero-byte read 的情況下，`_receiveTcs` 被重設後未使用，造成後續測試行為不一致。建議確認此變更是否為了解決特定問題，並確保測試仍能正確驗證。",
+    "existing_code": "var res = await _receiveTcs.Task;\n            _receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);\n            // Handle zero-byte reads\n            if (buffer.Count == 0)\n            {\n                return res.Item1;\n            }\n            res.Item2.CopyTo(buffer);\n            return res.Item1;",
+    "evidence": "diff 顯示 `_receiveTcs = new(...)` 從原本在 `if (buffer.Count == 0)` 之後移至之前。"
+  }
+]

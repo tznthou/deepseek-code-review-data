@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "moduleLoader.token 設定錯誤，導致 DI 解析失敗",
+    "body": "`moduleLoader` 的 `token` 屬性被設定為 `moduleToken`（`FLAGS_DI_TOKENS.FEATURES_REPOSITORY_MODULE`），但其他模組的慣例是設定為實際綁定的 token（`FLAGS_DI_TOKENS.FEATURES_REPOSITORY`）。這會導致依賴此模組的程式碼（例如 `FeatureOptInService` 模組）在解析 `featuresRepositoryModuleLoader.token` 時取得錯誤的 token，進而無法從容器中取得 `FeaturesRepository` 實例，造成執行時期錯誤。\n\n建議將 `token` 改為 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY`。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeaturesRepository.ts` 第 19 行 `token: moduleToken`，而 `moduleToken` 定義為 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY_MODULE`。對比同 PR 中 `FeatureOptInService.ts` 模組的 `moduleLoader.token` 設定為 `FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE`（實際 token），以及舊版 `Features.ts` 中 `moduleLoader.token` 設定為 `DI_TOKENS.FEATURES_REPOSITORY`，可確認此處應為實際 token。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 82,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試使用全域 DI 容器可能造成狀態污染",
+    "body": "測試中改用 `getFeaturesRepository()` 和 `getFeatureOptInService()`，這兩個函式每次呼叫都會建立新的容器，但 `FeatureOptInService` 可能內部持有狀態（例如快取），且測試之間可能共享相同的全域模組狀態。若測試並行執行或依賴特定狀態，可能導致測試不穩定或互相影響。\n\n建議確認 `FeatureOptInService` 是否為無狀態，或改為在每個測試中建立獨立的服務實例，並確保容器不會被重複使用。",
+    "existing_code": "const featuresRepository = getFeaturesRepository();\n  const service = getFeatureOptInService();",
+    "evidence": "diff 中 `FeatureOptInService.integration-test.ts` 第 82 行改為使用 `getFeaturesRepository()` 和 `getFeatureOptInService()`，這兩個函式來自 `packages/features/di/containers/`，其內部會建立新的容器，但未提供清理機制。"
+  },
+  {
+    "path": "packages/features/di/modules/FeatureOptInService.ts",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "DI 模組依賴的 token 可能不一致",
+    "body": "`FeatureOptInService` 模組依賴 `featuresRepositoryModuleLoader`，但 `featuresRepositoryModuleLoader` 的 `token` 屬性目前設定為 `moduleToken`（`FEATURES_REPOSITORY_MODULE`），而非實際的 `FEATURES_REPOSITORY` token。這可能導致依賴解析時無法正確取得 `FeaturesRepository` 實例。\n\n建議確認 `featuresRepositoryModuleLoader` 的 `token` 設定是否正確，並確保所有依賴模組的 token 一致。",
+    "existing_code": "const loadModule = bindModuleToClassOnToken({\n  module: thisModule,\n  moduleToken,\n  token,\n  classs: FeatureOptInService,\n  dep: featuresRepositoryModuleLoader,\n});",
+    "evidence": "diff 中 `FeatureOptInService.ts` 第 14 行使用 `dep: featuresRepositoryModuleLoader`，而 `featuresRepositoryModuleLoader` 來自 `./FeaturesRepository`，其 `token` 屬性在該檔案中設定為 `moduleToken`。"
+  },
+  {
+    "path": "packages/features/di/tokens.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "DI_TOKENS 合併可能造成 Symbol 重複或衝突",
+    "body": "`DI_TOKENS` 物件使用 spread 運算子合併 `FLAGS_DI_TOKENS` 和 `FEATURE_OPT_IN_DI_TOKENS`，但原有的 `FEATURES_REPOSITORY` 和 `FEATURES_REPOSITORY_MODULE` 已被移除。若其他程式碼仍直接引用 `DI_TOKENS.FEATURES_REPOSITORY`，將導致 undefined。\n\n建議搜尋程式碼中是否仍有直接使用 `DI_TOKENS.FEATURES_REPOSITORY` 的地方，並確認合併後的 token 不會與其他 token 衝突。",
+    "existing_code": "...FLAGS_DI_TOKENS,\n  ...FEATURE_OPT_IN_DI_TOKENS,",
+    "evidence": "diff 中 `packages/features/di/tokens.ts` 第 39 行移除了原有的 `FEATURES_REPOSITORY` 和 `FEATURES_REPOSITORY_MODULE`，改為合併 `FLAGS_DI_TOKENS` 和 `FEATURE_OPT_IN_DI_TOKENS`。"
+  }
+]

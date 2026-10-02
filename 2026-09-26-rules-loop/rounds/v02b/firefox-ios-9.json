@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "cancelEditMode 條件判斷邏輯反轉，可能導致編輯模式取消時 URL 處理錯誤",
+    "body": "在 `cancelEditMode` 中，原本的條件是 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，現在改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會讓所有網頁 URL 或 Reader Mode URL 都被保留，而其他 URL（例如 about:blank、file://）則會被設為 nil。這與原本意圖（僅保留一般網頁且非 Reader Mode 的 URL）完全相反。\n\n**失敗情境**：當使用者在編輯模式中取消編輯時，若目前頁面是 Reader Mode，原本會將 URL 設為 nil（可能觸發重新載入或顯示原始頁面），現在卻會保留 Reader Mode URL，可能導致後續行為異常。\n\n**建議**：若此變更為誤植，請還原為 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`；若為刻意修改，請提供對應的測試與說明。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `url = (currentURL.isWebPage() && !currentURL.isReaderModeURL) ? url : nil` 改為 `url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil`，邏輯完全相反。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "readerModeState 的 isEnabled 判斷邏輯反轉，可能導致 Telemetry 記錄錯誤",
+    "body": "在 `readerModeButtonTapped` 的 Telemetry 記錄中，原本 `case .available: true` 表示 Reader Mode 可用時 isEnabled 為 true，現在改為 `case .available: false`，且 `default: true`。這會讓所有非 available 狀態（例如 .unavailable、.active）都被記錄為 isEnabled = true，而 available 狀態反而記錄為 false。\n\n**失敗情境**：當使用者點擊 Reader Mode 按鈕時，若目前狀態為 available（即將啟用），Telemetry 會記錄 isEnabled = false，與實際行為不符，影響數據分析。\n\n**建議**：若此變更為誤植，請還原為 `case .available: true` 與 `default: false`；若為刻意修改，請提供對應的測試與說明。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中原本為 `case .available: true` 與 `default: false`，現在改為 `case .available: false` 與 `default: true`，邏輯完全相反。"
+  }
+]

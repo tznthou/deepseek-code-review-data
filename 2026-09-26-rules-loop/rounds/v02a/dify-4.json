@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] SQLAlchemy session 未使用 context manager 且未關閉",
+    "body": "`Session(db.engine)` 建立的 session 沒有使用 `with` 語句，且在方法結束後沒有呼叫 `session.close()`。這會導致資料庫連線無法釋放，可能造成連線池耗盡。請改用 `with Session(db.engine) as session:` 模式，或確保在 `finally` 中關閉 session。",
+    "existing_code": "session = Session(db.engine)\n        row = session.scalar(stmt)\n        if not row:\n            raise ConversationVariableNotFoundError(\"conversation variable not found in the database\")\n        row.data = variable.model_dump_json()\n        session.commit()",
+    "evidence": "diff 中新增的 `session = Session(db.engine)` 沒有對應的 `session.close()`，且未使用 context manager。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "flush 在迴圈內被呼叫，可能造成多次資料庫往返",
+    "body": "`self._conversation_variable_updater.flush()` 在 for 迴圈內每次迭代都被呼叫。如果有多個 conversation variables 需要更新，這會導致多次資料庫 commit。建議將 flush 移到迴圈外，在所有變數更新完成後只呼叫一次。",
+    "existing_code": "self._conversation_variable_updater.update(conversation_id=conversation_id, variable=variable)\n            self._conversation_variable_updater.flush()",
+    "evidence": "diff 中 `flush()` 位於 for 迴圈內，且 `update` 方法本身已執行 `session.commit()`，因此 flush 可能只是空操作，但若未來 flush 有實際邏輯，此處會造成效能問題。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "selector 長度檢查可能不完整",
+    "body": "程式碼檢查 `len(selector) < 2` 後才使用 `selector[0]`，但未驗證 selector 的內容是否為預期的格式。如果 selector 的第一個元素不是字串，比較 `selector[0] != CONVERSATION_VARIABLE_NODE_ID` 可能不會如預期運作。建議增加型別檢查或使用更嚴格的驗證。",
+    "existing_code": "if len(selector) < 2:\n                logger.warning(\"Conversation variable selector invalid. selector=%s\", selector)\n                continue\n            if selector[0] != CONVERSATION_VARIABLE_NODE_ID:",
+    "evidence": "diff 中僅檢查長度，未檢查元素型別。"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R06] 使用 assert 取代 XCTest 斷言導致測試失效",
+    "body": "在測試方法 `testRequestAuthorization` 中，原本使用 `XCTAssertTrue` 進行斷言，但被改為 Swift 標準庫的 `assert`。`assert` 在 release 建置中會被編譯器移除，且即使觸發也只會導致程式崩潰，不會被 XCTest 框架記錄為測試失敗。這會讓測試失去驗證功能，可能造成假性通過。\n\n建議改回使用 `XCTAssertTrue` 或 `XCTAssert` 系列斷言。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\n            assert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將 `XCTAssertTrue(granted)` 改為 `assert(granted, ...)`，且 `XCTAssertTrue(self.center.requestAuthorizationWasCalled)` 改為 `assert(center?.requestAuthorizationWasCalled ?? false, ...)`。"
+  }
+]

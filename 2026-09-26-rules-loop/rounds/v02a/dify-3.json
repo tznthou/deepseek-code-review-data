@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_renderer.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "render_template 可能回傳 None，導致後續 len() 或輸出錯誤",
+    "body": "在 `CodeExecutorJinja2TemplateRenderer.render_template` 中，`result.get(\"result\")` 可能回傳 `None`，但函式回傳型別標註為 `str`。若 `execute_workflow_code_template` 回傳的 dict 缺少 `result` 鍵或值為 `None`，則 `rendered` 為 `None`，函式會直接回傳 `None`。呼叫端 `TemplateTransformNode._run` 接著執行 `len(rendered)`，將拋出 `TypeError`，導致節點失敗且錯誤訊息不明確。建議在 renderer 中明確檢查 `rendered is None` 並拋出 `TemplateRenderError`，或確保回傳型別為 `str`。",
+    "existing_code": "rendered = result.get(\"result\")\n        if rendered is not None and not isinstance(rendered, str):\n            raise TemplateRenderError(\"Template render result must be a string.\")\n        return rendered",
+    "evidence": "diff 中新增的 `template_renderer.py` 第 36-38 行顯示 `rendered` 可能為 `None`，且函式回傳型別為 `str`。"
+  },
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_transform_node.py",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "render_template 回傳非字串時，錯誤訊息可能不明確",
+    "body": "在 `TemplateTransformNode._run` 中，呼叫 `self._template_renderer.render_template` 後直接使用 `len(rendered)`。若 renderer 因實作錯誤回傳非字串（例如 `None` 或數字），會拋出 `TypeError`，但此例外未被捕捉，導致節點以未處理例外失敗，而非回傳結構化的 `NodeRunResult`。建議在 renderer 中嚴格驗證回傳型別，或在節點中捕捉 `TypeError` 並轉換為 `TemplateRenderError`。",
+    "existing_code": "rendered = self._template_renderer.render_template(self.node_data.template, variables)\n            if len(rendered) > MAX_TEMPLATE_TRANSFORM_OUTPUT_LENGTH:",
+    "evidence": "diff 中 `template_transform_node.py` 第 68-69 行顯示直接對 `rendered` 呼叫 `len()`，未檢查型別。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/nodes/template_transform/template_transform_node_spec.py",
+    "line": 430,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試大量使用 MagicMock 模擬 renderer，未驗證實際渲染行為",
+    "body": "新增的測試案例均使用 `@patch` 模擬 `CodeExecutorJinja2TemplateRenderer.render_template`，僅驗證節點邏輯對模擬回傳值的處理，未測試實際的 Jinja2 渲染功能。這可能導致渲染器本身的錯誤（如模板語法錯誤、變數處理不當）未被測試覆蓋。建議增加針對 `CodeExecutorJinja2TemplateRenderer` 的單元測試，或使用真實的 CodeExecutor 進行整合測試。",
+    "existing_code": "@patch(\n        \"core.workflow.nodes.template_transform.template_transform_node.CodeExecutorJinja2TemplateRenderer.render_template\"\n    )\n    def test_run_with_boolean_values(self, mock_execute, mock_graph, mock_graph_runtime_state, graph_init_params):",
+    "evidence": "diff 中測試檔案新增的多個測試函式均使用 `@patch` 模擬 renderer，未呼叫真實渲染邏輯。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "布林邏輯反轉可能導致搜尋模式判斷錯誤",
+    "body": "在 `useMarketplaceSearchMode` 中，原本的 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)` 被改為 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`，移除了否定運算子。這會反轉條件：原本當 activePluginType 不屬於特定集合時會進入搜尋模式，現在變成屬於集合時才進入。若此邏輯用於判斷是否顯示搜尋結果或切換 UI，將導致行為完全相反。請確認此變更是否為預期，若非預期請恢復原邏輯。",
+    "existing_code": "|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))",
+    "evidence": "diff 中此行由 `!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)` 改為 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`，邏輯相反。"
+  },
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R09] 使用 any 型別違反 TypeScript 型別安全規範",
+    "body": "`usePluginPageContext` 的參數 `selector` 型別從具體的函式型別改為 `any`，這會繞過 TypeScript 的型別檢查，可能導致執行時期錯誤。專案規範 R09 明確禁止使用 `any`。請恢復原本的具體型別，或使用 `unknown` 配合型別守衛。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中此行由 `selector: (value: PluginPageContextValue) => any` 改為 `selector: any`。"
+  }
+]

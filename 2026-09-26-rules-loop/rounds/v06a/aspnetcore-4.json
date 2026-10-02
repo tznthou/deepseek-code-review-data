@@ -1,0 +1,112 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "For 參數變更時未重新渲染，導致顯示名稱過時",
+    "body": "在 SetParametersAsync 中，僅當 For 表達式與 _previousFieldAccessor 不同時才重新計算顯示名稱並渲染。然而，即使表達式相同，若目標屬性的顯示名稱屬性在執行階段發生變化（例如透過動態變更屬性或資源檔更新），元件不會重新渲染，導致 UI 顯示舊名稱。建議在每次 SetParametersAsync 時都重新計算並渲染，或至少提供機制以偵測顯示名稱的變更。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中 DisplayName.cs 第 44-52 行顯示條件渲染邏輯，僅在表達式變更時才更新。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R02] 使用檔案範圍命名空間宣告",
+    "body": "檔案 DisplayName.cs 使用傳統的區塊範圍命名空間宣告（namespace Microsoft.AspNetCore.Components.Forms { ... }），違反規範 R02。建議改為檔案範圍命名空間宣告（namespace Microsoft.AspNetCore.Components.Forms;）。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms\n{",
+    "evidence": "diff 中 DisplayName.cs 第 8 行顯示區塊範圍命名空間。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R03] 私有欄位未使用底線前綴 camelCase",
+    "body": "私有欄位 _renderHandle、_previousFieldAccessor、_displayName 使用底線前綴 camelCase，符合規範 R03。但請確認其他私有欄位也遵循此慣例。",
+    "existing_code": "private RenderHandle _renderHandle;\nprivate Expression<Func<TValue>>? _previousFieldAccessor;\nprivate string? _displayName;",
+    "evidence": "diff 中 DisplayName.cs 第 17-19 行顯示欄位命名。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R07] 公開屬性 For 缺少 XML 文件註解",
+    "body": "公開屬性 For 僅有 <summary> 標籤，但缺少 <param> 標籤描述參數。根據規範 R07，公開 API 應包含完整的 XML 文件註解，包括適用的 <param> 標籤。",
+    "existing_code": "/// <summary>\n/// Specifies the field for which the display name should be shown.\n/// </summary>\n[Parameter, EditorRequired]\npublic Expression<Func<TValue>>? For { get; set; }",
+    "evidence": "diff 中 DisplayName.cs 第 25-29 行顯示 For 屬性的文件註解。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R08] 非同步方法未使用 Async 後綴",
+    "body": "方法 IComponent.SetParametersAsync 回傳 Task，但名稱未以 Async 結尾。根據規範 R08，所有回傳 Task 的方法應使用 Async 後綴。然而，此方法為介面實作，無法變更名稱，建議在實作中保持介面名稱，但可考慮在文件或註解中說明。",
+    "existing_code": "Task IComponent.SetParametersAsync(ParameterView parameters)",
+    "evidence": "diff 中 DisplayName.cs 第 31 行顯示方法簽章。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R14] 內部類別未標記 sealed",
+    "body": "內部類別 ExpressionMemberAccessor 未標記為 sealed。根據規範 R14，內部實作類別應標記為 sealed 以防止意外繼承。建議加上 sealed 修飾詞。",
+    "existing_code": "internal static class ExpressionMemberAccessor",
+    "evidence": "diff 中 ExpressionMemberAccessor.cs 第 14 行顯示類別宣告。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R02] 使用檔案範圍命名空間宣告",
+    "body": "檔案 DisplayNameTest.cs 使用傳統的區塊範圍命名空間宣告（namespace Microsoft.AspNetCore.Components.Forms;），違反規範 R02。建議改為檔案範圍命名空間宣告。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Forms;",
+    "evidence": "diff 中 DisplayNameTest.cs 第 8 行顯示命名空間宣告。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 159,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "測試方法 SupportsLocalizationWithResourceType 缺少明確的 // Arrange、// Act、// Assert 註解，違反規範 R06。建議加入結構化註解以提升可讀性。",
+    "existing_code": "public async Task SupportsLocalizationWithResourceType()\n{\n    var model = new TestModel();\n    var rootComponent = new TestHostComponent\n    {\n        InnerContent = builder =>\n        {\n            builder.OpenComponent<DisplayName<string>>(0);\n            builder.AddComponentParameter(1, \"For\", (System.Linq.Expressions.Expression<Func<string>>)(() => model.PropertyWithResourceBasedDisplay));\n            builder.CloseComponent();\n        }\n    };\n\n    var output = await RenderAndGetOutput(rootComponent);\n    Assert.Equal(\"Localized Display Name\", output);\n}",
+    "evidence": "diff 中 DisplayNameTest.cs 第 124-137 行顯示測試方法缺少 AAA 註解。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Hot Reload 時未清除顯示名稱快取，可能導致不一致",
+    "body": "ClearCache 方法僅清除 _memberInfoCache，未清除 _displayNameCache。若 Hot Reload 期間屬性的顯示名稱屬性變更，快取中仍保留舊的顯示名稱，導致元件顯示過時資訊。建議同時清除 _displayNameCache。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 ExpressionMemberAccessor.cs 第 78-81 行顯示 ClearCache 僅清除 _memberInfoCache。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R10] 非同步方法未提供 CancellationToken 參數",
+    "body": "方法 IComponent.SetParametersAsync 未提供 CancellationToken 參數。根據規範 R10，公開非同步方法應包含 CancellationToken 參數。但此方法為介面實作，無法變更簽章，建議在實作中忽略此規範。",
+    "existing_code": "Task IComponent.SetParametersAsync(ParameterView parameters)",
+    "evidence": "diff 中 DisplayName.cs 第 31 行顯示方法簽章。"
+  }
+]

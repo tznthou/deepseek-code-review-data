@@ -1,0 +1,11 @@
+[info] repo 規範：repo=Ghost、24 條、10095 字元、placement=after_diff、sha256=a8cb682db80f
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 181237 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 ghost/core/core/server/services/stats/posts-stats-service.js:147 → 149（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/services/stats/posts-stats-service.js:1135 → 1144（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/services/stats/posts-stats-service.js:1568 → 1571（片段唯一命中）
+[info] 定位不到 ghost/core/core/server/services/stats/stats-service.js:124（片段多重命中（3 處），不猜）
+[info] 定位不到 ghost/core/core/server/services/stats/stats-service.js:142（片段多重命中（3 處），不猜）
+[info] 定位不到 ghost/core/core/server/services/stats/stats-service.js:195（片段多重命中（3 處），不猜）
+[info] 重新定位 ghost/core/core/server/services/stats/stats-service.js:221 → 223（片段唯一命中）
+[info] 定位不到 ghost/core/core/server/services/stats/stats-service.js:255（片段多重命中（3 處），不猜）
+[info] 完成於 13.6s ｜ findings=10 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 49032, "completion_tokens": 2043, "total_tokens": 51075, "prompt_tokens_details": {"cached_tokens": 46720}, "prompt_cache_hit_tokens": 46720, "prompt_cache_miss_tokens": 2312}

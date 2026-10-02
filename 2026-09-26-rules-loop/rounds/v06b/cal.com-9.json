@@ -1,0 +1,101 @@
+[
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Import 路徑可能錯誤：使用相對路徑指向 packages/platform",
+    "body": "此檔案從 packages/platform/atoms 移至 apps/web/components/apps 後，import 路徑改為 `../../../../packages/platform/atoms/src/components/atoms-wrapper`。請確認此相對路徑能正確解析到目標檔案。若路徑錯誤，將導致建置失敗或 runtime 錯誤。建議改用絕對路徑（如 `@calcom/atoms/...`）或確認相對路徑正確。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";",
+    "evidence": "diff 中顯示 import 路徑從 `../../src/components/atoms-wrapper` 改為 `../../../../packages/platform/atoms/src/components/atoms-wrapper`，但檔案位置已從 packages/platform/atoms/destination-calendar/wrappers 移至 apps/web/components/apps，相對路徑的層數可能不正確。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Import 路徑可能錯誤：使用相對路徑指向 packages/platform",
+    "body": "此檔案從 packages/platform/atoms 移至 apps/web/components/apps 後，import 路徑改為 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar`。請確認此相對路徑能正確解析到目標檔案。若路徑錯誤，將導致建置失敗或 runtime 錯誤。建議改用絕對路徑（如 `@calcom/atoms/...`）或確認相對路徑正確。",
+    "existing_code": "import { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 中顯示 import 路徑從 `../DestinationCalendar` 改為 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar`，但檔案位置已從 packages/platform/atoms/destination-calendar/wrappers 移至 apps/web/components/apps，相對路徑的層數可能不正確。"
+  },
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "sortHosts 函式邏輯可能被意外修改",
+    "body": "在將 `sortHosts` 從 `HostEditDialogs.tsx` 移至 `hostGroupUtils.ts` 時，權重相等時的回傳值從 `priorityB - priorityA` 改為 `priorityA - priorityB`。這會反轉排序順序，可能導致 host 排序錯誤。請確認此修改是否為預期行為，若非預期請修正。",
+    "existing_code": "if (weightA === weightB) {\n      return priorityA - priorityB;\n    } else {\n      return weightB - weightA;\n    }",
+    "evidence": "diff 中顯示原本在 HostEditDialogs.tsx 的 sortHosts 函式在 weightA === weightB 時回傳 `priorityB - priorityA`，但移動後變成 `priorityA - priorityB`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Import 路徑可能造成循環依賴",
+    "body": "此檔案從 `@calcom/atoms/event-types/hooks/useEventTypeForm` 等路徑 import hooks，但該 hooks 檔案仍位於 packages/platform/atoms 中，且可能 import 自此檔案（或相關檔案），形成循環依賴。請確認 import 關係是否會造成循環。",
+    "existing_code": "import { useEventTypeForm } from \"@calcom/atoms/event-types/hooks/useEventTypeForm\";",
+    "evidence": "diff 中顯示此檔案從 `@calcom/atoms/event-types/hooks/useEventTypeForm` import，而該 hook 檔案可能依賴於此檔案或其他 apps/web 模組，形成循環。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Import 路徑可能造成循環依賴",
+    "body": "此檔案從 `@calcom/atoms/event-types/hooks/useHandleRouteChange` 等路徑 import hooks，但該 hooks 檔案仍位於 packages/platform/atoms 中，且可能 import 自此檔案（或相關檔案），形成循環依賴。請確認 import 關係是否會造成循環。",
+    "existing_code": "import { useHandleRouteChange } from \"@calcom/atoms/event-types/hooks/useHandleRouteChange\";",
+    "evidence": "diff 中顯示此檔案從 `@calcom/atoms/event-types/hooks/useHandleRouteChange` import，而該 hook 檔案可能依賴於此檔案或其他 apps/web 模組，形成循環。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 31,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Import 路徑可能造成循環依賴",
+    "body": "此檔案從 `@calcom/atoms/event-types/hooks/useTabsNavigations` 等路徑 import hooks，但該 hooks 檔案仍位於 packages/platform/atoms 中，且可能 import 自此檔案（或相關檔案），形成循環依賴。請確認 import 關係是否會造成循環。",
+    "existing_code": "import { useTabsNavigations } from \"@calcom/atoms/event-types/hooks/useTabsNavigations\";",
+    "evidence": "diff 中顯示此檔案從 `@calcom/atoms/event-types/hooks/useTabsNavigations` import，而該 hook 檔案可能依賴於此檔案或其他 apps/web 模組，形成循環。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/assignment/EventTeamAssignmentTab.tsx",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Import 路徑變更可能造成循環依賴",
+    "body": "此檔案將 `sortHosts` 的 import 從 `@calcom/web/modules/event-types/components/HostEditDialogs` 改為 `@calcom/lib/bookings/hostGroupUtils`。請確認 `hostGroupUtils` 是否會反向依賴此檔案，造成循環。",
+    "existing_code": "import { sortHosts } from \"@calcom/lib/bookings/hostGroupUtils\";",
+    "evidence": "diff 中顯示 import 路徑變更，但未提供 hostGroupUtils 的內容，無法確認是否會造成循環依賴。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 57,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除 exports 可能導致外部 import 失敗",
+    "body": "此 PR 從 package.json 的 exports 中移除了多個路徑（如 `./add-members-switch/AddMembersWithSwitchWebWrapper`、`./connect/conferencing-apps/ConferencingAppsViewWebWrapper` 等）。若其他套件或應用程式仍使用這些路徑 import，將導致建置失敗。請確認所有使用這些路徑的程式碼都已更新。",
+    "existing_code": "\"./add-members-switch/AddMembersWithSwitchWebWrapper\": \"./add-members-switch/AddMembersWithSwitchWebWrapper.tsx\",",
+    "evidence": "diff 中顯示多個 exports 被移除，但未提供所有使用這些路徑的程式碼是否已更新。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 236,
+    "side": "RIGHT",
+    "severity": "nit",
+    "confidence": 0.4,
+    "title": "縮排不一致",
+    "body": "在 tabMap 的 setup 和 availability 區塊中，縮排從原本的 6 空格改為 8 空格，與其他區塊不一致。建議統一縮排以符合程式碼風格。",
+    "existing_code": "<EventSetupTab\n            eventType={eventType}\n            locationOptions={locationOptions}\n            team={team}\n            teamMembers={teamMembers}\n            destinationCalendar={destinationCalendar}\n        />",
+    "evidence": "diff 中顯示縮排從 6 空格改為 8 空格，但其他 tab 區塊仍使用 6 空格。"
+  }
+]

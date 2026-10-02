@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "子字串檢查可能誤判路徑已包含 bucket_folder",
+    "body": "在 `_resolve_path` 中，使用 `if self.bucket_folder and self.bucket_folder in path:` 來判斷路徑是否已包含 bucket_folder。這會導致當路徑中任何位置包含 bucket_folder 字串時（例如 bucket_folder 為 \"results/\"，而路徑為 \"myresults/file.txt\"），函式會錯誤地跳過前綴，直接返回原始路徑，造成檔案寫入錯誤位置。\n\n**失敗情境**：\n- bucket_folder = \"results/\"\n- 呼叫 `_resolve_path(\"myresults/file.txt\")`\n- 因為 \"results/\" 是 \"myresults/file.txt\" 的子字串，函式會直接返回 \"myresults/file.txt\"，而不是預期的 \"results/myresults/file.txt\"。\n\n**建議修法**：\n使用 `path.startswith(self.bucket_folder)` 或更精確的 `PurePosixPath(path).is_relative_to(self.bucket_folder)` 來檢查路徑是否已具有該前綴。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中新增的程式碼：\n```\n+        if self.bucket_folder and self.bucket_folder in path:\n+            return path\n```\n此處使用 `in` 運算子進行子字串檢查，而非前綴檢查。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R08] 跨欄位驗證誤用 field_validator",
+    "body": "在 `_bucket_folder_suffix` 中，新增了對 `bucket` 欄位的跨欄位驗證，但此驗證位於 `field_validator` 中。Pydantic 的 `field_validator` 預設只在單一欄位驗證時執行，且無法保證其他欄位已驗證完成。此處使用 `info.data.get(\"bucket\")` 可能取得未驗證或未設定的值，導致驗證邏輯不穩定或失效。\n\n**失敗情境**：\n- 若 `bucket` 欄位在 `bucket_folder` 之後才被設定，或驗證順序不同，`info.data.get(\"bucket\")` 可能為 `None`，導致驗證被跳過。\n- 若 `bucket` 欄位驗證失敗，此處仍可能執行，造成不一致。\n\n**建議修法**：\n將此跨欄位驗證移至 `@model_validator(mode=\"after\")` 中，以確保所有欄位已驗證完成。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的程式碼：\n```\n+        if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n+            raise ValueError(\"bucket_folder cannot be the same as bucket name\")\n```\n此處在 `field_validator` 中存取其他欄位，違反 R08。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/tests/conftest.py",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 disable_logging fixture 可能影響測試日誌行為",
+    "body": "此 PR 移除了 `disable_logging` fixture，該 fixture 原本會停用將日誌傳送至 API 的功能。移除後，測試期間可能會產生大量日誌傳送至 API，導致測試變慢或產生不必要的網路呼叫。\n\n**失敗情境**：\n- 在測試環境中，若 Prefect 設定允許日誌傳送至 API，移除該 fixture 後，所有測試日誌都會嘗試傳送至 API，可能拖慢測試或造成錯誤。\n\n**建議修法**：\n確認移除該 fixture 是否為必要變更。若需保留，可考慮在 `prefect_test_harness` 中設定相關選項，或保留該 fixture 但調整其設定。",
+    "existing_code": "with prefect_test_harness(server_timeout=60):\n        yield",
+    "evidence": "diff 中刪除了 `disable_logging` fixture 的定義，且未見替代方案。"
+  }
+]

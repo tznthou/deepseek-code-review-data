@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Coordinators/Launch/LaunchCoordinator.swift",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 onActionTap 閉包內容包進 Task 可能造成執行緒與順序問題",
+    "body": "原本 onActionTap 閉包直接呼叫 onboardingService.handleAction，現在改為在 Task 中執行。由於 Task 預設會繼承當前 actor 的隔離（此處為 @MainActor），因此 handleAction 仍會在主執行緒執行，但執行時機變成非同步。若呼叫端預期閉包執行完畢後某些狀態已更新，可能會出現競態。此外，completion 閉包現在可能在 Task 完成後才被呼叫，若呼叫端未預期非同步行為，可能導致 UI 更新延遲或順序錯誤。建議確認 handleAction 是否為非同步設計，或考慮直接將 onActionTap 標註為 @MainActor 並保持同步呼叫。",
+    "existing_code": "Task {\n    onboardingService.handleAction(\n        action,\n        from: cardName,\n        cards: onboardingModel.cards,\n        with: activityEventHelper,\n        completion: completion\n    )\n}",
+    "evidence": "diff 中 LaunchCoordinator.swift 的 onActionTap 閉包從直接呼叫改為包在 Task 中，且閉包本身未標註 @MainActor，但外部參數已標註 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/Client.xcodeproj/project.pbxproj",
+    "line": 27951,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "將 SWIFT_VERSION 設為 6.0 可能導致大量編譯錯誤",
+    "body": "將專案層級的 SWIFT_VERSION 從 5.0 改為 6.0 會啟用 Swift 6 的完整並行檢查。雖然此 PR 修改了部分程式碼以符合要求，但可能仍有其他未修改的程式碼會因嚴格並行檢查而無法編譯。建議先在 CI 中驗證所有 target 都能成功編譯，或考慮先使用 Swift 5 模式搭配 upcoming features 逐步遷移。",
+    "existing_code": "SWIFT_VERSION = 6.0;",
+    "evidence": "diff 中多處將 SWIFT_VERSION 從 5.0 改為 6.0，且未提供完整的編譯驗證。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift",
+    "line": 192,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R13] 移除 UX struct 並使用魔法數字 40",
+    "body": "原本的 UX struct 定義了 buttonSize 常數，現在被移除，並在約束中直接使用數字 40。這違反了專案規範 R13（UI 常數應定義在巢狀 UX struct 中）。建議保留 UX struct 並使用 UX.buttonSize。",
+    "existing_code": "closeButton.heightAnchor.constraint(equalToConstant: 40),\ncloseButton.widthAnchor.constraint(equalToConstant: 40),",
+    "evidence": "diff 中刪除了 struct UX { static let buttonSize: CGFloat = 40 }，並在約束中直接使用 40。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/WebEngineIntegration/BrowserWebUIDelegate.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 @Sendable 可能導致並行檢查警告",
+    "body": "在 BrowserWebUIDelegate.swift 中，completionHandler 的型別從 @escaping @MainActor @Sendable () -> Void 改為 @escaping @MainActor () -> Void，移除了 @Sendable。這可能導致在 Swift 6 模式下出現並行檢查警告或錯誤，因為 WKUIDelegate 的方法要求 completionHandler 為 @Sendable。建議確認此變更是否必要，或保留 @Sendable。",
+    "existing_code": "completionHandler: @escaping @MainActor () -> Void",
+    "evidence": "diff 中 BrowserWebUIDelegate.swift 的 runJavaScriptAlertPanelWithMessage 方法簽名移除了 @Sendable。"
+  }
+]

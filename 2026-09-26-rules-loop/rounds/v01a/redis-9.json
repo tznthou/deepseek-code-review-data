@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "rewriteClientCommandVector 參數數量可能不正確",
+    "body": "呼叫 `rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj);` 時，第二個參數為 6，但實際傳入的參數有 7 個（hsetex, key, keepttl, fields, 1, field, value）。這可能導致命令向量長度設定錯誤，造成複製或 AOF 寫入異常。請確認 rewriteClientCommandVector 的參數定義，並修正為正確的數量。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 rewriteClientCommandVector 呼叫，第二個參數為 6，但後續參數數量明顯超過 6 個。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 2130,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "共享物件 hsetex 和 fields 未在 server.h 中宣告",
+    "body": "在 server.c 中新增了 `shared.hsetex` 和 `shared.fields` 的初始化，但 server.h 中的 sharedObjectsStruct 是否已包含這兩個成員？從 diff 中看到 server.h 有新增 `*hsetex` 和 `*fields`，但需確認是否已正確加入結構體中，否則可能導致編譯錯誤。",
+    "existing_code": "shared.hsetex = createStringObject(\"HSETEX\",6);\n    shared.fields = createStringObject(\"FIELDS\",6);",
+    "evidence": "diff 中 server.c 新增了 shared.hsetex 和 shared.fields 的初始化，但 server.h 的修改僅在部分行顯示，需確認結構體定義是否完整。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1970,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試中缺少對 HINCRBYFLOAT 複製命令的明確驗證",
+    "body": "測試中使用了 `assert_replication_stream` 來驗證複製流，但對於 HINCRBYFLOAT 產生的 HSETEX 命令，僅檢查了命令格式，未驗證實際的 TTL 值是否正確保留。建議增加對 TTL 的明確斷言，以確保 KEEPTTL 旗標生效。",
+    "existing_code": "assert_replication_stream $repl {\n                {select *}\n                {hsetex h1 PXAT * FIELDS 1 f1 1}\n                {hset h1 f2 1}\n                {hsetex h1 KEEPTTL FIELDS 1 f1 *}\n                {hsetex h1 KEEPTTL FIELDS 1 f2 *}\n            }",
+    "evidence": "測試中僅檢查命令格式，未驗證 TTL 值。"
+  }
+]

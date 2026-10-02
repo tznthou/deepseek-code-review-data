@@ -1,0 +1,68 @@
+[
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 411,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "單筆確認時 acceptedBookings 的 oldStatus 硬編碼為 ACCEPTED，導致 audit log 狀態變更不正確",
+    "body": "在非 recurring 的分支中，`acceptedBookings` 被設定為 `[{ oldStatus: BookingStatus.ACCEPTED, uid: booking.uid }]`。但此時 booking 的實際狀態可能是 PENDING（或甚至其他狀態），因此 audit log 會記錄錯誤的狀態變更（例如 PENDING → ACCEPTED 被記錄成 ACCEPTED → ACCEPTED）。\n\n**失敗情境**：當一個 PENDING booking 被確認時，audit log 會顯示 previousStatus 為 ACCEPTED，而非 PENDING，造成稽核資料錯誤。\n\n**建議**：從 `booking` 物件取得實際的舊狀態，例如 `oldStatus: booking.status`。",
+    "existing_code": "acceptedBookings = [\n      {\n        oldStatus: BookingStatus.ACCEPTED,\n        uid: booking.uid,\n      },\n    ];",
+    "evidence": "diff 中新增的程式碼片段，位於 handleConfirmation 的非 recurring 分支。"
+  },
+  {
+    "path": "packages/features/booking-audit/lib/actions/RejectedAuditActionService.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "RejectedAuditActionService 的 fieldsSchemaV1 變更可能造成既有資料解析失敗",
+    "body": "原本 `rejectionReason` 使用 `StringChangeSchema`（具有 old/new 結構），現在改為 `z.string().nullable()`。這會導致已儲存的 audit log 資料（包含 `{ old, new }` 物件）在 `parseStored` 時驗證失敗，因為 schema 不再接受物件。\n\n**失敗情境**：升級後，任何讀取舊的 REJECTED audit log 的操作都會拋出 Zod 驗證錯誤，可能導致頁面無法顯示歷史紀錄。\n\n**建議**：保留舊 schema 作為 stored schema，並在 migrateToLatest 中處理轉換，或使用 union 型別相容新舊格式。",
+    "existing_code": "const fieldsSchemaV1 = z.object({\n  rejectionReason: z.string().nullable(),\n  status: BookingStatusChangeSchema,\n});",
+    "evidence": "diff 中將 `rejectionReason: StringChangeSchema` 改為 `rejectionReason: z.string().nullable()`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 263,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "recurring 確認時 acceptedBookings 的 oldStatus 可能不正確",
+    "body": "在 recurring 分支中，`acceptedBookings` 是從 `unconfirmedRecurringBookings` 取得，但該查詢的 `where` 條件是 `status: BookingStatus.PENDING`，因此 `oldStatus` 會是 PENDING。然而，在後續的 `updateMany` 之後，這些 booking 的狀態已變為 ACCEPTED，但 `acceptedBookings` 仍保留舊的 PENDING 狀態，這在 audit log 中是正確的。但需注意，如果 `unconfirmedRecurringBookings` 包含非 PENDING 的 booking（例如查詢條件有誤），則 oldStatus 會不正確。\n\n**失敗情境**：如果查詢條件未正確過濾，可能包含已 ACCEPTED 的 booking，導致 audit log 記錄 ACCEPTED → ACCEPTED。\n\n**建議**：確認查詢條件正確，或直接從 `unconfirmedRecurringBookings` 取得狀態，並確保其為 PENDING。",
+    "existing_code": "acceptedBookings = unconfirmedRecurringBookings.map((booking) => ({\n      oldStatus: booking.status,\n      uid: booking.uid,\n    }));",
+    "evidence": "diff 中新增的程式碼片段，位於 recurring 分支。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/confirm.handler.ts",
+    "line": 468,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "單筆拒絕時 rejectedBookings 的 oldStatus 可能不正確",
+    "body": "在非 recurring 的拒絕分支中，`rejectedBookings` 被設定為 `[{ uid: booking.uid, oldStatus: booking.status }]`。但 `booking.status` 是在 `prisma.booking.update` 之前取得的，因此是舊狀態（PENDING），這在 audit log 中是正確的。然而，如果 `booking.status` 不是 PENDING（例如已 ACCEPTED），則 audit log 會記錄錯誤的狀態變更。\n\n**失敗情境**：如果 booking 在拒絕前已被其他流程更改狀態，audit log 會顯示不正確的 previousStatus。\n\n**建議**：確認 booking 在拒絕前一定是 PENDING，或從資料庫重新取得狀態。",
+    "existing_code": "rejectedBookings = [\n        {\n          uid: booking.uid,\n          oldStatus: booking.status,\n        },\n      ];",
+    "evidence": "diff 中新增的程式碼片段，位於非 recurring 拒絕分支。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleConfirmation.ts",
+    "line": 249,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "acceptedBookings 變數可能未初始化",
+    "body": "`acceptedBookings` 在宣告時未初始化，僅在 `recurringEventId` 或非 recurring 分支中賦值。如果未來程式碼路徑未涵蓋所有情況，可能導致 `undefined` 傳入 `fireBookingAcceptedEvent`。\n\n**失敗情境**：如果新增其他分支而未設定 `acceptedBookings`，則會傳入 undefined，可能導致錯誤。\n\n**建議**：初始化為空陣列，或確保所有路徑都賦值。",
+    "existing_code": "let acceptedBookings: {\n    oldStatus: BookingStatus;\n    uid: string;\n  }[];",
+    "evidence": "diff 中新增的變數宣告，未初始化。"
+  },
+  {
+    "path": "packages/features/booking-audit/lib/actions/RejectedAuditActionService.ts",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "getDisplayJson 中移除了 previousReason 欄位",
+    "body": "原本 `getDisplayJson` 回傳 `previousReason`，現在被移除。這可能影響前端顯示，如果前端仍依賴此欄位，會導致 undefined。\n\n**失敗情境**：前端嘗試顯示 previousReason 時會得到 undefined，可能顯示錯誤或空白。\n\n**建議**：確認前端已更新，或保留 previousReason 欄位以相容。",
+    "existing_code": "return {\n      rejectionReason: fields.rejectionReason ?? null,\n      previousStatus: fields.status.old ?? null,\n      newStatus: fields.status.new ?? null,\n    };",
+    "evidence": "diff 中移除了 `previousReason: fields.rejectionReason.old ?? null`。"
+  }
+]

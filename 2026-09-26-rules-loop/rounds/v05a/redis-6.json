@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "恢復 active_defrag_enabled 時硬編碼為 1，可能覆蓋原始設定",
+    "body": "在 rdbLoadEmptyDbFunc 中，程式碼先將 server.active_defrag_enabled 儲存於 orig_active_defrag，但在 emptyData 呼叫後卻直接設定為 1，而非還原為 orig_active_defrag。若原始設定為 0（例如使用者停用主動碎片整理），此函式會意外啟用該功能，可能導致非預期的效能影響或行為變更。\n\n建議修改為：\n```c\nserver.active_defrag_enabled = orig_active_defrag;\n```",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼片段：\n```c\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n+\n     emptyData(-1, empty_db_flags, replicationEmptyDbCallback);\n+\n+    /* Restore the original active defragmentation setting. */\n+    server.active_defrag_enabled = 1;\n```\n變數 orig_active_defrag 被儲存但未使用，且恢復值固定為 1，與註解「Restore the original」矛盾。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2707,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "streamEntryIsReferenced 在 cgroups_ref 為 NULL 時回傳 1 可能不正確",
+    "body": "新增的檢查 `if (!s->cgroups_ref) return 1;` 表示當 stream 沒有 consumer groups 時，直接回傳 1（視為被引用）。這可能導致某些刪除或修剪操作無法正確進行，因為函式名稱暗示應回傳是否被引用，而 NULL cgroups_ref 通常代表沒有 group，理論上應回傳 0。需要確認此處的邏輯是否符合預期，並檢查所有呼叫此函式的地方是否依賴此行為。",
+    "existing_code": "/* Check if the message is in any consumer group's PEL */\n    if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的程式碼片段：\n```c\n+    if (!s->cgroups_ref) return 1;\n```\n此函式原本會直接呼叫 raxFind(s->cgroups_ref, ...)，若 s->cgroups_ref 為 NULL 可能導致 crash。但回傳 1 可能掩蓋了真正的引用狀態，需進一步分析。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "discard_replies_every 在 count 為 frequency 倍數時未讀取任何回覆",
+    "body": "輔助函式 discard_replies_every 的條件為 `if {$count % $frequency != 0}`，表示當 count 剛好是 frequency 的倍數時，不會讀取任何回覆。這可能導致測試中累積未讀取的回覆，最終造成記憶體耗盡或測試逾時。建議改為 `if {$count % $frequency == 0}` 或調整邏輯以確保在正確時機讀取。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {\n        if {$count % $frequency != 0} {\n            for {set k 0} {$k < $discard_num} {incr k} {\n                $rd read ; # Discard replies\n            }\n        }\n    }",
+    "evidence": "diff 中新增的輔助函式，其條件判斷與原本內嵌的邏輯相反。原本的程式碼是 `if {$count % 10000 == 0}` 才讀取，而新函式在不等於 0 時讀取，可能造成行為不一致。"
+  }
+]

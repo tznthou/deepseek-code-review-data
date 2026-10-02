@@ -1,0 +1,112 @@
+[
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_kpis_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_kpis_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE timeseries\nSQL >\n\n    %",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_kpis_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_active_visitors_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_active_visitors_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE _active_visitors_0\nSQL >\n%\n    select",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_active_visitors_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_post_visitor_counts_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_post_visitor_counts_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE _post_visitor_counts_0\nSQL >\n%\n    select",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_post_visitor_counts_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_devices_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_top_devices_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE session_data\nSQL >\n    %\n    SELECT",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_top_devices_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_locations_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_top_locations_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE _top_locations_0\nSQL >\n\n    %\n        select",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_top_locations_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_pages_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_top_pages_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE _top_pages_0\nSQL >\n\n    %\n    select",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_top_pages_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_sources_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_top_sources_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE session_data\nSQL >\n    %\n    SELECT",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_top_sources_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_utm_campaigns_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_top_utm_campaigns_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE session_data\nSQL >\n    %\n    SELECT",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_top_utm_campaigns_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_utm_contents_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_top_utm_contents_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE session_data\nSQL >\n    %\n    SELECT",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_top_utm_contents_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_utm_mediums_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R17] 新增 Tinybird pipe 檔案使用 2 空格縮排",
+    "body": "專案規範 R17 要求所有原始碼檔案使用 4 空格縮排（JSON 和 YAML 除外）。此 PR 新增的 `.pipe` 檔案（如 `api_top_utm_mediums_v2.pipe`）內容使用 2 空格縮排，違反規範。\n\n建議將所有新增的 `.pipe` 檔案內容改為 4 空格縮排。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ\n\nNODE session_data\nSQL >\n    %\n    SELECT",
+    "evidence": "diff 中新增的 `ghost/core/core/server/data/tinybird/endpoints/api_top_utm_mediums_v2.pipe` 檔案內容以 2 空格縮排，例如 `TOKEN \"stats_page\" READ` 前有 2 空格，而專案規範 R17 要求 4 空格。"
+  }
+]

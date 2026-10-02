@@ -1,0 +1,68 @@
+[
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 119,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "輪詢 effect 缺少 disableBlueskyMutation 依賴，可能使用到過時的 mutation 實例",
+    "body": "在 `useEffect` 中呼叫了 `disableBlueskyMutation.mutateAsync()`，但依賴陣列僅有 `[account?.blueskyEnabled, account?.blueskyHandleConfirmed, confirmHandle]`，未包含 `disableBlueskyMutation`。雖然註解聲稱 mutation 是穩定的，但 React Query 的 mutation 物件在每次 render 時可能重新建立，若父元件重新渲染導致 mutation 實例更新，此 effect 可能持有舊的 mutation，進而呼叫到過時的函式或造成記憶體洩漏。\n\n**失敗情境**：當使用者啟用 Bluesky 後，父元件因其他狀態更新而重新渲染，`disableBlueskyMutation` 實例改變，但 effect 仍使用舊實例；當輪詢失敗達上限時，呼叫舊實例的 `mutateAsync` 可能無法正確觸發 API 或更新快取。\n\n**建議**：將 `disableBlueskyMutation` 加入依賴陣列，或使用 `useRef` 保存最新的 mutation 實例，並在 effect 內使用 ref。",
+    "existing_code": "return () => clearInterval(confirmHandleInterval);\n        // eslint-disable-next-line react-hooks/exhaustive-deps\n    }, [account?.blueskyEnabled, account?.blueskyHandleConfirmed, confirmHandle]); // disableBlueskyMutation is stable",
+    "evidence": "diff 中新增的 useEffect 依賴陣列缺少 disableBlueskyMutation，且註解聲稱 stable 但未提供保證。"
+  },
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R16] 關閉 TypeScript strict 模式，降低型別安全",
+    "body": "此 PR 將 `strict` 從 `true` 改為 `false`，違反專案規範 R16（TypeScript Files Must Enable Strict Type Checking）。關閉 strict 模式會讓編譯器不再強制檢查 null/undefined、隱含 any 等常見錯誤來源，可能導致執行時期錯誤未被發現。\n\n**失敗情境**：例如 `account?.blueskyHandle` 可能為 `null`，但在 strict 模式下會強制處理；關閉後若未正確處理，可能導致執行時錯誤。\n\n**建議**：恢復 `strict: true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.json 的 strict 由 true 改為 false，違反 R16。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2833,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "confirmBlueskyHandle mutation 成功後未 invalidate accountFollows query",
+    "body": "在 `useConfirmBlueskyHandleMutationForUser` 的 `onSuccess` 中，更新了帳戶快取，但註解指出缺少 `accountFollows` query 的 invalidation。這可能導致 UI 上顯示的追蹤狀態與實際不一致，特別是在啟用 Bluesky 後會自動追蹤 brid.gy 帳號的情境。\n\n**失敗情境**：使用者確認 handle 後，畫面可能仍顯示未追蹤 brid.gy，或追蹤列表未更新。\n\n**建議**：在 `onSuccess` 中加入對應的 `queryClient.invalidateQueries` 呼叫，例如 `queryClient.invalidateQueries({ queryKey: QUERY_KEYS.accountFollows(handle) })`。",
+    "existing_code": "// Note: Missing invalidation of accountFollows query that should happen here",
+    "evidence": "diff 中新增的註解明確指出缺少 invalidation。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "輪詢 interval 未在元件 unmount 時正確清理，可能造成記憶體洩漏",
+    "body": "在 `useEffect` 中設定了 `setInterval`，並在 cleanup 函式中 `clearInterval`。但若 effect 因依賴變化而重新執行，舊的 interval 會被清除，新的會被建立，這部分正確。然而，若元件在 interval 執行期間 unmount，cleanup 會執行，但若 interval 回呼正在執行非同步操作（如 `confirmHandle` 中的 `mutateAsync`），該操作可能繼續執行並嘗試更新已 unmount 元件的狀態，導致記憶體洩漏或 React 警告。\n\n**失敗情境**：使用者快速離開頁面，輪詢仍在背景執行，可能觸發 API 呼叫並嘗試更新狀態。\n\n**建議**：在 cleanup 中增加取消機制，例如使用 `AbortController` 或檢查元件是否仍 mounted，並在 mutation 完成後避免 setState。",
+    "existing_code": "const confirmHandleInterval = setInterval(async () => {\n            if (retryCountRef.current >= MAX_CONFIRMATION_RETRIES) {\n                clearInterval(confirmHandleInterval);\n\n                toast.error('Something went wrong, please try again.');\n\n                await disableBlueskyMutation.mutateAsync();\n                setLoading(false);\n\n                return;\n            }\n\n            retryCountRef.current += 1;\n            confirmHandle();\n        }, CONFIRMATION_INTERVAL);",
+    "evidence": "diff 中新增的 setInterval 回呼包含非同步操作，且 cleanup 僅 clearInterval，未處理進行中的非同步操作。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "confirmHandle 使用空依賴陣列，可能捕獲過時的 mutation 函式",
+    "body": "`confirmHandle` 使用 `useCallback` 且依賴陣列為空，但內部呼叫了 `confirmBlueskyHandleMutation.mutateAsync()`。雖然註解聲稱 mutation 是穩定的，但若 mutation 實例因 queryClient 或選項變化而更新，此回呼將永遠使用舊的 mutation，可能導致 API 呼叫失敗或狀態更新錯誤。\n\n**失敗情境**：若 `confirmBlueskyHandleMutation` 的實作依賴於動態變數（如 handle），而該變數在元件生命週期中改變，舊的 mutation 可能使用過時的 handle。\n\n**建議**：將 `confirmBlueskyHandleMutation` 加入依賴陣列，或使用 ref 保存最新 mutation。",
+    "existing_code": "const confirmHandle = useCallback(() => {\n        confirmBlueskyHandleMutation.mutateAsync().then((handle) => {\n            if (handle) {\n                setHandleConfirmed(true);\n            }\n        });\n        // eslint-disable-next-line react-hooks/exhaustive-deps\n    }, []); // Empty deps - mutations are stable in practice",
+    "evidence": "diff 中新增的 useCallback 依賴陣列為空，但使用了外部 mutation。"
+  },
+  {
+    "path": "apps/activitypub/src/api/activitypub.ts",
+    "line": 711,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "enableBluesky 與 disableBluesky 方法缺少回傳型別標註",
+    "body": "`enableBluesky` 和 `disableBluesky` 方法沒有明確的回傳型別，雖然 TypeScript 可以推斷為 `Promise<void>`，但根據專案規範 R08（API Endpoint Controllers Must Have Type Annotations），此處可能違反型別標註要求。\n\n**建議**：明確標註回傳型別為 `Promise<void>`。",
+    "existing_code": "async enableBluesky() {\n        const url = new URL('.ghost/activitypub/v2/actions/bluesky/enable', this.apiUrl);\n\n        await this.fetchJSON(url, 'POST');\n    }",
+    "evidence": "diff 中新增的方法缺少回傳型別標註。"
+  }
+]

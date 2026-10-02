@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/events/schemas/automations.py",
+    "line": 772,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "欄位驗證器可能因欄位順序而失效",
+    "body": "`validate_automation_triggered_event_id` 使用 `info.data.get(\"triggering_event\")` 來檢查 `triggering_event` 是否存在。但 Pydantic 的欄位驗證器預設在欄位被設定後立即執行，且 `info.data` 只包含已驗證的欄位。若 `automation_triggered_event_id` 在 `triggering_event` 之前被設定（例如在 JSON 中先出現），則 `info.data` 中可能還沒有 `triggering_event`，導致驗證器誤判為 `None` 而拋出錯誤，即使 `triggering_event` 實際上有值。\n\n建議改用 `model_validator` 進行跨欄位驗證，或使用 `@field_validator(..., mode=\"after\")` 並檢查 `info.data` 中是否包含該欄位，或直接使用 `values` 參數（Pydantic v1 風格）。",
+    "existing_code": "@field_validator(\"automation_triggered_event_id\")\n    @classmethod\n    def validate_automation_triggered_event_id(cls, v, info):\n        \"\"\"Ensure automation_triggered_event_id is only set when triggering_event exists.\"\"\"\n        if v is not None and info.data.get(\"triggering_event\") is None:\n            raise ValueError(\n                \"automation_triggered_event_id can only be set when triggering_event is provided\"\n            )\n        return v",
+    "evidence": "diff 中新增的欄位驗證器依賴 `info.data`，但未考慮欄位驗證順序。"
+  },
+  {
+    "path": "tests/events/server/actions/test_actions_service.py",
+    "line": 145,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言假設 related 資源順序固定",
+    "body": "在 `test_successes_emit_events` 中，斷言 `executed_event.related[0]` 是 triggering-event。但 `related` 資源的順序可能不穩定，因為它們是從 `related_resources` 列表建構的，而該列表的順序取決於程式碼中的 append 順序。若未來程式碼變更順序，此測試會失敗。建議使用 `next()` 或迴圈查找特定 role 的資源，而不是依賴索引。",
+    "existing_code": "assert len(executed_event.related) == 1\n    assert (\n        executed_event.related[0][\"prefect.resource.id\"]\n        == f\"prefect.event.{email_me_when_that_dang_spider_comes.triggering_event.id}\"\n    )\n    assert executed_event.related[0][\"prefect.resource.role\"] == \"triggering-event\"",
+    "evidence": "diff 中新增的斷言使用索引 0 來驗證 related 資源。"
+  },
+  {
+    "path": "tests/events/server/actions/test_actions_service.py",
+    "line": 210,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言假設 related 資源順序固定",
+    "body": "在 `test_failures_emit_events` 中，同樣使用 `executed_event.related[0]` 來斷言 triggering-event。建議改用更穩健的查找方式。",
+    "existing_code": "assert len(executed_event.related) == 1\n    assert (\n        executed_event.related[0][\"prefect.resource.id\"]\n        == f\"prefect.event.{email_me_when_that_dang_spider_comes.triggering_event.id}\"\n    )\n    assert executed_event.related[0][\"prefect.resource.role\"] == \"triggering-event\"",
+    "evidence": "diff 中新增的斷言使用索引 0 來驗證 related 資源。"
+  }
+]

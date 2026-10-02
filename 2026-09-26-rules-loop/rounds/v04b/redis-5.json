@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/object.c",
+    "line": 1217,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "malloc_usable_size 可能高估記憶體使用量",
+    "body": "使用 malloc_usable_size(o) 作為 kvobj 的基礎大小，但 malloc_usable_size 回傳的是分配器實際配置的區塊大小，可能大於 kvobj 結構體本身的大小（例如因對齊或分配器 overhead）。這會導致記憶體使用量被高估，尤其當 kvobj 是從較大的記憶體池分配時。建議改為 sizeof(kvobj) 或使用 zmalloc_size(o)（若該函式能回傳實際配置大小且符合需求）。",
+    "existing_code": "size_t asize = malloc_usable_size((void *)o);",
+    "evidence": "diff 中新增行 `size_t asize = malloc_usable_size((void *)o);`，取代原本的 `sizeof(*o)` 計算。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1221,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "OBJ_ENCODING_INT 未計入整數值本身大小",
+    "body": "當字串編碼為 OBJ_ENCODING_INT 時，整數值直接存放在 robj 的 ptr 欄位中，但此處僅以 malloc_usable_size(o) 計算 kvobj 大小，未額外加上整數值佔用的空間。然而，malloc_usable_size(o) 可能已包含 ptr 欄位的空間，但若整數值大於指標大小（例如 64 位元整數），則可能低估。建議確認 kvobj 結構中 ptr 的型別與大小，必要時加上 sizeof(long long) 或實際整數大小。",
+    "existing_code": "/* Value already counted (reuse the \"ptr\" in header to store int) */",
+    "evidence": "diff 中對 OBJ_ENCODING_INT 的處理僅留下註解，未增加任何大小。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1239,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "quicklist 取樣平均計算可能高估",
+    "body": "原本計算平均時除以 elecount（實際元素數），現在改為除以 samples（取樣節點數）。若每個節點包含多個元素，samples 會小於 elecount，導致平均每個元素的大小被高估，進而使整體估計值偏高。建議維持除以 elecount，或改為計算每個節點的平均元素數再換算。",
+    "existing_code": "asize += (double)elesize/samples*ql->count;",
+    "evidence": "diff 中將 `(double)elesize/elecount*ql->count` 改為 `(double)elesize/samples*ql->count`。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1330,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "stream 最後一個 listpack 的處理可能重複計算",
+    "body": "在 stream 的計算中，原本使用 `s->rax->numele-1` 來估算非最後一個 listpack 的數量，現在改為 `s->rax->numele`。這可能導致最後一個 listpack 被重複計算，因為後續程式碼似乎有單獨處理最後一個 listpack。建議確認此處的邏輯是否正確。",
+    "existing_code": "asize += lpsize * s->rax->numele;",
+    "evidence": "diff 中將 `asize += lpsize * (s->rax->numele-1);` 改為 `asize += lpsize * s->rax->numele;`。"
+  },
+  {
+    "path": "tests/unit/type/string.tcl",
+    "line": 688,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試未涵蓋所有編碼與邊界",
+    "body": "新增的 MEMORY USAGE 測試僅涵蓋 string 類型的部分大小，未測試其他資料型別（如 hash、list、set、zset、stream）的記憶體計算。建議擴充測試以覆蓋所有編碼路徑，特別是本次修改的 quicklist、stream 等。",
+    "existing_code": "test {MEMORY USAGE - STRINGS} {",
+    "evidence": "diff 中新增的測試僅針對 string 型別。"
+  }
+]

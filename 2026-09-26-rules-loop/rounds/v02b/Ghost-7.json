@@ -1,0 +1,13 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R19] 部分 require 陳述式缺少分號",
+    "body": "在 members-api.js 中，前幾個 require 陳述式（例如 `const {Router} = require('express')`）結尾沒有分號，而後續的 require 陳述式則有分號。這違反了專案規範 R19（所有陳述式必須以分號結尾），且不一致的風格可能導致 ASI 相關問題。建議在所有 require 陳述式結尾補上分號。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中顯示新增的 require 陳述式缺少分號，而同一檔案後續的 require 陳述式（如 `const EventRepository = require('./repositories/event-repository');`）則有分號。"
+  }
+]

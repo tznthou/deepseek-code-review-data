@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "回傳值 True 應為 true（TypeScript 布林值）",
+    "body": "在 handleJSONSchemaChange 中，成功解析後回傳了 `True`（Python 風格），但 TypeScript 中布林值應為 `true`。這會導致型別錯誤（若函式有明確回傳型別）或非預期行為（例如呼叫端若檢查回傳值是否為 true 會失敗）。請改為 `return true`。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的 `return True` 行，TypeScript 不認得 `True`，會視為未定義的變數或型別錯誤。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 jsonObjectWrap 可能導致舊資料顯示不一致",
+    "body": "原本 jsonSchemaStr 會從 tempPayload.json_schema 解析後取出 `.properties` 顯示，現在直接顯示整個 schema。若舊有已儲存的 schema 是包裝格式（含 type: 'object' 與 properties），則編輯時會顯示完整包裝，但使用者可能只預期看到 properties 內容。建議確認資料遷移或提供相容處理。",
+    "existing_code": "return JSON.stringify(JSON.parse(tempPayload.json_schema), null, 2)",
+    "evidence": "diff 中將原本的 `.properties` 改為直接回傳整個解析結果，但未處理舊格式。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "handleJSONSchemaChange 回傳值不一致",
+    "body": "函式在空值時回傳 null，成功時回傳 True（應為 true），失敗時回傳 null。回傳值似乎未被使用，建議確認是否真的需要回傳值，或統一為 void。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的回傳值，但呼叫端未使用，可能造成混淆。"
+  }
+]

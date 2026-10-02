@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R02] 應使用 file-scoped namespace 宣告",
+    "body": "此檔案將原本的 file-scoped namespace 改為 block-scoped namespace，違反專案規範 R02。建議改回 file-scoped namespace 宣告（`namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;`），並移除多餘的大括號。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中將原本的 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests;` 改為 `namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests` 並加上 `{`，且檔案結尾多了一個 `}`。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R18] 開頭大括號應換行（Allman style）",
+    "body": "此處將 namespace 的開頭大括號放在同一行，違反專案規範 R18（Allman 括號風格）。建議將大括號移至下一行。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.E2ETests.ServerExecutionTests\n{",
+    "evidence": "diff 中新增的 `{` 與 namespace 宣告在同一行。"
+  }
+]

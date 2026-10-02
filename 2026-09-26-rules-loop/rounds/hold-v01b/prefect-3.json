@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-array-list.tsx",
+    "line": 142,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "拖放後呼叫 moveItem 的參數順序可能錯誤",
+    "body": "在 `handleDragEnd` 中，取得 `oldIndex` 和 `newIndex` 後呼叫 `moveItem(newIndex, oldIndex)`。但 `moveItem` 的簽名為 `moveItem(index: number, newIndex: number)`（從既有程式碼推測），因此第一個參數應為原始索引，第二個參數為目標索引。目前傳入的順序相反，會導致拖放後項目順序錯誤。請確認 `moveItem` 的實作，並修正為 `moveItem(oldIndex, newIndex)`。",
+    "existing_code": "moveItem(newIndex, oldIndex);",
+    "evidence": "diff 中新增的 `handleDragEnd` 函式內，`moveItem(newIndex, oldIndex)` 與既有 `moveItem` 呼叫慣例（如 `moveItem(index, index - 1)`）不一致。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-array-list.tsx",
+    "line": 148,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SortableContext 包含不可拖曳的 prefix items，可能導致索引錯亂",
+    "body": "`sortableKeys` 使用 `localKeyedValues.map((item) => item.key)` 取得所有項目的 key，但其中包含不可拖曳的 prefix items（`canMove` 為 false）。當拖曳一般項目時，dnd-kit 的排序策略會考慮所有項目，可能導致計算出的 `over.id` 對應到 prefix item，進而使 `newIndex` 指向錯誤位置。建議只將可拖曳項目的 key 傳入 `SortableContext`，或使用 `disabled` 屬性排除 prefix items。",
+    "existing_code": "const sortableKeys = localKeyedValues.map((item) => item.key);",
+    "evidence": "diff 中新增的 `sortableKeys` 定義，以及 `SchemaFormInputArrayItem` 中 `useSortable` 的 `disabled: !canMove` 設定。"
+  }
+]

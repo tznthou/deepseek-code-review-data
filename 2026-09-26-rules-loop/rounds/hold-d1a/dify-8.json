@@ -1,0 +1,13 @@
+[
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "[R25] 使用 console.error 違反前端規範",
+    "body": "此處使用 `console.error` 記錄動態載入失敗，違反專案規範 R25（Frontend Code Must Not Use console Statements）。建議移除或改用專案允許的 logging 機制。",
+    "existing_code": "console.error('Failed to load React Scan devtools:', error)",
+    "evidence": "diff 中新增的 loader.tsx 第 10 行包含 console.error 呼叫。"
+  }
+]

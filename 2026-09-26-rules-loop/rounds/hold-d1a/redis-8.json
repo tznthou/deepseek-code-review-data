@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2309,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R02] 記憶體洩漏：alsoPropagate 的 argv 陣列未釋放",
+    "body": "在 `hincrbyfloatCommand` 中，當欄位有過期時間時，程式碼建立了一個 `robj *argv[5]` 陣列，並將 `argv[2]` 設為 `createStringObjectFromLongLong(expireat)`。這個新建立的 robj 在傳遞給 `alsoPropagate` 後，沒有被釋放。`alsoPropagate` 只會複製指標，不會取得所有權，因此每次執行此路徑都會洩漏一個 robj。建議在 `alsoPropagate` 呼叫後立即 `decrRefCount(argv[2])`，或改用 `addReplyArrayLen` 等不會洩漏的方式。",
+    "existing_code": "argv[2] = createStringObjectFromLongLong(expireat);\n        argv[3] = shared.fields;\n        argv[4] = shared.integers[1];\n        argv[5] = c->argv[2];\n        alsoPropagate(c->db->id, argv, 6, PROPAGATE_AOF|PROPAGATE_REPL);",
+    "evidence": "diff 中新增的 `createStringObjectFromLongLong` 呼叫沒有對應的 `decrRefCount`，且 `alsoPropagate` 的實作不會釋放傳入的 robj 陣列元素。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1270,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R05] 測試函式未包在 REDIS_TEST 區塊內",
+    "body": "新增的測試程式碼位於 `tests/unit/type/hash-field-expire.tcl`，但該檔案中的測試函式沒有被 `#ifdef REDIS_TEST` / `#endif` 包住。根據規範 R05，所有測試函式必須包在 REDIS_TEST 條件編譯區塊內，以避免測試程式碼進入 production build。請確認此測試檔案是否應被視為測試專用，若是，則需加上條件編譯保護。",
+    "existing_code": "test \"HINCRBYFLOAT command won't remove field expiration on replica ($type)\" {",
+    "evidence": "diff 中新增的測試區塊沒有對應的 `#ifdef REDIS_TEST` 標記。"
+  }
+]

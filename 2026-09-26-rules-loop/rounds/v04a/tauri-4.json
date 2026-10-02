@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 201,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "條件判斷邏輯變更導致 JSON5 檔案不再進行 schema 驗證",
+    "body": "原本的條件 `config_path.extension() == Some(OsStr::new(\"json\")) || config_path.extension() == Some(OsStr::new(\"json5\"))` 會對 `.json` 或 `.json5` 檔案進行驗證。修改後變成 `config_path.extension() == Some(OsStr::new(\"json\")) && config_path.extension() == Some(OsStr::new(\"json5\"))`，這永遠為 false，因此所有設定檔都不會進行 schema 驗證。這會讓錯誤的設定檔通過驗證，可能導致後續執行時發生難以除錯的錯誤。",
+    "existing_code": "if config_path.extension() == Some(OsStr::new(\"json\"))\n    && config_path.extension() == Some(OsStr::new(\"json5\"))",
+    "evidence": "diff 中將 `||` 改為 `&&`，且兩個條件互斥，導致條件永遠不成立。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 289,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "merge_with 不再將合併結果寫回 inner，可能影響後續使用",
+    "body": "原本 `merge_with` 會將合併後的結果反序列化回 `config_metadata.inner`，現在改為將合併設定存入 `extensions`。若其他程式碼依賴 `inner` 包含合併後的完整設定，此變更可能導致行為不一致。需要確認所有使用 `inner` 的地方是否已改為從 `extensions` 取得合併設定。",
+    "existing_code": "config_metadata.extensions.insert(MERGE_CONFIG_EXTENSION_NAME.into(), merge_config);",
+    "evidence": "diff 中移除了 `config_metadata.inner = serde_json::from_value(value)...` 這一行，改為插入 extension。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 177,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "original_identifier 改從 bundle 取得可能導致行為變更",
+    "body": "原本從 `identifier` 取得，現在改為從 `bundle` 取得。若設定檔中 `identifier` 位於頂層而 `bundle` 不存在或結構不同，可能導致 `original_identifier` 為 None，影響後續邏輯。需確認此變更是否符合預期。",
+    "existing_code": ".and_then(|config| config.get(\"bundle\"))",
+    "evidence": "diff 中將 `config.get(\"identifier\")` 改為 `config.get(\"bundle\")`。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 151,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 OnceLock 延遲初始化 validator 可能增加首次呼叫延遲",
+    "body": "雖然延遲初始化可以避免不必要的 schema 解析，但首次呼叫時會解析並建立 validator，可能造成延遲。若此函式在啟動路徑上被頻繁呼叫，需評估效能影響。",
+    "existing_code": "static CONFIG_SCHEMA_VALIDATOR: OnceLock<jsonschema::Validator> = OnceLock::new();",
+    "evidence": "新增的 OnceLock 初始化程式碼。"
+  }
+]

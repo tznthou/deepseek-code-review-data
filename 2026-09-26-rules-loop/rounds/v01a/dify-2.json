@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "[R12] 回傳 `True` 而非 `true`，導致 TypeScript 型別錯誤",
+    "body": "在 `handleJSONSchemaChange` 中，成功解析 JSON 後回傳了 `True`（Python 布林值），但 TypeScript 中應為 `true`。這會導致型別錯誤，且函式預期回傳 `null` 或 `void`，回傳布林值可能造成呼叫端誤用。\n\n建議改為不回傳任何值（`return`）或回傳 `true`（若有必要）。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的 `return True` 使用了 Python 的布林值寫法，違反 TypeScript 語法。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`jsonSchemaStr` 改為回傳完整 schema，可能破壞既有資料顯示",
+    "body": "原本 `jsonSchemaStr` 只回傳 `properties` 部分，現在改為回傳整個 schema。若既有資料中 `json_schema` 僅包含 `properties` 而沒有 `type` 等頂層欄位，編輯時會顯示不完整的 schema，且儲存後可能導致格式不一致。\n\n建議確認資料遷移策略，或在前端進行相容性處理。",
+    "existing_code": "return JSON.stringify(JSON.parse(tempPayload.json_schema), null, 2)",
+    "evidence": "diff 中將 `JSON.parse(tempPayload.json_schema).properties` 改為 `JSON.parse(tempPayload.json_schema)`，改變了顯示內容。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`handleJSONSchemaChange` 回傳值不一致",
+    "body": "函式在空值時回傳 `null`，解析失敗時回傳 `null`，但成功時回傳 `True`。這種不一致的回傳型別可能造成呼叫端困惑，且 `True` 本身是錯誤的。建議統一為不回傳值或回傳 `void`。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的 `return True` 與其他分支的 `return null` 不一致。"
+  }
+]

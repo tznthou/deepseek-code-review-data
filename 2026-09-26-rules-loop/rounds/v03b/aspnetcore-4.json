@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "Hot Reload 時未清除 _displayNameCache，可能導致顯示名稱不更新",
+    "body": "在 Hot Reload 套用差異時，`ClearCache` 方法只清除了 `_memberInfoCache`，但未清除 `_displayNameCache`。如果屬性的顯示名稱在 Hot Reload 中變更（例如修改了 `[Display]` 屬性的值），`_displayNameCache` 仍會保留舊值，導致 UI 顯示過時的名稱。\n\n建議在 `ClearCache` 中同時清除 `_displayNameCache`：\n```csharp\nprivate static void ClearCache()\n{\n    _memberInfoCache.Clear();\n    _displayNameCache.Clear();\n}\n```",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 `ClearCache` 方法只呼叫 `_memberInfoCache.Clear()`，未清除 `_displayNameCache`。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "For 參數為 null 時拋出例外，但未處理重複渲染可能導致的效能問題",
+    "body": "在 `SetParametersAsync` 中，當 `For` 為 null 時拋出 `InvalidOperationException`。這符合預期，但若父元件在渲染過程中多次設定參數，且 `For` 暫時為 null，可能導致不必要的例外。建議考慮使用 `[EditorRequired]` 屬性（已使用）並在文件或錯誤訊息中明確說明。此外，目前每次 `SetParametersAsync` 都會檢查 `For` 是否為 null，但若 `For` 不變，仍會執行 null 檢查，可考慮將檢查移至 `For` 變更時。",
+    "existing_code": "if (For is null)\n{\n    throw new InvalidOperationException($\"{GetType()} requires a value for the \" +\n        $\"{nameof(For)} parameter.\");\n}",
+    "evidence": "diff 中 `SetParametersAsync` 方法在每次呼叫時都檢查 `For` 是否為 null，且未對重複渲染進行最佳化。"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/Register.razor",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少 class=\"form-label\"，可能導致樣式不一致",
+    "body": "在 `Register.razor` 中，`<label for=\"Input.Email\">` 和 `<label for=\"Input.Password\">` 缺少 `class=\"form-label\"`，而其他標籤（如 `ConfirmPassword`）已加上。這可能導致 Bootstrap 樣式不一致。建議為所有標籤統一加上 `class=\"form-label\"`。",
+    "existing_code": "<label for=\"Input.Email\">\n    <DisplayName For=\"() => Input.Email\" />\n</label>",
+    "evidence": "diff 中 `Register.razor` 的 `Input.Email` 和 `Input.Password` 標籤未包含 `class=\"form-label\"`，而 `Input.ConfirmPassword` 標籤已包含。"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/ResetPassword.razor",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少 class=\"form-label\"，可能導致樣式不一致",
+    "body": "在 `ResetPassword.razor` 中，`<label for=\"Input.Email\">` 缺少 `class=\"form-label\"`，而其他標籤（如 `Input.Password`）已加上。建議統一加上 `class=\"form-label\"`。",
+    "existing_code": "<label for=\"Input.Email\" class=\"form-label\">\n    <DisplayName For=\"() => Input.Email\" />\n</label>",
+    "evidence": "diff 中 `ResetPassword.razor` 的 `Input.Email` 標籤未包含 `class=\"form-label\"`，而 `Input.Password` 標籤已包含。"
+  }
+]

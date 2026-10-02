@@ -1,0 +1,13 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "generate_github_alternative_url 回傳原始 URL 而非替代 URL",
+    "body": "在 `generate_github_alternative_url` 函式中，原本會回傳 `alt_url`（替代 URL），但此變更將回傳值改為 `url.to_owned()`（原始 URL）。這可能導致當 GitHub 下載失敗時，無法使用鏡像站進行重試，進而影響下載功能。\n\n建議確認此變更是否為預期行為。若為意外修改，應改回回傳 `alt_url`。",
+    "existing_code": "url.to_owned(),",
+    "evidence": "diff 中顯示 `-        alt_url,` 被移除，並新增 `+        url.to_owned(),`，且變數 `alt_url` 被改名為 `_alt_url`，暗示不再使用。"
+  }
+]

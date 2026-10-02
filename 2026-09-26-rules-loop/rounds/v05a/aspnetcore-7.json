@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "enableJSRootComponents 的條件判斷可能導致多 host 情境下的錯誤",
+    "body": "原本的條件是 `if (manager)`，現在改為 `if (manager && currentRendererId === rendererId)`。這表示如果 `manager` 已存在但 `currentRendererId` 不同，就不會拋出錯誤，而是繼續執行後面的指派。這可能導致多 host 情境下（例如同時有 Server 和 WebAssembly renderer）動態 root component 被錯誤地重新初始化，或舊的 manager 被覆蓋。建議確認此情境是否為預期行為，或改為更嚴格的檢查。",
+    "existing_code": "if (manager && currentRendererId === rendererId) {",
+    "evidence": "diff 中將原本的 `if (manager)` 改為 `if (manager && currentRendererId === rendererId)`，但後續沒有處理 `manager` 存在但 rendererId 不同的情況。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/Tests/StatePersistenceTest.cs",
+    "line": 282,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法缺少 Arrange-Act-Assert 註解",
+    "body": "新增的測試方法 `PersistentStateIsSupportedInDynamicJSRoots` 沒有包含 `// Arrange`、`// Act`、`// Assert` 註解，違反了 repo 規範 R06。建議加入這些註解以符合專案慣例。",
+    "existing_code": "public void PersistentStateIsSupportedInDynamicJSRoots(string renderMode)",
+    "evidence": "diff 中新增的測試方法沒有 AAA 註解，而其他測試方法（如附近的 `StateIsProvidedEveryTimeACircuitGetsCreated`）都有。"
+  }
+]

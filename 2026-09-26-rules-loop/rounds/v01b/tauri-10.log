@@ -1,0 +1,7 @@
+[info] repo 規範：repo=tauri、17 條、9751 字元、placement=after_diff、sha256=c39280b11b8b
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 6037 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 crates/tauri/src/webview/webview_window.rs:1315 → 1316（片段唯一命中）
+[info] 重新定位 crates/tauri/src/webview/webview_window.rs:1316 → 1317（片段唯一命中）
+[info] 重新定位 crates/tauri/src/webview/webview_window.rs:1319 → 1321（片段唯一命中）
+[info] 重新定位 crates/tauri/src/webview/mod.rs:22 → 23（片段唯一命中）
+[info] 完成於 7.2s ｜ findings=4 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 5508, "completion_tokens": 927, "total_tokens": 6435, "prompt_tokens_details": {"cached_tokens": 5504}, "prompt_cache_hit_tokens": 5504, "prompt_cache_miss_tokens": 4}

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "rewriteClientCommandVector 參數順序可能錯誤",
+    "body": "在 `rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj)` 中，參數順序疑似有誤。HSETEX 的語法為 `HSETEX key [EX seconds|PX milliseconds|KEEPTTL] FIELDS num field value [field value ...]`，但此處傳入的順序是 `hsetex, key, keepttl, fields, 1, field, value`，缺少了 EX/PX 或 KEEPTTL 之前的時間參數位置。若 KEEPTTL 被當作時間參數，可能導致命令解析失敗或行為錯誤。建議核對 Redis 命令解析邏輯，確認此處參數順序是否正確。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 rewriteClientCommandVector 呼叫，參數順序與 HSETEX 命令語法不符。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1984,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中 TTL 斷言範圍可能因時間誤差而不穩定",
+    "body": "測試使用 `assert_range [r httl h1 FIELDS 1 f1] 90 100` 來驗證 TTL 在 90 到 100 秒之間，但實際 TTL 可能因測試執行時間、複製延遲或時鐘誤差而超出此範圍，導致測試偶發性失敗。建議放寬範圍或使用更精確的同步機制。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "測試中對 TTL 的斷言範圍較窄，且未考慮時間誤差。"
+  }
+]

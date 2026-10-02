@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 182,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除型別檢查可能導致 job_vars_schema 被指派非 dict 值",
+    "body": "原本的程式碼會檢查 `base_job_template[\"variables\"]` 是否為 dict，若不是則保留預設的空 dict。現在直接指派，若該值為 None、list 或其他型別，後續使用 `job_vars_schema` 的程式碼（例如產生 SDK 的型別提示）可能會出錯。建議保留型別檢查，或明確處理非 dict 的情況。",
+    "existing_code": "job_vars_schema = base_job_template[\"variables\"]",
+    "evidence": "diff 中移除了 `if isinstance(variables, dict):` 的檢查，直接指派。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 397,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "部署名稱過濾邏輯可能錯誤地排除符合條件的部署",
+    "body": "原本的過濾條件是 `full_name not in deployment_names`，其中 `full_name` 是 `flow_name/deployment_name`。現在改為 `dep.name not in deployment_names`，只比對部署名稱。如果使用者提供的過濾條件包含完整名稱（例如 `my-flow/production`），這個條件將永遠不成立，導致所有部署都被排除。建議保留原本的完整名稱比對，或同時支援兩種格式。",
+    "existing_code": "if deployment_names and dep.name not in deployment_names:",
+    "evidence": "diff 中將 `full_name not in deployment_names` 改為 `dep.name not in deployment_names`。"
+  },
+  {
+    "path": "docs/v3/api-ref/cli/sdk.mdx",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "文件中包含可疑的控制字元",
+    "body": "在 `<Info>` 區塊的說明文字中，`PREFECT_API_URL` 之後出現了一個 U+0008 (backspace) 控制字元（在 diff 中顯示為 `\\b`）。這可能是編輯時的意外輸入，建議移除。",
+    "existing_code": "PREFECT_API_URL).\n\n\\b\nExamples:",
+    "evidence": "diff 中該行包含 `\\b` 字元。"
+  }
+]

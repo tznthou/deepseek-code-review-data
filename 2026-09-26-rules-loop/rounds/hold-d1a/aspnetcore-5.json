@@ -1,0 +1,112 @@
+[
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R02] 使用檔案範圍命名空間宣告",
+    "body": "檔案 `ServerComponentDeserializerTest.cs` 將原本的檔案範圍命名空間 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 改為傳統的區塊範圍命名空間，違反了規範 R02。建議改回檔案範圍命名空間宣告。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{",
+    "evidence": "diff 中顯示原本的 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 被移除，並新增了 `namespace Microsoft.AspNetCore.Components.Server.Circuits` 與 `{`，這是傳統的區塊範圍命名空間。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "[R18] 開頭括號必須在新行 (Allman 風格)",
+    "body": "類別宣告 `public class ServerComponentDeserializerTest` 的開頭括號 `{` 與類別宣告在同一行，違反了 Allman 風格。建議將開頭括號移至新行。",
+    "existing_code": "public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 中新增了 `public class ServerComponentDeserializerTest` 與 `{`，且 `{` 與類別宣告在同一行。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 721,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法必須使用 Arrange-Act-Assert 模式註解",
+    "body": "測試方法 `CanRender_ClosedGenericComponent` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。建議加入這些註解以符合 AAA 模式。",
+    "existing_code": "[Fact]\n    public async Task CanRender_ClosedGenericComponent()\n    {\n        // Arrange\n        var httpContext = GetHttpContext();\n        var writer = new StringWriter();\n\n        // Act\n        var parameters = ParameterView.FromDictionary(new Dictionary<string, object> { { \"Value\", 42 } });\n        var result = await renderer.PrerenderComponentAsync(httpContext, typeof(GenericComponent<int>), null, parameters);\n        await renderer.Dispatcher.InvokeAsync(() => result.WriteTo(writer, HtmlEncoder.Default));\n        var content = writer.ToString();\n\n        // Assert\n        Assert.Equal(\"<p>Generic value: 42</p>\", content);\n    }",
+    "evidence": "此方法有 `// Arrange` 和 `// Act` 註解，但缺少 `// Assert` 註解。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 736,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法必須使用 Arrange-Act-Assert 模式註解",
+    "body": "測試方法 `CanRender_ClosedGenericComponent_ServerMode` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。建議加入這些註解以符合 AAA 模式。",
+    "existing_code": "[Fact]\n    public async Task CanRender_ClosedGenericComponent_ServerMode()\n    {\n        // Arrange\n        var httpContext = GetHttpContext();\n        var protector = _dataprotectorProvider.CreateProtector(ServerComponentSerializationSettings.DataProtectionProviderPurpose)\n            .ToTimeLimitedDataProtector();\n\n        // Act\n        var parameters = ParameterView.FromDictionary(new Dictionary<string, object> { { \"Value\", \"TestString\" } });\n        var result = await renderer.PrerenderComponentAsync(httpContext, typeof(GenericComponent<string>), new InteractiveServerRenderMode(false), parameters);\n        var content = await renderer.Dispatcher.InvokeAsync(() => HtmlContentToString(result));\n        var match = Regex.Match(content, ComponentPattern);\n\n        // Assert\n        Assert.True(match.Success);\n        var marker = JsonSerializer.Deserialize<ComponentMarker>(match.Groups[1].Value, ServerComponentSerializationSettings.JsonSerializationOptions);\n        Assert.Equal(0, marker.Sequence);\n        Assert.Null(marker.PrerenderId);\n        Assert.NotNull(marker.Descriptor);\n        Assert.Equal(\"server\", marker.Type);\n\n        var unprotectedServerComponent = protector.Unprotect(marker.Descriptor);\n        var serverComponent = JsonSerializer.Deserialize<ServerComponent>(unprotectedServerComponent, ServerComponentSerializationSettings.JsonSerializationOptions);\n        Assert.Equal(0, serverComponent.Sequence);\n        Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, serverComponent.AssemblyName);\n        Assert.Equal(typeof(GenericComponent<string>).FullName, serverComponent.TypeName);\n        Assert.NotEqual(Guid.Empty, serverComponent.InvocationId);\n\n        var parameterDefinition = Assert.Single(serverComponent.ParameterDefinitions);\n        Assert.Equal(\"Value\", parameterDefinition.Name);\n        Assert.Equal(\"System.String\", parameterDefinition.TypeName);\n        Assert.Equal(\"System.Private.CoreLib\", parameterDefinition.Assembly);\n\n        var value = Assert.Single(serverComponent.ParameterValues);\n        var rawValue = Assert.IsType<JsonElement>(value);\n        Assert.Equal(\"TestString\", rawValue.GetString());\n    }",
+    "evidence": "此方法有 `// Arrange` 和 `// Act` 註解，但缺少 `// Assert` 註解。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 771,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法必須使用 Arrange-Act-Assert 模式註解",
+    "body": "測試方法 `CanPrerender_ClosedGenericComponent_ServerMode` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。建議加入這些註解以符合 AAA 模式。",
+    "existing_code": "[Fact]\n    public async Task CanPrerender_ClosedGenericComponent_ServerMode()\n    {\n        // Arrange\n        var httpContext = GetHttpContext();\n        var protector = _dataprotectorProvider.CreateProtector(ServerComponentSerializationSettings.DataProtectionProviderPurpose)\n            .ToTimeLimitedDataProtector();\n\n        // Act\n        var parameters = ParameterView.FromDictionary(new Dictionary<string, object> { { \"Value\", 123 } });\n        var result = await renderer.PrerenderComponentAsync(httpContext, typeof(GenericComponent<int>), RenderMode.InteractiveServer, parameters);\n        var content = await renderer.Dispatcher.InvokeAsync(() => HtmlContentToString(result));\n        var match = Regex.Match(content, PrerenderedComponentPattern, RegexOptions.Multiline);\n\n        // Assert\n        Assert.True(match.Success);\n        var preamble = match.Groups[\"preamble\"].Value;\n        var preambleMarker = JsonSerializer.Deserialize<ComponentMarker>(preamble, ServerComponentSerializationSettings.JsonSerializationOptions);\n        Assert.Equal(0, preambleMarker.Sequence);\n        Assert.NotNull(preambleMarker.PrerenderId);\n        Assert.NotNull(preambleMarker.Descriptor);\n        Assert.Equal(\"server\", preambleMarker.Type);\n\n        var unprotectedServerComponent = protector.Unprotect(preambleMarker.Descriptor);\n        var serverComponent = JsonSerializer.Deserialize<ServerComponent>(unprotectedServerComponent, ServerComponentSerializationSettings.JsonSerializationOptions);\n        Assert.NotEqual(default, serverComponent);\n        Assert.Equal(0, serverComponent.Sequence);\n        Assert.Equal(typeof(GenericComponent<int>).Assembly.GetName().Name, serverComponent.AssemblyName);\n        Assert.Equal(typeof(GenericComponent<int>).FullName, serverComponent.TypeName);\n        Assert.NotEqual(Guid.Empty, serverComponent.InvocationId);\n\n        var prerenderedContent = match.Groups[\"content\"].Value;\n        Assert.Equal(\"<p>Generic value: 123</p>\", prerenderedContent);\n\n        var epilogue = match.Groups[\"epilogue\"].Value;\n        var epilogueMarker = JsonSerializer.Deserialize<ComponentMarker>(epilogue, ServerComponentSerializationSettings.JsonSerializationOptions);\n        Assert.Equal(preambleMarker.PrerenderId, epilogueMarker.PrerenderId);\n    }",
+    "evidence": "此方法有 `// Arrange` 和 `// Act` 註解，但缺少 `// Assert` 註解。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 806,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法必須使用 Arrange-Act-Assert 模式註解",
+    "body": "測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。建議加入這些註解以符合 AAA 模式。",
+    "existing_code": "[Fact]\n    public async Task CanPrerender_ClosedGenericComponent_ClientMode()\n    {\n        // Arrange\n        var httpContext = GetHttpContext();\n        var writer = new StringWriter();\n\n        // Act\n        var parameters = ParameterView.FromDictionary(new Dictionary<string, object> { { \"Value\", 456 } });\n        var result = await renderer.PrerenderComponentAsync(httpContext, typeof(GenericComponent<int>), RenderMode.InteractiveWebAssembly, parameters);\n        await renderer.Dispatcher.InvokeAsync(() => result.WriteTo(writer, HtmlEncoder.Default));\n        var content = writer.ToString();\n        content = AssertAndStripWebAssemblyOptions(content);\n        var match = Regex.Match(content, PrerenderedComponentPattern, RegexOptions.Multiline);\n\n        // Assert\n        Assert.True(match.Success);\n        var preamble = match.Groups[\"preamble\"].Value;\n        var preambleMarker = JsonSerializer.Deserialize<ComponentMarker>(preamble, ServerComponentSerializationSettings.JsonSerializationOptions);\n        Assert.NotNull(preambleMarker.PrerenderId);\n        Assert.Equal(\"webassembly\", preambleMarker.Type);\n        Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\n        Assert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);\n\n        var prerenderedContent = match.Groups[\"content\"].Value;\n        Assert.Equal(\"<p>Generic value: 456</p>\", prerenderedContent);\n\n        var epilogue = match.Groups[\"epilogue\"].Value;\n        var epilogueMarker = JsonSerializer.Deserialize<ComponentMarker>(epilogue, ServerComponentSerializationSettings.JsonSerializationOptions);\n        Assert.Equal(preambleMarker.PrerenderId, epilogueMarker.PrerenderId);\n    }",
+    "evidence": "此方法有 `// Arrange` 和 `// Act` 註解，但缺少 `// Assert` 註解。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法必須使用 Arrange-Act-Assert 模式註解",
+    "body": "測試方法 `CanParseSingleMarkerForClosedGenericComponent` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。建議加入這些註解以符合 AAA 模式。",
+    "existing_code": "[Fact]\n    public void CanParseSingleMarkerForClosedGenericComponent()\n    {\n        // Arrange\n        var markers = SerializeMarkers(CreateMarkers(typeof(GenericTestComponent<int>)));\n        var serverComponentDeserializer = CreateServerComponentDeserializer();\n\n        // Act & assert\n        Assert.True(serverComponentDeserializer.TryDeserializeComponentDescriptorCollection(markers, out var descriptors));\n        var deserializedDescriptor = Assert.Single(descriptors);\n        Assert.Equal(typeof(GenericTestComponent<int>).FullName, deserializedDescriptor.ComponentType.FullName);\n        Assert.Equal(0, deserializedDescriptor.Sequence);\n    }",
+    "evidence": "此方法有 `// Arrange` 和 `// Act & assert` 註解，但缺少明確的 `// Assert` 註解。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法必須使用 Arrange-Act-Assert 模式註解",
+    "body": "測試方法 `CanParseSingleMarkerForClosedGenericComponentWithStringTypeParameter` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。建議加入這些註解以符合 AAA 模式。",
+    "existing_code": "[Fact]\n    public void CanParseSingleMarkerForClosedGenericComponentWithStringTypeParameter()\n    {\n        // Arrange\n        var markers = SerializeMarkers(CreateMarkers(typeof(GenericTestComponent<string>)));\n        var serverComponentDeserializer = CreateServerComponentDeserializer();\n\n        // Act & assert\n        Assert.True(serverComponentDeserializer.TryDeserializeComponentDescriptorCollection(markers, out var descriptors));\n        var deserializedDescriptor = Assert.Single(descriptors);\n        Assert.Equal(typeof(GenericTestComponent<string>).FullName, deserializedDescriptor.ComponentType.FullName);\n        Assert.Equal(0, deserializedDescriptor.Sequence);\n    }",
+    "evidence": "此方法有 `// Arrange` 和 `// Act & assert` 註解，但缺少明確的 `// Assert` 註解。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法必須使用 Arrange-Act-Assert 模式註解",
+    "body": "測試方法 `CanParseSingleMarkerForClosedGenericComponentWithParameters` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。建議加入這些註解以符合 AAA 模式。",
+    "existing_code": "[Fact]\n    public void CanParseSingleMarkerForClosedGenericComponentWithParameters()\n    {\n        // Arrange\n        var markers = SerializeMarkers(CreateMarkers(\n            (typeof(GenericTestComponent<int>), new Dictionary<string, object> { [\"Value\"] = 42 })));\n        var serverComponentDeserializer = CreateServerComponentDeserializer();\n\n        // Act & assert\n        Assert.True(serverComponentDeserializer.TryDeserializeComponentDescriptorCollection(markers, out var descriptors));\n        var deserializedDescriptor = Assert.Single(descriptors);\n        Assert.Equal(typeof(GenericTestComponent<int>).FullName, deserializedDescriptor.ComponentType.FullName);\n        Assert.Equal(0, deserializedDescriptor.Sequence);\n\n        var parameters = deserializedDescriptor.Parameters.ToDictionary();\n        Assert.Single(parameters);\n        Assert.Contains(\"Value\", parameters.Keys);\n        Assert.Equal(42, Convert.ToInt64(parameters[\"Value\"]!, CultureInfo.InvariantCulture));\n    }",
+    "evidence": "此方法有 `// Arrange` 和 `// Act & assert` 註解，但缺少明確的 `// Assert` 註解。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 119,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "[R06] 測試方法必須使用 Arrange-Act-Assert 模式註解",
+    "body": "測試方法 `CanParseMultipleMarkersForClosedGenericComponents` 缺少明確的 `// Arrange`、`// Act`、`// Assert` 註解。建議加入這些註解以符合 AAA 模式。",
+    "existing_code": "[Fact]\n    public void CanParseMultipleMarkersForClosedGenericComponents()\n    {\n        // Arrange\n        var markers = SerializeMarkers(CreateMarkers(typeof(GenericTestComponent<int>), typeof(GenericTestComponent<string>)));\n        var serverComponentDeserializer = CreateServerComponentDeserializer();\n\n        // Act & assert\n        Assert.True(serverComponentDeserializer.TryDeserializeComponentDescriptorCollection(markers, out var descriptors));\n        Assert.Equal(2, descriptors.Count);\n\n        var firstDescriptor = descriptors[0];\n        Assert.Equal(typeof(GenericTestComponent<int>).FullName, firstDescriptor.ComponentType.FullName);\n        Assert.Equal(0, firstDescriptor.Sequence);\n\n        var secondDescriptor = descriptors[1];\n        Assert.Equal(typeof(GenericTestComponent<string>).FullName, secondDescriptor.ComponentType.FullName);\n        Assert.Equal(0, secondDescriptor.Sequence);\n    }",
+    "evidence": "此方法有 `// Arrange` 和 `// Act & assert` 註解，但缺少明確的 `// Assert` 註解。"
+  }
+]

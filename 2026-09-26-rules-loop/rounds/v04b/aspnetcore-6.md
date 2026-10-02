@@ -1,0 +1,49 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 主要移除 Blazor 中已標記為過時的 API，包括 Router.PreferExactMatches、EditContextDataAnnotationsExtensions 的舊方法、RemoteBrowserFileStreamOptions、WebEventCallbackFactoryEventArgsExtensions、SignOutSessionStateManager 等，並更新相關測試與 PublicAPI 檔案。整體而言，移除動作符合預期，但需特別注意 RemoteAuthenticatorViewCore 中登出流程的變更：新增的 `await Task.Yield()` 可能引入競態條件，且移除 SignOutManager 後，登出狀態驗證完全依賴 HistoryEntryState，可能影響相容性。此外，AccessTokenNotAvailableException.Redirect 的變更可能導致 NullReferenceException。建議在合併前確認這些行為變更的影響。
+
+### Findings（4 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs:290` | 登出流程中新增的 `await Task.Yield()` 可能導致競態條件 | 0.90 |
+| ⚠️ | Major | `src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs:38` | `Redirect` 方法可能因 `InteractiveRequestUrl` 為 null 而拋出 NullReferenceException | 0.85 |
+| ⚠️ | Major | `src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs:281` | 移除 SignOutManager 後，登出狀態驗證可能與舊版行為不相容 | 0.80 |
+| 🔸 | Minor | `src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs:44` | 使用 `InteractiveRequestUrl!` 可能掩蓋潛在的 null 問題 | 0.70 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs:290</code> 登出流程中新增的 `await Task.Yield()` 可能導致競態條件</summary>
+
+在 `ProcessLogOut` 方法中，於設定 `AuthenticationState.ReturnUrl` 後新增了 `await Task.Yield();`。此舉會讓出控制權，可能導致其他執行緒或非同步作業在此期間修改 `AuthenticationState` 或相關狀態，進而影響後續的 `GetAuthenticationStateAsync()` 結果。此外，此變更似乎與移除 `SignOutManager` 無直接關聯，可能引入不必要的延遲與不確定性。建議移除該行，或提供明確的註解說明其必要性。
+
+**判斷依據**：diff 中新增的 `await Task.Yield();` 位於 `AuthenticationState.ReturnUrl = returnUrl;` 之後，且無任何同步化機制保護後續的狀態讀取。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs:38</code> `Redirect` 方法可能因 `InteractiveRequestUrl` 為 null 而拋出 NullReferenceException</summary>
+
+原本的程式碼在 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 時才呼叫 `NavigateToLogin`，否則使用 `_tokenResult.RedirectUrl`。修改後，條件僅檢查 `_tokenResult.InteractionOptions != null`，但若 `InteractiveRequestUrl` 為 null，則會將 null 傳入 `NavigateToLogin`，可能導致 NullReferenceException。建議保留對 `InteractiveRequestUrl` 的 null 檢查，或確保該屬性在 `InteractionOptions` 存在時必定有值。
+
+**判斷依據**：diff 顯示條件從 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 簡化為 `_tokenResult.InteractionOptions != null`，且 else 分支使用 `_tokenResult.InteractiveRequestUrl!` 強制斷言非 null，但未提供保證。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs:281</code> 移除 SignOutManager 後，登出狀態驗證可能與舊版行為不相容</summary>
+
+原本的登出驗證會同時檢查 `Navigation.HistoryEntryState` 和 `SignOutManager.ValidateSignOutState()`，以支援舊版使用 sessionStorage 的登出流程。移除後，僅依賴 `Navigation.HistoryEntryState`，可能導致使用舊版登出機制的應用程式無法正常登出。若此為預期的 breaking change，應在 PR 描述中明確說明，並考慮提供遷移指引。
+
+**判斷依據**：diff 顯示原本的條件 `(Navigation.HistoryEntryState != null && !ValidateSignOutRequestState()) || (Navigation.HistoryEntryState == null && !await SignOutManager.ValidateSignOutState())` 被簡化為 `if (!ValidateSignOutRequestState())`，且 `SignOutManager` 屬性與相關注入均被移除。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs:44</code> 使用 `InteractiveRequestUrl!` 可能掩蓋潛在的 null 問題</summary>
+
+在 else 分支中，使用 null-forgiving operator (`!`) 將 `InteractiveRequestUrl` 傳遞給 `NavigateTo`。若該屬性實際上可能為 null，則會導致執行時期錯誤。建議明確處理 null 情況，例如拋出具有明確訊息的例外，或使用條件式存取。
+
+**判斷依據**：diff 中新增的 `_navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);` 使用了 null-forgiving operator，但未提供該屬性非 null 的保證。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 15704 (cache hit 15616) ｜ completion tokens 1355 ｜ PR #6</sub>

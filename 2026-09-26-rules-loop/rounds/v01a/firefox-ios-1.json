@@ -1,0 +1,68 @@
+[
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "[R12] SettingsTextFormatter 類別應標記為 final",
+    "body": "新增的 `SettingsTextFormatter` 類別並未標記為 `final`。根據專案規範 R12，不打算被繼承的類別應加上 `final` 以利編譯器最佳化並防止意外繼承。此類別僅作為輔助格式化用途，無需被繼承，建議加上 `final`。",
+    "existing_code": "class SettingsTextFormatter {",
+    "evidence": "diff 中新增的類別宣告 `class SettingsTextFormatter {` 缺少 `final` 修飾詞。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 419,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "[R09] SettingsTextFormatter 應標記 @MainActor",
+    "body": "此類別用於格式化 UI 顯示文字，且其方法可能被 UI 程式碼呼叫。根據專案規範 R09，UI 相關程式碼應標記 `@MainActor` 以確保執行緒安全。建議在類別或方法上加上 `@MainActor`。",
+    "existing_code": "static let shared = SettingsTextFormatter()",
+    "evidence": "新增的類別及其方法未標記 `@MainActor`，而專案規範要求 UI 相關程式碼必須標記。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "[R14] 公開方法缺少文件註解",
+    "body": "`formatStudiesText(appName:)` 和 `formatRolloutsText(appName:)` 是公開方法，但沒有文件註解。根據專案規範 R14，公開 API 應包含說明用途、參數與回傳值的文件註解。建議補上 `///` 註解。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {",
+    "evidence": "新增的兩個方法均為 public（預設 internal，但此處為 public 因為類別為 public？），且無文件註解。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 417,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "[R03] 缺少 MARK 區段註解",
+    "body": "新增的 `SettingsTextFormatter` 類別沒有使用 `// MARK:` 來組織程式碼區段。根據專案規範 R03，應使用 MARK 註解來區分邏輯區塊。建議加上 `// MARK: - SettingsTextFormatter` 或類似註解。",
+    "existing_code": "// Helper class for formatting Study and Rollout settings text for display",
+    "evidence": "新增的類別前僅有一般註解，未使用 MARK 格式。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "使用 String(format:) 搭配本地化字串可能導致執行期崩潰",
+    "body": "`formatStudiesText` 和 `formatRolloutsText` 使用 `String(format: strings.detailTextStudies, appName)`。若翻譯字串中的格式符號（如 `%@`）與傳入參數數量不符，可能導致執行期崩潰或顯示錯誤。建議改用 `String.localizedStringWithFormat` 或確保翻譯字串格式正確，並考慮加入單元測試。",
+    "existing_code": "return String(format: strings.detailTextStudies, appName)",
+    "evidence": "方法直接使用 `String(format:)` 搭配本地化字串，未處理格式不符的例外狀況。"
+  },
+  {
+    "path": "firefox-ios/Shared/Supporting Files/en-GB.lproj/Settings.strings",
+    "line": 311,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾刪除換行可能造成 diff 噪音",
+    "body": "在 en-GB.lproj/Settings.strings 的結尾刪除了一個換行符號，這可能導致檔案結尾不符合慣例，並在未來 diff 中產生不必要的變更。建議保留檔案結尾的換行。",
+    "existing_code": "\"Settings.Translation.ToggleTitle.v145\" = \"Enable Translations\";",
+    "evidence": "diff 顯示最後一行後刪除了一個空行。"
+  }
+]

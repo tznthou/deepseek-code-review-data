@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1962,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "active_defrag_enabled 恢復邏輯可能錯誤",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 儲存至 `orig_active_defrag`，然後設為 0，但在 `emptyData` 呼叫後卻直接設為 1，而非恢復為 `orig_active_defrag`。這可能導致如果原始設定為 0（停用），在清空資料庫後主動碎片整理會被意外啟用。\n\n**失敗情境**：若使用者在設定中停用主動碎片整理（`activedefrag no`），且複製同步觸發資料庫清空，則清空後主動碎片整理會被強制啟用，可能造成非預期的效能影響或行為變更。\n\n**建議修法**：將 `server.active_defrag_enabled = 1;` 改為 `server.active_defrag_enabled = orig_active_defrag;`",
+    "existing_code": "server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n+\n     emptyData(-1, empty_db_flags, replicationEmptyDbCallback);\n+\n+    /* Restore the original active defragmentation setting. */\n+    server.active_defrag_enabled = 1;\n```\n註解聲稱要恢復原始設定，但實際卻硬編碼為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "streamEntryIsReferenced 在 cgroups_ref 為 NULL 時回傳 1 可能不正確",
+    "body": "新增的檢查 `if (!s->cgroups_ref) return 1;` 表示當 stream 沒有 consumer groups 參考時，直接回傳 1（已參考）。這可能導致呼叫者認為該 entry 被參考而無法刪除，即使實際上沒有 consumer group 參考它。\n\n**失敗情境**：若某個 stream entry 僅存在於 stream 本身，且沒有 consumer group 參考，此函式會錯誤回傳 1，使得呼叫者（例如 `streamTrim` 或 `XADD` 的 MAXLEN 修剪）無法刪除該 entry，造成記憶體無法釋放或修剪行為不正確。\n\n**建議修法**：應回傳 0 表示未參考，或檢查呼叫者邏輯是否依賴此行為。需確認原始意圖：若無 cgroups_ref，則 entry 不可能被 PEL 參考，因此應回傳 0。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的程式碼：\n```\n+    if (!s->cgroups_ref) return 1;\n     unsigned char buf[sizeof(streamID)];\n     streamEncodeID(buf, id);\n     return raxFind(s->cgroups_ref, buf, sizeof(streamID), NULL);\n```\n此檢查在原本的 `raxFind` 之前，若 `cgroups_ref` 為 NULL，原本的 `raxFind` 可能導致 crash，但回傳 1 可能造成邏輯錯誤。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "discard_replies_every 函式參數名稱可能造成混淆",
+    "body": "函式 `discard_replies_every` 的參數 `frequency` 和 `discard_num` 在呼叫時傳入相同的值（例如 10000），但函式內部的邏輯是當 `count % frequency == 0` 時，丟棄 `discard_num` 個回覆。這可能造成閱讀上的混淆，因為 `frequency` 和 `discard_num` 通常不會相同。\n\n**建議**：可考慮重新命名參數或加入註解說明，但此為測試程式碼，影響有限。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {",
+    "evidence": "diff 中新增的函式定義，以及後續呼叫如 `discard_replies_every $rd $count 10000 10000`。"
+  }
+]

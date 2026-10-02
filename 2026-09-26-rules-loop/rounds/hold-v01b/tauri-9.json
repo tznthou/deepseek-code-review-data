@@ -1,0 +1,13 @@
+[
+  {
+    "path": "crates/tauri-cli/metadata-v2.json",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "版本不一致：cli.js 版本與 tauri-cli crate 版本不符",
+    "body": "在 `crates/tauri-cli/metadata-v2.json` 中，`cli.js` 的版本從 `2.8.1` 更新為 `2.8.2`，但 `crates/tauri-cli/Cargo.toml` 中的版本僅從 `2.8.0` 更新為 `2.8.1`。這可能導致發布流程中 npm 套件與 Rust crate 版本不一致，或使用者安裝時取得錯誤的版本資訊。請確認正確的版本號並統一更新。",
+    "existing_code": "\"version\": \"2.8.2\",",
+    "evidence": "diff 中 `crates/tauri-cli/metadata-v2.json` 的 `cli.js` 版本由 `2.8.1` 改為 `2.8.2`，而 `crates/tauri-cli/Cargo.toml` 的版本由 `2.8.0` 改為 `2.8.1`。"
+  }
+]
