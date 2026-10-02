@@ -1,0 +1,8 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 33466 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/dict.c:96 → 102（片段唯一命中）
+[info] 重新定位 src/dict.c:99 → 97（片段唯一命中）
+[info] 重新定位 src/dict.c:584 → 542（片段唯一命中）
+[info] 重新定位 src/dict.c:909 → 913（片段唯一命中）
+[info] 重新定位 src/dict.h:154 → 157（片段唯一命中）
+[info] 重新定位 src/t_hash.c:1256 → 1257（片段唯一命中）
+[info] 完成於 14.4s ｜ findings=7 ｜ relocated=6 ｜ verdict=comment ｜ usage={"prompt_tokens": 11911, "completion_tokens": 1605, "total_tokens": 13516, "prompt_tokens_details": {"cached_tokens": 11904}, "prompt_cache_hit_tokens": 11904, "prompt_cache_miss_tokens": 7}

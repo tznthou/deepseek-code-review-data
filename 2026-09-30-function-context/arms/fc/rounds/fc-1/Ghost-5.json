@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/signup-form/src/components/pages/form-view.tsx",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "提交前對 email 進行 trim 可能改變既有行為",
+    "body": "在 `submitHandler` 中，`onSubmit({email: email.trim()})` 會移除 email 前後的空白字元。這可能導致原本包含前後空白的 email 被視為有效（如果驗證邏輯允許），但實際上送出的是修剪後的字串。若後端依賴原始輸入（例如用於比對或記錄），可能造成不一致。建議確認此變更是否為預期行為，並考慮在驗證前進行 trim，或保留原始輸入。",
+    "existing_code": "onSubmit({email: email.trim()});",
+    "evidence": "diff 中 `-        onSubmit({email});` 改為 `+        onSubmit({email: email.trim()});`"
+  },
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "getUrlHistory 回傳型別可能為 undefined",
+    "body": "在 `getUrlHistory` 中，原本的寫法會在 `history` 存在時回傳 `history`，否則繼續執行後面的邏輯。修改後直接 `return history;`，但 `getDefaultUrlHistory()` 的回傳型別可能是 `URLHistory | undefined`（從函式定義推斷）。如果 `history` 為 `undefined`，則此函式會回傳 `undefined`，而呼叫端可能預期一定拿到陣列，導致後續處理出錯。建議檢查 `getDefaultUrlHistory` 的回傳型別，並在必要時提供預設值或調整型別。",
+    "existing_code": "return history;",
+    "evidence": "diff 中 `-            if (history) {\n-                return history;\n-            }` 改為 `+            return history;`"
+  },
+  {
+    "path": "apps/signup-form/.eslintrc.cjs",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增 ESLint 規則可能導致其他檔案 CI 失敗",
+    "body": "新增的 `'ghost/filenames/match-regex': ['error', '^[a-z0-9.-]+$', false]` 規則會強制所有檔案名稱符合 kebab-case。如果專案中仍有其他檔案未遵循此命名（例如測試檔案或設定檔），可能會在 CI 中報錯。建議先確認所有檔案已符合規則，或將規則設為 warning 並逐步修正。",
+    "existing_code": "'ghost/filenames/match-regex': ['error', '^[a-z0-9.-]+$', false],",
+    "evidence": "diff 中新增此規則"
+  }
+]

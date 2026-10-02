@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/signup-form/src/components/pages/form-view.tsx",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "email 輸入 trim 可能改變既有行為",
+    "body": "將 `onSubmit({email})` 改為 `onSubmit({email: email.trim()})` 會移除使用者輸入的前後空白。若原本允許 email 前後有空白（例如貼上時），此變更可能導致部分使用者無法登入或收到錯誤。建議確認產品需求是否允許空白，或改為在驗證時 trim 而非送出時。",
+    "existing_code": "onSubmit({email: email.trim()});",
+    "evidence": "diff 中 `-        onSubmit({email});` 改為 `+        onSubmit({email: email.trim()});`"
+  },
+  {
+    "path": "apps/signup-form/.eslintrc.cjs",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "ESLint 檔案命名規則 regex 可能過於寬鬆",
+    "body": "新增的規則 `'ghost/filenames/match-regex': ['error', '^[a-z0-9.-]+$', false]` 允許連續的點或連字號，例如 `foo..bar` 或 `-foo`。這可能不是預期的 kebab-case 格式。建議使用更嚴格的 regex，例如 `^[a-z0-9]+(-[a-z0-9]+)*$`。",
+    "existing_code": "'ghost/filenames/match-regex': ['error', '^[a-z0-9.-]+$', false],",
+    "evidence": "diff 中新增的 ESLint 規則。"
+  }
+]

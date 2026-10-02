@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中將 Back() 改為 Forward() 可能導致測試失效",
+    "body": "在 `RedirectEnhancedGetToInternal` 測試中，原本使用 `Browser.Navigate().Back()` 來驗證返回上一頁，但此變更改為 `Forward()`。這可能導致測試無法正確驗證預期的行為，甚至可能因瀏覽器歷史記錄中沒有下一頁而失敗。建議確認此變更的意圖，若為修正測試邏輯，應確保測試仍能驗證正確的導航行為。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 `Browser.Navigate().Back();` 改為 `Browser.Navigate().Forward();`，但測試名稱與註解仍描述為驗證返回上一頁，邏輯不一致。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試屬性從 Fact 改為 TestMethod 並標記 QuarantinedTest，可能掩蓋問題",
+    "body": "將 `[Fact]` 改為 `[TestMethod]` 並加上 `[QuarantinedTest]`，同時將 `DisableThrowNavigationException` 的設定從 `false` 改為 `true`。這可能導致測試不再驗證原本的異常處理行為，且隔離標記可能使測試在 CI 中被跳過，從而掩蓋潛在問題。建議確認此變更是否為暫時性措施，並確保有對應的追蹤項目。",
+    "existing_code": "[TestMethod]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]\n    public void NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException()\n    {\n        AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中顯示測試屬性與設定值變更，可能改變測試行為。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試初始化順序調整可能影響測試穩定性",
+    "body": "將 `Navigate` 呼叫移至取得 `_originalH1Element` 之後，可能導致某些測試在導航前就嘗試存取元素而失敗。建議確認此調整是否為了解決特定問題，並確保所有測試仍能正常執行。",
+    "existing_code": "_originalH1Element = Browser.Exists(By.TagName(\"h1\"));\n        Navigate($\"{ServerPathBase}/redirect\");",
+    "evidence": "diff 中顯示初始化順序變更，可能影響依賴此順序的測試。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "新增的 Task.Yield() 可能導致登出流程的非預期延遲",
+    "body": "在 ProcessLogOut 中新增 `await Task.Yield();` 會讓出執行緒，可能造成登出流程延遲。若 AuthenticationProvider.GetAuthenticationStateAsync 依賴於特定同步內容（例如 Blazor 的 SynchronizationContext），此變更可能導致後續程式碼在錯誤的執行緒上執行，或造成競態。建議移除該行，除非有明確理由需要讓出。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\n        await Task.Yield();",
+    "evidence": "diff 中新增的兩行：`// Ensure we're authenticated before proceeding with sign-out` 和 `await Task.Yield();`"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Redirect 方法可能使用 null 的 InteractiveRequestUrl",
+    "body": "在 `Redirect()` 方法中，原本的條件是 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null`，現在改為只檢查 `_tokenResult.InteractionOptions != null`，然後直接使用 `_tokenResult.InteractiveRequestUrl!`。如果 `InteractiveRequestUrl` 為 null，會導致 `NavigateToLogin` 收到 null 參數，可能拋出例外。建議保留 null 檢查或使用 null 條件運算子。",
+    "existing_code": "if (_tokenResult.InteractionOptions != null)\n        {\n            _navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, _tokenResult.InteractionOptions);\n        }\n        else\n        {\n            _navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);\n        }",
+    "evidence": "diff 中將條件從 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 改為 `_tokenResult.InteractionOptions != null`，並在 else 分支使用 `_tokenResult.InteractiveRequestUrl!`。"
+  }
+]

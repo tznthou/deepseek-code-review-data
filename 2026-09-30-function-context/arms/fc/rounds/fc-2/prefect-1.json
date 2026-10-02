@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 397,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "deployment 名稱比對邏輯變更可能導致篩選錯誤",
+    "body": "原本的比對是 `full_name not in deployment_names`，現在改成 `dep.name not in deployment_names`。這會造成當使用者提供完整名稱（例如 `flow-name/deployment-name`）時，`dep.name` 只包含 `deployment-name`，因此永遠不會等於完整名稱，導致所有 deployment 都被排除。\n\n失敗情境：使用者執行 `prefect sdk generate --deployment my-flow/production`，預期只產生該 deployment 的 SDK，但實際上會因為 `dep.name` 為 `production` 而 `production not in ['my-flow/production']` 為 True，導致沒有任何 deployment 被納入，最終可能拋出 `NoDeploymentsError`。\n\n建議修正：保留原本的 `full_name not in deployment_names` 檢查，或改為檢查 `full_name` 是否在 `deployment_names` 中，同時保留對短名稱的支援。",
+    "existing_code": "if deployment_names and dep.name not in deployment_names:",
+    "evidence": "diff 中將 `full_name not in deployment_names` 改為 `dep.name not in deployment_names`，但後續的迴圈仍會檢查完整名稱，顯示此處邏輯不一致。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 220,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 `zip` 的 `strict` 參數可能掩蓋資料不一致",
+    "body": "原本使用 `zip(pool_names_list, results, strict=True)` 會在兩個序列長度不一致時拋出 `ValueError`，現在移除 `strict` 參數後，若 `results` 長度與 `pool_names_list` 不同，多餘的元素會被靜默忽略，可能導致部分 work pool 未被處理且沒有警告。\n\n失敗情境：如果 `asyncio.gather` 因某種原因回傳的結果數量與輸入任務數不同（例如未來修改程式碼時引入 bug），移除 `strict` 會讓此錯誤被隱藏，導致 SDK 生成結果不完整。\n\n建議：保留 `strict=True` 以在開發階段捕捉此類錯誤，或明確處理長度不一致的情況。",
+    "existing_code": "for name, result in zip(pool_names_list, results):",
+    "evidence": "diff 中將 `zip(pool_names_list, results, strict=True)` 改為 `zip(pool_names_list, results)`。"
+  }
+]

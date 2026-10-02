@@ -1,0 +1,112 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "async setUp 中呼叫 @MainActor 方法缺少 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 已標記為 `@MainActor`，但在 async `setUp` 中呼叫時未加上 `await`。這會導致編譯錯誤，因為從非隔離的 async 函式呼叫 main actor 方法必須 await。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未變更，但 `DependencyHelperMock.bootstrapDependencies` 已加上 `@MainActor`，且此處 `setUp` 已改為 `async throws`，因此需要 `await`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/Launch/LaunchTypeTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "async setUp 中呼叫 @MainActor 方法缺少 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 已標記為 `@MainActor`，但在 async `setUp` 中呼叫時未加上 `await`。這會導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未變更，但 `DependencyHelperMock.bootstrapDependencies` 已加上 `@MainActor`，且此處 `setUp` 已改為 `async throws`，因此需要 `await`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CreditCard/CreditCardSettingsViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "async setUp 中呼叫 @MainActor 方法缺少 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 已標記為 `@MainActor`，但在 async `setUp` 中呼叫時未加上 `await`。這會導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未變更，但 `DependencyHelperMock.bootstrapDependencies` 已加上 `@MainActor`，且此處 `setUp` 已改為 `async throws`，因此需要 `await`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CustomSearchEnginesTest.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "async setUp 中呼叫 @MainActor 方法缺少 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 已標記為 `@MainActor`，但在 async `setUp` 中呼叫時未加上 `await`。這會導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未變更，但 `DependencyHelperMock.bootstrapDependencies` 已加上 `@MainActor`，且此處 `setUp` 已改為 `async throws`，因此需要 `await`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "async setUp 中呼叫 @MainActor 方法缺少 await",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 已標記為 `@MainActor`，但在 async `setUp` 中呼叫時未加上 `await`。這會導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未變更，但 `DependencyHelperMock.bootstrapDependencies` 已加上 `@MainActor`，且此處 `setUp` 已改為 `async throws`，因此需要 `await`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "tearDown 中呼叫 reset 未 await",
+    "body": "`DependencyHelperMock().reset()` 未標記為 `@MainActor`，但 `tearDown` 已改為 async 且未 await。若 `reset` 未來改為 main actor 隔離，此處將需要 await。目前可能無編譯錯誤，但建議統一加上 `await` 以符合 async 慣例。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 `tearDown` 改為 async，但 `reset()` 呼叫未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/Launch/LaunchTypeTests.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "tearDown 中呼叫 reset 未 await",
+    "body": "`DependencyHelperMock().reset()` 未標記為 `@MainActor`，但 `tearDown` 已改為 async 且未 await。若 `reset` 未來改為 main actor 隔離，此處將需要 await。目前可能無編譯錯誤，但建議統一加上 `await` 以符合 async 慣例。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 `tearDown` 改為 async，但 `reset()` 呼叫未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CreditCard/CreditCardSettingsViewControllerTests.swift",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "tearDown 中呼叫 reset 未 await",
+    "body": "`DependencyHelperMock().reset()` 未標記為 `@MainActor`，但 `tearDown` 已改為 async 且未 await。若 `reset` 未來改為 main actor 隔離，此處將需要 await。目前可能無編譯錯誤，但建議統一加上 `await` 以符合 async 慣例。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 `tearDown` 改為 async，但 `reset()` 呼叫未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CustomSearchEnginesTest.swift",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "tearDown 中呼叫 reset 未 await",
+    "body": "`DependencyHelperMock().reset()` 未標記為 `@MainActor`，但 `tearDown` 已改為 async 且未 await。若 `reset` 未來改為 main actor 隔離，此處將需要 await。目前可能無編譯錯誤，但建議統一加上 `await` 以符合 async 慣例。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 `tearDown` 改為 async，但 `reset()` 呼叫未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "tearDown 中呼叫 reset 未 await",
+    "body": "`DependencyHelperMock().reset()` 未標記為 `@MainActor`，但 `tearDown` 已改為 async 且未 await。若 `reset` 未來改為 main actor 隔離，此處將需要 await。目前可能無編譯錯誤，但建議統一加上 `await` 以符合 async 慣例。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 `tearDown` 改為 async，但 `reset()` 呼叫未加 await。"
+  }
+]

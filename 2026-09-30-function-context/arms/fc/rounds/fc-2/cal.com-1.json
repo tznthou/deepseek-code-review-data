@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/pbac/infrastructure/repositories/PermissionRepository.ts",
+    "line": 222,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "getTeamIdsWithPermission 未傳遞 orgId，導致 orgId 過濾失效",
+    "body": "在 `getTeamIdsWithPermission` 方法中，呼叫 `this.getTeamIdsWithPermissions` 時未將 `orgId` 參數傳入。這會導致當呼叫端使用 `getTeamIdsWithPermission` 並提供 `orgId` 時，該過濾條件不會被套用，可能回傳不屬於該組織的團隊 ID，造成權限檢查不正確。\n\n**失敗情境**：使用者呼叫 `getTeamIdsWithPermission({ userId, permission, fallbackRoles, orgId: 123 })`，但回傳的團隊 ID 包含不屬於 org 123 的團隊。\n\n**建議修法**：將 `orgId` 加入傳遞物件：\n```typescript\nreturn this.getTeamIdsWithPermissions({ userId, permissions: [permission], fallbackRoles, orgId });\n```",
+    "existing_code": "return this.getTeamIdsWithPermissions({ userId, permissions: [permission], fallbackRoles });",
+    "evidence": "diff 中 `getTeamIdsWithPermission` 方法新增了 `orgId` 參數，但呼叫 `getTeamIdsWithPermissions` 時未包含 `orgId`。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.ts",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "userIds 過濾的自我存取判斷從「僅限單一 ID」改為「包含自身 ID」，可能造成權限繞過",
+    "body": "原本的判斷是 `filters.userIds.length === 1 && user.id === filters.userIds[0]`，現在改為 `filters.userIds.includes(user.id)`。這表示當 `filters.userIds` 包含多個 ID 且其中包含當前使用者 ID 時，即使其他 ID 不在可存取範圍內，也不會觸發 FORBIDDEN 錯誤。\n\n**失敗情境**：攻擊者提供 `userIds: [自己的ID, 受害者的ID]`，由於包含自己的 ID，`isCurrentUser` 為 true，因此不會檢查其他 ID 是否在可存取範圍內，可能導致越權存取。\n\n**建議修法**：保留原本的嚴格判斷，或改為檢查所有 ID 是否都在可存取範圍內，且僅當 `filters.userIds` 只包含當前使用者 ID 時才視為自我存取。",
+    "existing_code": "const isCurrentUser = filters.userIds.includes(user.id);",
+    "evidence": "diff 中此行取代了原本的 `const isCurrentUser = filters.userIds.length === 1 && user.id === filters.userIds[0];`"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.test.ts",
+    "line": 127,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中 mock 的 PermissionCheckService 未涵蓋 orgId 參數",
+    "body": "在測試中，`mockGetTeamIdsWithPermission` 被設定為 `vi.fn()`，但沒有驗證呼叫時是否傳遞了 `orgId`。由於 handler 中會將 `user.orgId` 傳入 `getTeamIdsWithPermission`，測試應確認此參數被正確傳遞，以確保 orgId 過濾邏輯有被測試覆蓋。\n\n**建議修法**：在相關測試中加入對 `orgId` 的斷言，例如：\n```typescript\nexpect(mockGetTeamIdsWithPermission).toHaveBeenCalledWith({\n  userId: 1,\n  permission: \"booking.read\",\n  fallbackRoles: [\"ADMIN\", \"OWNER\"],\n  orgId: null, // 或實際的 orgId\n});\n```",
+    "existing_code": "expect(mockGetTeamIdsWithPermission).toHaveBeenCalledWith({\n        userId: 1,\n        permission: \"booking.read\",\n        fallbackRoles: [\"ADMIN\", \"OWNER\"],\n      });",
+    "evidence": "測試中對 `mockGetTeamIdsWithPermission` 的斷言未包含 `orgId`，而 handler 程式碼會傳遞 `orgId`。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SMTPClient 直接依賴全域 dify_config，降低可測試性與重用性",
+    "body": "SMTPClient 在建構時直接從全域 dify_config 讀取 SMTP_LOCAL_HOSTNAME，這使得 SMTPClient 與全域設定耦合，難以在測試中隔離或在不同設定下重用。建議將 local_hostname 作為建構子參數傳入，由呼叫端負責提供設定值。",
+    "existing_code": "local_host = dify_config.SMTP_LOCAL_HOSTNAME or \"\"",
+    "evidence": "diff 中新增 `from configs import dify_config` 並在建構子中使用 `dify_config.SMTP_LOCAL_HOSTNAME`，直接讀取全域設定。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "當 SMTP_LOCAL_HOSTNAME 為空字串時，local_hostname 傳入 None 可能導致非預期行為",
+    "body": "程式碼使用 `local_host or None`，若設定為空字串，則傳入 None。smtplib 在建構時若 local_hostname 為 None，會自動使用 socket.getfqdn()，這可能與預期不符（預期不覆寫時應使用預設行為，但 None 可能觸發不同的行為）。建議明確處理空字串，例如僅在設定非空時才傳遞 local_hostname 參數。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中 `local_hostname=local_host or None`，當 local_host 為空字串時傳入 None。"
+  }
+]

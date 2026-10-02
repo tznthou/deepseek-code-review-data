@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "CLEAR 模式下 income_value 可能未定義",
+    "body": "在 WriteMode.CLEAR 分支中，程式碼未設定 income_value 變數。若 write_mode 為 CLEAR，則後續的 `result_input_value = income_value.to_object()` 會拋出 UnboundLocalError。建議在 CLEAR 分支中明確設定 income_value 或調整邏輯。",
+    "existing_code": "case WriteMode.CLEAR:\n                income_value = SegmentType.get_zero_value(original_variable.value_type)\n                updated_variable = original_variable.model_copy(update={\"value\": income_value.to_object()})",
+    "evidence": "diff 中 CLEAR 分支未指派 income_value，但後續程式碼使用 income_value.to_object()。"
+  },
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "blocks_variable_output 的型別與效能疑慮",
+    "body": "方法參數使用 Set[Tuple[str, ...]]，但呼叫端可能傳入其他可迭代型別。此外，每次呼叫都進行集合查找，若頻繁呼叫可能影響效能。建議確認呼叫端型別，並考慮使用 frozenset 或快取。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "方法簽名使用 Set，但未見呼叫端，無法確認型別一致性。"
+  }
+]

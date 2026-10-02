@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/object.c",
+    "line": 1330,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Stream listpack 估算邏輯變更可能導致記憶體高估",
+    "body": "在 `kvobjComputeSize` 中，原本的估算方式是 `lpsize * (s->rax->numele-1)` 再加上最後一個 listpack 的實際大小，現在改為 `lpsize * s->rax->numele` 後又加上最後一個 listpack 的大小。這會導致最後一個 listpack 被重複計算，造成記憶體使用量高估。\n\n具體情境：當 stream 中的元素數量超過 sample_size 時，程式會先計算前 N 個 listpack 的平均大小，然後乘以總數 `numele`，接著又加上最後一個 listpack 的實際大小。但平均大小已經包含了最後一個 listpack 的貢獻，因此最後一個 listpack 被算了兩次。\n\n建議改回 `lpsize * (s->rax->numele-1)`，或調整邏輯以避免重複計算。",
+    "existing_code": "asize += lpsize * s->rax->numele;",
+    "evidence": "diff 中將 `asize += lpsize * (s->rax->numele-1);` 改為 `asize += lpsize * s->rax->numele;`，且後續仍執行 `asize += zmalloc_size(ri.data);` 來加入最後一個 listpack 的大小。"
+  },
+  {
+    "path": "tests/unit/type/string.tcl",
+    "line": 700,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中記憶體斷言可能因配置或架構而不穩定",
+    "body": "新增的測試 `MEMORY USAGE - STRINGS` 使用 `assert_lessthan_equal` 和 `assert_morethan_equal` 來驗證記憶體使用量落在一個範圍內。但記憶體使用量會受到 allocator、架構（32/64 位元）以及 Redis 內部配置的影響，這些斷言可能在特定環境下失敗。\n\n例如，`hdrsize` 的計算假設了固定的 header 大小，但實際大小可能因版本或編譯選項而異。建議放寬斷言範圍，或使用更精確的預期值（如參考現有的 jemalloc 測試）。",
+    "existing_code": "assert_lessthan_equal $min $memory_used\n                set max [expr {32 > $min ? 64 : [expr $min * 2]}]\n                assert_morethan_equal $max $memory_used",
+    "evidence": "測試中使用了 `assert_lessthan_equal` 和 `assert_morethan_equal`，並依賴 `hdrsize` 的計算，但未考慮 allocator 的 overhead 差異。"
+  }
+]

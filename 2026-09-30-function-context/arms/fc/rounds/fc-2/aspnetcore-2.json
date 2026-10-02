@@ -1,0 +1,24 @@
+[
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "LocateVisualStudio 中 $vsRequirements 可能為 $null 導致後續 Get-Member 失敗",
+    "body": "在 `LocateVisualStudio` 函式中，當 `$GlobalJson.tools` 不存在 `vs` 屬性時，`$vsRequirements` 會被設為 `$null`。然而，後續的 `if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' -ErrorAction SilentlyContinue))` 雖然有 `$vsRequirements -and` 的短路保護，但 `Get-Member` 的 `-InputObject` 參數若為 `$null`，在某些 PowerShell 版本中仍可能拋出錯誤（例如「Cannot bind argument to parameter 'InputObject' because it is null」）。建議先檢查 `$vsRequirements` 是否為 `$null`，或改用 `if ($null -ne $vsRequirements -and (Get-Member ...))` 的方式。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n      $vsRequirements = $GlobalJson.tools.vs\n    } else {\n      $vsRequirements = $null\n    }\n  }\n\n  $args = @('-latest', '-format', 'json', '-requires', 'Microsoft.Component.MSBuild', '-products', '*')\n\n  if (!$excludePrereleaseVS) {\n    $args += '-prerelease'\n  }\n\n  if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' -ErrorAction SilentlyContinue)) {",
+    "evidence": "diff 中新增了 `$vsRequirements = $null` 的分支，且後續的 `Get-Member` 呼叫使用了 `$vsRequirements` 作為 `-InputObject`。"
+  },
+  {
+    "path": "eng/common/core-templates/job/source-index-stage1.yml",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "source-index-stage1 的 condition 變更可能影響非 main 分支的索引",
+    "body": "原本 `condition` 為空字串，代表所有分支都會執行 source-index-stage1。現在改為 `eq(variables['Build.SourceBranch'], 'refs/heads/main')`，這會讓非 main 分支（例如 release 分支或 PR 分支）不再執行此階段。如果這是預期的行為（例如只在 main 分支產生索引），則沒有問題；但若其他分支也需要索引，則可能造成遺漏。建議確認此變更的意圖。",
+    "existing_code": "condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')",
+    "evidence": "diff 中將 `condition: ''` 改為 `condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')`。"
+  }
+]

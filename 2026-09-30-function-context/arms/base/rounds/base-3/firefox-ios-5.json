@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/State/TabsPanelState.swift",
+    "line": 143,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "scrollToTab 索引可能越界",
+    "body": "在 `createTabScrollBehavior` 中，當沒有選取分頁且 `state.tabs` 不為空時，回傳的 `toIndex` 從 `state.tabs.count - 1` 改為 `state.tabs.count`。這會導致 `IndexPath(row:section:)` 使用超出陣列範圍的 row，進而在 `scrollToTab` 中嘗試滾動到不存在的索引，可能造成應用程式崩潰。\n\n**失敗情境**：使用者開啟多個分頁，但沒有任何分頁被選取（例如剛啟動或切換面板後），此時觸發滾動到選取分頁的行為，就會嘗試滾動到 `tabs.count` 的索引，而陣列最後一個有效索引是 `tabs.count - 1`。\n\n**建議**：改回 `state.tabs.count - 1`，或明確處理 `tabs` 為空的情況。",
+    "existing_code": "return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)",
+    "evidence": "diff 中此行由 `return ScrollState(toIndex: state.tabs.count - 1, isInactiveTabSection: false, withAnimation: shouldAnimate)` 改為 `return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)`，移除了 `-1`。"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 8461,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "重新加入未使用的 Inactive Tabs 字串",
+    "body": "在 `Strings.swift` 中，原本刪除的 Inactive Tabs 相關字串被重新加入至新的 `v147` 結構中，但程式碼中已無任何使用這些字串的地方。這可能造成混淆，且若未來誤用可能導致功能回歸。\n\n**建議**：確認這些字串是否真的需要保留。若無使用，應一併刪除；若為了向後相容或未來功能，應加上明確註解。",
+    "existing_code": "struct v147 {\n            public static let TabsTrayInactiveTabsSectionClosedAccessibilityTitle = MZLocalizedString(\n                key: \"TabsTray.InactiveTabs.SectionTitle.Closed.Accessibility.v103\",\n                tableName: nil,\n                value: \"View Inactive Tabs\",\n                comment: \"Accessibility title for the inactive tabs section button when section is closed. This section groups all tabs that haven't been used in a while.\")\n            public static let TabsTrayInactiveTabsSectionOpenedAccessibilityTitle = MZLocalizedString(\n                key: \"TabsTray.InactiveTabs.SectionTitle.Opened.Accessibility.v103\",\n                tableName: nil,\n                value: \"Hide Inactive Tabs\",\n                comment: \"Accessibility title for the inactive tabs section button when section is open. This section groups all tabs that haven't been used in a while.\")\n            public static let CloseAllInactiveTabsButton = MZLocalizedString(\n                key: \"InactiveTabs.TabTray.CloseButtonTitle\",\n                tableName: nil,\n                value: \"Close All Inactive Tabs\",\n                comment: \"In the Tabs Tray, in the Inactive Tabs section, this is the button the user must tap in order to close all inactive tabs.\")\n            public static let CloseInactiveTabSwipeActionTitle = MZLocalizedString(\n                key: \"InactiveTabs.TabTray.CloseSwipeActionTitle.v115\",\n                tableName: \"TabsTray\",\n                value: \"Close\",\n                comment: \"This is the swipe action title for closing an inactive tab by swiping, located in the Inactive Tabs section of the Tabs Tray\")\n        }",
+    "evidence": "diff 中刪除了 `InactiveTabs` 結構，但在 `v147` 結構中重新加入了相同的字串常數。"
+  }
+]

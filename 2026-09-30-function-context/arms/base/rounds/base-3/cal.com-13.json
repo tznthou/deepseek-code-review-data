@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/di/tokens.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "DI token 合併可能造成 Symbol 重複或型別衝突",
+    "body": "在 `DI_TOKENS` 物件中使用 spread 運算子合併 `FLAGS_DI_TOKENS` 與 `FEATURE_OPT_IN_DI_TOKENS`，若這些 token 物件中有相同的鍵名，後者會覆蓋前者，導致 token 不一致。此外，原本的 `FEATURES_REPOSITORY` 與 `FEATURES_REPOSITORY_MODULE` 被移除，改由 `FLAGS_DI_TOKENS` 提供，但若其他程式碼仍直接引用 `DI_TOKENS.FEATURES_REPOSITORY`，將導致 undefined。建議明確列出所有 token，或使用 `Object.freeze` 與型別檢查確保唯一性。",
+    "existing_code": "...FLAGS_DI_TOKENS,\n  ...FEATURE_OPT_IN_DI_TOKENS,",
+    "evidence": "diff 中刪除了原本的 `FEATURES_REPOSITORY` 與 `FEATURES_REPOSITORY_MODULE`，並新增 spread 合併。"
+  },
+  {
+    "path": "packages/features/di/containers/FeatureOptInService.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "每次呼叫 getFeatureOptInService 都建立新容器與新服務實例",
+    "body": "`getFeatureOptInService` 每次呼叫都會建立新的 DI 容器並載入模組，這可能導致效能浪費，且若服務內部有狀態（例如快取），狀態不會被共享。建議考慮使用單例模式或模組層級的容器快取。",
+    "existing_code": "export function getFeatureOptInService(): IFeatureOptInService {\n  const featureOptInServiceContainer = createContainer();\n  featureOptInServiceModuleLoader.loadModule(featureOptInServiceContainer);\n  return featureOptInServiceContainer.get<IFeatureOptInService>(featureOptInServiceModuleLoader.token);\n}",
+    "evidence": "diff 中新增的容器函式，每次呼叫都建立新容器。"
+  },
+  {
+    "path": "packages/features/di/containers/FeaturesRepository.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "每次呼叫 getFeaturesRepository 都建立新容器與新 repository 實例",
+    "body": "與 `getFeatureOptInService` 相同，每次呼叫都建立新容器，可能造成不必要的資源消耗。若 repository 無狀態則影響較小，但仍建議考慮快取。",
+    "existing_code": "export function getFeaturesRepository(): FeaturesRepository {\n  const featuresRepositoryContainer = createContainer();\n  featuresRepositoryModuleLoader.loadModule(featuresRepositoryContainer);\n  return featuresRepositoryContainer.get<FeaturesRepository>(featuresRepositoryModuleLoader.token);\n}",
+    "evidence": "diff 中新增的容器函式。"
+  },
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "moduleLoader.token 使用 moduleToken 而非 token",
+    "body": "在 `moduleLoader` 物件中，`token` 屬性被設定為 `moduleToken`（即 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY_MODULE`），而其他模組通常使用 `token`（即 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY`）。這可能導致使用 `moduleLoader.token` 取得服務時型別不符或找不到綁定。請確認此處是否應為 `token` 而非 `moduleToken`。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 moduleLoader，token 使用 moduleToken。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/IFeatureOptInService.ts",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "nit",
+    "confidence": 0.5,
+    "title": "多餘的空白",
+    "body": "在 `orgAutoOptIn: boolean;` 後面有多餘的空白，雖然不影響功能，但建議移除。",
+    "existing_code": "orgAutoOptIn: boolean;",
+    "evidence": "diff 中新增的介面定義。"
+  }
+]

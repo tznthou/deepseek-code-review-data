@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "排程條件反轉導致重複排程",
+    "body": "原本條件為 `!hasScheduled.processOutbox`，修改後變成 `hasScheduled.processOutbox`，這會導致當 `hasScheduled.processOutbox` 為 true 時再次呼叫 `jobsService.addJob`，造成重複排程。應改回 `!hasScheduled.processOutbox`。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中此行由 `if (!hasScheduled.processOutbox && ...)` 改為 `if (hasScheduled.processOutbox && ...)`，邏輯相反。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 341,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "config 值型別不一致可能導致條件判斷錯誤",
+    "body": "`config.get('memberWelcomeEmailTestInbox')` 在測試中被設定為字串（如 'test-inbox@example.com'）或空字串，但在程式碼中直接作為布林條件使用。若 config 值為空字串，`welcomeEmailConfig` 為 falsy，但 `WELCOME_EMAIL_SOURCES.includes(source)` 仍可能為 true，導致非預期建立 outbox。建議明確檢查 config 值是否為非空字串，或統一型別。",
+    "existing_code": "const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');\nif (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)) {",
+    "evidence": "diff 中新增 `const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');` 並以 `welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)` 作為條件。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/members/members-api/repositories/MemberRepository.test.js",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試中直接 stub config.get 可能影響其他測試",
+    "body": "在測試中使用 `sinon.stub(config, 'get')` 直接替換全域 config 物件的 get 方法，且未在 afterEach 中 restore（僅有 `sinon.restore()` 在 describe 層級）。這可能導致其他測試意外使用到 stub 的 config.get，造成測試汙染。建議使用 sandbox 或確保每個測試後還原。",
+    "existing_code": "sinon.stub(config, 'get').withArgs('memberWelcomeEmailTestInbox').returns('test-inbox@example.com');",
+    "evidence": "diff 中新增此 stub，且未見對應的 restore 邏輯。"
+  }
+]

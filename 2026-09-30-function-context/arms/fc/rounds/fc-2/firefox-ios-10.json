@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試從 async 改為同步可能導致主執行緒阻塞",
+    "body": "原本使用 `await fulfillment(of: [exp], timeout: 2.0)` 的測試改為 `wait(for: [exp], timeout: 2.0)`，但 `startMockImageServer` 已不再是 async，且測試方法也移除了 `async`。這可能導致測試在主執行緒上同步等待非同步 callback，若 callback 需要在主執行緒執行，可能造成死鎖或測試逾時。建議確認 GCDWebServer 的 callback 執行緒，或保留 async 測試寫法。",
+    "existing_code": "func testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase() {",
+    "evidence": "diff 中移除了 `async` 關鍵字，並將 `await fulfillment` 改為 `wait(for:)`，但 `startMockImageServer` 仍可能涉及非同步行為。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 expectation 可能導致測試無法驗證非同步行為",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本有 expectation 等待 decision handler 被呼叫，但修改後移除了 expectation 與 wait，僅直接呼叫 `subject.requestMediaCapturePermission(decisionHandler: decisionHandler)`。若該方法為非同步，測試可能在 callback 執行前就結束，導致斷言未被執行。建議保留 expectation 或改用 async 測試。",
+    "existing_code": "let decisionHandler: @Sendable (WKPermissionDecision) -> Void = { (decision: WKPermissionDecision) in\n            XCTAssertEqual(decision, .prompt)\n        }",
+    "evidence": "diff 中移除了 `let expectation = expectation(...)` 與 `wait(for: [expectation])`，但未確認方法是否同步。"
+  },
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 nonisolated(unsafe) 可能隱藏執行緒安全問題",
+    "body": "將 `static let generator` 標記為 `nonisolated(unsafe)` 以繞過 Swift 6 的 concurrency 檢查，但註解指出 ContentBlockerGenerator 並非 thread safe。若此 static property 被多個執行緒同時存取，可能導致資料競爭。建議改為使用 actor 或確保所有存取都在同一執行緒。",
+    "existing_code": "nonisolated(unsafe) static let generator = ContentBlockerGenerator.factory()",
+    "evidence": "diff 中新增了 `nonisolated(unsafe)`，且註解明確指出 thread safety 問題。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Home/Homepage/SectionHeader/LabelButtonHeaderView.swift",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "額外的 closure 包裝可能造成 retain cycle",
+    "body": "新增的 `wrappedAction` 閉包捕獲了 `moreButtonAction`，但未使用 `[weak self]` 或 `[weak moreButtonAction]`。若 `moreButtonAction` 持有 self，可能造成 retain cycle。建議確認閉包的生命週期，或使用 weak 捕獲。",
+    "existing_code": "let wrappedAction: (@MainActor (UIButton) -> Void)? = { button in\n                moreButtonAction?(button)\n            }",
+    "evidence": "diff 中新增了 wrappedAction，但未見 weak 捕獲。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 444,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "metadata 為 null 時可能遺漏 XML 註解套用",
+    "body": "當 `metadata` 為 null 時，整個 if 區塊會被跳過，導致該參數的 XML 註解（例如 `<param>` 或屬性註解）不會被套用。雖然這避免了 NullReferenceException，但可能造成 OpenAPI 文件中缺少描述。建議確認 `metadata` 為 null 的情境是否合理，若可能發生，應考慮其他處理方式（例如記錄警告或使用替代資訊）。",
+    "existing_code": "if (metadata is not null\n    && metadata.MetadataKind == ModelMetadataKind.Property\n    && metadata.ContainerType is { } containerType\n    && metadata.PropertyName is { } propertyName)",
+    "evidence": "diff 中新增了 `metadata is not null` 條件，但未處理 null 時的行為。"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 452,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "參數名稱比對從 metadata.Name 改為 propertyName 可能影響既有功能",
+    "body": "原本使用 `metadata.Name` 來比對 operation.Parameters 中的參數名稱，現在改為 `propertyName`。若 `metadata.Name` 與 `propertyName` 不同（例如使用別名或繫結名稱不同），可能導致找不到對應的參數，進而將描述套用到 RequestBody 或完全遺漏。建議確認此變更是否為預期行為，並補充相關測試。",
+    "existing_code": "var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == propertyName);",
+    "evidence": "diff 中將 `p.Name == metadata.Name` 改為 `p.Name == propertyName`。"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 479,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "RequestBody.Description 設定時機變更可能影響範例處理",
+    "body": "原本先設定 `operation.RequestBody.Description = description`，再處理範例；現在改為先處理範例，再設定 Description。若範例處理過程中發生例外（例如 `jsonString.Parse()` 失敗），Description 將不會被設定，可能導致部分資訊遺失。建議確認此變更是否為預期，並考慮將 Description 設定放在 finally 或確保例外處理。",
+    "existing_code": "operation.RequestBody.Description = description;",
+    "evidence": "diff 中將 `operation.RequestBody.Description = description;` 從範例處理前移至範例處理後。"
+  }
+]

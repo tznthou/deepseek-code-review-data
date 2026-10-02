@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6260,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "Rollouts 字串的格式佔位符與註解不一致",
+    "body": "在 `RolloutsSettingMessage` 的 `value` 中使用 `%@`，但 `comment` 中寫的是 `%1$@`。這可能導致翻譯人員誤解佔位符的格式，進而產生錯誤的翻譯。建議將 `comment` 中的 `%1$@` 改為 `%@`，以保持一致。",
+    "existing_code": "value: \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\",\n        comment: \"A short description that explains that Mozilla may change features remotely. %1$@ is the app name (e.g. Firefox).\")",
+    "evidence": "diff 中新增的 `RolloutsSettingMessage` 定義，`value` 使用 `%@`，但 `comment` 使用 `%1$@`。"
+  },
+  {
+    "path": "firefox-ios/Shared/Supporting Files/en-GB.lproj/Settings.strings",
+    "line": 311,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "刪除了檔案結尾的換行",
+    "body": "在 en-GB.lproj/Settings.strings 的 diff 中，最後一行刪除了一個空行（`-` 行）。這可能導致檔案結尾缺少換行符，影響某些工具或版本控制系統的處理。建議保留檔案結尾的換行。",
+    "existing_code": "\"Settings.Translation.ToggleTitle.v145\" = \"Enable Translations\";\n-",
+    "evidence": "diff 中 en-GB.lproj/Settings.strings 的最後一行顯示刪除了一個空行。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "eng/common/core-templates/job/source-build.yml",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "內部來源建置映像從 Mariner 2 升級至 Azure Linux 3 可能導致相容性問題",
+    "body": "將內部來源建置的映像從 `1es-mariner-2` 改為 `1es-azurelinux-3`。Azure Linux 3 是較新的作業系統，可能包含不相容的套件或工具鏈變更，導致建置失敗或產出二進位檔的相容性問題。建議確認此變更已在內部管線中驗證，並檢查是否有相依於特定 OS 版本的工具或腳本。",
+    "existing_code": "image: 1es-azurelinux-3",
+    "evidence": "diff 中將 `image: 1es-mariner-2` 改為 `image: 1es-azurelinux-3`"
+  },
+  {
+    "path": "eng/common/core-templates/job/source-index-stage1.yml",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "source-index-stage1 條件變更可能影響來源索引產生",
+    "body": "將 `condition` 從空字串改為 `eq(variables['Build.SourceBranch'], 'refs/heads/main')`。這會限制來源索引僅在主分支上執行。若某些發行分支也需要來源索引，此變更可能導致索引缺失。請確認此限制是否符合預期。",
+    "existing_code": "condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')",
+    "evidence": "diff 中將 `condition: ''` 改為 `condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')`"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 409,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "WebSocketWrapper.ReceiveAsync 中 _receiveTcs 重設位置可能導致競態條件",
+    "body": "將 `_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);` 移至 `await _receiveTcs.Task` 之後、零位元組讀取處理之前。這可能導致在零位元組讀取時，`_receiveTcs` 已被重設，但後續的 `SetReceiveResult` 可能設定到新的 TCS，而舊的 TCS 已完成，造成訊息遺失或錯誤。建議將重設邏輯放在處理完成後，或使用更安全的同步機制。",
+    "existing_code": "_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);",
+    "evidence": "diff 中將 `_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);` 從零位元組讀取處理之後移至之前"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "CSP 錯誤訊息比對使用兩個 Regex 可能過於嚴格",
+    "body": "測試改為同時比對舊版和新版的 CSP 錯誤訊息。若瀏覽器更新後產生第三種格式，測試將失敗。建議使用單一 Regex 涵蓋所有可能格式，或使用更寬鬆的比對。",
+    "existing_code": "Assert.True(\n    ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n    ParseErrorMessageRegexNew.IsMatch(logs[0].Message),\n    $\"Expected log message to match one of the CSP error patterns: {ParseErrorMessageRegexOld} or {ParseErrorMessageRegexNew}. Actual: {logs[0].Message}\");",
+    "evidence": "diff 中將 `Assert.Matches(ParseErrorMessage(), logs[0].Message);` 改為上述程式碼"
+  },
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "LocateVisualStudio 對缺少 tools.vs 的處理可能改變行為",
+    "body": "當 `$GlobalJson.tools` 不存在 `vs` 屬性時，`$vsRequirements` 設為 `$null`，後續的 `Get-Member` 呼叫加上 `-ErrorAction SilentlyContinue` 以避免錯誤。這可能導致 `vswhere` 以不同參數執行，進而找到不符合需求的 Visual Studio 執行個體。建議確認此變更不會影響 VS 執行個體的選擇。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n      $vsRequirements = $GlobalJson.tools.vs\n    } else {\n      $vsRequirements = $null\n    }\n  }",
+    "evidence": "diff 中將原本的 `if (!$vsRequirements) { $vsRequirements = $GlobalJson.tools.vs }` 改為上述程式碼"
+  }
+]

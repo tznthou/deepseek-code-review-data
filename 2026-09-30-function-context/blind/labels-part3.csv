@@ -1,0 +1,101 @@
+pair,label,note
+P0201,no,GT 是缺明確存取修飾詞；finding 講 targetFrame 為 nil 的處理，兩件獨立的事
+P0202,same,finding 標題寫成可能允許 0，但內文指出 <=0 拒絕 0 與 non-negative 訊息不一致，修法同
+P0203,no,同一個 if 區塊，但講 Infinity 哨兵值的呼叫端處理，不是 > 該為 >= 的邊界錯誤
+P0204,no,GT 是缺 final；finding 講 XCTWaiter 阻塞，不同處不同問題
+P0205,no,GT 是 argv[2] 沒 decrRefCount 的記憶體洩漏；finding 講 alsoPropagate 回傳值未檢查
+P0206,partial,同樣講 clusterDeleteKeysInUnownedSlots 誤刪 key 造成資料遺失，但機制講成 MIGRATING 狀態；GT 是先刪後認領的順序錯誤
+P0207,no,GT 是輪詢計數 off-by-one；finding 講 confirmHandle 缺 catch
+P0208,no,GT 是缺 tenant_id 過濾；finding 講 Session 未關閉
+P0209,no,GT 是驗證失敗時塞 None 破壞回傳型別；finding 講 mget 長度不符
+P0210,no,同一個 setInterval，但 finding 講併發重入；GT 是重試計數 off-by-one 多打一次，兩者獨立
+P0211,no,同一行但兩個獨立問題：GT 是 waiter 未使用；finding 講 XCTWaiter 阻塞導致逾時
+P0212,no,GT 是缺 MPL 檔頭；finding 講 nonisolated(unsafe) 的資料競爭
+P0213,same,兩者都指出少了否定運算子、搜尋模式判斷反轉，修法同
+P0214,no,同一行但 finding 只講多餘空白；GT 是 size 與 position 順序對調
+P0215,same,兩者都指出真值判斷會把 0 顯示成 None，修法同（改 ?? 或明確檢查 null）
+P0216,no,GT 是 isCurrentUser 改用 includes 造成授權繞過；finding 講 teamIds 為空陣列
+P0217,no,GT 是缺存取修飾詞；finding 講 XCTWaiter 阻塞
+P0218,no,GT 是單引號；finding 講 redirect 可能無限迴圈
+P0219,no,GT 是 samples 變數遮蔽；finding 講 listpack 重複計算，同一分支但不同操作
+P0220,no,GT 是 selectedBlockDocument 誤用 filteredData；finding 講 name 為 null 時的大小寫比對
+P0221,same,兩者都指出先遞迴再標記邊的順序問題（遞迴時邊狀態尚未更新），還原順序即修好
+P0222,partial,指到同一個 Math.ceil 運算式並提到 created_at 含時間部分，但機制講成時區與浮點誤差，沒指出 ceil 應為 floor
+P0223,same,兩者都指出 field_validator 的 info.data 依欄位順序取值，建議改 model_validator
+P0224,partial,同一個函式；finding 講未被呼叫的死碼，GT 是測試函式缺 REDIS_TEST 包裝，屬相關症狀但沒點出包裝
+P0225,no,同一區塊但 finding 只講逗號後缺空格；GT 是 size 與 position 順序對調
+P0226,partial,同樣圍繞 CLEAR 模式的 income_value 與 result_input_value，但 finding 說 income_value 未定義（其片段顯示已設定），GT 是誤用 updated_variable
+P0227,no,同一行但 finding 講 this 綁定；GT 是超過 110 字元
+P0228,no,GT 是測試函式缺包裝；finding 講 keyFromStoredKey 回傳 NULL，是另一個函式
+P0229,no,GT 是缺分號；finding 講 dangerouslySetInnerHTML 的 XSS
+P0230,no,GT 是 GetDisplayName 不再用快取；finding 講 ClearCache 沒清顯示名稱快取，不同方法、不同缺陷
+P0231,same,兩者都指出 && 被改成 || 的條件變更，還原即修好
+P0232,no,GT 是直接用 malloc_usable_size；finding 講 quicklist 取樣平均
+P0233,no,finding 講 getDaysSinceFirstEmail 的 Math.ceil，與此 GT 的 > 該為 >= 是兩個獨立缺陷
+P0234,no,GT 是取錯欄位路徑；finding 講 OnceLock 初始化
+P0235,partial,同一函式也講型別，但講的是呼叫端可能傳入其他可迭代型別與效能，沒點出 Sequence 未轉 tuple 導致 in 判斷失效
+P0236,no,GT 是未使用的 import；finding 講 maxVisible 下限
+P0237,no,GT 是缺 AAA 註解；finding 講缺 async，同一行但獨立
+P0238,no,GT 是缺 target_os 條件編譯；finding 講 versionCode 上限
+P0239,same,兩者都指出 max_length 為 undefined 時比較失效，修法同（加 fallback 或 null 檢查）
+P0240,partial,同一個閉包；finding 講包進 Task 改變時序與 completion 執行緒，GT 是缺 @MainActor，都屬 actor 隔離但問題不同
+P0241,no,GT 是授權繞過；finding 講 orgId 傳 undefined
+P0242,no,GT 是缺存取修飾詞；finding 講 XCTWaiter 結果未檢查
+P0243,same,兩者都指出 active_defrag_enabled 被硬設為 1 而非還原 orig_active_defrag
+P0244,no,GT 是 OrdinalIgnoreCase 路徑比較；finding 講 Split 沒移除空項目
+P0245,no,GT 是缺存取修飾詞；finding 講依賴外部網路
+P0246,same,兩者都指出沒檢查 XCTWaiter 結果，修法同（檢查是否 completed）
+P0247,same,兩者都指出移除 expectation 與 wait 使非同步斷言不會被驗證
+P0248,no,GT 是 size_t 無號溢位；finding 講 lseek 失敗處理
+P0249,no,GT 是驗證與夾限順序；finding 講 versionCode 遞增競態
+P0250,same,兩者都指出 Back 被改成 Forward
+P0251,same,兩者都指出 position 與 size 處理順序對調（finding 語氣保留但指到同一件事）
+P0252,no,GT 是 Math.floor 該為 Math.round；finding 講 getDaysSinceFirstEmail 的日期計算，是另一個運算式
+P0253,no,GT 是 expect 該回傳 Result；finding 講 CFBundleTypeExtensions 條件相反
+P0254,partial,指到同一段初始化且提到 panic，但框架成 OnceLock 隱藏錯誤，建議仍是 expect 或 LazyLock，沒有要求改回傳 Result
+P0255,no,GT 是 slack.listen() 被移除；finding 講 scheduling.init() 少 apiUrl，同一清單但不同行
+P0256,same,兩者都指出斷言 darkThemeView 而非 lightThemeView
+P0257,no,GT 是直接從 features 套件 import；finding 講例外未處理
+P0258,no,同樣是 || 該用 ?? 的模式，但 finding 講 cache_key，GT 是 run_count，不同欄位
+P0259,no,GT 是 for 缺大括號；finding 講初始化旗標
+P0260,same,兩者都指出 browserActionStack 重複、漏了 trailingPageActionStack（finding 方法名寫成 updateActionStack，片段相同）
+P0261,same,兩者都指出失敗分支直接呼叫 @MainActor 的 completionHandler，缺 ensureMainThread
+P0262,no,GT 是 != 該用 !==；finding 講 <= 包含今日資料
+P0263,no,GT 是 xUnit 專案用 MSTest 屬性；finding 講 SetSwitch 值反轉
+P0264,no,同一段程式，但 finding 講 version 字串未驗證的路徑操縱；GT 是漏掉 localEnabled 判斷
+P0265,no,GT 是行寬；finding 講 rejectionReason 型別變更
+P0266,same,兩者都指出方法改名後失去 test 前綴，XCTest 不會執行
+P0267,no,GT 是 scheduling.init 少 apiUrl；finding 講 emailAddressService.init 改非同步
+P0268,no,GT 是單引號；finding 講缺少 schedule 結構驗證
+P0269,no,GT 是忽略 XCTWaiter 結果；finding 講依賴外部網路
+P0270,no,同一函式，但 finding 講參數序列化與後綴；GT 是缺 returnObjects 支援，不同操作
+P0271,no,GT 是該標 final；finding 講類別可能未被使用
+P0272,same,兩者都指出 isCurrentUser 改用 includes 造成授權繞過
+P0273,partial,同一段 autoCloseOnSelect，但 finding 說會非預期關閉，與 GT 說關不掉方向相反
+P0274,no,GT 是先比 num_ranges 再合併；finding 講 SortAndMerge 不合併重疊區間，是另一個函式
+P0275,no,GT 是日期門檻不一致；finding 講 uid 取代 id
+P0276,no,GT 是未使用的 import；finding 講 description 可能為 undefined
+P0277,same,兩者都指出 router context 的 new QueryClient 與 provider 用的 queryClient 不是同一個
+P0278,same,兩者都指出 TOML 解析錯誤被包成 FormatJson
+P0279,same,兩者都指出 Flatpak 的 Display 用大寫，改成小寫即修好（finding 從慣例不一致切入）
+P0280,no,GT 是 RETURNING 取錯欄位；finding 講回傳型別變更可能影響其他呼叫者，兩件獨立的事
+P0281,same,兩者都指出 listFeaturesForUser 的過濾被反轉
+P0282,no,GT 是引用了舊字串常數；finding 講類別可能未被使用
+P0283,no,GT 是 useTranslation 漏傳 defaultNs；finding 講序列化方式
+P0284,no,同一段但 finding 講 endsWith 大小寫敏感；GT 是空陣列被 length 判斷當成 falsy
+P0285,same,兩者都指出 || 該為 &&
+P0286,no,同一個列舉宣告，但 finding 講移除 thiserror 衍生；GT 是缺 #[non_exhaustive]，不同缺陷
+P0287,no,GT 是 normalizedJsonSchema 死存；finding 講 json_schema 為 undefined 的後端相容性
+P0288,no,GT 是用 var；finding 講 autoCloseOnSelect
+P0289,same,兩者都指出 nonisolated(unsafe) 與註解說明非執行緒安全互相矛盾
+P0290,same,兩者都指出 Unix 路徑比較不該用 OrdinalIgnoreCase
+P0291,no,GT 是缺分號；finding 講 useEffect 依賴陣列
+P0292,no,GT 是 finish 在 resolve 之前；finding 講 onBackPressed 的預設關閉行為
+P0293,same,兩者都指出 strict 被關閉
+P0294,no,GT 是行寬；finding 講 V2 字串未被使用
+P0295,same,finding 只抓到 renderer 不同時沒拋錯的那一半，把 === 改回 !== 即同時修好
+P0296,same,兩者都指出 None 會通過檢查並被回傳，應拒絕
+P0297,no,GT 是多餘的 to_string；finding 講 CFBundleTypeExtensions 條件相反
+P0298,no,GT 是 production code 裡的 print；finding 講遞迴與標記順序
+P0299,no,GT 是 useTranslation 漏傳 defaultNs；finding 講 Trans mock 沒處理 components
+P0300,same,兩者都指出移除 isinstance dict 檢查

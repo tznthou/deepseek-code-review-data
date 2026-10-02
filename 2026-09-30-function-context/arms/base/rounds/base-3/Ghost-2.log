@@ -1,0 +1,3 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 7196 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 apps/comments-ui/src/components/content/forms/form.tsx:308 → 313（片段唯一命中）
+[info] 完成於 11.6s ｜ findings=4 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 3579, "completion_tokens": 1093, "total_tokens": 4672, "prompt_tokens_details": {"cached_tokens": 3456}, "prompt_cache_hit_tokens": 3456, "prompt_cache_miss_tokens": 123}

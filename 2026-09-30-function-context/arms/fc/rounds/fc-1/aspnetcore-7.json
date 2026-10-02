@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "多 host 情境下 manager 可能被錯誤覆寫",
+    "body": "條件 `if (manager && currentRendererId === rendererId)` 僅在 rendererId 相同時拋出錯誤。若不同 rendererId（例如 Server 與 WebAssembly 同時存在），則會直接覆寫全域變數 `manager` 與 `currentRendererId`，導致先前 host 的 manager 遺失。這可能造成動態 root components 操作指向錯誤的 manager，或先前 host 的元件無法正常運作。\n\n建議：在多 host 情境下應明確禁止或隔離狀態，例如使用 Map 以 rendererId 為鍵儲存 manager，或至少在覆寫前記錄警告並確保舊 manager 不再被使用。",
+    "existing_code": "if (manager && currentRendererId === rendererId) {\n    // A different renderer type (e.g., Server vs WebAssembly) is trying to enable JS root components.\n    // This is a multi-host scenario which is not supported for dynamic root components.\n    throw new Error('Dynamic root components have already been enabled.');\n  }",
+    "evidence": "diff 中新增的條件判斷僅在 rendererId 相同時拋錯，但未處理不同 rendererId 的情況，直接執行後續賦值。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "hasInitializedJsComponents 旗標可能導致初始化遺漏",
+    "body": "`hasInitializedJsComponents` 為全域布林值，一旦設為 true 後，即使後續呼叫傳入不同的 `jsComponentInitializers` 或 `jsComponentParameters`，也不會重新執行初始化。若不同 renderer 需要不同的初始化集合，此旗標會阻止必要的初始化。\n\n建議：考慮以 rendererId 或初始化內容的 hash 作為鍵來判斷是否需要重新初始化，或明確記錄此限制。",
+    "existing_code": "if (!hasInitializedJsComponents) {\n    // Call the registered initializers. This is an arbitrary subset of the JS component types that are registered\n    // on the .NET side - just those of them that require some JS-side initialization (e.g., to register them\n    // as custom elements).\n    for (const [initializerIdentifier, componentIdentifiers] of Object.entries(jsComponentInitializers)) {\n      const initializerFunc = DotNet.findJSFunction(initializerIdentifier, 0) as JSComponentInitializerCallback;\n      for (const componentIdentifier of componentIdentifiers)\n        initializerFunc(componentIdentifier, jsComponentParameters[componentIdentifier]);\n    }\n\n    hasInitializedJsComponents = true;\n  }",
+    "evidence": "diff 中新增的旗標控制初始化區塊，但未考慮不同呼叫間參數可能不同的情況。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/Tests/StatePersistenceTest.cs",
+    "line": 282,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試方法缺少 async 關鍵字",
+    "body": "新增的測試方法 `PersistentStateIsSupportedInDynamicJSRoots` 未標記為 `async`，但內部使用了 `Browser.Equal` 等非同步等待方法。雖然這些方法可能內部處理等待，但若未來需要 await 其他操作，將無法使用。建議加上 `async` 並在必要處使用 `await`，以符合測試慣例。",
+    "existing_code": "public void PersistentStateIsSupportedInDynamicJSRoots(string renderMode)",
+    "evidence": "diff 中新增的測試方法簽名缺少 async，與其他測試方法（如上方 `public async Task StateIsProvidedEveryTimeACircuitGetsCreated`）不一致。"
+  }
+]

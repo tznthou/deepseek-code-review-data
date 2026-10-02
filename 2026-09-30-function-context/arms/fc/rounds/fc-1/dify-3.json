@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_transform_node.py",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "render_template 回傳 None 時 len() 會拋出 TypeError",
+    "body": "在 `_run` 中，`rendered = self._template_renderer.render_template(...)` 後直接呼叫 `len(rendered)`。但 `CodeExecutorJinja2TemplateRenderer.render_template` 在 `result.get(\"result\")` 為 None 時會回傳 None（見 template_renderer.py 第 36 行），此時 `len(None)` 會拋出 `TypeError`，且未被 `except TemplateRenderError` 捕捉，導致節點執行崩潰。建議在 renderer 中對 None 結果拋出 `TemplateRenderError`，或在 `_run` 中檢查 `rendered is None` 並回傳失敗。",
+    "existing_code": "rendered = self._template_renderer.render_template(self.node_data.template, variables)\n            if len(rendered) > MAX_TEMPLATE_TRANSFORM_OUTPUT_LENGTH:",
+    "evidence": "template_renderer.py 第 36 行 `return rendered` 可能回傳 None；template_transform_node.py 第 75 行 `len(rendered)` 未處理 None。"
+  },
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_renderer.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "render_template 可能回傳 None，違反回傳型別標註",
+    "body": "`render_template` 的型別標註為 `-> str`，但當 `result.get(\"result\")` 為 None 時會回傳 None。這會導致呼叫端在未檢查的情況下發生型別錯誤。建議在 None 時拋出 `TemplateRenderError`，確保回傳值永遠是 str。",
+    "existing_code": "rendered = result.get(\"result\")\n        if rendered is not None and not isinstance(rendered, str):\n            raise TemplateRenderError(\"Template render result must be a string.\")\n        return rendered",
+    "evidence": "第 34-36 行：rendered 可能為 None，直接回傳。"
+  },
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_transform_node.py",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "預設 renderer 未使用 factory 注入的 code_executor",
+    "body": "`TemplateTransformNode.__init__` 中，若未提供 `template_renderer`，會建立 `CodeExecutorJinja2TemplateRenderer()`，其內部使用預設的 `CodeExecutor`。但 `DifyNodeFactory` 在建構時可能注入了自訂的 `code_executor`（例如用於測試或沙箱），此時節點使用的 executor 與 factory 不一致。建議將 factory 的 `_code_executor` 傳入 renderer，或由 factory 統一建立 renderer 並注入。",
+    "existing_code": "self._template_renderer = template_renderer or CodeExecutorJinja2TemplateRenderer()",
+    "evidence": "node_factory.py 第 57 行 `self._template_renderer = template_renderer or CodeExecutorJinja2TemplateRenderer(code_executor)` 有傳入 code_executor，但此處未傳。"
+  }
+]

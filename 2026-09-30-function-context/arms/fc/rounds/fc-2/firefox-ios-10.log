@@ -1,0 +1,4 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 37507 字元、thinking=disabled、max_tokens=8192）
+[info] 定位不到 BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift:29（片段多重命中（3 處），不猜）
+[info] 重新定位 firefox-ios/Client/Frontend/Home/Homepage/SectionHeader/LabelButtonHeaderView.swift:104 → 106（片段唯一命中）
+[info] 完成於 10.8s ｜ findings=4 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 10279, "completion_tokens": 1080, "total_tokens": 11359, "prompt_tokens_details": {"cached_tokens": 10240}, "prompt_cache_hit_tokens": 10240, "prompt_cache_miss_tokens": 39}

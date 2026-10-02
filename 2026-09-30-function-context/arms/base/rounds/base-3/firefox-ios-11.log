@@ -1,0 +1,4 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 14230 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift:332 → 329（片段唯一命中）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift:462 → 465（片段唯一命中）
+[info] 完成於 12.3s ｜ findings=4 ｜ relocated=2 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 4947, "completion_tokens": 1333, "total_tokens": 6280, "prompt_tokens_details": {"cached_tokens": 4864}, "prompt_cache_hit_tokens": 4864, "prompt_cache_miss_tokens": 83}

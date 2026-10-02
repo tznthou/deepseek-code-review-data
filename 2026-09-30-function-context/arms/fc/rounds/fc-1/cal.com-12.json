@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "搜尋與過濾功能失效：直接使用 teamMembers 取代 filteredMembers",
+    "body": "原本使用 `filteredMembers` 來根據 `searchQuery` 和 `assignAllTeamMembers` 過濾顯示的成員，但現在改為直接 map `teamMembers`，導致搜尋框輸入不會過濾列表，且當 `assignAllTeamMembers` 為 false 時，仍會顯示所有團隊成員，而非僅限於已指派者。\n\n**失敗情境**：使用者輸入搜尋關鍵字，列表不會更新；或未勾選「指派所有成員」時，仍看到未指派的成員。\n\n**建議**：恢復使用 `filteredMembers`，或將過濾邏輯套用至 `teamMembers` 後再 map。",
+    "existing_code": "{teamMembers.map((member) => (\n  <TeamMemberItem key={member.value} member={member} onWeightChange={handleWeightChange} />\n))}",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且 `filteredMembers` 的 useMemo 仍存在但未使用。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 307,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "空狀態判斷錯誤：使用 teamMembers.length 而非 filteredMembers.length",
+    "body": "原本以 `filteredMembers.length === 0` 顯示「無成員」訊息，現在改為 `teamMembers.length === 0`，導致當過濾後無結果時，不會顯示空狀態，反而顯示所有成員。\n\n**失敗情境**：搜尋無匹配成員時，列表仍顯示所有成員，且無空狀態提示。\n\n**建議**：改回使用 `filteredMembers.length`。",
+    "existing_code": "{teamMembers.length === 0 && (\n  <div className=\"text-subtle py-4 text-center text-sm\">{t(\"no_members_found\")}</div>\n)}",
+    "evidence": "diff 中將 `filteredMembers.length` 改為 `teamMembers.length`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/hooks/useTeamMembersWithSegment.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "傳遞給 useProcessTeamMembersData 的 matchingTeamMembersWithResult 型別可能不符",
+    "body": "`useProcessTeamMembersData` 期望 `matchingTeamMembersWithResult` 為 `{ result: TeamMemberDto[] | null }`，但此處傳入的是 `matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult`。當 `matchingTeamMembersWithResult` 為 undefined 時，會傳入 undefined，可能導致型別錯誤或執行時期問題。\n\n**失敗情境**：當查詢未啟用或尚未回傳時，`matchingTeamMembersWithResult` 為 undefined，傳入 undefined 可能導致 `useProcessTeamMembersData` 內部存取 `matchingTeamMembersWithResult?.result` 時出錯。\n\n**建議**：確保傳入的物件符合型別，或調整 `useProcessTeamMembersData` 的參數型別以接受 undefined。",
+    "existing_code": "matchingTeamMembersWithResult: matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult,",
+    "evidence": "diff 中新增的 hook 檔案，此行程式碼可能造成型別不符。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 128,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "isPending 未用於載入狀態",
+    "body": "從 `useTeamMembersHook` 解構出 `isPending`，但未在 UI 中使用。當資料載入中時，使用者可能看到舊資料或空白，且無法得知載入狀態。\n\n**建議**：使用 `isPending` 來顯示載入指示器或停用相關按鈕。",
+    "existing_code": "const { teamMembers, localWeightsInitialValues, isPending } = useTeamMembersHook({",
+    "evidence": "diff 中新增解構 `isPending`，但後續未使用。"
+  }
+]

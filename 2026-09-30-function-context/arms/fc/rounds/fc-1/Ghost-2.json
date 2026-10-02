@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "editor.setEditable 條件改為 member?.expertise 可能導致無 expertise 的成員無法編輯",
+    "body": "原本條件為 `!!memberName && progress !== 'sending'`，現在改為 `!!member?.expertise && progress !== 'sending'`。若已登入成員沒有設定 expertise（例如新使用者或未填寫），即使有 name，編輯器也會被設為不可編輯，導致無法輸入回覆。建議改回使用 `memberName` 或同時檢查兩者，並新增測試涵蓋此情境。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`，且測試僅涵蓋 expertise 為 null 時不繼承父留言，未驗證編輯器是否可編輯。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 313,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "openForm 參數改為必填，需確認所有呼叫點皆已更新",
+    "body": "FormWrapper 的 props 型別中 `openForm?: OpenCommentForm` 改為 `openForm: OpenCommentForm`，且使用 `openForm.in_reply_to_snippet` 時不再使用可選串連。若其他元件未傳入 openForm，可能導致執行時期錯誤。請確認所有使用 FormWrapper 的地方都已傳入 openForm。",
+    "existing_code": "const isReplyToReply = !!openForm.in_reply_to_snippet;",
+    "evidence": "diff 中此行由 `const isReplyToReply = !!openForm?.in_reply_to_snippet;` 改為 `const isReplyToReply = !!openForm.in_reply_to_snippet;`，且 props 型別移除可選標記。"
+  }
+]

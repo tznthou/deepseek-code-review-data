@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "listFeaturesForUser 過濾條件寫反，導致回傳全域停用的功能",
+    "body": "在 `listFeaturesForUser` 中，原本的過濾條件是 `.filter((state) => state.globalEnabled)`，但此 PR 改成了 `.filter((state) => !state.globalEnabled)`。這會讓使用者只看到全域停用的功能，而看不到啟用的功能，完全違反預期行為。\n\n**失敗情境**：當使用者呼叫 `listForUser` API 時，所有全域啟用的 opt-in 功能都會被隱藏，而全域停用的功能反而會出現在列表中。\n\n**建議修法**：將條件改回 `.filter((state) => state.globalEnabled)`。",
+    "existing_code": "return featureIds.map((featureId) => resolvedStates[featureId]).filter((state) => !state.globalEnabled);",
+    "evidence": "diff 中此行由原本的 `.filter((state) => state.globalEnabled)` 改為 `.filter((state) => !state.globalEnabled)`，且註解仍寫著「Only returns features that are in the allowlist, globally enabled, and scoped to \"user\"」，明顯矛盾。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/featureOptIn/_router.ts",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "setUserState mutation 缺少 await，可能導致未處理的 rejection",
+    "body": "在 `setUserState` mutation 中，呼叫 `featureOptInService.setUserFeatureState(...)` 時沒有加上 `await`。這會使得該 Promise 的錯誤（例如 scope 驗證失敗的 ErrorWithCode）不會被 tRPC 捕獲，導致客戶端收到成功回應，但實際上狀態並未更新。\n\n**失敗情境**：當使用者嘗試設定一個不屬於 user scope 的功能時，service 會 throw ErrorWithCode，但因為沒有 await，這個錯誤會變成 unhandled promise rejection，而 API 仍回傳 `{ success: true }`。\n\n**建議修法**：加上 `await`，讓錯誤能正確傳播。",
+    "existing_code": "featureOptInService.setUserFeatureState({\n        userId: ctx.user.id,\n        featureId: input.slug,\n        state: input.state,\n        assignedBy: ctx.user.id,\n      });",
+    "evidence": "diff 中此處原本有 `await`，但被移除。其他 mutation（如 setTeamState、setOrganizationState）都保留 `await`。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/config.ts",
+    "line": 5,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "未使用的常數 UNUSED_CONSTANT 應移除",
+    "body": "新增的 `UNUSED_CONSTANT` 常數沒有被任何地方使用，且其名稱暗示這是測試用的殘留程式碼。這會觸發 lint 警告，並增加不必要的維護負擔。\n\n**建議修法**：直接刪除此常數。",
+    "existing_code": "const UNUSED_CONSTANT = \"this-should-be-removed\";",
+    "evidence": "diff 中新增了此常數，但整個 PR 中沒有其他引用。"
+  }
+]

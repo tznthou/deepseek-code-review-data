@@ -1,0 +1,46 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "URL 前綴解析可能產生錯誤結果",
+    "body": "在解析 bookingUrl 以取得前綴時，程式碼直接使用 `url.hostname`，但未包含 port（若存在），且未處理子路徑可能包含使用者名稱以外的情況。此外，若 bookingUrl 為相對路徑或格式不符，`new URL` 會拋出例外，但 catch 區塊僅回退到 `cal.com/${props.username}/`，可能與實際網域不符。建議使用更穩健的解析方式，或直接顯示完整 bookingUrl。",
+    "existing_code": "const url = new URL(props.bookingUrl);\n                      // Get path without the last segment (slug)\n                      const pathParts = url.pathname.split(\"/\").filter(Boolean);\n                      pathParts.pop(); // Remove slug\n                      // Compute prefix outside try/catch for React Compiler\n                      let prefix = \"/\";\n                      if (pathParts.length > 0) {\n                        prefix = `/${pathParts.join(\"/\")}/`;\n                      }\n                      return `${url.protocol}//${url.hostname}${prefix}`;",
+    "evidence": "diff 中新增的 URL 解析邏輯，使用 hostname 而非 host，且未處理 port；pathParts.pop() 假設最後一段是 slug，但若 bookingUrl 包含查詢參數或 hash 則可能出錯。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 949,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "bookingUrl 可能未初始化即被使用",
+    "body": "handlePreview 和 handleCopyLink 現在依賴 bookingUrl state，但該 state 的設定位置未在 diff 中顯示。若 bookingUrl 從未被設定（例如 API 未回傳或設定失敗），使用者將無法預覽或複製連結，且錯誤訊息可能誤導（提示先儲存，但儲存後可能仍無效）。建議確認 bookingUrl 的來源與更新時機，並提供更明確的錯誤處理。",
+    "existing_code": "if (!bookingUrl) {\n      showErrorAlert(\"Error\", \"Booking URL not available. Please save the event type first.\");\n      return;\n    }",
+    "evidence": "diff 中新增的檢查，但未見 bookingUrl 的賦值邏輯，可能導致功能失效。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "複製連結時未使用 bookingUrl",
+    "body": "在 copyBtn 的事件處理中，bookingUrl 的建構仍使用舊的 `https://cal.com/...` 方式，未使用 eventType.bookingUrl。這可能導致複製的連結與實際 bookingUrl 不一致（例如使用自訂網域時）。建議與 previewBtn 一樣使用 eventType.bookingUrl 或 fallback。",
+    "existing_code": "const bookingUrl =\n                      `https://cal.com/${\n                        eventType.users?.[0]?.username || \"user\"\n                      }/${eventType.slug}`;",
+    "evidence": "diff 中 copyBtn 的程式碼未修改，而 previewBtn 已改為使用 eventType.bookingUrl。"
+  },
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 266,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "URL 前綴顯示可能包含多餘的斜線",
+    "body": "當 bookingUrl 為根路徑（例如 `https://cal.com/username`）時，pathParts.pop() 後 pathParts 為空，prefix 設為 \"/\"，最後回傳 `https://cal.com/`，但實際應為 `https://cal.com/username/`。這可能導致顯示的 URL 前綴不正確。",
+    "existing_code": "let prefix = \"/\";\n                      if (pathParts.length > 0) {\n                        prefix = `/${pathParts.join(\"/\")}/`;\n                      }",
+    "evidence": "diff 中的邏輯未考慮 pathParts 為空的情況。"
+  }
+]

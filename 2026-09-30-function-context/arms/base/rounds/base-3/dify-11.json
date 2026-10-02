@@ -1,0 +1,68 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "tool_call_response 的 content 誤用 tool_inputs 而非 tool_responses",
+    "body": "在 organize_agent_history 中，原本 tool_call_response 的 content 是 `tool_responses.get(tool, agent_thought.observation)`，但此 PR 改為 `str(tool_inputs.get(tool, agent_thought.observation))`。這會導致回傳給使用者的工具回應內容變成工具的輸入參數，而非實際的觀察結果，造成資料錯誤。\n\n失敗情境：當 agent 使用工具並產生 observation 時，使用者看到的將是輸入參數而非工具輸出。\n\n建議：改回使用 `tool_responses`，並移除不必要的 `str()` 轉換（若原本就是字串）。",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中此行由 `content=tool_responses.get(tool, agent_thought.observation),` 改為 `content=str(tool_inputs.get(tool, agent_thought.observation)),`，明顯誤植變數。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1838,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "MessageAgentThought 改繼承 TypeBase 可能影響既有資料相容性",
+    "body": "原本 `class MessageAgentThought(Base)` 改為 `class MessageAgentThought(TypeBase)`。若 TypeBase 與 Base 在 SQLAlchemy 的設定上有所不同（例如 declarative base 不同），可能導致 ORM 行為改變，影響查詢或關聯。\n\n失敗情境：若 TypeBase 未包含某些 Base 的 mixin 或設定，可能導致 session 操作失敗或關聯載入異常。\n\n建議：確認 TypeBase 與 Base 的關係，並驗證所有使用 MessageAgentThought 的查詢與關聯仍正常運作。",
+    "existing_code": "class MessageAgentThought(TypeBase):",
+    "evidence": "diff 中顯示類別繼承由 `Base` 改為 `TypeBase`，但未提供 TypeBase 的定義，無法確認其相容性。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1850,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "id 欄位新增 default_factory 可能與 insert_default 衝突",
+    "body": "id 欄位同時設定了 `insert_default` 和 `default_factory`，兩者皆用於產生預設值。在 SQLAlchemy 中，同時存在可能導致行為不一致或錯誤。\n\n失敗情境：在某些操作下，ORM 可能優先使用其中一個，導致 id 產生方式與預期不符。\n\n建議：移除其中一個，或確認兩者同時存在是必要且正確的。",
+    "existing_code": "id: Mapped[str] = mapped_column(\n        StringUUID, insert_default=lambda: str(uuid4()), default_factory=lambda: str(uuid4()), init=False\n    )",
+    "evidence": "diff 中新增了 `default_factory`，但保留了原有的 `insert_default`。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 319,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "message_unit_price 與 answer_price_unit 的預設值可能與既有資料不一致",
+    "body": "在 create_agent_thought 中，`message_unit_price` 由 `0` 改為 `Decimal(0)`，`message_price_unit` 由 `0` 改為 `Decimal(\"0.001\")`，`answer_unit_price` 由 `0` 改為 `Decimal(\"0.001\")`，`answer_price_unit` 由 `0` 改為 `Decimal(0)`。這些變更可能影響計費邏輯，且與模型定義中的 server_default 不完全一致。\n\n失敗情境：若既有資料依賴舊的預設值，可能導致計算錯誤或顯示異常。\n\n建議：確認這些預設值變更是有意為之，並與模型定義及資料庫 schema 對齊。",
+    "existing_code": "message_unit_price=Decimal(0),\n            message_price_unit=Decimal(\"0.001\"),\n            message_files=json.dumps(messages_ids) if messages_ids else \"\",\n            answer=\"\",\n            observation=\"\",\n            answer_token=0,\n            answer_unit_price=Decimal(\"0.001\"),\n            answer_price_unit=Decimal(0),",
+    "evidence": "diff 中顯示這些欄位的值由整數改為 Decimal，且部分值與模型定義的 server_default 不同。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 365,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "save_agent_thought 中字串串接方式改變可能影響效能",
+    "body": "原本 `agent_thought.thought += thought` 改為 `existing_thought = agent_thought.thought or \"\"` 再 `agent_thought.thought = f\"{existing_thought}{thought}\"`。雖然功能相同，但若 thought 欄位很大，此方式會建立多餘的字串物件。\n\n失敗情境：在大量 agent thought 累積時，可能造成不必要的記憶體壓力。\n\n建議：若無特殊原因，可保留原本的 `+=` 寫法。",
+    "existing_code": "existing_thought = agent_thought.thought or \"\"\n            agent_thought.thought = f\"{existing_thought}{thought}\"",
+    "evidence": "diff 中顯示此段邏輯被改寫，但功能等價。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 469,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "organize_agent_history 中 tool_inputs 與 tool_responses 的解析邏輯重複且可能不一致",
+    "body": "原本對 tool_input 和 observation 的 JSON 解析各自獨立，現在改為先檢查是否為空字串再解析。但兩者的處理邏輯幾乎相同，可考慮抽成輔助函式以減少重複。\n\n失敗情境：若未來需要修改解析邏輯，可能只改到其中一處而導致不一致。\n\n建議：將 JSON 解析邏輯抽成共用函式。",
+    "existing_code": "tool_input_payload = agent_thought.tool_input\n                        if tool_input_payload:\n                            try:\n                                tool_inputs = json.loads(tool_input_payload)\n                            except Exception:\n                                tool_inputs = {tool: {} for tool in tool_names}\n                        else:\n                            tool_inputs = {tool: {} for tool in tool_names}\n\n                        observation_payload = agent_thought.observation\n                        if observation_payload:\n                            try:\n                                tool_responses = json.loads(observation_payload)\n                            except Exception:\n                                tool_responses = dict.fromkeys(tool_names, observation_payload)\n                        else:\n                            tool_responses = dict.fromkeys(tool_names, observation_payload)",
+    "evidence": "diff 中顯示兩段相似的解析邏輯。"
+  }
+]

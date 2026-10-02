@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "變更標記邊為跳過的順序可能導致競態條件",
+    "body": "原本先標記邊為跳過再遞迴傳播，現在改為先遞迴傳播再標記。若遞迴過程中依賴邊的狀態，可能讀到未更新的狀態。需要確認 `propagate_skip_from_edge` 是否會讀取該邊的狀態，以及此變更是否會影響其他並行操作。",
+    "existing_code": "self.propagate_skip_from_edge(edge.id)\nself._state_manager.mark_edge_skipped(edge.id)",
+    "evidence": "diff 中 `_propagate_skip_to_node` 方法內，兩行程式碼的順序對調。"
+  },
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "新增的 print 陳述式可能造成 log 污染",
+    "body": "在生產程式碼中使用 `print` 會將訊息輸出到 stdout，可能干擾正常的 log 格式或造成不必要的輸出。建議改用正式的 logging 模組，或移除該陳述式。",
+    "existing_code": "print(f\"Starting execution for node: {downstream_node_id}\")",
+    "evidence": "diff 中新增的 `print` 陳述式，位於 `propagate_skip_from_edge` 方法內。"
+  }
+]

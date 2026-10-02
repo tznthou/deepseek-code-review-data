@@ -1,0 +1,112 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/Launch/LaunchTypeTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "setUp 中呼叫 @MainActor 方法但類別未標註 @MainActor",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor 方法，但 `LaunchTypeTests` 類別本身沒有標註 @MainActor。在 Swift 6 嚴格並發檢查下，從非隔離的 async 方法呼叫 @MainActor 方法需要 await，但此處已加上 await，理論上可行；然而若測試方法本身在非主執行緒執行，可能導致後續操作不在主執行緒。建議確認測試類別是否需要標註 @MainActor，或確保所有相關操作都在主執行緒。",
+    "existing_code": "await DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws，並呼叫 await DependencyHelperMock().bootstrapDependencies()，但類別宣告 `final class LaunchTypeTests: XCTestCase` 沒有 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "setUp 中呼叫 @MainActor 方法但類別未標註 @MainActor",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor 方法，但 `LaunchScreenViewModelTests` 類別沒有標註 @MainActor。此處未加 await（diff 中仍為 `DependencyHelperMock().bootstrapDependencies()`），在 Swift 6 下可能導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws，但 bootstrapDependencies 呼叫未加 await，且類別未標註 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CreditCard/CreditCardSettingsViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "setUp 中呼叫 @MainActor 方法但類別未標註 @MainActor",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor 方法，但 `CreditCardSettingsViewControllerTests` 類別沒有標註 @MainActor。此處已加 await，但若測試方法在非主執行緒執行，可能導致後續操作不在主執行緒。",
+    "existing_code": "await DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws，並呼叫 await DependencyHelperMock().bootstrapDependencies()，但類別宣告 `final class CreditCardSettingsViewControllerTests: XCTestCase` 沒有 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CustomSearchEnginesTest.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "setUp 中呼叫 @MainActor 方法但類別未標註 @MainActor",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor 方法，但 `CustomSearchEnginesTest` 類別沒有標註 @MainActor。此處已加 await，但若測試方法在非主執行緒執行，可能導致後續操作不在主執行緒。",
+    "existing_code": "await DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws，並呼叫 await DependencyHelperMock().bootstrapDependencies()，但類別宣告 `class CustomSearchEnginesTest: XCTestCase` 沒有 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "setUp 中呼叫 @MainActor 方法但類別未標註 @MainActor",
+    "body": "`DependencyHelperMock().bootstrapDependencies()` 現在是 @MainActor 方法，但 `DownloadProgressManagerTests` 類別沒有標註 @MainActor。此處未加 await（diff 中仍為 `DependencyHelperMock().bootstrapDependencies()`），在 Swift 6 下可能導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws，但 bootstrapDependencies 呼叫未加 await，且類別未標註 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/Launch/LaunchTypeTests.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "tearDown 中呼叫 DependencyHelperMock().reset() 未加 await",
+    "body": "`DependencyHelperMock().reset()` 可能也是 @MainActor 方法（需確認），若為 @MainActor 且 tearDown 為 async，則應加上 await。目前 diff 中未加 await，可能導致編譯錯誤或執行緒問題。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但 reset() 呼叫未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "tearDown 中呼叫 AppContainer.shared.reset() 可能需 await",
+    "body": "`AppContainer.shared.reset()` 若為 @MainActor 方法，在 async tearDown 中應加上 await。目前未加，可能導致編譯錯誤。",
+    "existing_code": "AppContainer.shared.reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但 reset() 呼叫未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CreditCard/CreditCardSettingsViewControllerTests.swift",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "tearDown 中呼叫 DependencyHelperMock().reset() 未加 await",
+    "body": "`DependencyHelperMock().reset()` 可能也是 @MainActor 方法，若為 @MainActor 且 tearDown 為 async，則應加上 await。目前未加，可能導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但 reset() 呼叫未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CustomSearchEnginesTest.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "tearDown 中呼叫 AppContainer.shared.reset() 可能需 await",
+    "body": "`AppContainer.shared.reset()` 若為 @MainActor 方法，在 async tearDown 中應加上 await。目前未加，可能導致編譯錯誤。",
+    "existing_code": "AppContainer.shared.reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但 reset() 呼叫未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "tearDown 中呼叫 DependencyHelperMock().reset() 未加 await",
+    "body": "`DependencyHelperMock().reset()` 可能也是 @MainActor 方法，若為 @MainActor 且 tearDown 為 async，則應加上 await。目前未加，可能導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但 reset() 呼叫未加 await。"
+  }
+]

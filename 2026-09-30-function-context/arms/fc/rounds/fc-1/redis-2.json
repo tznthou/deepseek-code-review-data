@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "asmCreateImportTask 的記憶體所有權轉移可能造成 double-free 或 use-after-free",
+    "body": "在 `asmCreateImportTask` 中，原本使用 `slotRangeArrayDup(slots)` 複製一份 slots，現在改為直接指派 `task->slots = slots`，並在錯誤路徑中釋放 `slots`。這表示呼叫端（如 `clusterMigrationCommandImport`）不再需要釋放 slots，但其他呼叫端（如 `clusterAsmProcess`）可能仍持有原始指標，導致 double-free 或 use-after-free。\n\n具體情境：\n1. `clusterMigrationCommandImport` 呼叫 `parseSlotRangesOrReply` 取得 slots，然後傳給 `asmCreateImportTask`。若 `asmCreateImportTask` 成功，slots 的所有權轉移給 task，之後 task 釋放時會 free slots。但 `clusterMigrationCommandImport` 在成功後沒有釋放 slots，這是正確的。\n2. 然而，`clusterAsmProcess` 在 `ASM_EVENT_IMPORT_START` 事件中，先 `slotRangeArrayDup(arg)` 複製一份 slots，然後呼叫 `asmCreateImportTask`。若 `asmCreateImportTask` 失敗，它會釋放傳入的 slots（即複製的那份），但 `clusterAsmProcess` 在失敗後沒有釋放原始 `arg`，這可能導致記憶體洩漏。若 `asmCreateImportTask` 成功，則 task 擁有複製的 slots，但 `clusterAsmProcess` 也沒有釋放原始 `arg`，同樣可能洩漏。\n\n建議：明確所有權規則，例如讓 `asmCreateImportTask` 總是複製 slots，或讓呼叫端在成功後不再持有所有權，並在文件或註解中說明。",
+    "existing_code": "task->slots = slots;",
+    "evidence": "diff 中 `task->slots = slotRangeArrayDup(slots);` 改為 `task->slots = slots;`，且錯誤路徑新增 `slotRangeArrayFree(slots);`。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1855,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "slotRangeArraySortAndMerge 未合併重疊區間，可能導致驗證失敗或錯誤合併",
+    "body": "`slotRangeArraySortAndMerge` 的註解明確指出「Overlapping ranges are not merged.」，但函式名稱和用途暗示會合併相鄰區間。若輸入包含重疊區間（例如 `0-100 50-150`），排序後相鄰檢查 `prev.end + 1 == next.start` 不成立，因此不會合併，但後續的 `slotRangeArrayNormalizeAndValidate` 會偵測到重疊並回傳錯誤。這可能不是預期行為，因為呼叫端可能期望重疊區間被合併或至少被視為有效。\n\n具體情境：\n- 使用者輸入 `CLUSTER MIGRATION IMPORT 0 100 50 150`，預期可能被視為 `0-150`，但實際上會因為重疊而回傳錯誤。\n- 若未來有其他程式碼依賴此函式來正規化重疊區間，可能會產生非預期結果。\n\n建議：明確函式的行為，若只合併相鄰區間，應在函式名稱或註解中強調，並確保所有呼叫端都了解重疊區間不會被合併。或者考慮合併重疊區間，以符合直覺。",
+    "existing_code": "/* Sort slot ranges by start slot and merge adjacent ranges.\n * Adjacent means: prev.end + 1 == next.start.\n * e.g. 1000-2000 2001-3000 0-100  =>  0-100 1000-3000\n *\n * Note: Overlapping ranges are not merged.*/",
+    "evidence": "diff 中新增的函式註解明確指出重疊區間不會被合併，但函式名稱 `slotRangeArraySortAndMerge` 可能造成誤解。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "parseSlotRangesOrReply 中錯誤訊息釋放方式變更可能造成記憶體洩漏",
+    "body": "在 `parseSlotRangesOrReply` 中，原本在驗證失敗時使用 `addReplyErrorSds(c, err)` 將錯誤訊息傳給客戶端，該函式會負責釋放 `err`。現在改為 `sdsfree(err)` 後直接回傳 NULL，但沒有將錯誤訊息回覆給客戶端。這可能導致客戶端收到不明確的錯誤（例如只有 generic error），且若 `err` 為 NULL 時呼叫 `sdsfree` 可能不安全。\n\n具體情境：\n- 當 `slotRangeArrayNormalizeAndValidate` 回傳錯誤並設定 `err`，程式會釋放 `err` 但沒有回覆客戶端，客戶端可能只看到 generic error，難以除錯。\n- 若 `err` 為 NULL（例如某些錯誤路徑未設定），`sdsfree(NULL)` 可能導致 crash（取決於實作）。\n\n建議：保留 `addReplyErrorSds` 或明確回覆錯誤訊息，並確保 `err` 不為 NULL 再釋放。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n    sdsfree(err);\n    slotRangeArrayFree(slots);\n    return NULL;\n}",
+    "evidence": "diff 中原本的 `addReplyErrorSds(c, err);` 被移除，改為 `sdsfree(err);`。"
+  }
+]

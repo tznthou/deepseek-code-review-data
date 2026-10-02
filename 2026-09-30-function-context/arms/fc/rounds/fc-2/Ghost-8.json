@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "翻譯中遺漏變數 {newsletterName}",
+    "body": "翻譯字串 '{memberEmail} will no longer receive {newsletterName} newsletter.' 的譯文從 '{memberEmail}将不会再收到{newsletterName}的新闻信。' 改為 '{memberEmail}将不会再收到新闻信。'，遺漏了 {newsletterName} 變數。這會導致使用者無法得知具體是哪個新聞信，且可能造成格式錯誤。請保留變數，例如：'{memberEmail}将不会再收到{newsletterName}新闻信。'",
+    "existing_code": "\"{memberEmail} will no longer receive {newsletterName} newsletter.\": \"{memberEmail}将不会再收到新闻信。\"",
+    "evidence": "diff 中此行將原本包含 {newsletterName} 的譯文改為不含變數的版本。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/comments.json",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除 comments.json 可能導致評論功能缺少翻譯",
+    "body": "此 PR 刪除了整個 comments.json 檔案，但未提供替代檔案或說明。若程式碼仍引用這些翻譯鍵，將導致評論相關介面顯示原始英文或出現錯誤。請確認是否有其他語系檔或合併計畫，否則應保留此檔案或提供替代方案。",
+    "existing_code": "deleted file mode 100644",
+    "evidence": "diff 中顯示 comments.json 被刪除，且無新增對應檔案。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 117,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "翻譯 'Name' 從 '名字' 改為 '名稱' 可能造成語意混淆",
+    "body": "在 portal.json 中，'Name' 的翻譯從 '名字' 改為 '名稱'。'名稱' 通常用於物件或非人類實體，而此處可能用於使用者姓名，建議維持 '名字' 或使用 '姓名'。請確認上下文後調整。",
+    "existing_code": "\"Name\": \"名称\"",
+    "evidence": "diff 中此行將 'Name' 的翻譯改為 '名称'。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 213,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "翻譯 'You're not receiving emails' 從 '您当前不会收到电子邮件。' 改為 '您将不会收到邮件。' 可能改變時態",
+    "body": "原文 'You're not receiving emails' 是現在進行式，表示目前狀態，但新譯文 '您将不会收到邮件。' 使用未來式，可能造成誤解。建議改為 '您当前不会收到邮件。' 或 '您目前不会收到邮件。'",
+    "existing_code": "\"You're not receiving emails\": \"您将不会收到邮件。\"",
+    "evidence": "diff 中此行將原本的現在式翻譯改為未來式。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "遞迴順序變更可能導致狀態不一致",
+    "body": "原本先標記邊為 skipped 再遞迴傳播，現在改為先遞迴再標記。若遞迴過程中發生例外，邊的狀態可能未被正確標記，導致後續節點狀態分析錯誤。建議確認此順序變更的必要性，或加入例外處理確保狀態一致性。",
+    "existing_code": "self.propagate_skip_from_edge(edge.id)\n            self._state_manager.mark_edge_skipped(edge.id)",
+    "evidence": "diff 中 _propagate_skip_to_node 方法的變更：將 mark_edge_skipped 移到 propagate_skip_from_edge 之後。"
+  },
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "使用 print 輸出日誌",
+    "body": "新增的 `print(f\"Starting execution for node: {downstream_node_id}\")` 會將訊息輸出到標準輸出，可能污染正式環境的日誌或影響效能。建議改用 logging 模組，並設定適當的日誌層級。",
+    "existing_code": "print(f\"Starting execution for node: {downstream_node_id}\")",
+    "evidence": "diff 中新增的 print 陳述式，位於 propagate_skip_from_edge 方法內。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/graph_traversal/test_skip_propagator.py",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "測試斷言不足",
+    "body": "在 test_propagate_skip_to_node_marks_node_and_outgoing_edges_skipped 中，僅驗證 mark_edge_skipped 被呼叫，未驗證 propagate_skip_from_edge 是否被正確呼叫。建議使用 mock 的 assert_called_with 或檢查呼叫順序。",
+    "existing_code": "assert mock_state_manager.mark_edge_skipped.call_count == 2",
+    "evidence": "測試中僅檢查 call_count，未驗證 propagate_skip_from_edge 的呼叫。"
+  }
+]

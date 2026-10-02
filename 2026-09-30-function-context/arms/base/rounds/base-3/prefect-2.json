@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 202,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "fail() 方法中 triggered 事件的 related 參數誤用",
+    "body": "在 `fail()` 方法中，`prefect.automation.action.triggered` 事件的 `related` 參數被設定為 `self._resulting_related_resources`，而非建構好的 `related_resources`。這會導致該事件缺少 `triggering-event` 和 `automation-triggered-event` 關聯，破壞事件追蹤功能。\n\n**失敗情境**：當 action 失敗時，產生的 `action.triggered` 事件將不包含任何相關資源，使用者無法從該事件追溯到觸發事件或 automation 狀態變更事件。\n\n**建議修法**：將該行改為 `related=related_resources`。",
+    "existing_code": "related=self._resulting_related_resources,",
+    "evidence": "diff 中第 202 行（新增側）顯示 `related=self._resulting_related_resources`，而同一方法中後續的 `action.failed` 事件使用 `related=related_resources`。"
+  },
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 177,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "related_resources 順序可能導致事件關聯不一致",
+    "body": "在 `fail()` 和 `succeed()` 方法中，`related_resources` 先加入 `automation-triggered-event`，再加入 `triggering-event`。若下游依賴順序（例如測試或序列化），可能造成非預期行為。建議確認順序是否應為 `triggering-event` 在前，或明確文件化順序。\n\n**失敗情境**：若事件消費者假設第一個 related resource 是 `triggering-event`，則會解析錯誤。",
+    "existing_code": "if triggered_action.automation_triggered_event_id:\n                related_resources.append(\n                    RelatedResource(\n                        {\n                            \"prefect.resource.id\": f\"prefect.event.{triggered_action.automation_triggered_event_id}\",\n                            \"prefect.resource.role\": \"automation-triggered-event\",\n                        }\n                    )\n                )",
+    "evidence": "diff 中新增的程式碼區塊顯示先加入 automation-triggered-event，後續才加入 triggering-event。"
+  },
+  {
+    "path": "src/prefect/server/events/schemas/automations.py",
+    "line": 774,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "field_validator 使用 info.data 可能無法取得其他欄位值",
+    "body": "在 Pydantic v2 中，`field_validator` 的 `info.data` 僅包含已驗證的欄位，若 `triggering_event` 在 `automation_triggered_event_id` 之後定義，則 `info.data.get(\"triggering_event\")` 可能為 `None`，導致驗證錯誤。建議改用 `model_validator` 或確認欄位順序。\n\n**失敗情境**：若模型欄位順序變更，或使用 `model_construct` 跳過驗證，可能誤報錯誤。",
+    "existing_code": "def validate_automation_triggered_event_id(cls, v, info):\n        \"\"\"Ensure automation_triggered_event_id is only set when triggering_event exists.\"\"\"\n        if v is not None and info.data.get(\"triggering_event\") is None:\n            raise ValueError(\n                \"automation_triggered_event_id can only be set when triggering_event is provided\"\n            )\n        return v",
+    "evidence": "diff 中新增的 validator 依賴 `info.data`，但未保證欄位順序。"
+  }
+]

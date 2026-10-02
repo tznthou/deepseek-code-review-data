@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Popover hover 互動可能因間隙而意外關閉",
+    "body": "在桌面端，Popover 的開啟與關閉依賴於 trigger 與 content 的 onMouseEnter/onMouseLeave。然而，PopoverContent 與 trigger 之間可能存在視覺間隙（例如 margin 或定位偏移），當滑鼠移動到間隙時，會觸發 mouseleave 而關閉 popover，導致使用者無法將滑鼠移至內容上。建議使用 Radix Popover 的內建 hover 支援（如 `openOnHover` 或 `hoverable` 屬性），或加入延遲關閉機制。",
+    "existing_code": "onMouseEnter={handleMouseEnter}\n              onMouseLeave={handleMouseLeave}>",
+    "evidence": "LimitedBadges.tsx 第 75-76 行，trigger 的 onMouseEnter/onMouseLeave 直接控制 isOpen，但未處理間隙問題。"
+  },
+  {
+    "path": "apps/web/modules/users/components/UserTable/UserListTable.tsx",
+    "line": 251,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "屬性 badge 的權重與群組標記合併為單一 label，可能造成視覺混淆",
+    "body": "原本的實作將權重顯示為獨立的 badge（帶有不同背景色），並以橘色 badge 表示群組選項。現在將權重與群組標記直接附加在 label 文字中（例如 \"選項 80% (group)\"），可能讓使用者難以快速區分權重與群組狀態，且喪失了原有的視覺提示。建議保留原有的雙 badge 設計，或至少將權重以不同樣式呈現。",
+    "existing_code": "let label = attributeValue.value;\n                    label = `${label} ${weight}`;\n                    label = `${label}${groupIndicator}`;",
+    "evidence": "UserListTable.tsx 第 260-262 行，將 weight 與 groupIndicator 直接串接至 label。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 label 作為 key 可能導致重複 key 警告",
+    "body": "在 visibleItems 與 hiddenItems 的 map 中，使用 item.label 作為 key。如果兩個 badge 具有相同的 label（例如多個團隊同名或屬性值相同），React 會發出重複 key 的警告，並可能導致渲染錯誤。建議使用更穩定的唯一識別碼（如 id 或 index 與 label 的組合）。",
+    "existing_code": "<Badge key={item.label} variant={item.variant || \"gray\"} onClick={item.onClick}>",
+    "evidence": "LimitedBadges.tsx 第 58 行，key={item.label}。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "hiddenItems 的 span 缺少 onClick 處理，可能導致點擊無反應",
+    "body": "在 popover 中，hiddenItems 的 span 元素沒有 onClick 處理，但 BadgeItem 型別允許 onClick。如果未來傳入具有 onClick 的項目，點擊將不會觸發任何動作。建議為 span 加上 onClick={item.onClick}，或明確限制此處不支援點擊。",
+    "existing_code": "<span\n                  key={item.label}\n                  className=\"text-default cursor-pointer text-sm hover:text-emphasis\">\n                  {item.label}\n                </span>",
+    "evidence": "LimitedBadges.tsx 第 88-92 行，span 未綁定 onClick。"
+  }
+]

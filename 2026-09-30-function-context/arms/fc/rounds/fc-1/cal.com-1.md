@@ -1,0 +1,116 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 將 bookings 查詢的權限判斷從「僅 ADMIN/OWNER 角色」改為「透過 PBAC 權限服務（booking.read）與 fallback 角色」，並在 repository 層加入 orgId 範圍過濾。主要風險在於 SQL 查詢的 orgId 過濾條件可能導致結果不正確、getTeamIdsWithPermission 未傳遞 orgId 造成範圍過濾失效，以及測試中 mock 行為與實際實作不一致。建議優先修正 orgId 傳遞與 SQL 條件，並補齊測試。
+
+### Findings（8 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `packages/features/pbac/infrastructure/repositories/PermissionRepository.ts:222` | getTeamIdsWithPermission 未將 orgId 傳遞給 getTeamIdsWithPermissions | 0.90 |
+| ⚠️ | Major | `packages/features/pbac/infrastructure/repositories/PermissionRepository.ts:174` | PBAC 查詢的 orgId 過濾條件可能排除應包含的團隊 | 0.80 |
+| ⚠️ | Major | `packages/features/pbac/infrastructure/repositories/PermissionRepository.ts:205` | Fallback 查詢的 orgId 過濾條件可能排除應包含的團隊 | 0.80 |
+| ⚠️ | Major | `packages/features/pbac/infrastructure/repositories/PermissionRepository.ts:357` | Fallback 查詢的 UNION 部分 orgId 過濾條件不一致 | 0.80 |
+| ⚠️ | Major | `packages/trpc/server/routers/viewer/bookings/get.handler.ts:134` | getBookings 中 teamIdsWithBookingPermission 可能為空陣列，導致查詢範圍不正確 | 0.80 |
+| ⚠️ | Major | `packages/trpc/server/routers/viewer/bookings/get.handler.ts:149` | isCurrentUser 判斷邏輯變更可能導致權限繞過 | 0.80 |
+| 🔸 | Minor | `packages/trpc/server/routers/viewer/bookings/get.handler.test.ts:120` | 測試中 mock 的 PermissionCheckService 未包含 getTeamIdsWithPermissions 方法 | 0.70 |
+| 🔸 | Minor | `packages/trpc/server/routers/viewer/bookings/get.handler.test.ts:200` | 測試中 mock 的 kysely 查詢鏈可能與實際實作不符 | 0.70 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>packages/features/pbac/infrastructure/repositories/PermissionRepository.ts:222</code> getTeamIdsWithPermission 未將 orgId 傳遞給 getTeamIdsWithPermissions</summary>
+
+在 `getTeamIdsWithPermission` 方法中，呼叫 `this.getTeamIdsWithPermissions` 時未包含 `orgId` 參數，導致即使呼叫端提供 `orgId`，實際查詢也不會套用組織範圍過濾。這會造成權限範圍擴大，可能讓使用者取得不屬於其組織的團隊 ID。
+
+**失敗情境**：呼叫 `getTeamIdsWithPermission({ userId, permission, fallbackRoles, orgId: 123 })` 時，`orgId` 被忽略，回傳所有符合權限的團隊，而非僅限於 org 123 及其子團隊。
+
+**建議修法**：將 `orgId` 傳入 `getTeamIdsWithPermissions` 呼叫中：
+```ts
+return this.getTeamIdsWithPermissions({ userId, permissions: [permission], fallbackRoles, orgId });
+```
+
+**判斷依據**：diff 中 `getTeamIdsWithPermission` 方法新增了 `orgId` 參數，但呼叫 `getTeamIdsWithPermissions` 時未包含 `orgId`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/features/pbac/infrastructure/repositories/PermissionRepository.ts:174</code> PBAC 查詢的 orgId 過濾條件可能排除應包含的團隊</summary>
+
+在 `getTeamsWithPBACPermissions` 的第一個 SELECT 中，orgId 過濾條件為 `(t."id" = ${orgId} OR t."parentId" = ${orgId})`。這表示當 `orgId` 指定為某個組織 ID 時，只會回傳該組織本身或其直接子團隊。然而，若使用者是透過組織成員身分取得權限，且目標團隊是組織的孫層級（grandchild），則會被排除。
+
+**失敗情境**：組織 A（id=1）有子團隊 B（parentId=1），B 有子團隊 C（parentId=B.id）。使用者是組織 A 的成員，具有 booking.read 權限，查詢 `orgId=1` 時，團隊 C 不會被回傳，但實際上使用者應有權限存取 C 的 bookings。
+
+**建議修法**：考慮使用遞迴 CTE 或調整條件以包含所有後代團隊，或確認業務需求是否僅限直接子團隊。
+
+**判斷依據**：diff 中新增的 orgId 過濾條件僅檢查 `t.id` 或 `t.parentId`，未涵蓋更深層級的團隊。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/features/pbac/infrastructure/repositories/PermissionRepository.ts:205</code> Fallback 查詢的 orgId 過濾條件可能排除應包含的團隊</summary>
+
+在 `getTeamsWithFallbackRoles` 的第一個 SELECT 中，orgId 過濾條件為 `(t."id" = ${orgId} OR t."parentId" = ${orgId})`，同樣只包含組織本身及其直接子團隊。若使用者是組織成員，且目標團隊是更深層級的子團隊，則會被排除。
+
+**失敗情境**：組織 A（id=1）有子團隊 B（parentId=1），B 有子團隊 C（parentId=B.id）。使用者是組織 A 的 ADMIN，查詢 `orgId=1` 時，團隊 C 不會被回傳。
+
+**建議修法**：與 PBAC 查詢相同，需確認業務需求並調整條件以涵蓋所有後代團隊。
+
+**判斷依據**：diff 中新增的 orgId 過濾條件僅檢查 `t.id` 或 `t.parentId`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/features/pbac/infrastructure/repositories/PermissionRepository.ts:357</code> Fallback 查詢的 UNION 部分 orgId 過濾條件不一致</summary>
+
+在 `getTeamsWithFallbackRoles` 的 UNION 部分，orgId 過濾條件為 `(org."id" = ${orgId} OR child."id" = ${orgId} OR child."parentId" = ${orgId})`。此條件與第一個 SELECT 不同，可能導致結果不一致。例如，當 `orgId` 指定為某個子團隊 ID 時，第一個 SELECT 會回傳該子團隊（因為 `t.id = orgId`），但 UNION 部分可能不會回傳該子團隊（因為條件要求 `org.id = orgId` 或 `child.id = orgId` 或 `child.parentId = orgId`，若該子團隊是組織的直接子團隊，則 `child.parentId = orgId` 成立，但若該子團隊是更深層級，則可能不成立）。
+
+**失敗情境**：組織 A（id=1）有子團隊 B（parentId=1），B 有子團隊 C（parentId=B.id）。使用者是組織 A 的 ADMIN，查詢 `orgId=B.id` 時，第一個 SELECT 會回傳 B（因為 `t.id = B.id`），但 UNION 部分可能不會回傳 C（因為 `org.id = B.id` 不成立，`child.id = B.id` 不成立，`child.parentId = B.id` 成立，但此處 `child` 是 C，其 parentId 是 B.id，所以條件成立，但若 C 是更深層級則可能不成立）。
+
+**建議修法**：統一兩個 SELECT 的 orgId 過濾邏輯，確保行為一致。
+
+**判斷依據**：diff 中 UNION 部分的 orgId 條件與第一個 SELECT 不同。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/trpc/server/routers/viewer/bookings/get.handler.ts:134</code> getBookings 中 teamIdsWithBookingPermission 可能為空陣列，導致查詢範圍不正確</summary>
+
+在 `getBookings` 中，`teamIdsWithBookingPermission` 是透過 `permissionCheckService.getTeamIdsWithPermission` 取得。若使用者沒有任何符合權限的團隊，此陣列為空。後續呼叫 `getEventTypeIdsFromTeamIdsFilter(prisma, teamIdsWithBookingPermission)` 和 `getUserIdsAndEmailsFromTeamIds(prisma, teamIdsWithBookingPermission)` 時，若傳入空陣列，可能導致查詢條件 `in: []` 而回傳空結果，或產生 SQL 錯誤。
+
+**失敗情境**：使用者沒有 booking.read 權限且不是 ADMIN/OWNER，`teamIdsWithBookingPermission` 為空陣列。`getUserIdsAndEmailsFromTeamIds` 中 `teamIds.length === 0` 會回傳 `[[], []]`，但 `getEventTypeIdsFromTeamIdsFilter` 可能未處理空陣列，導致查詢 `eventType.findMany({ where: { teamId: { in: [] } } })` 可能回傳空陣列或拋出錯誤。
+
+**建議修法**：在呼叫前檢查 `teamIdsWithBookingPermission.length`，若為 0 則直接設定 `eventTypeIdsWhereUserHasBookingPermission = []` 和 `userIdsAndEmailsWhereUserHasBookingPermission = [[], []]`，避免不必要的查詢。
+
+**判斷依據**：diff 中將原本的 `membershipConditionWhereUserIsAdminOwner` 替換為 `teamIdsWithBookingPermission`，但未處理空陣列情況。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>packages/trpc/server/routers/viewer/bookings/get.handler.ts:149</code> isCurrentUser 判斷邏輯變更可能導致權限繞過</summary>
+
+原本的 `isCurrentUser` 判斷為 `filters.userIds.length === 1 && user.id === filters.userIds[0]`，現在改為 `filters.userIds.includes(user.id)`。這表示若 `filters.userIds` 包含多個 ID，且其中包含當前使用者 ID，則 `isCurrentUser` 為 true，即使其他 ID 不在可存取範圍內，也不會觸發 FORBIDDEN 錯誤。這可能導致使用者可以查詢到不應存取的 bookings。
+
+**失敗情境**：使用者 A（id=1）請求 `filters.userIds = [1, 2]`，其中使用者 2 不屬於 A 的團隊或組織。由於 `isCurrentUser` 為 true，`areUserIdsWithinUserOrgOrTeam` 的檢查被跳過，A 可以取得使用者 2 的 bookings。
+
+**建議修法**：恢復原本的嚴格判斷，或改為檢查所有 userIds 是否都在可存取範圍內，且當前使用者 ID 必須單獨存在時才視為 current user。
+
+**判斷依據**：diff 中將 `isCurrentUser` 的判斷從 `filters.userIds.length === 1 && user.id === filters.userIds[0]` 改為 `filters.userIds.includes(user.id)`。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>packages/trpc/server/routers/viewer/bookings/get.handler.test.ts:120</code> 測試中 mock 的 PermissionCheckService 未包含 getTeamIdsWithPermissions 方法</summary>
+
+在測試中，`PermissionCheckService` 被 mock 為僅有 `getTeamIdsWithPermission` 方法。但實際的 `getBookings` 函式僅呼叫 `getTeamIdsWithPermission`，因此測試可能通過。然而，若未來程式碼改為呼叫 `getTeamIdsWithPermissions`，測試將失敗。此外，mock 的實作與實際 service 的介面不完全一致，可能掩蓋潛在問題。
+
+**建議修法**：在 mock 中加入 `getTeamIdsWithPermissions` 方法，或使用更完整的 mock 以反映實際介面。
+
+**判斷依據**：diff 中 mock 的 PermissionCheckService 僅包含 `getTeamIdsWithPermission`。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>packages/trpc/server/routers/viewer/bookings/get.handler.test.ts:200</code> 測試中 mock 的 kysely 查詢鏈可能與實際實作不符</summary>
+
+測試中手動建立了 mock 的 kysely query builder，但其實作可能與實際的 kysely 鏈式呼叫不完全一致。例如，`selectFrom` 回傳的物件需要支援所有鏈式方法，但測試中的 mock 可能遺漏某些方法或行為，導致測試無法準確反映實際執行情況。
+
+**建議修法**：使用更完整的 kysely mock 或考慮使用整合測試來驗證實際查詢行為。
+
+**判斷依據**：diff 中測試手動建立 mock query builder，可能無法完全模擬實際 kysely 行為。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 27964 (cache hit 1536) ｜ completion tokens 3398 ｜ PR #1</sub>

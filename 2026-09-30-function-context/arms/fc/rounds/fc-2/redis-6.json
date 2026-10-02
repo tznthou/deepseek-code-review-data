@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "active_defrag_enabled 恢復方式錯誤，可能永久停用主動碎片整理",
+    "body": "在 `rdbLoadEmptyDbFunc()` 中，程式碼先將 `server.active_defrag_enabled` 儲存至 `orig_active_defrag`，然後設為 0，但在 `emptyData()` 呼叫後卻直接設回 1，而非恢復為 `orig_active_defrag`。\n\n**失敗情境**：若使用者在執行 replicaof 同步前已將 `activedefrag` 設為 `no`（即 `server.active_defrag_enabled` 原本為 0），則此函式執行後會將該值強制設為 1，導致主動碎片整理被意外啟用，可能造成不必要的延遲或資源消耗。\n\n**建議修法**：將 `server.active_defrag_enabled = 1;` 改為 `server.active_defrag_enabled = orig_active_defrag;`。",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的兩行：`int orig_active_defrag = server.active_defrag_enabled;` 與 `server.active_defrag_enabled = 1;`。前者儲存原始值，後者卻忽略該值直接設為 1，明顯違反註解所述「Restore the original active defragmentation setting」。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2707,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "streamEntryIsReferenced 在 cgroups_ref 為 NULL 時直接回傳 1，可能導致記憶體洩漏或錯誤保留",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 會在 `cgroups_ref` 為 NULL 時直接回傳 1，表示該 entry 被引用。這可能發生在 RDB 載入後，若 stream 有 consumer groups 但尚未建立 `cgroups_ref`（例如所有 PEL 皆為空）。\n\n**失敗情境**：當 `cgroups_ref` 為 NULL 且 `min_cgroup_last_id` 小於 entry ID 時，原本應回傳 0（未被引用），但現在會回傳 1，導致 `XADD` 或 `XTRIM` 無法刪除實際上已無引用的 entry，造成記憶體無法釋放。\n\n**建議修法**：確認 `cgroups_ref` 為 NULL 時的預期行為。若 NULL 代表沒有 PEL 引用，應回傳 0；若代表未知，則應先建立 `cgroups_ref` 或採用其他方式判斷。",
+    "existing_code": "/* Check if the message is in any consumer group's PEL */\n    if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 新增的 `if (!s->cgroups_ref) return 1;` 位於原本的 `raxFind` 呼叫之前。原本若 `cgroups_ref` 為 NULL，`raxFind` 可能無法處理，但直接回傳 1 可能過度保守，影響記憶體回收。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 100,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中 discard_replies_every 的 discard_num 參數可能與實際回覆數不符",
+    "body": "在 `discard_replies_every` 的呼叫中，部分傳入的 `discard_num` 可能與該迴圈每次迭代產生的回覆數不一致。例如在 `Active defrag big list` 測試中，每次迭代會產生兩個回覆（`lpush` 兩次），但呼叫時傳入的 `discard_num` 為 20000，而 `frequency` 為 10000，這表示每 10000 次迭代會丟棄 20000 個回覆，但實際上每 10000 次迭代會產生 20000 個回覆，因此正確。然而在其他地方（如 `Active defrag big keys` 的 `hset` 迴圈）每次迭代只產生一個回覆，但傳入的 `discard_num` 為 10000，頻率為 10000，這也正確。需要逐一檢查所有呼叫點，確保 `discard_num` 等於 `frequency` 乘以每次迭代的回覆數。\n\n**建議**：在程式碼審查中確認所有呼叫點的參數正確性，或考慮改為自動計算回覆數。",
+    "existing_code": "discard_replies_every $rd $count 10000 10000",
+    "evidence": "diff 中多處將原本的 `if {$count % 10000 == 0} { for {set k 0} {$k < 10000} {incr k} { $rd read } }` 替換為 `discard_replies_every $rd $count 10000 10000`。此重構本身合理，但需確保參數與實際回覆數匹配。"
+  }
+]

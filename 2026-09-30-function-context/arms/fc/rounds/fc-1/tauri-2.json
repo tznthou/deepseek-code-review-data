@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 312,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "檔案寫入前設定權限可能導致失敗",
+    "body": "在 `write_and_make_executable` 中，先呼叫 `fs::set_permissions` 再呼叫 `fs::write`。若檔案不存在，`set_permissions` 會回傳錯誤，導致函式失敗。應先寫入檔案再設定權限。",
+    "existing_code": "fs::set_permissions(path, fs::Permissions::from_mode(0o770)).map_err(FileWriteError::Permissions)?;\n  fs::write(path, data).map_err(FileWriteError::Write)?;",
+    "evidence": "diff 中新增的 `write_and_make_executable` 函式將原本的 `fs::write` 與 `fs::set_permissions` 順序對調，且未檢查檔案是否存在。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "linuxdeploy 下載 URL 使用錯誤的架構變數",
+    "body": "原本使用 `linuxdeploy_arch`（i686 對應 i383），但修改後改為直接使用 `arch`。這可能導致 i686 架構下載到錯誤的檔案。",
+    "existing_code": "let data = download(&format!(\"https://github.com/tauri-apps/binary-releases/releases/download/linuxdeploy/linuxdeploy-{arch}.AppImage\"))?;",
+    "evidence": "diff 中將 `{linuxdeploy_arch}` 改為 `{arch}`，但 `linuxdeploy_arch` 的定義仍存在且用於 i686 的轉換。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 326,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "使用 sed 對二進位檔案進行路徑替換可能損壞檔案",
+    "body": "最後一行 `find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;` 會對所有 libwebkit 相關檔案執行 sed 替換，但這些檔案可能是二進位格式，直接替換字串可能導致檔案損壞。",
+    "existing_code": "find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;",
+    "evidence": "此為新增腳本內容，且 sed 對二進位檔案操作有風險。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "GStreamer 0.10 的 AppRun hook 使用錯誤的版本路徑",
+    "body": "在 `GSTREAMER_VERSION == \"0.10\"` 的分支中，`GST_PLUGIN_SYSTEM_PATH_0_10` 被設定為 `${APPDIR}/usr/lib/gstreamer-1.0`，但應為 `gstreamer-0.10`。",
+    "existing_code": "export GST_PLUGIN_SYSTEM_PATH_0_10=\"${APPDIR}/usr/lib/gstreamer-1.0\"",
+    "evidence": "diff 中該行位於 0.10 分支，但路徑包含 1.0。"
+  }
+]

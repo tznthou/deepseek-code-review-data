@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Logging.AzureAppServices/src/AzureFileLoggerOptions.cs",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "RetainedFileCountLimit 驗證條件變更可能允許 0 值",
+    "body": "原本的驗證條件為 `if (value <= 0)`，會拒絕 0 和負數；變更後為 `if (value < 0)`，允許 0 值。但屬性文件說明為「strictly positive value」，且錯誤訊息仍為「must be positive」，因此 0 值可能導致後續邏輯錯誤（例如保留 0 個檔案）。建議確認 0 是否為有效值，若不是則應維持 `<= 0` 的檢查。",
+    "existing_code": "if (value < 0)",
+    "evidence": "diff 中將 `if (value <= 0)` 改為 `if (value < 0)`，但文件仍描述為 strictly positive，且錯誤訊息未變更。"
+  },
+  {
+    "path": "src/Logging.AzureAppServices/src/BatchingLoggerOptions.cs",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "BackgroundQueueSize 驗證條件變更可能允許 0 值",
+    "body": "原本的驗證條件為 `if (value < 0)`，允許 0 值；變更後為 `if (value <= 0)`，拒絕 0 值。但屬性文件說明為「maximum size of the background log message queue or null for no limit」，且錯誤訊息仍為「must be non-negative」，因此 0 值可能被視為有效（表示無佇列？）。建議確認 0 是否為有效值，若不是則應更新錯誤訊息與文件。",
+    "existing_code": "if (value <= 0)",
+    "evidence": "diff 中將 `if (value < 0)` 改為 `if (value <= 0)`，但文件仍描述為 non-negative，且錯誤訊息未變更。"
+  },
+  {
+    "path": "src/Validation/src/ValidationOptions.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "out 參數初始化位置變更可能影響行為",
+    "body": "在 `TryGetValidatableTypeInfo` 方法中，原本在迴圈後才將 `validatableTypeInfo` 設為 null，現在移到方法開頭。這在功能上等價，但若未來在迴圈前加入其他邏輯，可能造成影響。建議確認此變更是否必要，或僅為程式碼整理。",
+    "existing_code": "validatableTypeInfo = null;",
+    "evidence": "diff 中將 `validatableTypeInfo = null;` 從方法結尾移至開頭。"
+  }
+]

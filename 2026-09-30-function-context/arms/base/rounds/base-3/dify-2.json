@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳未定義的 `True` 可能導致 ReferenceError",
+    "body": "在 `handleJSONSchemaChange` 中，成功解析 JSON 後回傳了 `True`（大寫 T）。在 TypeScript/JavaScript 中，`True` 不是內建的全域變數，除非有自訂的全域宣告，否則執行到此處會拋出 `ReferenceError: True is not defined`。這會中斷函式執行，且由於此函式是事件處理器，錯誤可能不會被明顯捕捉，導致 UI 行為異常。建議改為回傳 `true` 或直接不回傳值。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的 `return True` 行，在 TypeScript 中 `True` 未定義。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 311,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`jsonSchemaValue` 可能不是字串，導致 JSON.parse 收到非字串",
+    "body": "在 `handleConfirm` 中，`jsonSchemaValue` 的型別是 `InputVar['json_schema']`，可能是 `string | undefined`。程式碼先檢查 `!isSchemaEmpty && typeof jsonSchemaValue === 'string'`，但 `isSchemaEmpty` 的實作中，若 `value` 不是 null/undefined 且不是字串，會回傳 `false`。因此，若 `jsonSchemaValue` 是其他型別（例如數字或物件），`isSchemaEmpty` 會回傳 `false`，但 `typeof jsonSchemaValue === 'string'` 會是 `false`，所以不會進入 JSON.parse 的區塊，而是直接呼叫 `onConfirm`。這可能導致非字串的 schema 被儲存，與預期不符。建議在 `isJsonSchemaEmpty` 中明確處理非字串型別，或在此處增加型別檢查。",
+    "existing_code": "if (!isSchemaEmpty && typeof jsonSchemaValue === 'string') {\n        try {\n          const schema = JSON.parse(jsonSchemaValue)",
+    "evidence": "diff 中新增的型別檢查條件，但 `isSchemaEmpty` 對非字串型別的回傳值可能造成邏輯漏洞。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 255,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "空 schema 設定為 undefined 可能與後端預期不符",
+    "body": "在 `handleConfirm` 中，若 schema 為空，會將 `json_schema` 設為 `undefined` 後傳給 `onConfirm`。這可能導致後端收到缺少 `json_schema` 欄位的 payload，若後端預期該欄位存在（即使是空字串），可能造成錯誤。建議確認後端 API 對 `json_schema` 的處理方式，或改為傳送空字串。",
+    "existing_code": "const payloadToSave = isSchemaEmpty\n      ? { ...tempPayload, json_schema: undefined }\n      : tempPayload",
+    "evidence": "diff 中新增的 payloadToSave 邏輯，將空 schema 設為 undefined。"
+  }
+]

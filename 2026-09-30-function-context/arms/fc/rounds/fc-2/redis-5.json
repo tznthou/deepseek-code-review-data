@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/object.c",
+    "line": 1330,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "Stream listpack 估算可能重複計算最後一個 listpack",
+    "body": "在 stream 的記憶體估算中，當 `s->rax->numele > samples` 時，程式碼先以平均大小乘以 `s->rax->numele`（而非原本的 `numele-1`），然後又加上最後一個 listpack 的實際大小。這會導致最後一個 listpack 被計算兩次（一次在平均估算中，一次在實際大小中），造成記憶體高估。\n\n建議改回 `asize += lpsize * (s->rax->numele-1);` 或調整後續的實際大小加法邏輯。",
+    "existing_code": "asize += lpsize * s->rax->numele;",
+    "evidence": "diff 中將 `asize += lpsize * (s->rax->numele-1);` 改為 `asize += lpsize * s->rax->numele;`，但下方仍保留 `asize += zmalloc_size(ri.data);` 來加上最後一個 listpack 的實際大小。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1239,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Quicklist 取樣平均計算可能除零",
+    "body": "在 quicklist 的估算中，原本使用 `elecount` 作為分母，但 `elecount` 可能為 0（例如 quicklist 為空或所有節點均為空），導致除以零。修改後改用 `samples` 作為分母，但 `samples` 也可能為 0（例如 quicklist 為空或 `sample_size` 為 0）。\n\n建議在計算前檢查 `samples` 是否為 0，若為 0 則跳過平均計算。",
+    "existing_code": "asize += (double)elesize/samples*ql->count;",
+    "evidence": "diff 中將 `asize += (double)elesize/elecount*ql->count;` 改為 `asize += (double)elesize/samples*ql->count;`，但未對 `samples` 進行零值檢查。"
+  },
+  {
+    "path": "src/object.c",
+    "line": 1217,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "kvobjComputeSize 中 asize 初始化可能包含未初始化記憶體",
+    "body": "`asize` 初始化為 `malloc_usable_size((void *)o)`，但 `malloc_usable_size` 可能回傳大於實際配置的大小，且未初始化的部分可能包含垃圾資料。雖然這只是估算，但可能導致不穩定的結果。\n\n建議改用 `zmalloc_size(o)` 或確保 `o` 的記憶體已初始化。",
+    "existing_code": "size_t asize = malloc_usable_size((void *)o);",
+    "evidence": "diff 中新增 `size_t asize = malloc_usable_size((void *)o);`，但未見對 `o` 的記憶體初始化保證。"
+  }
+]

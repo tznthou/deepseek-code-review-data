@@ -1,0 +1,24 @@
+# 依副檔名對應 git 內建的 funcname driver（git help gitattributes「Defining a custom hunk-header」）。
+# 只列這批 PR 會出現、且 git 有內建 driver 的語言；JS／TS／Swift 沒有內建 driver，不列。
+# 以 core.attributesFile 傳入，優先序低於 repo 自己的 .gitattributes。
+*.cs diff=csharp
+*.razor diff=csharp
+*.py diff=python
+*.pyi diff=python
+*.rs diff=rust
+*.c diff=cpp
+*.h diff=cpp
+*.cc diff=cpp
+*.cpp diff=cpp
+*.hpp diff=cpp
+*.go diff=golang
+*.java diff=java
+*.kt diff=kotlin
+*.rb diff=ruby
+*.php diff=php
+*.m diff=objc
+*.css diff=css
+*.html diff=html
+*.md diff=markdown
+*.mdx diff=markdown
+*.sh diff=bash

@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "使用 malloc 取代 zmalloc 可能導致記憶體未初始化或未對齊",
+    "body": "在 clusterCommonInit() 中，原本使用 zmalloc 配置 server.cluster_slot_stats，現在改為 malloc。zmalloc 會將記憶體初始化為零，而 malloc 不會。若後續程式碼假設 slot stats 已歸零（例如 resetClusterStats() 可能只重置部分欄位），可能導致未定義行為或錯誤的統計數據。建議改回 zmalloc 或使用 zcalloc。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的 clusterCommonInit() 使用 malloc，而原本在 server.c 中使用 zmalloc。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2137,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "clusterCommonInit() 呼叫順序可能導致未初始化相依性",
+    "body": "clusterCommonInit() 呼叫 resetClusterStats() 和 asmInit()，但這兩個函式可能依賴其他尚未初始化的全域狀態（例如 server.cluster 或 asm 相關結構）。原本在 clusterInit() 中呼叫的順序是 resetClusterStats() 在 clusterUpdateMyselfIp() 等之後，asmInit() 在最後。現在提前到 clusterInit() 之前，可能造成相依性問題。建議確認這些函式的相依性，或調整呼叫順序。",
+    "existing_code": "void clusterCommonInit(void) {\n    server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));\n    resetClusterStats();\n    asmInit();\n}",
+    "evidence": "diff 中新增 clusterCommonInit()，並在 server.c 中於 clusterInit() 之前呼叫。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "clusterDeleteKeysInUnownedSlots() 可能誤刪正在遷移中的 key",
+    "body": "此函式會刪除所有不在自己 slot 中的 key，但未檢查 slot 是否正在進行 legacy 遷移（例如 MIGRATING 狀態）。雖然註解提到 atomic slot migration 安全，但 legacy 遷移中若節點是 migrating 狀態，刪除 key 可能導致資料遺失。建議增加對 migrating 狀態的檢查，或確認此函式僅在特定條件下呼叫。",
+    "existing_code": "clusterDelKeysInSlot(i, 0);",
+    "evidence": "diff 中新增的 clusterDeleteKeysInUnownedSlots() 直接呼叫 clusterDelKeysInSlot，未檢查 migrating 狀態。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2212,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "verifyClusterConfigWithData() 中 clusterClaimUnassignedSlots() 可能覆蓋既有設定",
+    "body": "clusterClaimUnassignedSlots() 會將所有有 key 但無主的 slot 指派給自己，但未檢查是否已有其他節點正在進行遷移或設定。這可能導致叢集狀態不一致。建議在 claim 前檢查 slot 是否處於特殊狀態，或增加日誌記錄。",
+    "existing_code": "clusterClaimUnassignedSlots();",
+    "evidence": "diff 中新增的 verifyClusterConfigWithData() 呼叫 clusterClaimUnassignedSlots()，而該函式在 cluster_legacy.c 中實作。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 1658,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "asmCron() 呼叫位置變更可能影響效能",
+    "body": "原本 asmCron() 在 clusterCron() 內部呼叫，現在移至 serverCron() 中與 clusterCron() 並列。這可能改變執行頻率或順序，若 asmCron() 有相依於 clusterCron() 的狀態更新，可能造成問題。建議確認兩者之間的相依性。",
+    "existing_code": "asmCron();\n            clusterCron();",
+    "evidence": "diff 中 server.c 的 serverCron() 修改。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 1842,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "asmBeforeSleep() 呼叫順序可能影響叢集狀態",
+    "body": "原本 asmBeforeSleep() 在 clusterBeforeSleep() 內部呼叫，現在移至 beforeSleep() 中於 clusterBeforeSleep() 之後呼叫。若 asmBeforeSleep() 需要 clusterBeforeSleep() 的結果，順序變更可能造成問題。建議確認相依性。",
+    "existing_code": "clusterBeforeSleep();\n        asmBeforeSleep();",
+    "evidence": "diff 中 server.c 的 beforeSleep() 修改。"
+  }
+]

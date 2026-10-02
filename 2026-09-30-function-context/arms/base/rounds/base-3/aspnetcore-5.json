@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "ClientMode 測試中使用了錯誤的泛型型別進行驗證",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，渲染的元件型別是 `GenericComponent<int>`（`typeof(GenericComponent<int>)`），但後續驗證 preamble marker 時卻使用了 `GenericComponent<string>` 的組件名稱與完整名稱：\n```csharp\nAssert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\nAssert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);\n```\n這會導致測試失敗，因為實際序列化的型別資訊應為 `GenericComponent<int>`。建議將這兩行改為使用 `typeof(GenericComponent<int>)`。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\nAssert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 內，渲染時使用 `typeof(GenericComponent<int>)`，但驗證時使用 `typeof(GenericComponent<string>)`，兩者不一致。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "命名空間與類別宣告格式變更可能不必要",
+    "body": "此檔案從 file-scoped namespace（`namespace Microsoft.AspNetCore.Components.Server.Circuits;`）改為 block-scoped namespace，並將類別宣告移至大括號內，但縮排未隨之調整（類別內成員仍維持原縮排）。這可能是無意的格式變更，且與專案其他檔案的風格不一致。建議確認此變更是否必要，若無必要請還原；若必要，請調整縮排以符合規範。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{\n    public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 顯示原本的 file-scoped namespace 被改為 block-scoped，且類別宣告被包在大括號內，但後續成員的縮排未改變，導致格式不一致。"
+  }
+]

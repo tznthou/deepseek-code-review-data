@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Storybook decorator 中 QueryClient 共用可能導致測試隔離問題",
+    "body": "在 decorator 中使用了模組層級的 `queryClient`（第 9 行），並在 `createTestRouter` 中又建立了一個新的 `QueryClient` 傳入 router context。這會造成兩個不同的 QueryClient 實例：一個提供給 `QueryClientProvider`，另一個存在 router context 中。如果元件或其依賴的 hooks 使用 router context 中的 queryClient，快取將不會被共用，可能導致非預期的行為或測試污染。建議統一使用同一個 QueryClient，或明確區分用途。",
+    "existing_code": "const queryClient = new QueryClient({\n\tdefaultOptions: {\n\t\tqueries: {\n\t\t\tretry: false,\n\t\t},\n\t},\n});",
+    "evidence": "第 9-15 行定義了模組層級的 queryClient，第 25 行在 createTestRouter 中又建立了新的 QueryClient 並放入 context。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少錯誤處理，查詢失敗時可能導致整個應用程式崩潰",
+    "body": "使用 `useSuspenseQuery` 會在查詢失敗時拋出錯誤，如果沒有 ErrorBoundary 包覆，錯誤會向上傳播並可能導致整個應用程式崩潰。建議在元件外層加入 ErrorBoundary，或在查詢選項中設定 `throwOnError: false` 並手動處理錯誤狀態。",
+    "existing_code": "const { data: flow } = useSuspenseQuery(buildFLowDetailsQuery(flowId));",
+    "evidence": "第 20 行使用 useSuspenseQuery，但元件本身沒有錯誤處理邏輯。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "連結缺少可存取性標籤，圖示可能被螢幕閱讀器忽略",
+    "body": "連結內容包含圖示和文字，但圖示沒有提供替代文字（如 `aria-hidden` 或 `alt`），且連結本身沒有 `aria-label`。如果圖示是裝飾性的，應加上 `aria-hidden=\"true\"`；如果具有意義，應提供文字描述。這有助於螢幕閱讀器使用者理解連結目的。",
+    "existing_code": "<Icon id=\"Workflow\" className=\"size-4\" />",
+    "evidence": "第 27 行使用了 Icon 元件，但沒有提供任何無障礙屬性。"
+  }
+]

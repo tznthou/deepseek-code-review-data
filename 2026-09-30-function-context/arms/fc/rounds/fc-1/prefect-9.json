@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Storybook 裝飾器中的 queryClient 與元件使用的 queryClient 不一致",
+    "body": "在 `createTestRouter` 中，`context` 使用了 `new QueryClient()`，但裝飾器外層的 `QueryClientProvider` 使用的是模組頂層的 `queryClient`。這可能導致元件內部的 `useSuspenseQuery` 使用到錯誤的 queryClient 實例，造成測試行為不一致或快取問題。建議在 `createTestRouter` 中傳入相同的 `queryClient` 實例，或將 `queryClient` 的建立移到裝飾器內。",
+    "existing_code": "context: { queryClient: new QueryClient() },",
+    "evidence": "diff 中第 24 行顯示 `context: { queryClient: new QueryClient() }`，而第 8-14 行定義了模組層級的 `queryClient`，並在第 36 行用於 `QueryClientProvider`。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "缺少錯誤邊界，useSuspenseQuery 失敗可能導致應用程式崩潰",
+    "body": "元件使用 `useSuspenseQuery`，但沒有提供錯誤邊界（Error Boundary）。如果查詢失敗（例如網路錯誤或 API 回傳 500），React 會將錯誤拋出到最近的錯誤邊界；若沒有錯誤邊界，整個應用程式可能會 unmount。建議在元件外層或應用程式路由層級加入錯誤邊界，以妥善處理查詢失敗的情況。",
+    "existing_code": "const { data: flow } = useSuspenseQuery(buildFLowDetailsQuery(flowId));",
+    "evidence": "diff 中第 20 行顯示使用 `useSuspenseQuery`，但整個元件檔案中沒有錯誤邊界的實作或引入。"
+  }
+]

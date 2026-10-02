@@ -1,0 +1,112 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 陳述式缺少分號",
+    "body": "此檔案中多個 require 陳述式結尾缺少分號，與專案其他檔案的風格不一致。雖然 JavaScript 會自動插入分號，但建議補上以維持一致性。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中顯示原本的 require 陳述式有分號，但新版本移除了分號。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `./services/MemberBREADService` 改為 `./services/member-bread-service` 時，同時將 `BREAD` 改為 `bread`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const MemberBREADService = require('./services/member-bread-service')",
+    "evidence": "diff 中顯示原本為 `MemberBREADService`，新版本改為 `member-bread-service`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `../../lib/magic-link/MagicLink` 改為 `../../lib/magic-link/magic-link`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const MagicLink = require('../../lib/magic-link/magic-link');",
+    "evidence": "diff 中顯示原本為 `MagicLink`，新版本改為 `magic-link`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `../../email-suppression-list/EmailSuppressionList` 改為 `../../email-suppression-list/email-suppression-list`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');",
+    "evidence": "diff 中顯示原本為 `EmailSuppressionList`，新版本改為 `email-suppression-list`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `../../lib/magic-link/MagicLink` 改為 `../../lib/magic-link/magic-link`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const MagicLink = require('../../lib/magic-link/magic-link');",
+    "evidence": "diff 中顯示原本為 `MagicLink`，新版本改為 `magic-link`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `../../email-suppression-list/EmailSuppressionList` 改為 `../../email-suppression-list/email-suppression-list`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');",
+    "evidence": "diff 中顯示原本為 `EmailSuppressionList`，新版本改為 `email-suppression-list`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `../../lib/magic-link/MagicLink` 改為 `../../lib/magic-link/magic-link`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const MagicLink = require('../../lib/magic-link/magic-link');",
+    "evidence": "diff 中顯示原本為 `MagicLink`，新版本改為 `magic-link`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `../../email-suppression-list/EmailSuppressionList` 改為 `../../email-suppression-list/email-suppression-list`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');",
+    "evidence": "diff 中顯示原本為 `EmailSuppressionList`，新版本改為 `email-suppression-list`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `../../lib/magic-link/MagicLink` 改為 `../../lib/magic-link/magic-link`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const MagicLink = require('../../lib/magic-link/magic-link');",
+    "evidence": "diff 中顯示原本為 `MagicLink`，新版本改為 `magic-link`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 問題",
+    "body": "將 `../../email-suppression-list/EmailSuppressionList` 改為 `../../email-suppression-list/email-suppression-list`。在大小寫不敏感的檔案系統上，這可能不會造成問題，但若部署到 Linux 則可能找不到模組。建議確認所有引用都已更新，且檔案名稱完全一致。",
+    "existing_code": "const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');",
+    "evidence": "diff 中顯示原本為 `EmailSuppressionList`，新版本改為 `email-suppression-list`。"
+  }
+]

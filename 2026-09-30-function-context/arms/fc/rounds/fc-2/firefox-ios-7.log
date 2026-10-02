@@ -1,0 +1,4 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 301308 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 BrowserKit/Sources/Common/Utilities/DispatchQueueHelper.swift:16 → 22（片段唯一命中）
+[info] 重新定位 firefox-ios/Client/Utils/MainThreadThrottler.swift:24 → 25（片段唯一命中）
+[info] 完成於 10.2s ｜ findings=2 ｜ relocated=2 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 68267, "completion_tokens": 919, "total_tokens": 69186, "prompt_tokens_details": {"cached_tokens": 68224}, "prompt_cache_hit_tokens": 68224, "prompt_cache_miss_tokens": 43}

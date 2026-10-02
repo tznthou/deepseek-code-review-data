@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 182,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除型別檢查可能導致非 dict 值被指派給 job_vars_schema",
+    "body": "原本的程式碼會檢查 `base_job_template[\"variables\"]` 是否為 dict，若不是則不指派。移除檢查後，若 `variables` 的值不是 dict（例如是字串或 None），`job_vars_schema` 會被指派為該值，後續使用時可能發生型別錯誤。\n\n建議保留型別檢查，或明確處理非 dict 的情況。",
+    "existing_code": "job_vars_schema = base_job_template[\"variables\"]",
+    "evidence": "diff 中刪除了 `if isinstance(variables, dict):` 的檢查，直接指派。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 397,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "部署名稱過濾邏輯變更可能導致錯誤排除",
+    "body": "原本的條件是 `if deployment_names and full_name not in deployment_names:`，現在改為 `if deployment_names and dep.name not in deployment_names:`。這會導致當使用者指定完整名稱（如 `flow-name/deployment-name`）時，`dep.name` 只包含部署名稱部分，因此永遠不會等於完整名稱，造成所有部署都被排除。\n\n建議改回使用 `full_name` 進行比對，或明確處理完整名稱與短名稱的比對邏輯。",
+    "existing_code": "if deployment_names and dep.name not in deployment_names:",
+    "evidence": "diff 中將 `full_name` 改為 `dep.name`。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 220,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 `strict=True` 可能隱藏長度不一致問題",
+    "body": "原本的 `zip(..., strict=True)` 會在兩個序列長度不一致時拋出例外，移除後若 `pool_names_list` 與 `results` 長度不同，會靜默忽略多餘的元素。雖然目前兩者長度應相同，但移除嚴格模式降低了防禦性。\n\n建議保留 `strict=True` 以確保長度一致。",
+    "existing_code": "for name, result in zip(pool_names_list, results):",
+    "evidence": "diff 中移除了 `strict=True`。"
+  }
+]

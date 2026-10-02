@@ -1,0 +1,98 @@
+pair,label,note
+P0801,no,GT 是缺分號的風格規則；finding 講 useEffect 相依陣列為空 - 不同問題
+P0802,same,兩者都指出 confirmBlueskyHandle 的 onSuccess 缺 accountFollows invalidate
+P0803,same,兩者都指出 XCTWaiter.wait 的回傳值 waiter 沒被使用；檢查 waiter 結果的修法同時消除未使用變數
+P0804,no,GT 是 flush 放在迴圈內造成多次 commit；finding 講 selector 長度檢查 - 獨立問題
+P0805,no,GT 是 helper 函式缺 static；finding 講 HSETEX KEEPTTL 複寫的 TTL 行為 - 無關
+P0806,same,兩者都指出 userSelect 移除 locale 導致取消流程 organizer.locale 為 undefined
+P0807,no,GT 是 certDirFullPath 用了 prettyCertDir（含 $HOME）；finding 講 GetFullPath 例外處理 - 獨立缺陷
+P0808,same,兩者都指出 return True 未定義（應為 true）
+P0809,partial,同一行 malloc；GT 是規則要求用 zmalloc；finding 講未檢查 NULL - 不同問題（zmalloc 不回 NULL 所以換掉會順帶消除但 finding 沒提）
+P0810,no,GT 是巢狀 class 缺 final；finding 講 targetFrame 可能為 nil - 無關
+P0811,no,GT 是註解的 format specifier 與 value 不一致；finding 講新增的 V3 字串可能未使用 - 無關
+P0812,no,GT 是條件 num_keys >= 0 誤含無 key 指令；finding 講 cross-slot 分支內重設 slot - 沒提條件問題
+P0813,no,GT 是 rendered 變數作用域造成 UnboundLocalError；finding 講預設 renderer 未用 factory 的 code_executor - 無關
+P0814,no,GT 是 onOpenChange(false) 先於 onCreated 的時序；finding 講 console.error 洩漏敏感資訊 - 無關
+P0815,partial,同一段 advisory lock 程式；GT 講 hash() 跨行程不一致致鎖失效；finding 講 SQLite 無 advisory lock 仍有競態 - 都關於序列化失效但原因不同
+P0816,no,GT 是行寬超過 110；finding 講每次都建新容器 - 無關
+P0817,same,同 P0802 兩者都指出 confirmBlueskyHandle 缺 accountFollows invalidate
+P0818,same,兩者都指出 toIndex 用 tabs.count 而非 count - 1 造成越界
+P0819,no,GT 是 argv[5] 陣列越界；finding 講 createStringObjectFromLongLong 回傳 NULL 未檢查 - 獨立問題
+P0820,same,同一行 navigationAction.targetFrame；GT 主張應改 sourceFrame 且提到 targetFrame 可能為 nil；finding 只抓到 nil 那一半且修法不同 - 依判準只抓一半仍算 same（信心較低）
+P0821,same,兩者都指向移除 thiserror 改手寫 Display/Error；還原 derive 同時解掉兩者
+P0822,partial,同一行 label 串接 weight；GT 講 weights 關閉時多出尾端空白；finding 講合併成單一 badge 造成資訊混淆 - 相關但不同問題
+P0823,no,GT 是 createTFunction 不支援 returnObjects；finding 講缺單元測試 - 無關
+P0824,partial,同一個類別；GT 是缺 @MainActor；finding 講不必要的 singleton 並帶到執行緒安全 - 相關但沒指出缺 @MainActor
+P0825,no,GT 是缺 AAA 註解；finding 講斷言 && 可能過嚴 - 無關
+P0826,no,GT 是 require 路徑大小寫錯（magic-link vs MagicLink）；finding 講缺分號 - 無關
+P0827,same,兩者都指出 expect 在 name 為 None 時 panic（finding 說原本有 fallback）
+P0828,no,GT 是字串該用單引號；finding 講 getUrlHistory 回傳型別 - 無關
+P0829,same,兩者都指出 notlike 缺 escape 參數
+P0830,no,GT 是檔案比較運算元順序（描述含糊）；finding 講讀不到 tauri.properties 時 versionCode 重設為 1 - 無關
+P0831,no,GT 是回傳 identifier 而非 token；finding 講 buildInviteLink 條件反轉 - 無關
+P0832,no,GT 是 config 改動後未重新產生 schema；finding 講 Flatpak Display 字串大小寫 - 無關
+P0833,same,兩者都指出檔案結尾缺少換行
+P0834,same,兩者都指出 || 被改成 && 使條件永遠為 false（finding 把範圍說成只有 JSON5 但修法相同）
+P0835,same,兩者都指向 findMany 的時間門檻（bookingToDelete.startTime）與更新用的 new Date() 不一致；finding 講的是門檻在過去時的鏡像情境 修法同樣是讓兩邊門檻一致
+P0836,no,GT 是規則要求 zmalloc/zfree；finding 講 cross-slot 路徑洩漏（自己承認目前有 free）與清理路徑 - 沒提配置器規則
+P0837,same,兩者都指出 map_or(!wait ...) 被改成 map_or(wait ...) 的邏輯反轉
+P0838,partial,同一段 if v2_enabled 賦值；GT 講 static_subpath 指到 V1 常數；finding 講變數未定義 NameError（對照程式碼並不成立）- 指對地方但機制講錯
+P0839,no,GT 是缺 // MARK: 分段；finding 講 targetFrame 可能為 nil - 無關
+P0840,no,GT 是舊式 typing 匯入與 Set/Tuple 寫法；finding 講參數型別過窄與效能 - 同一行但不同問題
+P0841,same,兩者都指出 run_deployment 變成 async 別名而缺少同步包裝
+P0842,no,GT 是行寬超過 110；finding 講每次都建新容器 - 無關
+P0843,no,GT 是持久化例外被吞掉；finding 講 selector 長度檢查 - 無關
+P0844,same,兩者都指出 extractKeysAndSlot 只在 num_keys > 0 時設定 slot 造成未初始化
+P0845,partial,同一行 bucket_folder in path；GT 講該用 startswith 避免子字串誤判；finding 講就算改 startswith 仍需路徑正規化 - 沒點出 in 的誤判
+P0846,same,兩者都指出 number 類型輸入改成 type=text 失去數字驗證
+P0847,same,兩者都指出 getTeamIdsWithPermission 沒把 orgId 傳給 getTeamIdsWithPermissions
+P0848,same,兩者都指出 getRecordings 呼叫缺 await
+P0849,partial,GT 講清理條件含 AOF_BROKEN_RECOVERED 造成成功復原後提早離開；finding 引用同一個條件但情境是非最後一個檔案且結論含糊 - 相關但機制不同
+P0850,no,GT 是重新啟用時漏掉 jsComponentParametersByIdentifier 的賦值；finding 講 manager 與 currentRendererId 被覆寫 - 不同變數不同問題
+P0851,no,GT 是 jwt.sign 拿掉 noTimestamp；finding 講 _isJWTExpired 用 jwt.decode 略過驗簽 - 不同函式不同問題
+P0852,same,同 P0818 兩者都指出 toIndex 用 tabs.count 而非 count - 1 造成越界
+P0853,no,GT 是 async 測試方法名缺 Async 後綴；finding 講斷言用錯泛型型別 - 無關
+P0854,no,GT 是 handleEnable 拿掉 try-catch 造成載入狀態卡住；finding 講輪詢 effect 相依陣列 - 無關
+P0855,same,兩者都指出新增的 isLandscape 常數未被使用
+P0856,no,GT 是 require 路徑大小寫錯（magic-link vs MagicLink）；finding 講缺分號 - 同一行但不同問題
+P0857,same,兩者都指出 Error::source() 漏掉 FailedToEncodeDER 等變體（finding 列出的範圍較廣但包含它）
+P0858,same,兩者都指出 asmCron() 與 clusterCron() 的順序或位置變動可能讓 asmCron 依賴到 clusterCron 的狀態更新（finding 措辭含糊但抓到順序相依）
+P0859,no,GT 是缺 AAA 註解；finding 講兩個 Regex 比對過嚴 - 無關
+P0860,same,兩者都指出 active_defrag_enabled 被無條件設為 1 而沒有還原原值
+P0861,same,兩者都指出 deployment_id 可能為 None 應改用 deployment.id
+P0862,no,GT 是測試強制解包 URL(string:)!；finding 講 expectation.fulfill 位置 - 無關
+P0863,no,GT 是自動遞增沒有上限驗證；finding 講並行建置的競態 - 獨立問題
+P0864,no,GT 是 GetDisplayName 不再使用 _displayNameCache 造成效能退化；finding 講 ClearCache 沒清 _displayNameCache - 不同方法不同問題
+P0865,no,GT 是 helper 函式缺 static；finding 講匯入中 slot 的 key 刪除邏輯 - 無關
+P0866,same,兩者都指出 moduleLoader.token 用了 moduleToken 而非 token
+P0867,same,兩者都指出迴圈內每次都 flush 應移到迴圈外
+P0868,same,兩者都指出 answer 的單價與單位初始值對調錯誤（finding 只點名 answer_price_unit=0 那一半 修法是同一個對調）
+P0869,no,GT 是移除 HistoryEntryState 空值檢查導致合法登出被拒；finding 講 Task.Yield 競態 - 無關
+P0870,no,GT 是 Unix 路徑比較用了 OrdinalIgnoreCase；finding 講 catch 過寬 - 同一區塊但不同問題
+P0871,same,兩者都指出 require 陳述式缺分號
+P0872,no,GT 是拿掉 && !dev 使 dev 建置也遞增；finding 講並行建置的競態 - 獨立問題
+P0873,same,兩者都指出 created_at:<= 會包含今日資料應改成 <
+P0874,same,兩者都指出 emailAddressService.init() 移進 Promise.all 破壞初始化順序
+P0875,no,GT 是 Sequence 與 tuple 集合比對型別不符使 in 恆為 False；finding 講 Set/Tuple 寫法風格 - 同一行但不同問題
+P0876,same,GT 是 Skeleton 匯入未使用；finding 講 Suspense 缺 fallback 並建議 fallback={<Skeleton />} - 同一根因 一個修改同時解決兩者
+P0877,no,GT 是使用 var 宣告；finding 講 config 值型別不一致 - 無關
+P0878,same,兩者都指出按鈕尺寸 40 被寫死而沒有放進 UX 常數
+P0879,same,兩者都指出 logger 改用 logging.getLogger 而非 get_logger 應恢復
+P0880,no,GT 是 setUp 中 bootstrapDependencies() 缺 await；finding 講 tearDown 的 AppContainer.shared.reset() 可能需 await - 不同呼叫不同方法
+P0881,no,GT 是直接從 @calcom/features 匯入的規則；finding 講缺少 teamId 權限檢查 - 無關
+P0882,same,兩者都指出 Math.ceil 應改為 Math.floor
+P0883,same,兩者都指出 setEditable 條件誤用 member?.expertise 應為 memberName
+P0884,no,GT 是自動遞增沒有上限驗證；finding 講讀不到 tauri.properties 時 unwrap_or(1) 靜默重置 - 同一行但不同問題
+P0885,no,GT 是行寬超過 100；finding 講 OnceLock 初始化可能隱藏錯誤 - 無關
+P0886,no,GT 是查找順序 fullKey 先於 key；finding 講缺單元測試 - 無關
+P0887,same,兩者都指出 run_count || 0 應改用 ??
+P0888,same,兩者都指出移除了 variables 的 dict 型別檢查
+P0889,no,GT 是拿掉顯示名稱未變不重繪的檢查造成多餘重繪；finding 要求移除外層 For != _previousFieldAccessor 檢查改成每次都重繪 - 方向相反且不是同一個檢查
+P0890,no,GT 是翻譯查找順序；finding 講參數序列化與舊 mock 不一致 - 不同問題
+P0891,no,GT 是前綴項目被納入可排序範圍；finding 講 moveItem 參數順序 - 不同問題（finding 實際對應 P0894 的 GT）
+P0892,no,GT 是測試強制解包 URL；finding 講 expectation.fulfill 位置 - 無關
+P0893,no,GT 是缺少明確存取控制；finding 講 String(format:) 搭配本地化字串可能崩潰 - 無關
+P0894,partial,同一個 handleDragEnd；GT 是 moveItem 參數對調；finding 講索引未扣除 prefixItems 造成拖放結果錯位 - 同樣的拖放位置錯誤症狀但機制講錯
+P0895,partial,同樣圍繞 local_host 空值與 EHLO 主機名稱造成 SMTP 連線失敗；GT 是 ehlo(local_host) 應改用 self.server；finding 講建構子 local_hostname=local_host or None - 不同呼叫不同機制
+P0896,partial,GT 是 Error enum 應使用 thiserror；finding 只講手動 Display 中 path.display() 與 thiserror 輸出可能不同 - 同源（手寫取代 thiserror）但沒指出規則問題 還原 derive 才會順帶消除
+P0897,no,GT 是字串該用單引號；finding 講 getUrlHistory 回傳型別 - 無關

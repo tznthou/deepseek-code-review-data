@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "testRequestMediaCaptureSuccess 的 expectation 邏輯錯誤",
+    "body": "在 testRequestMediaCaptureSuccess 中，decisionHandler 閉包內沒有呼叫 expectation.fulfill()，而是在呼叫 subject.webView(...) 之後直接呼叫 expectation.fulfill()。這會導致測試在 decisionHandler 被呼叫前就完成等待，無法驗證 decisionHandler 是否被呼叫及其內容。若 decisionHandler 從未被呼叫，測試仍會通過，失去測試意義。\n\n建議將 expectation.fulfill() 移回 decisionHandler 閉包內，並移除多餘的 expectation.fulfill()。",
+    "existing_code": "let decisionHandler = { (decision: WKPermissionDecision) in\n            XCTAssertEqual(decision, .prompt)\n        }\n\n        let expectation = expectation(description: \"Wait for the decision handler to be called\")\n        subject.webView(MockWKWebView(),\n                        requestMediaCapturePermissionFor: origin,\n                        initiatedByFrame: frame,\n                        type: .cameraAndMicrophone,\n                        decisionHandler: decisionHandler)\n        wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中新增的 testRequestMediaCaptureSuccess 顯示 decisionHandler 內沒有 expectation.fulfill()，且在 wait 之後才呼叫 expectation.fulfill()。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴外部網路可能導致不穩定",
+    "body": "captureFrameAndOrigin 使用真實的 WKWebView 載入 https://example.com，這需要網路連線。在 CI 環境中若無網路或網路不穩定，測試可能逾時或失敗。建議改用本地 HTML 字串或攔截請求的方式，避免外部依賴。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 37 行載入外部 URL。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "XCTWaiter.wait 的結果未檢查",
+    "body": "XCTWaiter.wait 的回傳值未被檢查，若等待逾時，capturedFrame 與 capturedOrigin 可能為 nil，函式會回傳 nil，導致測試中 XCTFail 被觸發。但若等待逾時，測試會花費 timeout 秒數才失敗，可能拖慢測試。建議檢查 waiter 結果，若逾時則直接 XCTFail 並 return，避免後續不必要的等待。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)\n        if let frame = delegate.capturedFrame, let origin = delegate.capturedOrigin {\n            return (frame, origin)\n        }\n        return nil",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 40-44 行未檢查 waiter 結果。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "FakeWKNavigationDelegate 可能無法捕捉 targetFrame",
+    "body": "在 decidePolicyFor navigationAction 中，navigationAction.targetFrame 可能為 nil（例如新視窗或某些重定向），此時 capturedFrame 為 nil，導致測試失敗。建議處理 targetFrame 為 nil 的情況，或使用其他 delegate 方法。",
+    "existing_code": "let frame = navigationAction.targetFrame\n            capturedFrame = frame\n            capturedOrigin = frame?.securityOrigin",
+    "evidence": "diff 中新增的 WebKitTestHelpers.swift 第 15-17 行直接使用 targetFrame，未檢查 nil。"
+  }
+]

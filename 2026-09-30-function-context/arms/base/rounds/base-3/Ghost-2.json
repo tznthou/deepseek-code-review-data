@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "member 可能為 null 時 editor.setEditable 判斷有誤",
+    "body": "原本的判斷是 `!!memberName && progress !== 'sending'`，現在改為 `!!member?.expertise && progress !== 'sending'`。如果 `member` 為 null，`member?.expertise` 會是 undefined，導致 `!!undefined` 為 false，編輯器會被設為不可編輯。但若使用者未登入（member 為 null），回覆表單可能仍應允許輸入（例如匿名回覆）。請確認此情境下的預期行為，並考慮使用 `member?.expertise != null` 或調整條件。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`，且依賴陣列由 `[editor, memberName, progress]` 改為 `[editor, member, progress]`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 313,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "openForm 可能為 null 時存取 in_reply_to_snippet 會拋錯",
+    "body": "原本使用 `openForm?.in_reply_to_snippet` 可選串連，現在改為 `openForm.in_reply_to_snippet`。若 `openForm` 可能為 null 或 undefined，此處會拋出 TypeError。請確認 `openForm` 在此情境下是否保證非空，否則應保留可選串連或加入防護。",
+    "existing_code": "const isReplyToReply = !!openForm.in_reply_to_snippet;",
+    "evidence": "diff 中此行由 `const isReplyToReply = !!openForm?.in_reply_to_snippet;` 改為 `const isReplyToReply = !!openForm.in_reply_to_snippet;`"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/reply-form.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "回覆目標改為 parent.id 可能影響巢狀回覆",
+    "body": "原本使用 `openForm.in_reply_to_id` 作為回覆目標，現在改為 `parent.id`。若 `parent` 是回覆的回覆（即巢狀回覆），`parent.id` 可能不是正確的頂層回覆 ID，導致回覆鏈結錯誤。請確認此變更是否符合預期，並考慮是否應保留 `openForm.in_reply_to_id` 或使用其他方式取得正確的父 ID。",
+    "existing_code": "in_reply_to_id: parent.id,",
+    "evidence": "diff 中此行由 `in_reply_to_id: openForm.in_reply_to_id,` 改為 `in_reply_to_id: parent.id,`"
+  },
+  {
+    "path": "apps/comments-ui/test/e2e/actions.test.ts",
+    "line": 648,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試斷言依賴特定 UI 文字，可能脆弱",
+    "body": "測試中斷言 expertise 按鈕文字為 '·Add your expertise'，若 UI 文字變更（例如改為 'Add expertise' 或加上其他符號），測試會失敗。建議改用更穩定的定位方式（如 data-testid 或部分文字比對）。",
+    "existing_code": "await expect(expertiseButton).toHaveText('·Add your expertise');",
+    "evidence": "diff 中新增的測試包含此行，且文字包含特殊字元 '·'，可能因 UI 微調而變動。"
+  }
+]

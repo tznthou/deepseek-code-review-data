@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 202,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "fail() 中 action.triggered 事件使用了錯誤的 related 資源",
+    "body": "在 `fail()` 方法中，`prefect.automation.action.triggered` 事件的 `related` 參數被設為 `self._resulting_related_resources`，而不是包含 triggering-event 和 automation-triggered-event 的 `related_resources`。這會導致該事件缺少與觸發事件及 automation 狀態變更事件的連結，破壞了此 PR 旨在建立的因果鏈。\n\n**失敗情境**：當 action 失敗時，`action.triggered` 事件將不包含 `triggering-event` 或 `automation-triggered-event` 相關資源，使用者無法從該事件追溯到觸發來源。\n\n**建議修法**：將 `related=self._resulting_related_resources` 改為 `related=related_resources`。",
+    "existing_code": "related=self._resulting_related_resources,",
+    "evidence": "diff 中 `fail()` 方法內，`await events.emit(Event(... event=\"prefect.automation.action.triggered\" ... related=self._resulting_related_resources ...))`，而 `related_resources` 已正確建構但未被使用。"
+  },
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 177,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "fail() 中 action.triggered 事件缺少 triggering-event 連結",
+    "body": "即使修正了上述 blocker，`fail()` 中的 `action.triggered` 事件仍可能缺少 `triggering-event` 連結。目前 `related_resources` 僅在 `triggered_action.triggering_event` 存在時才加入該連結，但 `triggering_event` 可能為 None（例如 proactive trigger 且無最近事件）。這會導致事件缺少關鍵上下文。\n\n**失敗情境**：當 `triggering_event` 為 None 時，`action.triggered` 事件將沒有 `triggering-event` 相關資源，使用者無法追溯觸發來源。\n\n**建議修法**：確認此情境下是否應包含 `triggering-event` 連結，或至少確保 `automation-triggered-event` 連結存在。",
+    "existing_code": "if triggered_action.triggering_event:",
+    "evidence": "diff 中 `related_resources` 的建構邏輯：僅在 `triggered_action.triggering_event` 為真時才加入 `triggering-event` 相關資源。"
+  },
+  {
+    "path": "src/prefect/server/events/schemas/automations.py",
+    "line": 776,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "field_validator 可能無法正確取得 triggering_event",
+    "body": "`validate_automation_triggered_event_id` 使用 `info.data.get(\"triggering_event\")` 來檢查 `triggering_event` 是否存在。在 Pydantic v2 中，`info.data` 包含已驗證的欄位，但若 `triggering_event` 在 `automation_triggered_event_id` 之後才被驗證，則可能尚未存在於 `info.data` 中，導致驗證失敗或誤判。\n\n**失敗情境**：若欄位驗證順序導致 `triggering_event` 尚未被處理，則即使 `triggering_event` 實際存在，驗證器也可能拋出錯誤。\n\n**建議修法**：改用 `info.data.get(\"triggering_event\")` 或使用 `model_fields_set` 來檢查欄位是否已設定。",
+    "existing_code": "if v is not None and info.data.get(\"triggering_event\") is None:",
+    "evidence": "diff 中新增的 validator 依賴 `info.data`，但未考慮欄位驗證順序。"
+  },
+  {
+    "path": "tests/events/server/actions/test_actions_service.py",
+    "line": 306,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試未涵蓋 fail() 中 action.triggered 事件的 related 資源",
+    "body": "新增的測試 `test_failure_events_include_automation_triggered_event_link` 驗證了 `action.failed` 事件的相關資源，但未驗證 `action.triggered` 事件的相關資源。由於 `fail()` 中 `action.triggered` 事件的 `related` 參數存在 blocker，此測試未能捕捉該缺陷。\n\n**建議修法**：在測試中增加對 `triggered_event.related` 的斷言，確保包含 `automation-triggered-event` 和 `triggering-event`。",
+    "existing_code": "# Verify automation-triggered-event related resource on action.triggered event",
+    "evidence": "測試中僅檢查了 `failed_event` 的相關資源，未檢查 `triggered_event`。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 445,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "primary_state_change_event 可能為 None 但未處理",
+    "body": "`primary_state_change_event` 可能為 None（當 `state_change_events` 中沒有 Triggered 或 Resolved 狀態時），但後續直接使用 `primary_state_change_event.id`，可能導致 AttributeError。\n\n**失敗情境**：若 `firing.trigger_states` 不包含 Triggered 或 Resolved（例如僅有其他狀態），則 `primary_state_change_event` 為 None，存取 `.id` 會拋出例外。\n\n**建議修法**：在使用前檢查 `primary_state_change_event` 是否為 None，或確保 `state_change_events` 至少包含一個狀態。",
+    "existing_code": "primary_state_change_event_id = (\n        primary_state_change_event.id if primary_state_change_event else None\n    )",
+    "evidence": "diff 中 `primary_state_change_event` 的取得方式，以及後續直接使用 `.id`。"
+  },
+  {
+    "path": "tests/events/server/actions/test_actions_service.py",
+    "line": 505,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "缺少 automation_triggered_event_id 為 None 時的 fail() 測試",
+    "body": "現有測試 `test_action_events_without_automation_triggered_event_id` 僅涵蓋成功情境，未涵蓋失敗情境。當 `automation_triggered_event_id` 為 None 且 action 失敗時，`action.triggered` 和 `action.failed` 事件的相關資源應僅包含 `triggering-event`，但此行為未經測試。\n\n**建議修法**：新增一個測試，模擬 action 失敗且 `automation_triggered_event_id` 為 None，驗證相關資源。",
+    "existing_code": "async def test_action_events_without_automation_triggered_event_id(",
+    "evidence": "測試僅涵蓋成功路徑，未涵蓋失敗路徑。"
+  }
+]

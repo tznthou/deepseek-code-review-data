@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "DisplayName 元件在參數未變更時不會重新渲染",
+    "body": "在 `SetParametersAsync` 中，只有當 `For` 表達式與 `_previousFieldAccessor` 不同時才會重新計算顯示名稱並呼叫 `_renderHandle.Render`。如果父元件重新渲染但傳入相同的 `For` 表達式（例如父元件狀態變更但表達式相同），則此元件不會重新渲染。這可能導致顯示名稱過期，例如當顯示名稱依賴於某個會變更的資源或文化特性時。建議在每次 `SetParametersAsync` 呼叫時都重新計算並渲染，或至少提供一個機制來強制更新。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中 `DisplayName.cs` 第 44-52 行顯示條件渲染邏輯。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Hot Reload 時未清除顯示名稱快取",
+    "body": "`ClearCache` 方法僅清除 `_memberInfoCache`，未清除 `_displayNameCache`。當 Hot Reload 套用中繼資料變更時，顯示名稱快取可能保留過時的顯示名稱，導致顯示不正確。建議同時清除 `_displayNameCache`。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 `ExpressionMemberAccessor.cs` 第 84-87 行。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "未處理 For 參數為 null 以外的無效表達式",
+    "body": "`SetParametersAsync` 僅檢查 `For` 是否為 null，但未處理表達式無效的情況（例如表達式不是成員存取）。`ExpressionMemberAccessor.GetDisplayName` 會拋出 `ArgumentException`，但此例外可能未以有意義的方式處理，導致元件渲染失敗。建議在元件中捕獲並處理此例外，或提供更明確的錯誤訊息。",
+    "existing_code": "if (For is null)\n{\n    throw new InvalidOperationException($\"{GetType()} requires a value for the \" +\n        $\"{nameof(For)} parameter.\");\n}",
+    "evidence": "diff 中 `DisplayName.cs` 第 36-40 行。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 183,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試程式碼中型別匹配可能不正確",
+    "body": "在 `RenderAndGetOutput` 方法中，使用 `f.Component is DisplayName<string> or DisplayName<int> or DisplayName<DateTime>` 來尋找元件框架。但 `DisplayName<TValue>` 是泛型型別，實際執行時期的型別可能因 `TValue` 不同而不同，此模式可能無法正確匹配所有情況。建議改用更通用的方式，例如檢查 `f.Component` 是否為 `DisplayName<>` 的執行個體。",
+    "existing_code": "var displayLabelComponentFrame = batch.ReferenceFrames\n    .First(f => f.FrameType == RenderTree.RenderTreeFrameType.Component &&\n               f.Component is DisplayName<string> or DisplayName<int> or DisplayName<DateTime>);",
+    "evidence": "diff 中 `DisplayNameTest.cs` 第 218-220 行。"
+  }
+]

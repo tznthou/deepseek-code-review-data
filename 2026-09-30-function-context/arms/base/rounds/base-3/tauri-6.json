@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "返回鍵處理可能造成遞迴或非預期行為",
+    "body": "當沒有 JS listener 且 webView 無法返回時，程式碼呼叫 `this@AppPlugin.activity.onBackPressed()`。但此 callback 已註冊在 `onBackPressedDispatcher` 上，而 `activity.onBackPressed()` 通常會再次觸發 dispatcher，導致此 callback 被重複呼叫，可能造成無窮遞迴或非預期行為。\n\n建議改為直接呼叫 `activity.finish()` 或使用 `onBackPressedDispatcher.onBackPressed()` 以外的機制來結束 activity。",
+    "existing_code": "this@AppPlugin.activity.onBackPressed()",
+    "evidence": "在 `handleOnBackPressed` 中，當 `!hasListener(BACK_BUTTON_EVENT)` 且 `webView?.canGoBack() != true` 時，執行 `this@AppPlugin.activity.onBackPressed()`。由於此 callback 已透過 `onBackPressedDispatcher.addCallback` 註冊，呼叫 `activity.onBackPressed()` 會再次觸發 dispatcher，可能導致遞迴。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "webView 可能為 null 時使用 !! 強制解參考",
+    "body": "在 `handleOnBackPressed` 中，當 `webView?.canGoBack() == true` 時，使用 `this@AppPlugin.webView!!.goBack()`。雖然 `load` 方法會在 WebView 載入時設定 `webView`，但若 callback 在 `load` 之前被觸發（例如 activity 初始化期間），`webView` 可能仍為 null，導致 NPE。\n\n建議使用安全呼叫或明確檢查 null。",
+    "existing_code": "this@AppPlugin.webView!!.goBack()",
+    "evidence": "`webView` 宣告為 `private var webView: WebView? = null`，並在 `load` 中賦值。在 `handleOnBackPressed` 中，條件 `this@AppPlugin.webView?.canGoBack() == true` 確保 `webView` 非 null，但使用 `!!` 仍可能因時序問題（如 callback 在 `load` 前觸發）而拋出 NPE。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "exit 命令未處理 activity 可能為 null 的情況",
+    "body": "`exit` 命令直接呼叫 `activity.finish()`。若 activity 已銷毀或為 null，可能拋出 NPE。雖然在正常情況下 activity 不應為 null，但建議加入防禦性檢查。",
+    "existing_code": "activity.finish()",
+    "evidence": "`activity` 在建構子中傳入，但未檢查是否為 null。若在 activity 銷毀後呼叫此命令，可能導致 NPE。"
+  }
+]

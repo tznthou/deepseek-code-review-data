@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "型別標註使用 `Set` 與 `Tuple`，與專案慣用的 `set` 和 `tuple` 不一致",
+    "body": "此處使用 `typing.Set` 和 `typing.Tuple`，但專案其他部分（如 `collections.abc` 的引入）傾向使用內建泛型。建議改用 `set` 和 `tuple` 以維持一致性。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的型別標註使用了 `Set` 和 `Tuple`，而檔案開頭已從 `typing` 引入 `Any`，且專案其他程式碼可能使用內建泛型。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試假設所有 conversation variable chunk events 的值都等於 input_query，可能過於嚴格",
+    "body": "測試中斷言所有 `conv_var_chunk_events` 的 `chunk` 都等於 `input_query`。但若串流過程中有多個 chunk（例如分段傳輸），此斷言可能失敗。建議改為檢查最後一個 chunk 或累積結果。",
+    "existing_code": "assert all(event.chunk == input_query for event in conv_var_chunk_events), (\n        \"Expected streamed conversation variable value to match the input query\"\n    )",
+    "evidence": "diff 中新增的測試斷言所有 chunk 事件的值都等於 input_query，但未考慮多 chunk 情況。"
+  }
+]

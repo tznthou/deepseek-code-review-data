@@ -1,0 +1,24 @@
+[
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "moduleLoader.token 可能設定錯誤",
+    "body": "在 `FeaturesRepository.ts` 中，`moduleLoader` 的 `token` 屬性被設定為 `moduleToken`，但其他模組（如 `FeatureOptInService.ts`）的 `moduleLoader.token` 是設定為實際的服務 token。這可能導致依賴此模組的容器在解析時找不到正確的 token。\n\n建議確認 `moduleLoader.token` 的預期用途：若它代表模組本身的 token，則應使用 `moduleToken`；若代表模組提供的服務 token，則應使用 `token`。請參考其他模組的實作方式，確保一致性。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `FeaturesRepository.ts` 第 20 行將 `token` 設為 `moduleToken`，而 `FeatureOptInService.ts` 的 `moduleLoader` 則將 `token` 設為服務 token（`FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE`）。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 82,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試使用容器取得的實例可能影響隔離性",
+    "body": "測試中改用 `getFeaturesRepository()` 和 `getFeatureOptInService()` 取得實例，這些實例可能共享底層的 Prisma client 或快取。若 `FeaturesRepository` 內部有快取機制，且未在每個測試前清除，可能導致測試間互相影響。\n\n建議確認 `FeaturesRepository` 是否有快取，並在測試中確保每個測試使用獨立的實例或清除快取。",
+    "existing_code": "const featuresRepository = getFeaturesRepository();\n  const service = getFeatureOptInService();",
+    "evidence": "diff 中測試檔案第 54 行改為使用容器取得實例，但未見對應的快取清理邏輯。"
+  }
+]

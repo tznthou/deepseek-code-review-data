@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/stats/utils/tinybird.js",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "未驗證的 version 字串直接拼接進 URL，可能導致路徑操縱",
+    "body": "`version` 來自 `statsConfig?.version`，直接以字串拼接方式插入 URL（`/v0/pipes/${pipeName}_${version}.json`）。若 config 中的 `version` 未經嚴格驗證（例如只允許 `[a-zA-Z0-9_-]+`），攻擊者或錯誤設定可能注入 `../` 等路徑片段，導致請求被導向非預期的 Tinybird pipe，甚至繞過權限控制。建議在 `buildRequest` 中對 `version` 進行正規表示式驗證，或使用 Tinybird 提供的參數化 pipe 名稱機制。",
+    "existing_code": "const version = statsConfig?.version;\n        const pipeUrl = version ?\n            `/v0/pipes/${pipeName}_${version}.json` :\n            `/v0/pipes/${pipeName}.json`;",
+    "evidence": "diff 中新增的 `version` 直接以字串模板拼接，且未見任何驗證邏輯。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/ContentStatsService.js",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 source 過濾條件可能破壞既有 API 行為",
+    "body": "原本 `options.source` 會被加入 tinybirdOptions（即使為空字串），但此 PR 刪除了該區塊。若前端或其他服務依賴 `source` 參數來過濾流量來源，升級後這些請求將不再帶有 `source` 參數，導致回傳未過濾的資料。請確認是否有其他呼叫端仍傳遞 `source`，並評估是否應保留此參數的傳遞。",
+    "existing_code": "// Only add source if defined (allow empty string for \"Direct\" traffic)\n        if (options.source !== undefined) {\n            tinybirdOptions.source = options.source;\n        }",
+    "evidence": "diff 中刪除了處理 `options.source` 的程式碼區塊。"
+  },
+  {
+    "path": "ghost/core/core/server/api/endpoints/stats.js",
+    "line": 125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 tb_version 參數可能造成 API 相容性問題",
+    "body": "從允許的查詢參數清單中移除了 `tb_version`。若外部使用者仍傳送此參數，可能會被忽略或導致驗證錯誤。建議確認此參數是否已完全棄用，並在必要時提供過渡期或文件說明。",
+    "existing_code": "'date_to',\n            'timezone',\n            'member_status',\n            'post_type',\n            'post_uuid',\n            'pathname',",
+    "evidence": "diff 中刪除了 `'tb_version'` 行。"
+  }
+]

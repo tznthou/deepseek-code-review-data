@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "IpadOnlyTestCase.setUp 中 await super.setUp() 缺少 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp` 中，呼叫 `await super.setUp()` 但沒有加上 `try`。由於 `super.setUp()` 現在是 `async throws`，若其拋出錯誤，此處會因未處理而導致編譯錯誤或執行期崩潰。建議改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中 BaseTestCase.swift 的 IpadOnlyTestCase 類別內，`await super.setUp()` 未加上 `try`，而其他類似呼叫均有 `try await`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "setUp 中呼叫順序變更可能影響測試初始化",
+    "body": "原本 `setUpExperimentVariables()` 在 `setUpApp()` 之前呼叫，現在順序對調。若 `setUpApp()` 依賴實驗變數已設定，可能導致測試行為錯誤。請確認此順序變更是有意為之且不會影響測試。",
+    "existing_code": "setUpApp()\nsetUpExperimentVariables()",
+    "evidence": "diff 中 FeatureFlaggedTestBase.swift 的 setUp 方法內，兩行順序對調。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "全域變數加上 @MainActor 可能造成初始化時機問題",
+    "body": "`urlBarAddress` 和 `homepageSearchBar` 等全域變數加上 `@MainActor` 後，其初始化將在主執行緒進行。若這些變數在非主執行緒環境中被存取，可能導致執行期錯誤。請確認所有存取點皆在主執行緒。",
+    "existing_code": "@MainActor\nlet urlBarAddress = XCUIApplication().textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]",
+    "evidence": "diff 中 BaseTestCase.swift 頂部新增 @MainActor 標註於全域變數。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/TodayWidgetTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "全域變數從 nonisolated(unsafe) 改為 @MainActor 可能影響並發安全",
+    "body": "原本使用 `nonisolated(unsafe)` 的全域變數改為 `@MainActor`，這會限制其存取在主執行緒。若這些變數在非主執行緒的 context 中被使用，可能導致編譯錯誤或執行期問題。請確認所有使用情境。",
+    "existing_code": "@MainActor\nvar goToCopiedLink = springboard.buttons[\"Go to Copied Link\"]",
+    "evidence": "diff 中 TodayWidgetTests.swift 的多個全域變數由 nonisolated(unsafe) 改為 @MainActor。"
+  }
+]

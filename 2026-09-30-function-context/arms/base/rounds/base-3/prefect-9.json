@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Suspense 未提供 fallback，可能導致載入時無 UI 回饋",
+    "body": "`<Suspense>` 沒有指定 `fallback` prop。當 `useSuspenseQuery` 暫停元件時，React 會尋找最近的 Suspense boundary 並顯示其 fallback；若沒有 fallback，則會向上尋找其他 boundary，若都沒有，則整個應用程式會 suspend 且無任何 UI 回饋。建議提供明確的 fallback，例如 `<Suspense fallback={<Skeleton />}>`。",
+    "existing_code": "<Suspense>\n\t\t\t<FlowIconTextImplementation flowId={flowId} />\n\t\t</Suspense>",
+    "evidence": "diff 中第 14-16 行顯示 `<Suspense>` 沒有 fallback prop。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Storybook 中 queryClient 來源不一致",
+    "body": "`createTestRouter` 內建立新的 `QueryClient` 並放入 router context，但 decorator 使用模組層級的 `queryClient` 包裹 `QueryClientProvider`。這可能導致 `useSuspenseQuery` 使用 decorator 提供的 client，而 router context 中的 client 未被使用，造成快取行為不一致或測試時資料無法正確隔離。建議統一使用同一個 queryClient，或明確指定 provider 的 client 與 router context 相同。",
+    "existing_code": "context: { queryClient: new QueryClient() },",
+    "evidence": "diff 中第 27 行建立新的 QueryClient，而第 36 行使用模組層級的 queryClient。"
+  }
+]

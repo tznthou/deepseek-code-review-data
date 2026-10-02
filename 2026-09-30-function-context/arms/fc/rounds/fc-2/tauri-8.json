@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "MouseButtonState 映射反轉",
+    "body": "在 `From<tray_icon::MouseButtonState>` 的實作中，原本的映射是 `Up` -> `Up`、`Down` -> `Down`，但此 PR 將其反轉為 `Up` -> `Down`、`Down` -> `Up`。這會導致所有依賴此轉換的邏輯（例如處理滑鼠按鈕事件）行為錯誤。\n\n建議修正為：\n```rust\nimpl From<tray_icon::MouseButtonState> for MouseButtonState {\n    fn from(value: tray_icon::MouseButtonState) -> Self {\n        match value {\n            tray_icon::MouseButtonState::Up => MouseButtonState::Up,\n            tray_icon::MouseButtonState::Down => MouseButtonState::Down,\n        }\n    }\n}\n```",
+    "existing_code": "tray_icon::MouseButtonState::Up => MouseButtonState::Down,\n      tray_icon::MouseButtonState::Down => MouseButtonState::Up,",
+    "evidence": "diff 中顯示原本的映射為 `Up => Up`、`Down => Down`，但新程式碼改為 `Up => Down`、`Down => Up`，明顯是錯誤的變更。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/error.rs",
+    "line": 72,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "cfg_attr 用於 thiserror 的 error 屬性可能不受支援",
+    "body": "此變更將原本的 `#[cfg(target_os = \"linux\")]` 和 `#[cfg(not(target_os = \"linux\"))]` 搭配 `#[error(...)]` 改為使用 `#[cfg_attr(target_os = \"linux\", error(...))]` 和 `#[cfg_attr(not(target_os = \"linux\"), error(...))]`。然而，`thiserror` 的 `error` 屬性是否可透過 `cfg_attr` 條件式套用，取決於 `thiserror` 的版本。若版本不支援，可能導致編譯錯誤或錯誤訊息未正確設定。\n\n建議確認專案使用的 `thiserror` 版本是否支援此用法，或考慮其他替代方案（例如使用獨立的 enum variant 或自訂 `Display` 實作）。",
+    "existing_code": "#[cfg_attr(\n    target_os = \"linux\",\n    error(\"__TAURI_BUNDLE_TYPE variable not found in binary. Make sure tauri crate and tauri-cli are up to date and that symbol stripping is disabled (https://doc.rust-lang.org/cargo/reference/profiles.html#strip)\")\n  )]\n  #[cfg_attr(\n    not(target_os = \"linux\"),\n    error(\"__TAURI_BUNDLE_TYPE variable not found in binary. Make sure tauri crate and tauri-cli are up to date\")\n  )]\n  MissingBundleTypeVar,",
+    "evidence": "diff 中顯示原本使用 `#[cfg]` 和 `#[error]` 分開的寫法，現在改為 `cfg_attr` 合併。需要驗證 `thiserror` 是否支援在 `cfg_attr` 中指定 `error` 屬性。"
+  }
+]

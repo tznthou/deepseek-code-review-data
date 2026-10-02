@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1962,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "active_defrag_enabled 恢復為硬編碼 1，忽略原始設定",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 存到 `orig_active_defrag`，然後設為 0，但在 `emptyData` 之後卻直接設為 1，而不是恢復為 `orig_active_defrag`。如果原始設定為 0（例如使用者停用主動碎片整理），此函式會意外地啟用它，可能導致非預期的碎片整理行為。\n\n失敗情境：使用者設定 `activedefrag no`，然後執行會觸發 `rdbLoadEmptyDbFunc` 的操作（例如複製同步），之後主動碎片整理會被意外啟用。\n\n建議修改：\n```c\nserver.active_defrag_enabled = orig_active_defrag;\n```",
+    "existing_code": "server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```c\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n+\n     emptyData(-1, empty_db_flags, replicationEmptyDbCallback);\n+\n+    /* Restore the original active defragmentation setting. */\n+    server.active_defrag_enabled = 1;\n```\n註解說要恢復原始設定，但實際卻設為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "streamEntryIsReferenced 在 cgroups_ref 為 NULL 時回傳 1 可能過度保留資料",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 在沒有 consumer group references 時回傳 1，表示該 entry 被引用。這可能導致在沒有 PEL 的情況下，stream 的 entry 永遠不會被刪除，造成記憶體洩漏或資料無法清理。\n\n失敗情境：建立 stream 並建立 consumer group，但沒有任何 PEL 條目（例如所有訊息都已 ack），然後執行 XADD MAXLEN 或 XTRIM，預期會刪除舊 entry，但因為 `cgroups_ref` 為 NULL 而回傳 1，導致 entry 被保留。\n\n建議：確認此修正是否為了解決特定 crash，並評估是否應回傳 0 或進行其他處理。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的這一行，位於 `streamEntryIsReferenced` 函式內，在檢查 PEL 之前。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "discard_replies_every 函式參數名稱可能造成混淆",
+    "body": "新定義的 `discard_replies_every` 函式參數 `frequency` 和 `discard_num` 的命名可能不夠清晰。`frequency` 實際上是「每多少筆丟棄一次」，而 `discard_num` 是「每次丟棄的回覆數」。建議改名為 `discard_interval` 和 `replies_per_discard` 以提高可讀性。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {",
+    "evidence": "diff 中新增的函式定義。"
+  }
+]

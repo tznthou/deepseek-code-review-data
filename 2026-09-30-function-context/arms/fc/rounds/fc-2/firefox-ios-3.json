@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Coordinators/Launch/LaunchCoordinator.swift",
+    "line": 130,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "onActionTap 閉包改用 Task 包裝可能造成執行順序與完成回呼時序改變",
+    "body": "原本 onActionTap 閉包直接呼叫 onboardingService.handleAction，現在改為 `Task { ... }` 包裝。由於 Task 是異步執行，handleAction 內部的同步操作（如 completion(.success(.none))）可能延後執行，導致 UI 更新延遲。此外，若 handleAction 內部有依賴 MainActor 的狀態，Task 預設會繼承當前 actor context，但若閉包本身非 @MainActor，可能造成資料競爭。建議確認 handleAction 是否為 @MainActor，並考慮使用 `Task { @MainActor in ... }` 明確標註。",
+    "existing_code": "Task {\n    onboardingService.handleAction(\n        action,\n        from: cardName,\n        cards: onboardingModel.cards,\n        with: activityEventHelper,\n        completion: completion\n    )\n}",
+    "evidence": "diff 中 onActionTap 閉包從直接呼叫改為 Task 包裝，且 handleAction 的 completion 參數型別改為 @Sendable @escaping @MainActor，但 Task 本身未標註 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/WebEngineIntegration/BrowserWebUIDelegate.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "BrowserWebUIDelegate 中 runJavaScriptAlertPanelWithMessage 的 completionHandler 移除 @Sendable 可能導致編譯錯誤",
+    "body": "WKUIDelegate 的 runJavaScriptAlertPanelWithMessage 方法要求 completionHandler 為 @escaping @MainActor @Sendable () -> Void，但此處將 @Sendable 移除，可能導致 Swift 6 編譯錯誤。建議確認 WKUIDelegate 的實際簽名，並保留 @Sendable。",
+    "existing_code": "completionHandler: @escaping @MainActor () -> Void",
+    "evidence": "diff 中該行從 `@escaping @MainActor @Sendable () -> Void` 改為 `@escaping @MainActor () -> Void`，與其他 delegate 方法（如 runJavaScriptConfirmPanelWithMessage）不一致。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/Extensions/BrowserViewController+WebViewDelegates.swift",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "handleJavaScriptAlert 的 spamCallback 參數標註 @MainActor @Sendable，但呼叫處未明確標註",
+    "body": "handleJavaScriptAlert 的 spamCallback 參數型別改為 @escaping @MainActor @Sendable () -> Void，但呼叫 handleSpammedJSAlert 時傳入的 closure 未明確標註 @MainActor，可能導致編譯警告或錯誤。建議確認所有呼叫點是否正確。",
+    "existing_code": "spamCallback: @escaping @MainActor @Sendable () -> Void",
+    "evidence": "diff 中 handleJavaScriptAlert 的參數型別變更，但未看到呼叫處的相應調整。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "DownloadToast 的 completion 閉包標註 @MainActor，但未確認所有呼叫點是否在主執行緒",
+    "body": "DownloadToast 的 init 中 completion 參數改為 @MainActor @escaping (Bool) -> Void，但 buttonPressed 方法中呼叫 completionHandler 時未明確在主執行緒，可能導致執行緒安全問題。建議確認所有呼叫點是否在主執行緒，或使用 DispatchQueue.main.async 包裝。",
+    "existing_code": "completion: @MainActor @escaping (Bool) -> Void",
+    "evidence": "diff 中 init 的 completion 參數型別變更，但 buttonPressed 方法中呼叫 completionHandler 的程式碼未變更。"
+  }
+]

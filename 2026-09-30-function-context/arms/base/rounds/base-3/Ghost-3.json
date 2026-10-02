@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`findPage` 回傳值可能未定義 `data` 屬性，導致執行時期錯誤",
+    "body": "`#getHighestCount` 改為呼叫 `findPage` 後，直接存取 `result.data.length`。若 `findPage` 的實作在某些情況下（例如資料庫錯誤、回傳格式不符）未提供 `data` 陣列，將拋出 `TypeError`。建議先檢查 `result` 與 `result.data` 是否存在，或使用選用鏈結（`result?.data?.length`）並提供預設值。",
+    "existing_code": "const result = await this.#emailModel.findPage({\n            filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,\n            order: 'csd_email_count DESC',\n            limit: 1\n        });\n\n        if (!result.data.length) {",
+    "evidence": "diff 中 `#getHighestCount` 方法從 `findOne` 改為 `findPage`，並直接使用 `result.data.length`，但未對 `result` 或 `result.data` 進行空值檢查。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中 `createModelClass` 的 `findAll` 屬性與實際 `findPage` 不一致",
+    "body": "在 `beforeEach` 中，`Email = createModelClass({ findAll: [] })`，但服務實際呼叫的是 `findPage`。這可能導致測試未正確模擬 `findPage` 的行為，使測試無法有效驗證服務邏輯。建議將 `findAll` 改為 `findPage` 或確認 `createModelClass` 如何處理 `findPage`。",
+    "existing_code": "Email = createModelClass({\n            findAll: []\n        });",
+    "evidence": "diff 中 `beforeEach` 的 `Email` 初始化使用 `findAll`，但服務程式碼呼叫 `findPage`，兩者名稱不符。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 111,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`get` 方法可能不存在於回傳的資料物件",
+    "body": "`result.data[0].get('csd_email_count')` 假設 `data` 陣列中的元素具有 `get` 方法。若 `findPage` 回傳的是純物件而非模型實例，將導致錯誤。建議確認 `findPage` 的回傳型別，或改用屬性存取（如 `result.data[0].csd_email_count`）。",
+    "existing_code": "const count = result.data[0].get('csd_email_count');",
+    "evidence": "diff 中直接呼叫 `get` 方法，但型別定義 `EmailModel` 的 `findPage` 回傳 `{data: EmailRecord[]}`，而 `EmailRecord` 型別未定義 `get` 方法。"
+  }
+]

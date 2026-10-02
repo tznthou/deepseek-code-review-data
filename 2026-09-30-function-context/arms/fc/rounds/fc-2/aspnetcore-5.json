@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "ClientMode 測試中使用了錯誤的泛型型別進行斷言",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，實際 prerender 的元件型別是 `GenericComponent<int>`，但斷言卻使用 `typeof(GenericComponent<string>)` 來取得 Assembly 和 FullName。這會導致斷言失敗（因為 `GenericComponent<string>` 的 FullName 與 `GenericComponent<int>` 不同），或者如果測試通過，則表示程式碼有問題。請將斷言中的型別改為 `GenericComponent<int>`。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\n        Assert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 內，prerender 呼叫使用 `typeof(GenericComponent<int>)`，但後續斷言使用 `typeof(GenericComponent<string>)`。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "命名空間與類別縮排變更與既有風格不一致",
+    "body": "此檔案將命名空間從 file-scoped (`namespace ...;`) 改為 block-scoped，並將類別縮排一層。這與專案中其他檔案的風格可能不一致，且增加了不必要的 diff。建議保持 file-scoped namespace 以維持一致性。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{\n    public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 顯示原本的 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 被改為 block-scoped，且類別縮排增加。"
+  }
+]

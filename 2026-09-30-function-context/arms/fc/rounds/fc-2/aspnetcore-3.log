@@ -1,0 +1,6 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 47657 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/Shared/CertificateGeneration/UnixCertificateManager.cs:330 → 375（片段唯一命中）
+[info] 重新定位 src/Shared/CertificateGeneration/UnixCertificateManager.cs:318 → 375（片段唯一命中）
+[info] 重新定位 src/Shared/CertificateGeneration/UnixCertificateManager.cs:340 → 408（片段唯一命中）
+[info] 重新定位 src/Tools/dotnet-dev-certs/src/Program.cs:103 → 127（片段唯一命中）
+[info] 完成於 12.8s ｜ findings=4 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 12176, "completion_tokens": 1327, "total_tokens": 13503, "prompt_tokens_details": {"cached_tokens": 12160}, "prompt_cache_hit_tokens": 12160, "prompt_cache_miss_tokens": 16}

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getDisplayEmail 正規表達式可能誤刪合法 email 中的加號部分",
+    "body": "`getDisplayEmail` 使用 `/\\+[a-zA-Z0-9]{25}/` 來移除 CUID 後綴，但此模式會匹配任何 email 中出現的 `+` 後接 25 個英數字元的片段。若使用者的 email 本身包含加號（例如 `user+tag@example.com`），且 `tag` 恰好為 25 個英數字元，則該部分會被錯誤移除，導致顯示錯誤的 email。\n\n**失敗情境**：使用者 email 為 `john+abcdefghijklmnopqrstuvwxyz12345@example.com`（加號後 25 個字元），`getDisplayEmail` 會回傳 `john@example.com`，而非原始 email。\n\n**建議**：改為更精確的比對，例如僅在 email 的 local part 中比對 CUID 格式（如 `/\\+[a-zA-Z0-9]{25}@/`），或使用已知的 CUID 產生規則來驗證。",
+    "existing_code": "private getDisplayEmail(email: string): string {\n    return email.replace(/\\+[a-zA-Z0-9]{25}/, \"\");\n  }",
+    "evidence": "diff 中新增的 getDisplayEmail 方法使用寬鬆的正規表達式，未限制加號後綴的位置或格式。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 getOutputRecurringSeatedBookings 的排序可能導致回傳順序不穩定",
+    "body": "原本 `getOutputRecurringSeatedBookings` 會依 `start` 時間排序回傳的 bookings，但此 PR 移除了排序邏輯，直接回傳 `transformed`。這可能導致 API 回傳的 recurring bookings 順序不固定，影響前端顯示或測試的穩定性。\n\n**失敗情境**：若資料庫回傳的 bookings 順序未依時間排序，前端可能顯示錯誤的順序，或依賴順序的測試（如 e2e）會 flaky。\n\n**建議**：除非有明確理由，否則應保留排序邏輯，或確認呼叫端已自行排序。",
+    "existing_code": "return transformed;",
+    "evidence": "diff 中刪除了 `return transformed.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());`，改為直接回傳 `transformed`。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 165,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "displayGuests 的 map 回呼可能遺失 this 綁定",
+    "body": "在 `getOutputBooking` 中，`bookingTransformed.bookingFieldsResponses.displayGuests = bookingTransformed.bookingFieldsResponses.guests.map(this.getDisplayEmail);` 直接傳遞 `this.getDisplayEmail` 作為回呼，但 `getDisplayEmail` 是實例方法，若其內部依賴 `this`（目前沒有），未來修改可能導致錯誤。此外，在其他方法中使用了箭頭函式包裝，此處不一致。\n\n**建議**：統一使用箭頭函式，例如 `.map((guest: string) => this.getDisplayEmail(guest))`，以避免潛在的 `this` 綁定問題。",
+    "existing_code": "bookingTransformed.bookingFieldsResponses.displayGuests = bookingTransformed.bookingFieldsResponses.guests.map(\n        this.getDisplayEmail\n      );",
+    "evidence": "diff 中此處直接傳遞方法參考，而其他類似處使用箭頭函式。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "無條件將 active_defrag_enabled 設為 1，可能意外啟用 defrag",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 設為 0，呼叫 `emptyData` 後再無條件設為 1。如果原本 `active_defrag_enabled` 為 0（例如使用者透過設定停用 defrag），此函式會錯誤地啟用 defrag，可能導致非預期的記憶體重整行為，甚至影響效能或穩定性。\n\n建議改為儲存原始值並在最後恢復：\n```c\nint orig_active_defrag = server.active_defrag_enabled;\nserver.active_defrag_enabled = 0;\nemptyData(-1, empty_db_flags, replicationEmptyDbCallback);\nserver.active_defrag_enabled = orig_active_defrag;\n```",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```c\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n+\n     emptyData(-1, empty_db_flags, replicationEmptyDbCallback);\n+\n+    /* Restore the original active defragmentation setting. */\n+    server.active_defrag_enabled = 1;\n```\n變數 `orig_active_defrag` 被儲存但未使用，且最後直接指派為 1，而非恢復原值。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "streamEntryIsReferenced 在 cgroups_ref 為 NULL 時回傳 1，可能導致記憶體洩漏",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 會在沒有 consumer groups 時直接回傳 1（表示被引用）。這可能導致某些清理邏輯（例如 `XADD ... ACKED` 或 `XTRIM`）誤以為 entry 仍被引用而無法刪除，造成記憶體洩漏或資料殘留。需要確認此變更的意圖：若沒有 cgroups，entry 應視為未被引用（回傳 0）才合理。建議檢查相關呼叫點，並考慮回傳 0 或調整邏輯。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的一行：\n```c\n+    if (!s->cgroups_ref) return 1;\n```\n此函式原本會執行 `raxFind(s->cgroups_ref, ...)`，若 `s->cgroups_ref` 為 NULL 會導致 crash。但回傳 1 可能掩蓋了真正的語意。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試輔助函式 discard_replies_every 的參數名稱可能造成混淆",
+    "body": "新函式 `discard_replies_every` 的參數 `frequency` 和 `discard_num` 在呼叫時傳入的值相同（例如 10000），但語意不同：`frequency` 是觸發間隔，`discard_num` 是每次丟棄的回覆數。雖然目前呼叫都一致，但未來可能誤用。建議在函式內加入註解或改用更明確的參數名稱。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {",
+    "evidence": "diff 中新增的函式定義。"
+  }
+]

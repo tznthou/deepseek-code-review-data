@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1316,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`window_features` 中 size 與 position 的設定順序對調可能影響視窗初始狀態",
+    "body": "原本先設定 position 再設定 size，現在改為先設定 size 再設定 position。在部分平台（如 Windows）上，設定 position 後再設定 size 可能導致視窗位置被重新計算，反之亦然。若此順序調整非刻意為之，可能造成視窗初始位置或大小不符合預期。建議確認此變更的意圖，或恢復原本順序。",
+    "existing_code": "if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 中 `with_window_features` 改名為 `window_features`，且原本先處理 position 的區塊被移到 size 之後。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1317,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "程式碼格式：`inner_size` 參數間多餘空白",
+    "body": "`inner_size(size.width,    size.height)` 中 `size.width` 與 `size.height` 之間有四個空格，與專案慣例不符。建議改為單一空格。",
+    "existing_code": "self.window_builder = self.window_builder.inner_size(size.width,    size.height);",
+    "evidence": "diff 中該行顯示多餘空白。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1321,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "程式碼格式：`position` 參數間缺少空格",
+    "body": "`position(position.x,position.y)` 中逗號後缺少空格，與專案慣例不符。建議改為 `position(position.x, position.y)`。",
+    "existing_code": "self.window_builder = self.window_builder.position(position.x,position.y);",
+    "evidence": "diff 中該行顯示缺少空格。"
+  }
+]

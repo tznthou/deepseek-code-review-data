@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ui-v2/tsconfig.app.json",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "關閉 strict 模式會降低型別安全",
+    "body": "將 `strict` 從 `true` 改為 `false` 會停用 TypeScript 的嚴格型別檢查，包括 `strictNullChecks`、`strictFunctionTypes` 等，可能隱藏潛在的 null/undefined 錯誤，並讓程式碼更容易出現型別相關的 bug。這通常不是一個好的做法，除非有非常具體的理由（例如漸進式遷移），但在此 PR 中並未看到相關說明。建議恢復 `strict: true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中將 `\"strict\": true` 改為 `\"strict\": false`，且沒有其他相關變更來處理可能出現的型別錯誤。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/work-pool-status-trigger-fields.tsx",
+    "line": 78,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 parseInt 而非 Number 處理數字輸入",
+    "body": "在 Threshold 欄位的 onChange 中，使用了 `parseInt(e.target.value)`，而其他元件（如 custom-trigger-fields.tsx）使用 `Number(e.target.value)`。`parseInt` 會忽略非數字字元，例如輸入 \"10abc\" 會得到 10，而 `Number` 會得到 NaN。這可能導致使用者輸入無效值時，表單狀態被設定為不正確的數字。建議統一使用 `Number` 並處理 NaN 的情況（例如設定為 undefined 或顯示錯誤）。",
+    "existing_code": "onChange={(e) => field.onChange(parseInt(e.target.value))}",
+    "evidence": "diff 中該行使用 parseInt，而其他類似元件使用 Number。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/deployment-status-trigger-fields.tsx",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Reactive 模式下使用 trigger.expect 可能導致資料不一致",
+    "body": "在 DeploymentStatusTriggerFields 中，當 posture 為 Reactive 時，狀態欄位綁定到 `trigger.expect`，但該欄位在 schema 中可能預期為陣列（如同 custom trigger 的 expect）。此處使用 `field.value?.[0]` 取得第一個值，並在選擇時設定為 `[value]`，這可能覆蓋其他已設定的 expect 值。如果 Reactive 模式允許設定多個期望狀態，此實作會遺失其他狀態。建議確認 schema 定義，若 expect 為陣列，應提供多選或至少保留其他值。",
+    "existing_code": "const selectedStatus = field.value?.[0];",
+    "evidence": "diff 中該行取得陣列的第一個元素，且 onValueChange 設定為 `[value]`，未保留其他元素。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/custom-trigger-fields.tsx",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "空輸入時設定為 undefined 可能導致型別不符",
+    "body": "在 Expected Events 的 onChange 中，當輸入為空時設定為 `undefined`，但 schema 可能預期為陣列。這可能導致表單狀態型別不一致，並在提交時產生問題。建議確認 schema 是否允許 undefined，或改為空陣列 `[]`。",
+    "existing_code": "field.onChange(lines.length > 0 ? lines : undefined);",
+    "evidence": "diff 中該行在空輸入時設定為 undefined。"
+  }
+]

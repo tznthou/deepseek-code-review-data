@@ -1,0 +1,13 @@
+[
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.ts",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 `endsWith` 可能導致全表掃描，影響批次查詢效能",
+    "body": "在 `where` 條件中使用 `endsWith` 來排除特定後綴的日曆，但資料庫（如 PostgreSQL）通常無法對 `endsWith` 使用一般的 B-tree 索引，這可能導致對 `selectedCalendar` 資料表的全表掃描。若該資料表規模較大，且此查詢被頻繁呼叫（例如定期同步），可能造成顯著的效能問題。\n\n建議：\n- 考慮在 `externalId` 上建立反向索引（reverse index）或使用其他可索引的比對方式（例如儲存反轉後的字串並使用 `startsWith`）。\n- 若資料量不大或查詢頻率低，可接受此權衡，但應在 PR 描述中說明。",
+    "existing_code": "AND: genericCalendarSuffixes?.length\n          ? genericCalendarSuffixes?.map((suffix) => ({\n              NOT: { externalId: { endsWith: suffix } },\n            }))\n          : undefined,",
+    "evidence": "diff 中新增的 `AND` 條件使用了 `endsWith`，且未見任何索引調整或效能考量。"
+  }
+]

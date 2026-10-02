@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2306,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "argv 陣列大小不足，寫入 argv[5] 導致堆疊緩衝區溢位",
+    "body": "在 hincrbyfloatCommand 中，宣告 `robj *argv[5];` 但後續指派 `argv[5] = c->argv[2];`，索引 5 超出陣列範圍（合法索引為 0-4）。這會造成堆疊緩衝區溢位，可能導致程式崩潰或任意程式碼執行。\n\n失敗情境：當欄位有過期時間時，執行 HINCRBYFLOAT 即觸發此寫入。\n\n建議修正：將陣列大小改為 6，例如 `robj *argv[6];`。",
+    "existing_code": "robj *argv[5];\n        argv[0] = shared.hpexpireat;\n        argv[1] = c->argv[1];\n        argv[2] = createStringObjectFromLongLong(expireat);\n        argv[3] = shared.fields;\n        argv[4] = shared.integers[1];\n        argv[5] = c->argv[2];",
+    "evidence": "diff 中新增的程式碼片段顯示 `robj *argv[5];` 宣告大小為 5，但後續指派 `argv[5] = c->argv[2];` 使用索引 5，超出陣列邊界。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2309,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "手動傳播 HPEXPIREAT 時未處理 createStringObjectFromLongLong 可能失敗的情況",
+    "body": "`createStringObjectFromLongLong(expireat)` 可能因為記憶體不足而回傳 NULL，但程式碼未檢查就直接指派給 argv[2]，後續 alsoPropagate 可能對 NULL 物件進行操作，導致崩潰。\n\n失敗情境：在記憶體極度不足時，執行 HINCRBYFLOAT 且欄位有過期時間。\n\n建議修正：檢查回傳值，若為 NULL 則回傳錯誤或採取其他處理。",
+    "existing_code": "argv[2] = createStringObjectFromLongLong(expireat);",
+    "evidence": "diff 中新增的程式碼直接呼叫 createStringObjectFromLongLong 而未檢查回傳值。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2304,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "手動傳播指令時未處理 alsoPropagate 的失敗情況",
+    "body": "alsoPropagate 可能因為記憶體不足或其他原因失敗，但程式碼未檢查其回傳值。若傳播失敗，可能導致主從資料不一致。\n\n失敗情境：在記憶體不足或網路異常時，HSET 或 HPEXPIREAT 未能正確傳播到 AOF 或複本。\n\n建議修正：檢查 alsoPropagate 的回傳值，若失敗則進行適當處理（如記錄錯誤或回傳錯誤給客戶端）。",
+    "existing_code": "alsoPropagate(c->db->id, c->argv, c->argc, PROPAGATE_AOF|PROPAGATE_REPL);",
+    "evidence": "diff 中新增的 alsoPropagate 呼叫未檢查回傳值。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2310,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 shared.fields 與 shared.integers[1] 作為 HPEXPIREAT 參數，但未確認其初始化狀態",
+    "body": "shared.fields 在 createSharedObjects 中初始化，但 shared.integers[1] 是否已初始化需確認。若未初始化，可能導致傳播錯誤的指令。\n\n失敗情境：若 shared.integers[1] 未正確初始化，傳播的 HPEXPIREAT 指令可能包含錯誤的參數。\n\n建議修正：確認 shared.integers[1] 在 createSharedObjects 中已正確初始化，或改用其他方式建立整數物件。",
+    "existing_code": "argv[3] = shared.fields;\n        argv[4] = shared.integers[1];",
+    "evidence": "diff 中新增的程式碼使用 shared.integers[1]，但未在 diff 中看到其初始化。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1290,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試未涵蓋 HINCRBYFLOAT 在欄位無過期時間時的正確性",
+    "body": "測試中對 f2 執行 HINCRBYFLOAT，但未驗證其值是否正確（僅驗證無過期時間）。建議增加對 f2 值的斷言，以確保 HINCRBYFLOAT 在無過期時間時仍正常運作。\n\n失敗情境：若 HINCRBYFLOAT 在無過期時間時有錯誤，此測試無法發現。\n\n建議修正：增加 `assert_equal [r -1 hget h1 f2] [r hget h1 f2]` 或類似斷言。",
+    "existing_code": "assert_equal {-1} [r httl h1 FIELDS 1 f2]\n                assert_equal [r -1 hget h1 f2] [r hget h1 f2]",
+    "evidence": "測試中對 f2 的驗證僅有 httl 和 hget，但未驗證 hget 的值是否正確。"
+  }
+]

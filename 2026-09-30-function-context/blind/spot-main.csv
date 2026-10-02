@@ -1,0 +1,31 @@
+pair,label,note
+P0036,same,同一處順序調換；finding 機制講成例外而 GT 是遞迴中邊狀態為 UNKNOWN；還原順序可同時修（邊界：也可判 partial）
+P0053,same,同一個 setLoading(false) 被移除
+P0070,no,GT 是 updateMany 少回傳；finding 講新增的 update 型別是不同方法
+P0073,same,size 與 position 順序對調
+P0134,same,stacks 陣列重複 browserActionStack 且漏 trailingPageActionStack
+P0187,same,num_keys > 0 改成 >= 0 且結論建議維持 > 0
+P0263,no,GT 是 MSTest 屬性；finding 是 SetSwitch 參數反轉
+P0264,no,GT 是拿掉 localEnabled 檢查；finding 是 version 未驗證的路徑操縱（獨立缺陷）
+P0285,same,|| 應為 && 且建議改回 &&
+P0291,no,GT 是缺分號；finding 是 useEffect 依賴陣列
+P0336,no,GT 是缺存取控制修飾詞；finding 是 nil targetFrame
+P0399,same,同一個 null 賦值位置變更；finding 說功能等價而 GT 說違反 out 語意；還原位置可同時修（邊界：也可判 partial）
+P0426,no,GT 是 start_execution 早於 enqueue_node；finding 是另一段的標記順序且距錨點 21 行
+P0483,partial,同一個函式；GT 是缺 REDIS_TEST 包裹而 finding 是函式未被呼叫（dead code）
+P0502,no,GT 是 jwt.decode 取代 verify；finding 是 jwt.sign 的 noTimestamp
+P0503,no,GT 是拋一般 Error；finding 是驗證欄位不足（獨立缺陷）
+P0556,no,GT 是 force unwrap；finding 是 expectation.fulfill 位置
+P0567,partial,同一段 valid_up_to 邊界處理；GT 是 size_t 轉型回繞而 finding 是 -1 時仍 truncate
+P0589,no,GT 是公開函式缺文件；finding 是 versionCode 競態
+P0600,no,GT 是 JSON 縮排；finding 是翻譯漏變數
+P0674,no,GT 是缺分號；finding 是 useEffect 依賴陣列
+P0675,no,GT 是 >= 該用 >（400k 應吃 2 倍）；finding 沒指出邊界錯誤且結論說 400k 時結果正常
+P0698,same,迴圈該迭代 plans_to_cache 卻迭代 bulk_plans
+P0738,no,GT 是缺 static；finding 是 rewriteClientCommandVector 參數
+P0780,no,GT 是 require 路徑大小寫錯；finding 是缺分號
+P0801,no,GT 是缺分號；finding 是 useEffect 依賴陣列
+P0802,same,onSuccess 缺 accountFollows 的 invalidate
+P0818,same,tabs.count 應為 count - 1 的越界
+P0830,no,GT 是比較運算元順序；finding 是讀檔失敗時 versionCode 重置為 1
+P0874,same,emailAddressService.init() 移入 Promise.all 造成依賴順序被破壞

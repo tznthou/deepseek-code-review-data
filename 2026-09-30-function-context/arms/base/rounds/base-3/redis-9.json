@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "複寫指令參數順序可能錯誤",
+    "body": "`rewriteClientCommandVector` 的參數順序為 `(c, argc, ...)`，但此處傳入的參數順序為 `shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj`。根據 HSETEX 語法，正確順序應為 `HSETEX key [KEEPTTL] FIELDS num field value`，因此 `shared.keepttl` 應在 `shared.fields` 之前，但此處 `shared.keepttl` 在 `shared.fields` 之後，可能導致複寫指令格式錯誤。\n\n失敗情境：當主節點執行 HINCRBYFLOAT 時，複本會收到錯誤格式的 HSETEX 指令，導致複寫中斷或資料不一致。\n\n建議修正：調整參數順序為 `shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj`。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 `rewriteClientCommandVector` 呼叫，參數順序與 HSETEX 命令語法不符。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1988,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "TTL 範圍斷言可能過於嚴格",
+    "body": "測試中 `assert_range [r httl h1 FIELDS 1 f1] 90 100` 假設 TTL 在 90 到 100 秒之間，但實際 TTL 可能因測試執行時間而低於 90 秒，導致測試不穩定。\n\n失敗情境：若測試執行較慢，TTL 可能降至 90 以下，造成斷言失敗。\n\n建議修正：放寬範圍或使用相對誤差，例如 `assert_range [r httl h1 FIELDS 1 f1] 80 100`。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "測試中新增的斷言，TTL 範圍固定為 90-100，未考慮時間流逝。"
+  }
+]

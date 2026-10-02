@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 227,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "getRecordings 呼叫缺少 await，可能回傳 Promise 而非實際資料",
+    "body": "在 `getBookingRecordings` 方法中，`this.calVideoService.getRecordings(bookingUid)` 沒有加上 `await`。如果 `getRecordings` 是非同步方法，則 `recordings` 會是 Promise 物件，而非實際的錄音資料陣列。這會導致 API 回傳錯誤的資料格式，且可能造成序列化問題。請確認 `getRecordings` 是否為 async，若是則必須加上 `await`。",
+    "existing_code": "const recordings = this.calVideoService.getRecordings(bookingUid);",
+    "evidence": "diff 中此行從 `await this.calVideoService.getRecordings(bookingUid)` 改為 `this.calVideoService.getRecordings(bookingUid)`，移除了 await。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 216,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄音端點權限從 BOOKING_READ 改為 BOOKING_WRITE，可能過度授權",
+    "body": "錄音端點原本使用 `@Permissions([BOOKING_READ])`，現在改為 `@Permissions([BOOKING_WRITE])`。讀取錄音應只需要讀取權限，改為寫入權限可能讓具有寫入權限但無讀取權限的使用者也能存取錄音，造成權限擴張。除非有特殊原因，否則應維持 `BOOKING_READ`。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中此行從 `@Permissions([BOOKING_READ])` 改為 `@Permissions([BOOKING_WRITE])`。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/get-booking-recordings.output.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 BookingRepository import 似乎未使用",
+    "body": "在 `get-booking-recordings.output.ts` 中新增了 `import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";`，但在此檔案中沒有看到使用 `BookingRepository` 的地方。這可能是多餘的 import，建議移除以避免 lint 錯誤。",
+    "existing_code": "import type { BookingRepository } from \"@calcom/features/bookings/lib/BookingRepository\";",
+    "evidence": "diff 中新增此 import，但檔案內容未使用該型別。"
+  }
+]

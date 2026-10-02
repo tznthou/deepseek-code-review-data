@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 nonisolated(unsafe) 可能隱藏資料競爭",
+    "body": "將 `generator` 標記為 `nonisolated(unsafe)` 表示開發者手動保證其執行緒安全，但註解中明確指出 `ContentBlockerGenerator` 並非執行緒安全。若此靜態屬性被多個執行緒同時存取，可能導致資料競爭或未定義行為。建議確認 `ContentBlockerGenerator.factory()` 的回傳值是否真的不可變且內部狀態安全，或考慮使用鎖定、actor 或其他同步機制。",
+    "existing_code": "nonisolated(unsafe) static let generator = ContentBlockerGenerator.factory()",
+    "evidence": "diff 中新增了 `nonisolated(unsafe)` 修飾詞，且上方註解寫著 `// FXIOS-14548 ContentBlockerGenerator is not thread safe`，顯示開發者已知其非執行緒安全，但選擇用 unsafe 標記來繞過編譯器檢查。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "移除 expectation 可能導致測試提前結束",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase` 中，原本使用 `expectation` 等待非同步下載完成，但修改後移除了 `expectation` 的建立與等待，且未使用 `wait(for:)`。這可能導致測試方法在非同步回呼執行前就返回，使得測試永遠通過，無法驗證實際行為。建議保留 expectation 或改用 `wait(for:)` 來等待非同步操作。",
+    "existing_code": "func testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase() {\n        let assetType: AssetType = .svgCase1\n        let expectedRasterSize = CGSize(width: 360, height: 360)\n\n        guard let imageData = try? dataFor(type: assetType) else {\n            XCTFail(\"Could not load test asset\")\n            return\n        }\n\n        guard let mockedURL = try? startMockImageServer(imageData: imageData, forAssetType: assetType) else {\n            XCTFail(\"Check bundle setup for mock server response data\")\n            return\n        }\n\n        let siteDownloader = DefaultSiteImageDownloader()\n        siteDownloader.downloadImage(with: mockedURL, options: [.processor(SVGImageProcessor())]) { result in\n            switch result {\n            case .success(let result):\n                XCTAssertEqual(result.originalData, imageData)\n                XCTAssertEqual(result.url, mockedURL)\n                XCTAssertEqual(result.image.size, expectedRasterSize)\n            case .failure(let error):\n                XCTFail(\"Should not have an error: \\(error) \\(error.errorDescription ?? \"\")\")\n            }\n        }\n    }",
+    "evidence": "diff 中刪除了 `let exp = expectation(description: \"Image download and parse\")` 以及 `await fulfillment(of: [exp], timeout: 2.0)`，且未加入 `wait(for:)`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 expectation 可能導致測試提前結束",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本使用 `expectation` 等待 decision handler 被呼叫，但修改後移除了 expectation 的建立與等待，且未使用 `wait(for:)`。這可能導致測試方法在非同步回呼執行前就返回，使得測試永遠通過，無法驗證實際行為。建議保留 expectation 或改用 `wait(for:)` 來等待非同步操作。",
+    "existing_code": "func testRequestMediaCaptureSuccess() {\n        let subject = createSubject(isActive: true)\n\n        let decisionHandler: @Sendable (WKPermissionDecision) -> Void = { (decision: WKPermissionDecision) in\n            XCTAssertEqual(decision, .prompt)\n        }\n\n        subject.requestMediaCapturePermission(decisionHandler: decisionHandler)\n    }",
+    "evidence": "diff 中刪除了 `let expectation = expectation(description: \"Wait for the decision handler to be called\")` 以及 `wait(for: [expectation])`，且未加入其他等待機制。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Home/Homepage/SectionHeader/LabelButtonHeaderView.swift",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "閉包包裝可能造成不必要的 @MainActor 隔離",
+    "body": "在 `configure` 方法中，新增了一個 `wrappedAction` 閉包來呼叫 `moreButtonAction`，並將其傳遞給 `ActionButtonViewModel`。此包裝可能只是為了滿足型別檢查，但若 `moreButtonAction` 本身已是 `@MainActor`，此包裝可能導致額外的隔離或效能影響。建議確認是否可以直接傳遞 `moreButtonAction`，或簡化此處的型別轉換。",
+    "existing_code": "let wrappedAction: (@MainActor (UIButton) -> Void)? = { button in\n                moreButtonAction?(button)\n            }",
+    "evidence": "diff 中新增了 `wrappedAction` 閉包，並將其指派給 `touchUpAction`，而原本的 `moreButtonAction` 參數型別已改為 `(@Sendable @MainActor (UIButton) -> Void)?`。"
+  }
+]

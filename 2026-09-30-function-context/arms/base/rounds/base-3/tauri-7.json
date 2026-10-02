@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "鏡像 URL 回退邏輯可能錯誤改寫非 GitHub 網址",
+    "body": "在 `generate_github_alternative_url` 中，原本回傳替代 URL（`alt_url`），現在改為回傳原始 URL（`url.to_owned()`）。這可能導致當 `generate_github_mirror_url_from_template` 或 `generate_github_mirror_url_from_base` 成功產生鏡像 URL 時，函式卻回傳原始 URL，使得鏡像功能失效。此外，若原始 URL 不是 GitHub 網址，此函式仍可能被呼叫並回傳原始 URL，但呼叫端可能預期只有 GitHub 網址會被處理。建議確認此函式的呼叫情境，並確保只有 GitHub 網址會進入此邏輯，或修正回傳值為 `alt_url`。",
+    "existing_code": ".map(|_alt_url| {\n      (\n        ureq::Agent::config_builder()\n          .user_agent(BUNDLER_USER_AGENT)\n          .build()\n          .into(),\n        url.to_owned(),\n      )\n    })",
+    "evidence": "diff 中將 `alt_url` 改為 `url.to_owned()`，且參數改名為 `_alt_url` 表示不再使用。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 Sha256 的 Windows 限定可能影響跨平台行為",
+    "body": "原本 `HashAlgorithm::Sha256` 只在 Windows 上可用，現在移除 `#[cfg(target_os = \"windows\")]`，使其在所有平台可用。這可能是為了支援跨平台雜湊驗證，但需確認是否有其他平台特定邏輯依賴此 cfg。若無其他限制，此變更應屬安全，但建議確認相關使用情境。",
+    "existing_code": "pub enum HashAlgorithm {\n  Sha256,\n  Sha1,\n}",
+    "evidence": "diff 中移除了 `#[cfg(target_os = \"windows\")]` 屬性。"
+  }
+]

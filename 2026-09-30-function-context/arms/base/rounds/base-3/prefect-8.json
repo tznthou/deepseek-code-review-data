@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 458,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "變數作用域錯誤：`source_static_path` 與 `static_subpath` 可能未定義",
+    "body": "在 `create_ui_app` 函式中，`source_static_path` 和 `static_subpath` 是在 `if v2_enabled:` 和 `else:` 區塊內分別賦值。然而，後續程式碼（如 `static_dir = ... or str(static_subpath)` 和 `copy_directory(str(source_static_path), ...)`）在區塊外使用這兩個變數。若 `v2_enabled` 為真，則 `static_subpath` 未定義；若為假，則 `source_static_path` 未定義，導致 `NameError`。\n\n**失敗情境**：當伺服器啟動且 `v2_enabled` 為真時，執行到 `static_dir = ... or str(static_subpath)` 會拋出 `NameError: name 'static_subpath' is not defined`。\n\n**建議修法**：在 `if` 區塊之前先定義這兩個變數的預設值，或將後續使用邏輯移入對應的條件分支中。",
+    "existing_code": "if v2_enabled:\n        source_static_path = prefect.__ui_v2_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v2:{prefect.__version__}:{base_url}\"\n    else:\n        source_static_path = prefect.__ui_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v1:{prefect.__version__}:{base_url}\"\n\n    stripped_base_url = base_url.rstrip(\"/\")\n    static_dir = prefect.settings.PREFECT_UI_STATIC_DIRECTORY.value() or str(\n        static_subpath\n    )",
+    "evidence": "diff 中新增的程式碼顯示 `source_static_path` 和 `static_subpath` 僅在條件分支內賦值，但後續第 470 行左右使用 `static_subpath`，第 506 行左右使用 `source_static_path`，均可能未定義。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 472,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`static_subpath` 可能未定義導致 `NameError`",
+    "body": "`static_subpath` 在 `if v2_enabled` 為真時未被賦值，但此處直接使用 `str(static_subpath)`。若 `v2_enabled` 為真，將拋出 `NameError`。\n\n**失敗情境**：啟用 V2 UI 時，伺服器啟動即失敗。\n\n**建議修法**：在條件判斷前先定義 `static_subpath` 的預設值，或將此邏輯移入對應分支。",
+    "existing_code": "static_dir = prefect.settings.PREFECT_UI_STATIC_DIRECTORY.value() or str(\n        static_subpath\n    )",
+    "evidence": "diff 中顯示 `static_subpath` 僅在 `else` 分支賦值，但此處在分支外使用。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 509,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`source_static_path` 可能未定義導致 `NameError`",
+    "body": "`source_static_path` 在 `if v2_enabled` 為假時未被賦值，但此處直接使用 `str(source_static_path)`。若 `v2_enabled` 為假，將拋出 `NameError`。\n\n**失敗情境**：使用 V1 UI 時，伺服器啟動即失敗。\n\n**建議修法**：在條件判斷前先定義 `source_static_path` 的預設值，或將此邏輯移入對應分支。",
+    "existing_code": "copy_directory(str(source_static_path), str(static_dir))",
+    "evidence": "diff 中顯示 `source_static_path` 僅在 `if` 分支賦值，但此處在分支外使用。"
+  },
+  {
+    "path": "src/prefect/settings/models/server/ui.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "V2 UI 預設啟用可能導致未預期的行為變更",
+    "body": "新增的 `v2_enabled` 設定預設為 `True`，這表示所有現有使用者升級後將預設使用實驗性的 V2 UI。若 V2 UI 尚未完全穩定或與現有功能不相容，可能造成使用者困擾。\n\n**建議修法**：考慮將預設值設為 `False`，或提供明確的遷移指引。",
+    "existing_code": "v2_enabled: bool = Field(\n        default=True,\n        description=\"Whether to serve the experimental V2 UI instead of the default V1 UI.\",\n    )",
+    "evidence": "diff 中顯示 `default=True`。"
+  },
+  {
+    "path": ".github/workflows/python-package.yaml",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Workflow 中未設定 `timeout-minutes`",
+    "body": "新增的 `Build UI v2` step 未設定 `timeout-minutes`，若建置過程卡住可能導致 workflow 長時間執行。\n\n**建議修法**：為 job 或 step 設定合理的 timeout。",
+    "existing_code": "- name: Build UI v2\n        working-directory: ui-v2\n        run: |\n          npm ci\n          npm run build\n          cp -r dist ../src/prefect/server/ui-v2",
+    "evidence": "diff 中新增的 step 沒有 timeout 設定。"
+  }
+]

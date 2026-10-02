@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Hot Reload 時未清除 _displayNameCache，可能導致顯示名稱過期",
+    "body": "`ClearCache` 方法只清除了 `_memberInfoCache`，但 `_displayNameCache` 未被清除。當 Hot Reload 套用中繼資料變更（例如修改屬性的 `DisplayAttribute`）時，`_displayNameCache` 中快取的舊顯示名稱將繼續被使用，導致 UI 顯示過期的名稱。\n\n**失敗情境**：開發者在 Hot Reload 期間修改了某個屬性的 `DisplayAttribute.Name`，但頁面仍顯示舊名稱。\n\n**建議**：在 `ClearCache` 中同時清除 `_displayNameCache`。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 `ClearCache` 方法僅呼叫 `_memberInfoCache.Clear()`，未處理 `_displayNameCache`。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "For 參數為 null 時拋出例外，可能導致頁面中斷",
+    "body": "當 `For` 參數未提供時，元件會拋出 `InvalidOperationException`。這可能導致整個頁面渲染失敗，而不是僅顯示空白或預設內容。雖然測試中預期此行為，但對於生產應用程式，更友善的做法是記錄警告並渲染空內容，或提供預設顯示名稱。\n\n**失敗情境**：開發者忘記設定 `For` 參數，頁面直接崩潰。\n\n**建議**：考慮改為記錄警告並渲染空字串，或提供可設定的預設值。",
+    "existing_code": "if (For is null)\n{\n    throw new InvalidOperationException($\"{GetType()} requires a value for the \" +\n        $\"{nameof(For)} parameter.\");\n}",
+    "evidence": "diff 中 `DisplayName<TValue>` 的 `SetParametersAsync` 方法在 `For` 為 null 時拋出例外。"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/Register.razor",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "部分標籤缺少 class=\"form-label\"，可能影響樣式一致性",
+    "body": "在 `Register.razor` 中，`Input.Email` 和 `Input.Password` 的 `<label>` 元素未加上 `class=\"form-label\"`，而其他欄位（如 `Input.ConfirmPassword`）有加上。這可能導致樣式不一致，尤其是在使用 Bootstrap 等 CSS 框架時。\n\n**失敗情境**：使用者看到 Email 和 Password 欄位的標籤樣式與其他欄位不同。\n\n**建議**：為所有 `<label>` 元素統一加上 `class=\"form-label\"`。",
+    "existing_code": "<label for=\"Input.Email\">\n    <DisplayName For=\"() => Input.Email\" />\n</label>",
+    "evidence": "diff 中 `Register.razor` 的 Email 和 Password 標籤缺少 `class=\"form-label\"`，而 ConfirmPassword 標籤有。"
+  }
+]

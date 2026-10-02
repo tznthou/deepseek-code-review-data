@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/devtools/tanstack/loader.tsx",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "TanStack devtools 載入失敗被靜默吞掉",
+    "body": "在 lazy import 的 catch 中直接回傳 `{ default: () => null }`，沒有記錄任何錯誤。這會讓開發者無法察覺 devtools 載入失敗，喪失除錯能力。建議至少加上 `console.error`，或考慮在開發環境顯示錯誤訊息。",
+    "existing_code": "})).catch(() => {\n      return { default: () => null }\n    }),",
+    "evidence": "diff 中新增的 loader.tsx 第 10-12 行，catch 區塊沒有錯誤處理。"
+  },
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "React Scan 載入失敗時回傳 null 元件可能造成非預期行為",
+    "body": "在 catch 中回傳 `{ default: () => null }`，雖然有記錄錯誤，但回傳 null 元件可能導致 React 在渲染時出現問題（例如 Suspense 邊界無法正確處理）。建議改為回傳一個空的 Fragment 或明確的 fallback 元件。",
+    "existing_code": "console.error('Failed to load React Scan devtools:', error)\n    return { default: () => null }",
+    "evidence": "diff 中新增的 loader.tsx 第 10-11 行。"
+  }
+]

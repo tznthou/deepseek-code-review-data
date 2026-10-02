@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 382,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 remarks 指派給 Summary 可能改變 API 文件語意",
+    "body": "原本 `operation.Description = remarks;` 改為 `operation.Summary = remarks;`。在 OpenAPI 中，Summary 是簡短摘要，Description 是詳細說明。若 remarks 內容較長，放入 Summary 可能導致文件品質下降。建議確認此變更是否為預期行為，或考慮同時設定兩者。",
+    "existing_code": "operation.Summary = remarks;",
+    "evidence": "diff 中 `- operation.Description = remarks;` 改為 `+ operation.Summary = remarks;`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 444,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "metadata 為 null 時直接跳過，可能遺漏文件產生",
+    "body": "新增 `metadata is not null` 檢查後，若 `parameterDescription.ModelMetadata` 為 null，則整個 if 區塊跳過，不會嘗試從其他來源取得文件。若此情況常見，可能導致部分參數缺少描述。建議確認 null 是否為預期狀態，或考慮記錄警告。",
+    "existing_code": "if (metadata is not null\n    && metadata.MetadataKind == ModelMetadataKind.Property",
+    "evidence": "diff 中新增 `metadata is not null` 條件"
+  },
+  {
+    "path": "src/OpenApi/test/Microsoft.AspNetCore.OpenApi.SourceGenerators.Tests/OperationTests.Controllers.cs",
+    "line": 141,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試方法缺少 Arrange/Act/Assert 結構，且未驗證 Summary",
+    "body": "測試 `SupportsRouteParametersFromControllers` 直接驗證 `path.Parameters[0].Description`，但未驗證 Summary 是否正確。若 PR 同時修改了 Summary 行為，此測試可能無法捕捉回歸。建議增加對 Summary 的斷言。",
+    "existing_code": "Assert.Equal(\"The id of the user.\", path.Parameters[0].Description);",
+    "evidence": "測試僅驗證 Description，未驗證 Summary"
+  }
+]

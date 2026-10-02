@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`run_deployment` 失去同步執行能力，破壞向後相容性",
+    "body": "原本 `run_deployment` 使用 `@sync_compatible` 裝飾器，允許在同步與非同步環境中呼叫。現在改為 `run_deployment = arun_deployment`，而 `arun_deployment` 是純 async 函式，因此在同步環境中呼叫 `run_deployment(...)` 會回傳 coroutine 物件，而不會實際執行流程。這會導致所有現有同步呼叫者的程式碼靜默失敗（例如在腳本或同步函式中呼叫）。\n\n建議：保留一個同步包裝函式，例如使用 `asyncio.run` 或 `anyio.from_thread.run` 來執行 async 版本，或使用 `@sync_compatible` 裝飾器來維持原有行為。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中新增 `run_deployment = arun_deployment`，且移除了 `@sync_compatible` 裝飾器。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`get_or_create_client` 可能無法正確處理未提供的 client",
+    "body": "原本使用 `@inject_client` 裝飾器，會自動注入 client 或建立新的 client。現在改為手動呼叫 `get_or_create_client(client)`，但未檢查回傳的 client 是否有效。如果 `client` 為 `None`，`get_or_create_client` 應建立新的 client，但需確認其行為與原本一致，特別是在沒有活動 event loop 的同步環境中。\n\n建議：確認 `get_or_create_client` 的實作，並在必要時處理例外或提供明確的錯誤訊息。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中新增 `client, _ = get_or_create_client(client)`，取代了 `@inject_client` 裝飾器。"
+  },
+  {
+    "path": "tests/deployment/test_flow_runs.py",
+    "line": 762,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中使用未定義的 `_sync` 參數",
+    "body": "在 `TestRunDeploymentSyncContext` 類別中的測試方法呼叫 `run_deployment(..., _sync=True)`，但 `run_deployment` 的簽名中沒有 `_sync` 參數。這會導致測試失敗，因為函式不接受該參數。\n\n建議：移除 `_sync=True`，或修改函式簽名以支援該參數。",
+    "existing_code": "_sync=True,",
+    "evidence": "diff 中多處出現 `_sync=True`，但 `run_deployment` 的定義中沒有此參數。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`collect_task_run_inputs` 改為同步呼叫，可能導致效能問題",
+    "body": "原本 `await collect_task_run_inputs(v)` 是非同步呼叫，現在改為 `collect_task_run_inputs(v)` 同步呼叫。如果 `collect_task_run_inputs` 內部有 I/O 或需要非同步操作，這會阻塞事件迴圈。需確認該函式是否為純同步函式，否則應保留 `await`。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中將 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 212,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 `deployment_id` 而非 `deployment.id` 可能導致型別不一致",
+    "body": "原本傳遞 `deployment.id`，現在改為 `deployment_id`。需確認 `deployment_id` 的型別與 `create_flow_run_from_deployment` 預期的參數型別一致。如果 `deployment_id` 是字串而函式預期 UUID 物件，可能導致型別錯誤。",
+    "existing_code": "deployment_id,",
+    "evidence": "diff 中將 `deployment.id` 改為 `deployment_id`。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-runtime-wry/src/lib.rs",
+    "line": 1718,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "delete_cookie 改為 SetCookie 可能無法正確刪除 cookie",
+    "body": "在 `delete_cookie` 方法中，原本傳送 `WebviewMessage::DeleteCookie`，現在改為 `WebviewMessage::SetCookie`。這可能導致 cookie 被設定而不是刪除，除非 `SetCookie` 的實作會檢查 cookie 的過期時間或 max-age 來決定是否刪除。請確認 `SetCookie` 的處理邏輯是否支援刪除語意，否則應保留 `DeleteCookie` 或使用其他刪除機制。",
+    "existing_code": "WebviewMessage::SetCookie(cookie.into_owned()),",
+    "evidence": "diff 中將 `WebviewMessage::DeleteCookie(cookie.clone().into_owned())` 改為 `WebviewMessage::SetCookie(cookie.into_owned())`，但方法名稱仍為 `delete_cookie`，語意不一致。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1316,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "window_features 方法中參數順序調整可能影響行為",
+    "body": "在 `window_features` 方法中，原本先處理 position 再處理 size，現在順序對調。若兩者同時存在，且後者會覆蓋前者的設定，則可能導致最終視窗位置或大小不符合預期。請確認 `self.window_builder` 的 position 和 inner_size 設定是否互相獨立，否則應保持原有順序。",
+    "existing_code": "if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 中將原本的 position 處理區塊移到 size 處理區塊之後，可能改變設定的先後順序。"
+  }
+]

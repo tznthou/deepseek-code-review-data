@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6260,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "格式字串不一致：%@ 與 %1$@ 混用",
+    "body": "在 `RolloutsSettingMessage` 中使用了 `%@`，但註解寫的是 `%1$@`。在 iOS 的本地化字串中，若使用位置參數（如 `%1$@`），則所有格式符都應使用位置參數，否則可能導致參數錯位或無法正確替換。建議統一使用 `%@` 或 `%1$@`，並更新註解。",
+    "existing_code": "value: \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\",\ncomment: \"A short description that explains that Mozilla may change features remotely. %1$@ is the app name (e.g. Firefox).\"",
+    "evidence": "diff 中新增的 `RolloutsSettingMessage` 的 value 使用 `%@`，但 comment 提到 `%1$@`，兩者不一致。"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6232,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增的 V3 字串可能未被使用",
+    "body": "新增了 `StudiesSettingTitleV3`、`StudiesSettingLinkV3`、`StudiesSettingMessageV3` 等靜態屬性，但在這個 diff 中沒有看到任何使用它們的程式碼。如果這些字串是為了未來的功能預留，建議確認是否有對應的 PR 會使用它們，否則可能造成無用的程式碼。",
+    "existing_code": "public static let StudiesSettingTitleV3 = MZLocalizedString(\n    key: \"Settings.Studies.Title.v148\",\n    tableName: \"Settings\",\n    value: \"Allow Feature Studies\",\n    comment: \"Label used as a toggle item in Settings. When this is off, the user is opting out of all studies.\")",
+    "evidence": "diff 中新增了 V3 字串，但沒有看到使用處。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 203,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增的 V2 字串可能未被使用",
+    "body": "新增了 `detailTextSendUsageDataV2`、`labelStudiesV2`、`detailTextStudiesV2` 等靜態屬性，但在這個 diff 中沒有看到任何使用它們的程式碼。如果這些字串是為了未來的功能預留，建議確認是否有對應的 PR 會使用它們，否則可能造成無用的程式碼。",
+    "existing_code": "static let detailTextSendUsageDataV2 = NSLocalizedString(\"Settings.detailTextSendUsageData.v2\", value: \"Mozilla strives to collect only what we need to provide and improve %@ for everyone.\", comment: \"Description associated to the Send Usage Data toggle on main screen. %@ is the app name (for example \\\"Firefox Focus\\\" or \\\"Firefox Klar\\\").\")",
+    "evidence": "diff 中新增了 V2 字串，但沒有看到使用處。"
+  },
+  {
+    "path": ".github/l10n/linter_config_ios.json",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Linter 排除規則可能掩蓋格式問題",
+    "body": "在 linter 設定中新增了排除 `firefox-ios.xliff:Settings.Studies.Message.v148`，這可能掩蓋了該字串的格式問題。建議確認該字串是否真的需要排除，或者是否應該修正格式問題而不是排除。",
+    "existing_code": "\"exclusions\": [\n    \"firefox-ios.xliff:Settings.Studies.Message.v148\"\n]",
+    "evidence": "diff 中新增了排除規則。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "SettingsTextFormatter 可能造成記憶體洩漏或執行緒安全問題",
+    "body": "新增的 `SettingsTextFormatter` 使用 singleton 模式，但沒有明顯的必要性。如果這個類別只包含無狀態的方法，可以考慮使用靜態方法，避免不必要的 singleton。另外，如果未來加入狀態，需注意執行緒安全。",
+    "existing_code": "class SettingsTextFormatter {\n    static let shared = SettingsTextFormatter()\n\n    private init() {}\n\n    func formatStudiesText(appName: String) -> String {\n        return String(format: strings.detailTextStudies, appName)\n    }\n\n    func formatRolloutsText(appName: String) -> String {\n        return String(format: strings.detailTextRollouts, appName)\n    }\n}",
+    "evidence": "diff 中新增了 singleton 類別。"
+  }
+]

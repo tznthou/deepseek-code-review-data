@@ -1,0 +1,101 @@
+pair,label,note
+P0501,same,同一問題：錯誤路徑只 sdsfree(err) 沒有回覆客戶端錯誤訊息
+P0502,no,finding 講 jwt.sign 拿掉 noTimestamp 會多出 iat；GT 講 _isJWTExpired 用 decode 不驗簽章；不同函式不同問題
+P0503,no,同一函式但缺陷獨立（丟泛用 Error vs 驗證涵蓋不足）；邊界個案
+P0504,no,同一個 class 但缺陷獨立（缺 final vs singleton 沒必要）；邊界個案
+P0505,no,finding 講 assert 會被 -O 移除；GT 講 local_host or None 的重複轉換；不同問題
+P0506,same,同一問題：useEffect 依賴陣列為空 需加入 item.html
+P0507,no,finding 講 emailAddressService.init 改成並行；GT 講 scheduling.init 少了 apiUrl；不同問題
+P0508,same,"同一問題：position(position.x,position.y) 逗號後缺空格"
+P0509,no,finding 講 cache_key 的 || 且明說 run_count 沒問題；GT 講 run_count 的 || 應為 ??；不同欄位
+P0510,same,同一問題：條件從 && 變成 ||（finding 語氣保守但指出同一處）
+P0511,no,finding 講 malloc 沒檢查 NULL；GT 講迴圈 <= 越界；同一個 buffer 但缺陷獨立；邊界個案
+P0512,partial,指對 update() 呼叫沒處理例外；但機制講反（finding 說 workflow 會失敗；GT 是被引擎吞掉而靜默失敗）
+P0513,same,同一問題：_serverToken 存了整個物件而不是 token 字串
+P0514,no,finding 講 V2 字串未被使用；GT 講該行超過 line length；不同問題
+P0515,same,同一問題：oldStatus 寫死 ACCEPTED 應取 booking.status
+P0516,no,finding 講 catch 吞掉所有例外；GT 講 GetFullPath 用了 prettyCertDir；不同問題
+P0517,no,finding 講 dev 模式 versionCode 的 clamp 順序；GT 講自動遞增不該在 dev 執行；不同區塊
+P0518,no,finding 講 malloc 取代 zmalloc；GT 講 helper 函式缺 static；不同函式
+P0519,no,finding 講 totalDays 為 1 時除以零；GT 講完成判斷的 > 應為 >=；不同敘述
+P0520,same,同一問題：isLandscape 宣告後沒有使用
+P0521,no,finding 講 setUserFeatureState 條件反轉；GT 講型別定義那行超過 110 字元；不同問題
+P0522,same,同一問題：!crate_lock_packages.is_empty() 條件反轉
+P0523,partial,指對 validator 那行；但機制不同（finding 講欄位驗證順序；GT 講 proactive trigger 沒有 triggering_event 卻被擋）
+P0524,no,finding 講 getRecordings 缺 await；GT 講 UseGuards 順序錯；不同問題
+P0525,same,同一問題：else 分支直接呼叫 completionHandler 少了 ensureMainThread
+P0526,no,finding 講輪詢先 sleep 再檢查；GT 講傳了 deployment_id 而不是 deployment.id；不同問題
+P0527,same,同一問題：oldStatus 寫死 ACCEPTED 應取 booking.status
+P0528,same,同一問題：Redirect 條件少檢查 InteractiveRequestUrl
+P0529,no,finding 講讀不到 tauri.properties 時靜默重置 versionCode；GT 講函式缺 target_os 條件編譯；不同問題
+P0530,same,同一問題：readerModeState 的 enabled 判斷反轉
+P0531,no,finding 講建構子沒驗證 code_executor 型別；GT 講 render 結果為 None 會通過檢查；不同問題
+P0532,same,同一問題：移除了依開始時間的排序
+P0533,partial,finding 講寫快取迴圈用 bulk_plans 而非 plans_to_cache；GT 講 log 計數用 len(bulk_plans)；同一種變數混用但不同敘述；邊界個案
+P0534,no,finding 講測試依賴真實網路；GT 講方法缺存取修飾詞；不同問題
+P0535,no,finding 講 tool_inputs 誤用；GT 講 except Exception 太寬；不同問題
+P0536,same,同一問題：手寫驗證取代 zod 且沒驗 schedule 與 eventTypeId（finding 也建議改用 zod）
+P0537,same,同一問題：先點 Done 再 goto 的順序（finding 語氣保守）
+P0538,no,finding 講 confirmHandle 缺 catch；GT 講 handleEnable 拿掉 try/catch；不同函式
+P0539,no,finding 講 schema 驗證不夠深；GT 講驗了未正規化的值；同一區塊但缺陷獨立；邊界個案
+P0540,same,同一問題：jwt.decode 取代 jwt.verify 不驗簽章
+P0541,partial,主論點是事件觸發時機；只順帶點到硬編碼 ACCEPTED 而沒說 oldStatus 錯；邊界個案
+P0542,same,同一問題：cgroups_ref 為 NULL 時不該回傳 1
+P0543,no,finding 講回傳 Infinity 的處理；GT 講缺分號；不同問題
+P0544,no,finding 講 fallback 回 null 元件；GT 講 console.error 違反規範；不同問題
+P0545,no,finding 講參數順序調換；GT 講 expect() 會 panic；同一段呼叫但缺陷獨立
+P0546,no,finding 講 XCTWaiter 結果未檢查；GT 講成員缺存取修飾詞；不同問題
+P0547,partial,指到同一個 wrappedAction 閉包；但講的是多餘包裝與額外隔離；GT 是包裝弄丟 @Sendable
+P0548,no,finding 講 targetFrame 可能為 nil；GT 講 class 缺 final；不同問題
+P0549,same,同一問題：快取迴圈走 bulk_plans 而含 None 值（finding 的 TypeError 說法不成立但修法方向一致）
+P0550,no,finding 講 retry_jitter_factor 的 0 被顯示成 None；GT 講 retries 少了 toString；不同欄位
+P0551,same,同一問題：collect_task_run_inputs 少了 await（finding 語氣保守）
+P0552,no,finding 講 var 宣告；GT 講 autoCloseOnSelect 沒關閉 popover；不同問題
+P0553,no,finding 講 SMTPClient 與全域設定耦合；GT 講 ehlo 用了 local_host；不同問題
+P0554,same,GT 描述含「逗號後多餘空格」；finding 指出 inner_size 那處的多餘空格
+P0555,no,finding 講 SetSwitch 參數值反轉；GT 講非 xUnit 屬性；不同問題
+P0556,no,finding 講 expectation.fulfill 的位置；GT 講強制解包 URL；不同問題
+P0557,no,同一行上兩個獨立缺陷：GT 講引用了舊的 detailTextStudies；finding 講 String(format:) 的格式字串風險
+P0558,no,finding 講 CFBundleTypeExtensions 條件相反；GT 講 to_string 的 clippy 警告；不同問題
+P0559,same,同一問題：action.triggered 事件用了 self._resulting_related_resources 而非 related_resources
+P0560,no,finding 講 new_click 寫死零值；GT 講缺 must_use；不同問題
+P0561,same,同一問題：sortableKeys 把 prefix items 也包進去
+P0562,no,finding 講 else 分支遺失原始錯誤訊息；GT 講無號整數迴繞；不同問題
+P0563,partial,finding 最後點出 local_host 可能為空字串導致 HELO 空值；跟 GT 的 or 空字串同源但沒指到那一行；標題與主論點是類別選擇
+P0564,no,finding 講前後端重複過濾；GT 講縮排用空格；不同問題
+P0565,no,finding 講模型沒被使用；GT 講用 Pydantic v1 Config；不同問題
+P0566,no,finding 講回傳 Infinity；GT 講 Math.floor 應為 Math.round；不同問題
+P0567,no,finding 講 valid_up_to 為 -1 時仍截斷；GT 講無號迴繞；同一條 if-else 鏈但缺陷獨立；邊界個案
+P0568,no,finding 講依賴外部網路；GT 講 waiter 變數未使用；不同問題
+P0569,partial,finding 講手寫的 source() 不完整；正是 GT 要換成 thiserror 的那段手寫實作；但沒指出該改用 thiserror
+P0570,no,同一行上兩個獨立缺陷：GT 講行太長；finding 講 comment 引號改變
+P0571,no,finding 講 versionCode 遞增的競態；GT 講檔案比較的運算元順序；不同問題
+P0572,same,同一問題：AspNetCorePatchVersion == '1' 使後續 servicing 版本被跳過（finding 語氣保守）
+P0573,same,同一問題：hasPageActions 該用 trailingPageActionStack
+P0574,no,finding 講停用 webhook 後其他副作用；GT 講直接讀 process.env；不同問題
+P0575,no,同一段運算式上兩個獨立缺陷：GT 講 to_string 的 clippy；finding 講 expect 可能 panic
+P0576,same,同一問題：回傳 newToken.identifier 而非 token
+P0577,no,finding 講與全域設定耦合；GT 講三元運算式選類別難讀；不同問題
+P0578,partial,同一個 raise；主論點是例外被吞掉；只在最後一句提到改用更精確的例外型別
+P0579,no,finding 講 getRecordings 缺 await；GT 講 UseGuards 順序錯；不同問題
+P0580,no,finding 講與全域設定耦合；GT 講 or None 的重複轉換；不同問題
+P0581,no,finding 講 buildInviteLink 條件反轉；GT 講回傳 identifier 而非 token；不同問題
+P0582,same,同一問題：seat 取消時 requestReschedule 被寫死為 true
+P0583,no,finding 講 namespace 前綴行為改變；GT 講缺 returnObjects 支援；同一函式但缺陷獨立
+P0584,same,同一問題：finding 的修法（改為 orig_active_defrag）同時消掉未使用變數
+P0585,partial,指對 ValidateSignOutRequestState 那行且點出登出會失敗；但歸因是拿掉 SignOutSessionStateManager 而非拿掉 null 檢查
+P0586,same,同一問題：直接 return history 可能是 undefined（finding 對原本行為的描述有誤但建議保留條件判斷）
+P0587,no,finding 講 ValidateBaseline 被停用；GT 講缺 PreReleaseBrandingLabel；不同問題
+P0588,same,同一問題：toolbar 的 leadingAnchor 該對 leftSkeletonAddressBar
+P0589,no,finding 講 versionCode 遞增的競態；GT 講公開函式缺文件；不同問題
+P0590,same,同一問題：版本前綴順序與後端不一致
+P0591,partial,指到同一行的版本號不一致；但方向相反（finding 說 2.8.2 領先 tauri-cli 的 2.8.1；GT 說落後實際的 2.8.3）
+P0592,same,同一問題：手寫驗證沒驗 schedule 結構（GT 內文含此點）
+P0593,no,finding 講 tool_inputs 誤用；GT 講 except Exception 太寬；不同問題
+P0594,no,finding 講 orgId 過濾漏掉深層子團隊；GT 講 repository 命名慣例；不同問題
+P0595,no,finding 講 related_resources 的順序；GT 講 emit 用了錯的 list；不同敘述
+P0596,no,finding 講函式可能誤刪遷移中的 key；GT 講缺 static；同一函式但缺陷獨立
+P0597,no,finding 講參數名稱比對改成 propertyName；GT 講 RequestBody description 的設定順序；不同問題
+P0598,no,finding 講 oldStatus 可能不準；GT 講 recurring 先觸發事件後更新資料庫；不同問題
+P0599,no,finding 講 Trans mock 沒處理 components；GT 講缺 returnObjects；不同問題
+P0600,no,同一行上兩個獨立缺陷：GT 講 4 格縮排；finding 講翻譯漏了變數

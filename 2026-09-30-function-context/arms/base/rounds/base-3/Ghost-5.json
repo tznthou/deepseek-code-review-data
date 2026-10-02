@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getUrlHistory 回傳型別變更可能導致呼叫端未處理 undefined 而發生錯誤",
+    "body": "原本的程式碼在 `history` 為 falsy 時會回傳 `undefined`，但修改後直接回傳 `history`，型別從 `URLHistory | undefined` 變成 `URLHistory`。如果呼叫端沒有處理 `undefined` 的情況，可能會在執行時期嘗試存取 `history` 的屬性而拋出錯誤。建議確認所有呼叫端是否都有正確處理 `undefined`，或保留原本的條件判斷。",
+    "existing_code": "const history = getDefaultUrlHistory();\n            return history;",
+    "evidence": "diff 中刪除了 `if (history) { return history; }` 的條件判斷，直接回傳 `history`。"
+  },
+  {
+    "path": "apps/signup-form/src/components/pages/form-page.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 setLoading(false) 可能導致 loading 狀態無法正確重設",
+    "body": "在 minimal 模式下，成功送出表單後原本會呼叫 `setLoading(false)` 來重設 loading 狀態，但此 PR 移除了這一行。如果 `setLoading(false)` 是必要的，移除後可能導致 UI 一直顯示 loading 狀態。建議確認 minimal 模式下的狀態管理邏輯，若需要重設 loading 則應保留。",
+    "existing_code": "setSuccess(true);",
+    "evidence": "diff 中刪除了 `setLoading(false);` 這一行。"
+  },
+  {
+    "path": "apps/signup-form/src/components/pages/form-view.tsx",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "email trim 可能改變原本行為，需確認是否符合預期",
+    "body": "在 submitHandler 中將 email 加上 `.trim()`，這會移除前後空白。如果原本的驗證邏輯允許前後空白，這可能改變行為。建議確認 email 驗證邏輯是否已處理 trim，或此變更是否為預期。",
+    "existing_code": "onSubmit({email: email.trim()});",
+    "evidence": "diff 中將 `onSubmit({email});` 改為 `onSubmit({email: email.trim()});`"
+  }
+]

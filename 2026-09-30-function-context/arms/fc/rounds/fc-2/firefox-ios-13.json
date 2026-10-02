@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試方法改名可能導致測試不再被執行",
+    "body": "將 `testBookmarksShareNormalWebsiteReminders` 改名為 `verifyBookmarksShareNormalWebsiteReminders`。XCTest 僅自動執行以 `test` 開頭的方法，改名後此方法將不再被視為測試案例，除非有明確的呼叫或設定。這會導致該測試涵蓋的功能失去自動化驗證。建議保留 `test` 前綴，或確認此方法已被其他測試呼叫。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中將原本的 `func testBookmarksShareNormalWebsiteReminders()` 改為 `func verifyBookmarksShareNormalWebsiteReminders()`，且未見其他呼叫點。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中提前 return 可能跳過 app.terminate()",
+    "body": "在 `tearDown()` 中，若 `self.name.contains(\"testSelectBottomPlacement\") || iPad()` 成立，會直接 `return`，導致後續的 `app.terminate()` 不會被執行。這可能使應用程式在測試結束後仍保持執行狀態，影響後續測試的隔離性。建議將 `app.terminate()` 移至條件判斷之前，或使用 `defer` 確保其總會被執行。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 中新增的條件區塊包含 `return`，而原本的 `app.terminate()` 位於該區塊之後。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 471,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 springboard 全域變數可能未初始化",
+    "body": "新增的 `springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)` 使用了 `springboard`，但此變數在 `BaseTestCase` 中未見定義或初始化。若它是一個全域變數，需確認其已正確設定；否則可能導致測試執行時崩潰。建議確認 `springboard` 的來源，或改用 `XCUIApplication(bundleIdentifier: \"com.apple.springboard\")`。",
+    "existing_code": "springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)",
+    "evidence": "diff 中新增此行，但未見 `springboard` 的定義。"
+  }
+]

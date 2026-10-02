@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "sortHosts 函式在移動時 priority 排序方向被反轉",
+    "body": "在 `isRRWeightsEnabled` 為 true 且權重相同時，原本的程式碼回傳 `priorityB - priorityA`（降冪），但移動後變成 `priorityA - priorityB`（升冪）。這會導致主持人排序結果相反，可能影響輪流主持（round-robin）的權重分配。請改回 `priorityB - priorityA`。",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中 `packages/lib/bookings/hostGroupUtils.ts` 新增的 `sortHosts` 函式，在 `weightA === weightB` 分支回傳 `priorityA - priorityB`，而原始 `apps/web/modules/event-types/components/HostEditDialogs.tsx` 中對應的程式碼為 `priorityB - priorityA`。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用相對路徑 import 跨 package 的模組，增加耦合與維護成本",
+    "body": "此檔案從 `packages/platform/atoms` 移至 `apps/web/components/apps` 後，改用相對路徑 `../../../../packages/platform/atoms/src/components/atoms-wrapper` 和 `../../../../packages/platform/atoms/destination-calendar/DestinationCalendar` 來 import。這會讓 apps/web 直接依賴 packages/platform 的內部檔案結構，未來若 packages/platform 調整路徑，此處容易斷裂。建議改用 package exports 或 alias。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 中 `apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx` 的 import 路徑改為相對路徑，跨越多層目錄指向 packages/platform。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "import 路徑混用相對路徑與 package alias，不一致",
+    "body": "此檔案中部分 import 使用相對路徑（如 `./ChildrenEventTypeSelect`、`./EventType`），但 hooks 仍使用 `@calcom/atoms/event-types/hooks/...`。雖然功能上可能正常，但風格不一致，建議統一使用 alias 或相對路徑。",
+    "existing_code": "import type { ChildrenEventType } from \"./ChildrenEventTypeSelect\";\nimport { EventType as EventTypeComponent } from \"./EventType\";\nimport { useEventTypeForm } from \"@calcom/atoms/event-types/hooks/useEventTypeForm\";\nimport { useHandleRouteChange } from \"@calcom/atoms/event-types/hooks/useHandleRouteChange\";\nimport { useTabsNavigations } from \"@calcom/atoms/event-types/hooks/useTabsNavigations\";",
+    "evidence": "diff 中 `apps/web/modules/event-types/components/EventTypeWebWrapper.tsx` 的 import 區塊同時出現相對路徑與 `@calcom/atoms` alias。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案缺少結尾換行",
+    "body": "檔案最後一行 `export default EventLimitsTabWebWrapper;` 沒有換行符號，可能導致某些工具或 linter 警告。建議補上換行。",
+    "existing_code": "export default EventLimitsTabWebWrapper;",
+    "evidence": "diff 中 `apps/web/modules/event-types/components/tabs/limits/EventLimitsTabWebWrapper.tsx` 的最後一行顯示 `\\ No newline at end of file`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案缺少結尾換行",
+    "body": "檔案最後一行 `export default EventRecurringWebWrapper;` 沒有換行符號，可能導致某些工具或 linter 警告。建議補上換行。",
+    "existing_code": "export default EventRecurringWebWrapper;",
+    "evidence": "diff 中 `apps/web/modules/event-types/components/tabs/recurring/EventRecurringWebWrapper.tsx` 的最後一行顯示 `\\ No newline at end of file`。"
+  }
+]

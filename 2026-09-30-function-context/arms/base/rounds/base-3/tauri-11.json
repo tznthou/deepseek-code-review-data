@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/cargo_manifest.rs",
+    "line": 194,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "條件判斷邏輯反轉，導致鎖定版本解析錯誤",
+    "body": "原本的條件 `lock.is_some() && crate_lock_packages.is_empty()` 在 lock 存在且 crate_lock_packages 為空時執行，但修改後變成 `lock.is_some() && !crate_lock_packages.is_empty()`，邏輯完全相反。這會導致當 lock 存在且 crate_lock_packages 有值時才進入此區塊，但此區塊的目的是在找不到 crate 時從 lock 中取得版本，因此應在 crate_lock_packages 為空時執行。此錯誤可能造成版本解析失敗或回傳錯誤版本。",
+    "existing_code": "if lock.is_some() && !crate_lock_packages.is_empty() {",
+    "evidence": "diff 中將 `crate_lock_packages.is_empty()` 改為 `!crate_lock_packages.is_empty()`，但上下文顯示此區塊用於處理 crate_lock_packages 為空的情況。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/windows/util.rs",
+    "line": 65,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "直接使用 ureq::get 未套用系統憑證設定",
+    "body": "在 `download_webview2_offline_installer` 中，改用 `ureq::get(url)` 而非透過 `base_ureq_agent()` 建立的 agent，這可能導致在啟用 platform-certs feature 時，此請求未使用系統憑證，造成 TLS 驗證失敗。建議改用 `base_ureq_agent().get(url)` 以確保一致性。",
+    "existing_code": "let response = ureq::get(url).call().map_err(Box::new)?;",
+    "evidence": "diff 中新增此行程式碼，但未使用先前定義的 `base_ureq_agent`。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/cargo_manifest.rs",
+    "line": 122,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "platform-certs 分支未設定 proxy",
+    "body": "在 `crate_latest_version` 中，當啟用 platform-certs feature 時，建立的 agent 未設定 proxy（`ureq::Proxy::try_from_env()`），這可能導致在需要 proxy 的環境下無法正常連線。建議與 `base_ureq_agent` 的實作保持一致，加入 proxy 設定。",
+    "existing_code": "let agent = ureq::Agent::config_builder()\n      .tls_config(\n        ureq::tls::TlsConfig::builder()\n          .root_certs(ureq::tls::RootCerts::PlatformVerifier)\n          .build(),\n      )\n      .build()\n      .new_agent();",
+    "evidence": "diff 中新增的 agent 建立程式碼缺少 `.proxy(ureq::Proxy::try_from_env())`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "generate_github_mirror_url_from_base 移除 set_path 可能改變行為",
+    "body": "原本的程式碼會將 `cdn` 的 path 設定為 `github_url`，但修改後直接使用 `cdn.to_string()`，這可能導致 mirror URL 的 path 未被正確設定，影響 GitHub 下載的 mirror 功能。需確認此變更是否為預期行為。",
+    "existing_code": ".map(|cdn| {\n      cdn.to_string()\n    })",
+    "evidence": "diff 中移除了 `cdn.set_path(github_url);` 這一行。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/admin-x-framework/src/utils/stats-config.ts",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "版本前綴邏輯與後端不一致",
+    "body": "此處將 `config.version` 直接加在 endpointName 前面（例如 `v2_api_kpis`），但後端 `buildRequest` 是加在後面（`api_kpis_v2`）。若前端使用此函式產生的 URL，將呼叫不存在的 pipe，導致 API 錯誤。建議統一命名規則，例如改為 `${endpointName}_${config.version}`。",
+    "existing_code": "const finalEndpointName = config.version ? `${config.version}_${endpointName}` : endpointName;",
+    "evidence": "diff 中新增的這一行，與 `ghost/core/core/server/services/stats/utils/tinybird.js` 中 `const pipeUrl = version ? `/v0/pipes/${pipeName}_${version}.json` : ...` 的命名方式相反。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/pipes/filtered_sessions_v2.pipe",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "缺少 TYPE ENDPOINT 宣告",
+    "body": "此 pipe 檔案結尾沒有 `TYPE ENDPOINT`，而其他 endpoint pipe 都有。這可能導致 Tinybird 無法正確部署或執行此 pipe，進而使所有依賴 `filtered_sessions_v2` 的 v2 端點失效。建議在檔案最後加上 `TYPE ENDPOINT`。",
+    "existing_code": "{% if defined(utm_content) %} and utm_content = {{ String(utm_content, description=\"UTM content to filter on\", required=False) }} {% end %}",
+    "evidence": "diff 中此檔案的最後一行，與其他 endpoint pipe（如 `api_kpis_v2.pipe`）的結尾 `TYPE ENDPOINT` 不同。"
+  }
+]

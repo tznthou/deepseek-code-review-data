@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試從 async 改為同步可能導致執行緒阻塞或逾時",
+    "body": "原本使用 `await fulfillment(of:timeout:)` 等待非同步 callback，現在改為同步的 `wait(for:timeout:)`。若 callback 在背景執行緒執行，`wait(for:timeout:)` 會阻塞主執行緒，可能導致測試逾時或死鎖。建議保留 async 版本，或確認 callback 執行緒與測試執行緒的關係。",
+    "existing_code": "func testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase() {",
+    "evidence": "diff 中移除了 `async` 關鍵字，並將 `await fulfillment` 改為 `wait(for:timeout:)`。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 208,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 @MainActor 可能導致 GCDWebServer 初始化執行緒不安全",
+    "body": "原本 `startMockImageServer` 有 `@MainActor` 標註，確保 GCDWebServer 在主執行緒初始化。移除後，若測試在背景執行緒呼叫此方法，可能導致崩潰或未定義行為。建議保留 @MainActor，或確認所有呼叫點都在主執行緒。",
+    "existing_code": "func startMockImageServer(imageData: Data, forAssetType assetType: AssetType) throws -> URL {",
+    "evidence": "diff 中移除了 `@MainActor` 標註。"
+  },
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "nonisolated(unsafe) 可能隱藏執行緒安全問題",
+    "body": "使用 `nonisolated(unsafe)` 來繞過 Swift 6 的嚴格並發檢查，但若 `ContentBlockerGenerator` 真的非執行緒安全，此標註只是暫時壓制問題。建議確認其執行緒安全性，或改用其他並發安全機制。",
+    "existing_code": "nonisolated(unsafe) static let generator = ContentBlockerGenerator.factory()",
+    "evidence": "diff 中新增了 `nonisolated(unsafe)`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除 expectation 可能導致測試無法驗證非同步行為",
+    "body": "在 `testRequestMediaCaptureSuccess` 中移除了 expectation 和 wait，若 `requestMediaCapturePermission` 是非同步的，測試可能在 callback 執行前就結束，導致斷言未執行。建議保留 expectation 或改用 async 測試。",
+    "existing_code": "let decisionHandler: @Sendable (WKPermissionDecision) -> Void = { (decision: WKPermissionDecision) in",
+    "evidence": "diff 中移除了 expectation 的建立與 wait。"
+  }
+]

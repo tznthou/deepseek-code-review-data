@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/Client/Coordinators/Launch/LaunchCoordinator.swift",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 @MainActor 閉包包在 Task 中可能造成非預期執行緒切換",
+    "body": "原本 `onActionTap` 閉包標註為 `@MainActor`，直接呼叫 `onboardingService.handleAction`。修改後將呼叫包在 `Task { ... }` 中，但 `Task` 預設會繼承當前 actor context，若呼叫端已在 MainActor 上，則仍會在 MainActor 執行；然而若呼叫端不在 MainActor，則會切換到背景執行緒，可能導致 UI 操作或狀態更新不在主執行緒。建議明確使用 `Task { @MainActor in ... }` 或保留原本的直接呼叫。",
+    "existing_code": "Task {\n    onboardingService.handleAction(\n        action,\n        from: cardName,\n        cards: onboardingModel.cards,\n        with: activityEventHelper,\n        completion: completion\n    )\n}",
+    "evidence": "diff 中原本的 `onActionTap: { @MainActor [weak self] action, cardName, completion in ... }` 被改為 `onActionTap: { [weak self] action, cardName, completion in ... }`，並在內部使用 `Task { ... }`。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/Extensions/BrowserViewController+WebViewDelegates.swift",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "WKUIDelegate 方法中的 completionHandler 標註不一致可能導致編譯錯誤",
+    "body": "在 `BrowserViewController+WebViewDelegates.swift` 中，多個 WKUIDelegate 方法的 `completionHandler` 參數被加上 `@Sendable`，但對應的 `BrowserWebUIDelegate.swift` 中相同方法的 `completionHandler` 卻移除了 `@Sendable`。這可能導致協定遵循不一致，造成編譯錯誤。請確認所有實作與協定定義的標註一致。",
+    "existing_code": "completionHandler: @escaping @MainActor @Sendable () -> Void",
+    "evidence": "diff 中 `BrowserViewController+WebViewDelegates.swift` 將 `completionHandler` 改為 `@escaping @MainActor @Sendable`，而 `BrowserWebUIDelegate.swift` 則將原本的 `@escaping @MainActor @Sendable` 改為 `@escaping @MainActor`。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/Extensions/BrowserViewController+WebViewDelegates.swift",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "handleJavaScriptAlert 的 spamCallback 標註變更可能導致執行緒問題",
+    "body": "`handleJavaScriptAlert` 的 `spamCallback` 參數從 `@escaping () -> Void` 改為 `@escaping @MainActor @Sendable () -> Void`。此方法內部在 `handleSpammedJSAlert` 中使用 `DispatchQueue.main.asyncAfter` 呼叫 callback，若 callback 被標註為 `@MainActor`，則在非主執行緒呼叫可能導致編譯錯誤或執行期崩潰。請確認所有呼叫點皆在主執行緒。",
+    "existing_code": "spamCallback: @escaping @MainActor @Sendable () -> Void",
+    "evidence": "diff 中 `handleJavaScriptAlert` 的參數類型變更，且 `handleSpammedJSAlert` 內使用 `DispatchQueue.main.asyncAfter` 呼叫。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/Extensions/BrowserViewController+WebViewDelegates.swift",
+    "line": 315,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "部分閉包標註 @Sendable 但未確認所有使用情境",
+    "body": "多個方法（如 `addOpenInNewTab`、`addOpenInNewPrivateTab`）的閉包參數被加上 `@Sendable`，但這些閉包可能捕獲非 Sendable 的狀態（如 `self`），可能導致 Swift 6 的嚴格並發檢查錯誤。建議逐一確認閉包內捕獲的物件是否為 Sendable，或考慮使用 `@unchecked Sendable` 包裝。",
+    "existing_code": "addTab: @escaping @MainActor @Sendable (URL, Bool, Tab) -> Void",
+    "evidence": "diff 中多處將閉包參數加上 `@Sendable`，但未見對應的 Sendable 確認。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift",
+    "line": 192,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除 UX struct 並硬編碼按鈕尺寸可能降低可維護性",
+    "body": "原本的 `UX.buttonSize` 常數被移除，改為直接使用數值 `40`。雖然不影響功能，但若未來需要調整尺寸，需修改多處。建議保留常數或使用有意義的命名。",
+    "existing_code": "closeButton.heightAnchor.constraint(equalToConstant: 40),\ncloseButton.widthAnchor.constraint(equalToConstant: 40),",
+    "evidence": "diff 中刪除了 `struct UX` 並將 `UX.buttonSize` 替換為 `40`。"
+  }
+]

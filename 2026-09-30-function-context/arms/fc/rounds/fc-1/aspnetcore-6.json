@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "登出流程中新增的 Task.Yield 可能引入競態",
+    "body": "在 `ProcessLogOut` 中，於驗證登出狀態後、取得驗證狀態前新增了 `await Task.Yield()`。這會讓出執行緒，可能導致後續的 `AuthenticationProvider.GetAuthenticationStateAsync()` 讀取到不一致的狀態。例如，若使用者在 `Task.Yield()` 期間登入或登出，可能導致登出流程使用過時的驗證狀態。建議移除 `Task.Yield()`，或說明其必要性並確保狀態一致性。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\n        await Task.Yield();",
+    "evidence": "diff 中新增了 `await Task.Yield();`，且前後文顯示此處原本直接取得驗證狀態。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "登出流程完全依賴 HistoryEntryState，可能導致登出失敗",
+    "body": "原本的登出流程在 `Navigation.HistoryEntryState` 為 null 時會 fallback 到 `SignOutManager.ValidateSignOutState()`。移除 `SignOutSessionStateManager` 後，若 `HistoryEntryState` 為 null（例如使用者直接輸入登出 URL），`ValidateSignOutRequestState()` 可能回傳 false，導致登出失敗並導向失敗頁面。這可能破壞向後相容性。建議確認 `ValidateSignOutRequestState()` 對 null 的處理，或保留某種 fallback 機制。",
+    "existing_code": "if (!ValidateSignOutRequestState())\n        {\n            Log.LogoutOperationInitiatedExternally(Logger);\n            Navigation.NavigateTo(ApplicationPaths.LogOutFailedPath, AuthenticationNavigationOptions with { HistoryEntryState = \"The logout was not initiated from within the page.\" });\n            return;\n        }",
+    "evidence": "diff 中移除了原本的 fallback 邏輯，改為直接呼叫 `ValidateSignOutRequestState()`。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Redirect 方法可能使用 null 的 InteractiveRequestUrl",
+    "body": "在 `Redirect` 方法中，原本的條件是 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null`，現在改為只檢查 `_tokenResult.InteractionOptions != null`。若 `InteractionOptions` 不為 null 但 `InteractiveRequestUrl` 為 null，則會呼叫 `_navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, ...)`，可能導致 null 參數例外。建議保留對 `InteractiveRequestUrl` 的 null 檢查，或確保兩者同時存在。",
+    "existing_code": "if (_tokenResult.InteractionOptions != null)\n        {\n            _navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, _tokenResult.InteractionOptions);\n        }\n        else\n        {\n            _navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);\n        }",
+    "evidence": "diff 中移除了 `&& _tokenResult.InteractiveRequestUrl != null` 條件。"
+  }
+]

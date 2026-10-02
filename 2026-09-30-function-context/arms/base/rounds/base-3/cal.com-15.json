@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "Slot.userIds 型別從 number[] 改為 string[]，可能導致執行時期錯誤",
+    "body": "原本 @calcom/trpc/server/routers/viewer/slots/types 中的 Slot.userIds 型別為 number[]，但此處新定義為 string[]。若實際 API 回傳的 userIds 是數字陣列，則使用此型別的程式碼（例如將 userIds 傳給其他函式）可能因型別不符而發生錯誤。建議確認實際資料型別，並保持與原定義一致。",
+    "existing_code": "export type Slot = {\n  time: string;\n  userIds?: string[];\n  attendees?: number;\n  bookingUid?: string;\n  users?: string[];\n};",
+    "evidence": "diff 中新增的 Slot 型別定義 userIds?: string[]，而刪除的舊定義為 userIds?: number[]。"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "validateCreateScheduleInput 未驗證 schedule 結構，可能接受無效資料",
+    "body": "validateCreateScheduleInput 僅檢查 name 是否為非空字串，未驗證 schedule 是否為符合預期的陣列結構。若呼叫端傳入錯誤格式的 schedule，可能導致後續 API 請求失敗或產生未預期的行為。建議加入對 schedule 的型別檢查，例如確認其為二維陣列且元素包含 start 和 end。",
+    "existing_code": "export function validateCreateScheduleInput(input: unknown): CreateScheduleInput {\n  if (!input || typeof input !== 'object') {\n    throw new Error('Invalid input: must be an object');\n  }\n\n  const data = input as Record<string, unknown>;\n\n  if (typeof data.name !== 'string' || data.name.length === 0) {\n    throw new Error('Invalid input: name must be a non-empty string');\n  }\n\n  return data as CreateScheduleInput;\n}",
+    "evidence": "diff 中新增的 validateCreateScheduleInput 函式僅驗證 name，未驗證 schedule。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 \"./booker\" 匯出可能造成 breaking change",
+    "body": "原本 package.json 中有 \"./booker\": \"./booker/index.ts\" 的匯出，現在改為 \"./booker/types\": \"./booker/types.ts\"。若外部使用者依賴 \"./booker\" 匯入，升級後會找不到模組。建議保留 \"./booker\" 匯出，或確認此變更為預期的 breaking change。",
+    "existing_code": "\"./booker/types\": \"./booker/types.ts\",",
+    "evidence": "diff 中刪除了 \"./booker\": \"./booker/index.ts\"，新增了 \"./booker/types\": \"./booker/types.ts\"。"
+  }
+]

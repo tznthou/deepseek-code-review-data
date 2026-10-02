@@ -1,0 +1,7 @@
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 16099 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/prefect/server/events/models/composite_trigger_child_firing.py:28 → 42（片段唯一命中）
+[info] 重新定位 src/prefect/server/events/triggers.py:338 → 349（片段唯一命中）
+[info] 重新定位 src/prefect/server/events/models/composite_trigger_child_firing.py:30 → 46（片段唯一命中）
+[info] 重新定位 tests/events/server/triggers/test_composite_triggers.py:1700 → 1674（片段唯一命中）
+[info] 完成於 11.5s ｜ findings=4 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 6227, "completion_tokens": 1248, "total_tokens": 7475, "prompt_tokens_details": {"cached_tokens": 6144}, "prompt_cache_hit_tokens": 6144, "prompt_cache_miss_tokens": 83}

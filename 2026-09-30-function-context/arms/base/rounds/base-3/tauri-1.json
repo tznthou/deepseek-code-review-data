@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 636,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "自動遞增 versionCode 存在競態條件",
+    "body": "`generate_tauri_properties` 在讀取舊的 `versionCode` 後直接加 1 寫回，沒有鎖定或原子操作。若兩個建置同時執行（例如 CI 平行建置），可能讀到相同的舊值，導致產生相同的 `versionCode`，造成 Android 套件衝突。建議使用檔案鎖（例如 `flock`）或將遞增邏輯移到單一建置流程中，確保同一時間只有一個程序更新。",
+    "existing_code": "let last_version_code = std::fs::read_to_string(&app_tauri_properties_path)\n        .ok()\n        .and_then(|content| {\n          content\n            .lines()\n            .find(|line| line.starts_with(\"tauri.android.versionCode=\"))\n            .and_then(|line| line.split('=').nth(1))\n            .and_then(|s| s.trim().parse::<u32>().ok())\n        });\n      let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "diff 中新增的 `generate_tauri_properties` 函式，讀取與寫入之間沒有同步機制。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 645,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "讀取 tauri.properties 失敗時靜默重置 versionCode 為 1",
+    "body": "當 `tauri.properties` 不存在或無法解析時，`last_version_code` 為 `None`，`new_version_code` 會被設為 1。這可能導致在檔案遺失或格式錯誤時，版本碼意外重置，造成已發布的應用程式無法更新。建議在 `auto_increment_version_code` 為 true 且檔案不存在時，回傳錯誤或至少發出警告，而不是靜默重置。",
+    "existing_code": "let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "diff 中該行直接使用 `unwrap_or(1)`，沒有區分檔案不存在與解析失敗。"
+  },
+  {
+    "path": "crates/tauri-build/src/mobile.rs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 tauri-build 中的 tauri.properties 產生邏輯可能影響其他呼叫者",
+    "body": "原本 `generate_gradle_files` 會根據 config 產生 `tauri.properties`，現在此邏輯被移除，改由 CLI 在 build/dev 時呼叫 `generate_tauri_properties`。但 `tauri-build` 是公開 crate，可能有其他使用者直接呼叫 `generate_gradle_files`，導致他們不再產生 `tauri.properties`，造成 Android 建置失敗。建議確認所有呼叫點都已更新，或保留向後相容的函式。",
+    "existing_code": "pub fn generate_gradle_files(project_dir: PathBuf) -> Result<()> {",
+    "evidence": "diff 中函式簽名從 `(project_dir, config)` 改為 `(project_dir)`，且移除了產生 `tauri.properties` 的程式碼。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 652,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "dev 模式下 versionCode 的 clamp 順序可能導致非預期結果",
+    "body": "在 dev 模式下，程式先檢查 `version_code == 0` 和 `> 2100000000` 並回傳錯誤，然後才執行 `clamp(1, 2100000000)`。這表示如果 semver 計算出的 `version_code` 超過上限，dev 模式會直接失敗，而不是被 clamp 到上限。原本在 `tauri-build` 中的邏輯是先 clamp 再檢查，行為可能不一致。建議確認預期行為，並調整順序或移除重複檢查。",
+    "existing_code": "if version_code == 0 {\n        crate::error::bail!(\n          \"You must change the `version` in `tauri.conf.json`. The default value `0.0.0` is not allowed for Android package and must be at least `0.0.1`.\"\n        );\n      } else if version_code > 2100000000 {\n        crate::error::bail!(\n          \"Invalid version code {}. Version code must be between 1 and 2100000000. You must change the `version` in `tauri.conf.json`.\",\n          version_code\n        );\n      }\n\n      if dev {\n        version_code = version_code.clamp(1, 2100000000);\n      }",
+    "evidence": "diff 中新增的程式碼片段，與被移除的 `tauri-build` 邏輯相比，順序不同。"
+  }
+]

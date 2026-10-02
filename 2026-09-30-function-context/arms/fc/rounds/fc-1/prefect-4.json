@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "重複的客戶端過濾導致選取項目可能無法顯示",
+    "body": "`useSuspenseQuery` 的查詢參數中已經包含了 `name: { like_: deferredSearch }` 的過濾條件，但又在 `filteredData` 中對 `data` 進行了一次 `toLowerCase().includes()` 的客戶端過濾。這會造成兩個問題：\n1. 伺服器端過濾可能因為大小寫或部分匹配規則不同，導致某些符合條件的項目被客戶端過濾掉。\n2. 當 `selectedBlockDocumentId` 對應的項目不在 `filteredData` 中時（例如使用者選取後清除搜尋字串，但資料尚未重新載入），`selectedBlockDocument` 會是 `undefined`，導致 combobox 顯示 placeholder 而非已選取的名稱。\n\n建議移除客戶端過濾，直接使用 `data` 作為顯示清單，並依賴伺服器端過濾。",
+    "existing_code": "const filteredData = useMemo(() => {\n    return data.filter((blockDocument) =>\n      blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),\n    );\n  }, [data, deferredSearch]);",
+    "evidence": "diff 中新增的 `filteredData` 邏輯與查詢參數中的 `name: { like_: deferredSearch }` 重複，且 `selectedBlockDocument` 是從 `filteredData` 中尋找，可能找不到已選取的項目。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 161,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "驗證錯誤處理不完整，可能誤導使用者",
+    "body": "在 `onSave` 中，呼叫 `validateForm` 後檢查 `errors.length > 0` 就 `return`，但沒有顯示任何錯誤訊息給使用者。使用者可能填寫了無效的資料，按下送出後沒有任何反應，誤以為建立成功。\n\n建議在 `errors.length > 0` 時顯示錯誤提示（例如 toast 或表單內錯誤），或將驗證錯誤整合到表單的錯誤顯示中。",
+    "existing_code": "await validateForm({ schema: values });\n      if (errors.length > 0) {\n        return;\n      }",
+    "evidence": "diff 中新增的 `onSave` 函式，在驗證失敗時僅 `return`，沒有使用者可見的錯誤回饋。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 179,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "錯誤處理中使用 `console.error` 可能洩漏敏感資訊",
+    "body": "在 `onError` 和 `catch` 區塊中，使用 `console.error` 記錄錯誤物件。如果錯誤物件包含敏感資訊（例如 API 回應中的詳細資料），可能會在瀏覽器主控台中暴露。建議使用結構化記錄或僅記錄錯誤訊息，避免輸出完整物件。",
+    "existing_code": "onError: (err) => {\n            const message = \"Unknown error while creating block.\";\n            toast.error(message);\n            console.error(message, err);\n          },",
+    "evidence": "diff 中新增的錯誤處理程式碼，直接將 `err` 傳給 `console.error`。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input.tsx",
+    "line": 81,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "型別斷言可能隱藏錯誤",
+    "body": "在處理 `blockTypeSlug` 時，使用 `value as { $ref: string } | undefined` 進行型別斷言。如果 `value` 的實際型別不是預期的形狀，可能會在執行時期造成問題。建議使用型別守衛或更精確的型別檢查。",
+    "existing_code": "<SchemaFormInputBlockDocument\n          value={value as { $ref: string } | undefined}\n          onValueChange={onValueChange}\n          blockTypeSlug={blockTypeSlug}\n          id={id}\n        />",
+    "evidence": "diff 中新增的型別斷言，沒有驗證 `value` 的實際結構。"
+  }
+]

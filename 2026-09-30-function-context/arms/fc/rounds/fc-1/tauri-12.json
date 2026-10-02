@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 353,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`expect` 取代 fallback 可能導致 panic",
+    "body": "原本的程式碼在 `name` 為 `None` 時會 fallback 到 `association.ext[0].0`，但現在改為 `expect(\"File association must have a name\")`。如果使用者未提供 `name` 且 `ext` 為空（或 `ext` 的第一個元素不存在），程式會 panic。這會讓建置流程直接崩潰，且錯誤訊息不夠明確。\n\n建議：保留原本的 fallback 邏輯，或改用更安全的處理方式，例如在 `ext` 為空時使用預設名稱或回傳錯誤。",
+    "existing_code": ".expect(\"File association must have a name\")",
+    "evidence": "diff 中原本的 `unwrap_or(&association.ext[0].0)` 被替換為 `expect`，且 `ext` 欄位型別為 `Vec<AssociationExt>`，可能為空。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`CFBundleTypeExtensions` 條件判斷可能相反",
+    "body": "程式碼在 `association.ext.is_empty()` 為 true 時才插入 `CFBundleTypeExtensions`，但這與預期相反：通常應該在有副檔名時才加入此鍵。若 `ext` 為空，則不應加入；若 `ext` 非空，則應加入。目前的寫法會導致有副檔名時反而沒有寫入 `CFBundleTypeExtensions`，可能影響檔案關聯功能。\n\n建議：將條件改為 `!association.ext.is_empty()`。",
+    "existing_code": "if association.ext.is_empty() {\n              dict.insert(\n                \"CFBundleTypeExtensions\".into(),\n                plist::Value::Array(\n                  association\n                    .ext\n                    .iter()\n                    .map(|ext| ext.to_string().into())\n                    .collect(),\n                ),\n              );\n            }",
+    "evidence": "diff 中新增了 `if association.ext.is_empty()` 條件，但原本的程式碼是無條件插入 `CFBundleTypeExtensions`。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 1185,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增欄位未加上 `#[serde(default)]`",
+    "body": "`content_types` 和 `exported_type` 欄位沒有加上 `#[serde(default)]`，這表示在反序列化時如果 JSON 中缺少這些欄位，會導致錯誤。雖然 `Option` 型別通常會自動處理缺失欄位，但加上 `#[serde(default)]` 可以更明確地表達意圖，並避免未來若欄位型別變更時出現問題。\n\n建議：為這兩個欄位加上 `#[serde(default)]`。",
+    "existing_code": "pub content_types: Option<Vec<String>>,",
+    "evidence": "diff 中新增的欄位沒有 `#[serde(default)]` 屬性，而其他欄位如 `role` 和 `rank` 都有。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "semaphore 未初始化時拋出 RuntimeError 可能導致 observer 啟動失敗",
+    "body": "在 `_replicate_pod_event` 中，當 `event_type is None` 且 `_startup_event_semaphore` 為 `None` 時，會拋出 `RuntimeError`。如果 `initialize_clients` 因為某些原因沒有成功設定 semaphore（例如設定值無效或初始化順序問題），所有啟動時的事件處理都會失敗，可能導致 observer 無法正常啟動。建議考慮使用預設值或延遲初始化，並記錄更明確的錯誤訊息。",
+    "existing_code": "if _startup_event_semaphore is None:\n            raise RuntimeError(\"Startup event semaphore not initialized\")",
+    "evidence": "diff 中新增了 semaphore 初始化，但在使用前直接檢查並拋出例外，沒有 fallback 機制。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 137,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "semaphore 僅在 event_type is None 時使用，可能無法完全限制啟動時的 API 呼叫",
+    "body": "semaphore 只在 `event_type is None` 的分支中使用，但啟動時可能還有其他 API 呼叫（例如 `events_client.emit`）未受限制。如果啟動時有大量事件需要發送，仍可能造成 API server 壓力。建議評估是否所有啟動時的 API 呼叫都應納入 semaphore 管理。",
+    "existing_code": "async with _startup_event_semaphore:",
+    "evidence": "diff 中 semaphore 僅包住 `/events/filter` 請求，未涵蓋後續的 `events_client.emit`。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/tests/test_observer.py",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "刪除整個測試檔案，降低測試涵蓋率",
+    "body": "此 PR 刪除了 `test_observer.py`，其中包含多個針對 `_replicate_pod_event` 和 observer 啟動/停止的測試。刪除後，新加入的 semaphore 邏輯沒有對應的測試，且原有功能的回歸測試也消失。建議保留或更新測試，並新增針對 semaphore 行為的測試。",
+    "existing_code": "deleted file mode 100644",
+    "evidence": "diff 顯示整個測試檔案被刪除。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/settings.py",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "startup_event_concurrency 設定值未驗證，可能導致 semaphore 初始化失敗",
+    "body": "新增的 `startup_event_concurrency` 欄位沒有驗證，如果使用者設定為 0 或負數，`asyncio.Semaphore` 會拋出 `ValueError`，導致 `initialize_clients` 失敗。建議加入驗證器確保值為正整數。",
+    "existing_code": "startup_event_concurrency: int = Field(\n        default=5,\n        description=\"Maximum number of concurrent API calls when checking for \"\n        \"duplicate events during observer startup. This helps prevent overloading \"\n        \"the API server when there are many existing pods/jobs in the cluster.\",\n    )",
+    "evidence": "diff 中新增欄位但沒有驗證邏輯。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "並行限制輸入未驗證，可能傳送負數或非整數",
+    "body": "在 `concurrencyLimit` 的輸入處理中，直接將輸入值轉為 `Number`，未檢查是否為正整數。若使用者輸入 `-1` 或 `1.5`，表單會通過驗證並將這些值傳送給 API，可能導致後端錯誤或非預期行為。\n\n建議在 schema 中加入驗證規則，例如使用 zod 的 `int().positive()`，或在 `onChange` 中過濾無效值。",
+    "existing_code": "onChange={(e) => {\n\tconst value = e.target.value;\n\tfield.onChange(value === \"\" ? null : Number(value));\n}}",
+    "evidence": "diff 中新增的 `onChange` 處理直接將輸入轉為數字，沒有驗證範圍或整數性。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "錯誤訊息未顯示 API 回傳的細節",
+    "body": "在 `onError` 中，僅使用 `error.message` 顯示錯誤，但 API 可能回傳更詳細的錯誤資訊（例如 404 時的 `detail` 欄位）。這會讓使用者難以理解失敗原因。\n\n建議檢查 error 物件是否包含 API 回傳的資料，並顯示更具體的訊息。",
+    "existing_code": "onError: (error) => {\n\ttoast.error(\n\t\t`Failed to update work pool: ${error instanceof Error ? error.message : \"Unknown error\"}`,\n\t);\n},",
+    "evidence": "diff 中的錯誤處理僅使用 `error.message`，未考慮 API 錯誤結構。"
+  }
+]

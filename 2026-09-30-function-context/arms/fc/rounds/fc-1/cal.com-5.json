@@ -1,0 +1,46 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的 URL 前綴",
+    "body": "在 `BasicsTab.tsx` 中，解析 `bookingUrl` 以取得前綴的邏輯會將 URL 的 pathname 最後一段移除，但若 `bookingUrl` 的 pathname 不包含 slug（例如 `https://cal.com/username`），則會錯誤地移除 username，導致前綴變成 `https://cal.com/`。此外，若 `bookingUrl` 包含 query string 或 hash，這些部分不會被包含在前綴中，可能導致顯示不完整。建議改為直接使用 `bookingUrl` 的 origin 加上 pathname 的前段，或由後端提供明確的 prefix 欄位。",
+    "existing_code": "const url = new URL(props.bookingUrl);\n                      // Get path without the last segment (slug)\n                      const pathParts = url.pathname.split(\"/\").filter(Boolean);\n                      pathParts.pop(); // Remove slug",
+    "evidence": "diff 中新增的程式碼片段，位於 BasicsTab.tsx 的 URL 顯示區塊。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 949,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "handlePreview 與 handleCopyLink 依賴 bookingUrl state，但 state 可能未正確更新",
+    "body": "`bookingUrl` state 的更新來源未在 diff 中顯示，若該 state 未在取得事件類型資料時設定，則使用者在儲存前點擊預覽或複製連結會看到錯誤訊息。此外，若事件類型尚未儲存，`bookingUrl` 可能為空，但使用者仍可嘗試操作，造成不佳的使用者體驗。建議確認 `bookingUrl` 的設定時機，並在 UI 上禁用相關按鈕直到 `bookingUrl` 可用。",
+    "existing_code": "if (!bookingUrl) {\n      showErrorAlert(\"Error\", \"Booking URL not available. Please save the event type first.\");\n      return;\n    }",
+    "evidence": "diff 中 handlePreview 與 handleCopyLink 的修改，新增了對 bookingUrl 的檢查。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "copyBtn 的 bookingUrl 未使用 eventType.bookingUrl",
+    "body": "在 content.ts 的 copyBtn 事件處理中，bookingUrl 的建構仍使用硬編碼的 `https://cal.com/...`，未使用 `eventType.bookingUrl`，與其他部分的修改不一致。這可能導致複製的連結與實際 bookingUrl 不同，若後端提供了自訂網域或不同路徑，使用者會複製到錯誤的連結。建議統一使用 `eventType.bookingUrl` 或提供 fallback。",
+    "existing_code": "const bookingUrl =\n                      `https://cal.com/${\n                        eventType.users?.[0]?.username || \"user\"\n                      }/${eventType.slug}`;",
+    "evidence": "diff 中 copyBtn 的修改，未加入 eventType.bookingUrl 的使用。"
+  },
+  {
+    "path": "companion/components/event-type-list-item/EventTypeListItemParts.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "getDisplayUrl 的 fallback 邏輯可能產生不一致的顯示",
+    "body": "當 `bookingUrl` 存在但解析失敗時，會 fallback 到 `/${username}/${slug}`，但若 `username` 不存在，則會顯示 `/${slug}`，與原本的行為一致。然而，若 `bookingUrl` 存在且解析成功，顯示的格式為 `hostname + pathname`，與 fallback 的格式不同，可能造成視覺上的不一致。建議統一顯示格式，或考慮僅顯示 pathname 部分。",
+    "existing_code": "return username ? `/${username}/${slug}` : `/${slug}`;",
+    "evidence": "diff 中 getDisplayUrl 函式的實作。"
+  }
+]

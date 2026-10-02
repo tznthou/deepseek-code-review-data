@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/calendar-subscription/adapters/AdaptersFactory.ts",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "getProviders() 未包含 office365_calendar，導致 Office 365 日曆永遠不會被處理",
+    "body": "`getProviders()` 回傳的陣列只包含 `google_calendar`，但 `CalendarSubscriptionProvider` 型別包含 `office365_calendar`。這會導致 `checkForNewSubscriptions()` 在呼叫 `findNextSubscriptionBatch` 時，`integrations` 參數只會是 `['google_calendar']`，因此 Office 365 的日曆永遠不會被選取來訂閱。這是一個功能性回歸，因為原本的程式碼可能預期處理所有 provider。\n\n**失敗情境**：當使用者有 Office 365 日曆且需要訂閱時，`checkForNewSubscriptions` 不會將它們納入批次，導致這些日曆永遠不會被同步。\n\n**建議修法**：將 `office365_calendar` 加入回傳陣列，或明確說明為何只支援 Google Calendar。",
+    "existing_code": "getProviders(): CalendarSubscriptionProvider[] {\n    const providers: CalendarSubscriptionProvider[] = [\"google_calendar\"];\n    return providers;\n  }",
+    "evidence": "diff 中 `getProviders()` 的實作只回傳 `['google_calendar']`，但型別 `CalendarSubscriptionProvider` 定義為 `\"google_calendar\" | \"office365_calendar\"`。"
+  },
+  {
+    "path": "packages/features/calendar-subscription/adapters/AdaptersFactory.ts",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getGenericCalendarSuffixes() 使用 Object.keys 迭代可能導致型別不安全",
+    "body": "`getGenericCalendarSuffixes()` 使用 `Object.keys(GENERIC_CALENDAR_SUFFIXES)` 取得 provider 鍵，然後用 `as CalendarSubscriptionProvider` 斷言型別。這在執行時期是安全的，因為 `GENERIC_CALENDAR_SUFFIXES` 的鍵確實是 provider 名稱，但型別系統無法保證。如果未來新增 provider 但忘記更新 `GENERIC_CALENDAR_SUFFIXES`，此處會產生 undefined 的後綴陣列，導致執行時期錯誤。\n\n**建議修法**：使用 `Object.entries` 並直接迭代值，或使用型別安全的輔助函式，例如 `(Object.keys(GENERIC_CALENDAR_SUFFIXES) as CalendarSubscriptionProvider[]).flatMap(...)` 但需確保鍵的完整性。",
+    "existing_code": "getGenericCalendarSuffixes(): string[] {\n    return Object.keys(GENERIC_CALENDAR_SUFFIXES).flatMap(\n      (provider) => GENERIC_CALENDAR_SUFFIXES[provider as CalendarSubscriptionProvider]\n    );\n  }",
+    "evidence": "diff 中 `getGenericCalendarSuffixes` 的實作使用 `Object.keys` 和型別斷言。"
+  },
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.ts",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Prisma 查詢中 AND: undefined 可能導致不必要的查詢條件",
+    "body": "在 `findNextSubscriptionBatch` 中，當 `genericCalendarSuffixes` 為空或未提供時，`AND` 會被設為 `undefined`。Prisma 在處理 `undefined` 時通常會忽略該條件，但這可能導致查詢產生不必要的 `AND` 子句，影響效能或產生非預期的行為。此外，測試中明確斷言了 `AND: undefined`，這可能依賴於 Prisma 的內部行為，未來升級可能導致測試失敗。\n\n**建議修法**：僅在 `genericCalendarSuffixes` 有值時才加入 `AND` 條件，例如使用條件展開：`...(genericCalendarSuffixes?.length ? { AND: ... } : {})`。",
+    "existing_code": "AND: genericCalendarSuffixes?.length\n          ? genericCalendarSuffixes?.map((suffix) => ({\n              NOT: { externalId: { endsWith: suffix } },\n            }))\n          : undefined,",
+    "evidence": "diff 中 `AND` 條件在 `genericCalendarSuffixes` 為空時被設為 `undefined`。"
+  },
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.test.ts",
+    "line": 130,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中斷言 AND: undefined 可能不穩定",
+    "body": "在 `findNextSubscriptionBatch` 的測試中，當未提供 `genericCalendarSuffixes` 時，斷言 `AND: undefined`。這依賴於 Prisma 的內部行為，未來 Prisma 版本可能改變處理 `undefined` 的方式，導致測試失敗。建議改為斷言 `AND` 不存在，或使用更寬鬆的匹配。",
+    "existing_code": "AND: undefined,",
+    "evidence": "diff 中測試斷言 `AND: undefined`。"
+  }
+]

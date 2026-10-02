@@ -1,0 +1,101 @@
+pair,label,note
+P0301,no,同一行但缺陷獨立：GT 是少了 decrRefCount 造成洩漏；finding 是 NULL 回傳未檢查（邊界：同一物件的不同問題）
+P0302,no,GT 是 auto-increment 路徑缺上限驗證；finding 講 semver 路徑在 dev 模式先驗證後 clamp（那是 P0340 的 GT）
+P0303,no,GT 是 map callback 的未使用參數 index；finding 講 Popover 的 hover 與 click 互動
+P0304,no,GT 是忽略 XCTWaiter 結果；finding 講測試依賴真實網路
+P0305,no,GT 是行寬超過 110；finding 講測試沒驗證邀請連結的實際可用性
+P0306,partial,同一行且都質疑 Convert.ToInt64 的型別處理；但 GT 要改成 ToInt32（參數是 int）；finding 猜 JsonElement 並建議斷言型別 修法不同
+P0307,same,GT 的未使用變數 orig_active_defrag 正是 finding 說的「還原時寫死 1 沒用原值」；改成用 orig 還原一個改動就同時修掉兩者
+P0308,no,同一運算式但缺陷獨立：GT 是 trim 會吃掉使用者刻意的空白；finding 講 undefined 沒轉成 null 的型別問題（邊界：no 或 partial）
+P0309,same,兩者都指 strict 被改成 false
+P0310,no,GT 是 async 方法缺 Async 後綴；finding 講缺 Arrange/Act/Assert 結構與沒驗證 Summary
+P0311,same,兩者都指斷言目標從 lightThemeView 被改成 darkThemeView
+P0312,same,兩者都指移除 UX 常數改寫死魔術數字 40
+P0313,same,兩者都指先 set_permissions 後 write 的順序反了（檔案尚不存在會失敗）；finding 多了權限被覆蓋的推測 但修法相同（恢復順序）
+P0314,no,GT 是兩個函式呼叫的先後順序；finding 講另一個函式裡 clusterDelKeysInSlot 第二參數的語意 位置也差 35 行
+P0315,no,GT 是門檻比較 < 應為 <=；finding 講 findPage 回傳可能沒有 data
+P0316,no,GT 是 finish() 早於 resolve()；finding 講另一處 webView!! 可能 NPE
+P0317,partial,指到同一段預設值改動並提到計費影響 也說與 server_default 不完全一致；但沒點出 answer_unit_price 與 answer_price_unit 對調（邊界：partial 或 same）
+P0318,same,兩者都指跨欄位驗證誤用 field_validator 應改用 model_validator
+P0319,partial,同一個 if；finding 的情境（config 為 falsy 但 source 在清單內仍建立 outbox）正是 || 的後果 但歸因成 config 型別不一致 建議也不是改成 &&（邊界：partial 或 same）
+P0320,no,GT 是 linuxdeploy URL 用了 arch 而非 linuxdeploy_arch；finding 講 gtk 腳本存在時反而覆寫（另一個獨立 bug）
+P0321,partial,finding 的「沒有最小值驗證可能送出負數」與 GT 的 min 被移除同向；但它不知道 min 被移除 也不知道 zod 已有驗證 建議走 zod 並主打 NaN
+P0322,same,兩者都指回傳 newToken.identifier 而不是實際 token
+P0323,same,兩者都指改成 map teamMembers 而非 filteredMembers 導致搜尋失效
+P0324,no,GT 是 class 缺 final；finding 講 String(format:) 搭配本地化字串可能崩潰
+P0325,no,GT 是 captureFrameAndOrigin 缺明確存取控制；finding 講 XCTWaiter 結果未檢查
+P0326,same,兩者都指 generate_github_alternative_url 回傳原 URL 而非 alt_url 使鏡像失效；標題偏題但內文與修法（回傳 alt_url）正確
+P0327,same,兩者都指 flush 在迴圈內每次執行 應移到迴圈外
+P0328,same,兩者都指 updateMany 沒有回傳 Prisma 結果（count）
+P0329,no,同一行但主張不同：GT 是忽略 waiter 結果；finding 主張 wait 會卡住 run loop 必定逾時 完全沒提結果沒檢查（邊界：no 或 partial）
+P0330,no,GT 是缺 target_os 編譯條件；finding 講 versionCode 遞增的競態
+P0331,same,兩者都指直接用 ureq::get 繞過共用的 agent（base_ureq_agent）；finding 猜成代理設定而非平台憑證 但根因與修法相同
+P0332,no,GT 是三元運算式可讀性；finding 講 local_host 空字串轉 None 的行為
+P0333,partial,同樣在談 local_hostname 的空字串與 None；但 finding 把 or None 當成問題（方向與 GT 相反）且沒指出 or 空字串 的預設值才是錯的
+P0334,no,GT 是沒開權重時 label 尾巴多一個空白；finding 講權重改成純文字降低可讀性（邊界：同一段程式的不同問題）
+P0335,same,兩者都指 type 從 number 改成 text
+P0336,no,GT 是 captureFrameAndOrigin 缺明確存取控制；finding 講 targetFrame 可能為 nil
+P0337,no,GT 是 buildInviteLink 的 isOrgContext 分支對調；finding 講 createInvite 回傳 identifier（那是 P0322 的 GT）
+P0338,no,同一行但缺陷獨立：GT 是 finish() 與 resolve() 的順序；finding 講 activity 可能為 null
+P0339,same,兩者都指移除了 ! 使搜尋模式判斷反轉
+P0340,no,GT 是 versionCode 驗證早於 dev 模式 clamp；finding 講自動遞增的競態
+P0341,same,兩者都指移除 zip 的 strict=True
+P0342,partial,指到同一處參數對調 但只說可能影響可讀性 沒指出 ditto 來源與目的順序反了會失敗 也沒給修法（邊界：partial 或 no）
+P0343,same,兩者都指 lazy import 的 catch 靜默吞錯 沒有 log
+P0344,same,兩者都指 selector 型別被放寬成 any
+P0345,same,兩者都指 Description 改到處理範例之後 範例解析拋例外時 Description 就不會被設定
+P0346,no,GT 是參數查找用了 propertyName 而非 metadata.Name；finding 講 RequestBody.Description 設定時機（那是 P0345 的 GT）
+P0347,no,GT 是缺 @MainActor；finding 講類別可能沒被使用
+P0348,no,GT 是用 prettyCertDir 而非 certDir 算完整路徑；finding 講路徑比較用 OrdinalIgnoreCase 兩者獨立
+P0349,no,GT 是 public 函式缺文件註解；finding 講非主執行緒時回傳 nil 的語意
+P0350,no,GT 是 onOpenChange(false) 早於 onCreated；finding 講驗證失敗沒有提示
+P0351,same,兩者都指 MouseButtonState 的 From 對應被反轉
+P0352,same,兩者都指 ensureMainThread 在非主執行緒立刻回傳 nil 丟掉結果
+P0353,same,兩者都指缺少 await 導致回傳 Promise
+P0354,no,GT 是硬編碼 Loading devtools 字串沒走 i18n；finding 講 catch 回傳 null 元件
+P0355,same,兩者都指 linuxdeploy URL 用了 arch 而非 linuxdeploy_arch
+P0356,same,兩者都指 ESCAPE 用豎線但 escape_like_pattern 用反斜線
+P0357,same,兩者都指用 in 子字串檢查而非前綴檢查
+P0358,no,GT 是 autoCloseOnSelect 只呼叫 onClose?.() 沒關閉；finding 講 var 取代 const
+P0359,no,GT 是 lambda 大括號風格；finding 講 OrdinalIgnoreCase 路徑比較
+P0360,same,GT 的未使用 waiter 與 finding 的沒檢查 waiter 結果是同一件事；檢查 waiter 結果一個改動同時修掉兩者
+P0361,no,GT 是移除 zip 的 strict=True；finding 講 variables 缺型別檢查 位置差 37 行
+P0362,same,兩者都指 @Roles TEAM_MEMBER 權限過寬應改管理員
+P0363,no,GT 是 dev 模式也會自動遞增；finding 講遞增的競態（同一區塊但獨立缺陷）
+P0364,same,兩者都指 InteractiveRequestUrl 為 null 時仍導覽 需補 null 檢查
+P0365,no,GT 是直接 malloc/free 而非 zmalloc/zfree；finding 講迴圈邊界 <= 越界（且引用的迴圈條件與 GT 片段不同）
+P0366,same,兩者都指 h1 元素在 Navigate 之前取得 導覽後元素失效
+P0367,no,GT 是 JSON 縮排 4 格；finding 講翻譯漏了 newsletterName 變數
+P0368,same,兩者都指每次呼叫都建立新容器與新 repository；finding 低估嚴重度 但修法（快取）相同
+P0369,no,GT 是逗號後空白格式；finding 講 position 與 size 的處理順序
+P0370,no,GT 是取了 targetFrame 而非 sourceFrame；finding 講測試依賴真實網路
+P0371,same,兩者都指 lastExecutionTime 在 guard 之前被更新使節流失效
+P0372,no,GT 是行寬超過 110；finding 講傳入 undefined 的型別問題
+P0373,no,GT 是 || 應為 &&；finding 講 return 跳過 super.tearDown（同一區塊但獨立缺陷）
+P0374,same,兩者都指未使用的常數 UNUSED_CONSTANT
+P0375,no,GT 是 useTranslation 沒接 defaultNs；finding 講 createTFunction 一律加 namespace 前綴 位置差 26 行
+P0376,no,GT 是日期過濾 <= 包含今天；finding 講 get 方法可能不存在
+P0377,same,兩者都指 Error::source() 漏了 Plist（finding 還列了其他變體）
+P0378,no,GT 是 useTranslation mock 漏了 defaultNs；finding 講缺少單元測試
+P0379,no,GT 是丟棄回覆的條件反了；finding 講參數命名
+P0380,same,兩者都指中文翻譯漏了 newsletterName 變數
+P0381,same,兩者都指 && 應為 ||（finding 語氣保留但點到了）
+P0382,no,GT 是三元運算式可讀性；finding 講空字串轉 None 的行為
+P0383,same,兩者都指 moduleLoader.token 用了 moduleToken 而不是服務 token
+P0384,same,兩者都指 selector 型別被放寬成 any
+P0385,no,GT 是缺 MPL 授權標頭；finding 講 nonisolated(unsafe)
+P0386,same,兩者都指 MouseButtonState 的 From 對應被反轉
+P0387,same,finding 指的新增 features import 就是 GT 分層違規的那一行；理由不同（未使用 vs 分層）但刪掉該 import 一個改動同時修掉兩者（邊界：same 或 partial）
+P0388,partial,同一個端點的授權不足；GT 是角色層級過寬（應為管理員）；finding 講缺少 teamId 成員資格檢查 修法不同（邊界：partial 或 no）
+P0389,no,GT 是 argv[5] 越界寫入；finding 講 createStringObjectFromLongLong 回傳 NULL 未檢查
+P0390,same,兩者都指 linuxdeploy URL 用了 arch 而非 linuxdeploy_arch
+P0391,no,GT 是 BOOKING_WRITE 權限層級錯；finding 講缺少 await
+P0392,no,GT 是 start_execution 早於 enqueue_node；finding 講 print 污染 log
+P0393,same,兩者都指 TEAM_MEMBER 權限過寬應改管理員
+P0394,no,GT 是 helper 缺 static；finding 講 clusterCommonInit 呼叫順序
+P0395,same,兩者都指 readerModeState 的 true 與 false 對調使遙測相反
+P0396,no,GT 是 rendered 變數範圍問題；finding 講 render_template 回傳 None 時 len 失敗 兩者獨立
+P0397,no,GT 是跨欄位驗證誤用 field_validator；finding 講 in 子字串檢查 位置差 21 行
+P0398,no,GT 是 slotRangeArrayIsEqual 在合併前先比範圍數量；finding 講 SortAndMerge 沒處理重疊 不同函式不同問題
+P0399,same,兩者都指 out 參數的 null 賦值被提前；GT 與 finding 都承認功能等價 理由不同但標的與修法（移回迴圈後）相同（邊界：same 或 partial）
+P0400,no,GT 是 helper 缺 static；finding 講 clusterCommonInit 呼叫順序

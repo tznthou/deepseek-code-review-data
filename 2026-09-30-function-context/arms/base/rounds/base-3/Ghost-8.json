@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ghost/i18n/locales/zh/comments.json",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除 comments.json 可能導致引用錯誤",
+    "body": "此 PR 刪除了整個 comments.json 檔案。如果程式碼或其他翻譯檔案仍引用此檔案中的鍵值，將導致翻譯缺失或錯誤。請確認此檔案是否已不再使用，或是否應保留並更新內容。",
+    "existing_code": "{\n    \"{amount} characters left\": \"还剩{amount}字\",",
+    "evidence": "diff 中顯示整個檔案被刪除（deleted file mode 100644）。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "翻譯遺漏變數 {newsletterName}",
+    "body": "翻譯中移除了 {newsletterName} 變數，可能導致使用者無法知道是哪個新聞信。建議保留變數以提供完整資訊。",
+    "existing_code": "\"{memberEmail} will no longer receive {newsletterName} newsletter.\": \"{memberEmail}将不会再收到新闻信。\"",
+    "evidence": "diff 中此行將原本包含 {newsletterName} 的翻譯改為不含變數。"
+  }
+]

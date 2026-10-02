@@ -1,0 +1,4 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 33241 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 firefox-ios/firefox-ios-tests/Tests/XCUITests/DisplaySettingsTests.swift:38 → 53（片段唯一命中）
+[info] 定位不到 firefox-ios/firefox-ios-tests/Tests/XCUITests/HomePageSettingsUITest.swift:104（片段多重命中（4 處），不猜）
+[info] 完成於 7.2s ｜ findings=2 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 10093, "completion_tokens": 659, "total_tokens": 10752, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 8557}

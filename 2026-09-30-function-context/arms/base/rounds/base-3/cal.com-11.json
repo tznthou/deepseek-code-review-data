@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/webhooks/lib/factory/versioned/v2021-10-20/BookingPayloadBuilder.ts",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "requestReschedule 預設值不一致可能導致下游誤判",
+    "body": "在 v2021-10-20 的 payload builder 中，`requestReschedule` 使用 `dto.requestReschedule ?? true`，若 DTO 未提供此欄位，預設為 `true`。但在 `BookingWebhookFactory` 中，`requestReschedule` 預設為 `false`。這兩個建構路徑的預設值相反，可能導致同一事件在不同 webhook 版本或路徑下產生不一致的 payload，下游系統若依此欄位判斷是否為 reschedule 請求，將可能誤判。\n\n建議統一預設值，或明確在 DTO 層級設定，避免隱含預設。",
+    "existing_code": "requestReschedule: dto.requestReschedule ?? true,",
+    "evidence": "diff 中新增的這一行使用 `?? true`，而 `BookingWebhookFactory.ts` 中新增的 `requestReschedule: params.requestReschedule ?? false` 使用 `?? false`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 414,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增 ENABLE_WEBHOOKS 環境變數可能意外停用所有取消 webhook",
+    "body": "此處新增 `const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";`，若環境變數未設定，`webhooksEnabled` 為 `true`，行為不變。但若部署環境中已存在 `ENABLE_WEBHOOKS=false`（例如用於其他目的），將導致所有取消 webhook 停止發送，且無任何 log 提示。建議確認此環境變數是否為新引入，並考慮使用更特定的名稱（如 `ENABLE_CANCELLATION_WEBHOOKS`）或增加 log 警告。",
+    "existing_code": "const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";",
+    "evidence": "diff 中新增的這一行，且後續 `webhooks.map` 被包在 `webhooksEnabled ? ... : []` 中。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "requestReschedule 硬編碼為 false，可能與實際情境不符",
+    "body": "在一般取消流程中，`requestReschedule` 被硬編碼為 `false`。但若此函式也可能被用於 reschedule 請求的取消（例如從 request-reschedule 流程呼叫），則此值可能不正確。建議確認所有呼叫路徑，或改由呼叫端傳入。",
+    "existing_code": "requestReschedule: false,",
+    "evidence": "diff 中新增的這一行，且未從 input 或 context 取得。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/requestReschedule.handler.ts",
+    "line": 276,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "iCalSequence 計算可能不正確",
+    "body": "此處將 `iCalSequence` 設為 `(bookingToReschedule.iCalSequence ?? 0) + 1`，但若 `bookingToReschedule.iCalSequence` 為 null，則會得到 1。這可能與實際 iCal 序列不符，因為原始序列可能未知。建議確認此邏輯是否符合預期，或考慮保留 null 而非遞增。",
+    "existing_code": "iCalSequence: (bookingToReschedule.iCalSequence ?? 0) + 1,",
+    "evidence": "diff 中新增的這一行。"
+  }
+]

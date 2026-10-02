@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2306,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "argv 陣列宣告大小為 5，但寫入 6 個元素，導致堆疊緩衝區溢位",
+    "body": "在 `hincrbyfloatCommand` 中，當 `has_expiration` 為真時，程式碼宣告 `robj *argv[5];`，但隨後寫入 `argv[0]` 到 `argv[5]` 共 6 個元素，造成堆疊緩衝區溢位。這可能導致記憶體損壞、程式當機，甚至可能被利用。\n\n建議修正：將陣列大小改為 6，例如 `robj *argv[6];`。",
+    "existing_code": "robj *argv[5];\n        argv[0] = shared.hpexpireat;\n        argv[1] = c->argv[1];\n        argv[2] = createStringObjectFromLongLong(expireat);\n        argv[3] = shared.fields;\n        argv[4] = shared.integers[1];\n        argv[5] = c->argv[2];",
+    "evidence": "diff 中新增的程式碼片段：\n```\n+        robj *argv[5];\n+        argv[0] = shared.hpexpireat;\n+        argv[1] = c->argv[1];\n+        argv[2] = createStringObjectFromLongLong(expireat);\n+        argv[3] = shared.fields;\n+        argv[4] = shared.integers[1];\n+        argv[5] = c->argv[2];\n```\n陣列大小為 5，但索引 0 到 5 共 6 個元素，超出範圍。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1190,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中對複製流的斷言可能因 MULTI/EXEC 包裹方式而失敗",
+    "body": "在測試 `HINCRBYFLOAT command won't remove field expiration on replica` 中，`assert_replication_stream` 期望的序列包含 `{multi}`、`{hset h1 f1 *}`、`{hpexpireat h1 * FIELDS 1 f1}`、`{exec}`。然而，實際傳播的 MULTI/EXEC 可能不會以這種方式呈現，或者可能因為 `alsoPropagate` 的呼叫方式而導致順序或包裹方式不同。建議確認實際複製流的格式，或調整斷言以符合實際行為。",
+    "existing_code": "assert_replication_stream $repl {\n                {select *}\n                {hset h1 f1 1}\n                {hset h1 f2 1}\n                {hpexpireat h1 * FIELDS 1 f1}\n                {multi}\n                {hset h1 f1 *}\n                {hpexpireat h1 * FIELDS 1 f1}\n                {exec}\n                {hset h1 f2 *}\n            }",
+    "evidence": "diff 中新增的測試斷言片段。"
+  }
+]

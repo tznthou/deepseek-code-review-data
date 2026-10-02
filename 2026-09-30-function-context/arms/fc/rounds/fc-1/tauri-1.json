@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 636,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "自動遞增 versionCode 存在競態條件",
+    "body": "`generate_tauri_properties` 在讀取舊的 `versionCode` 後直接加 1 寫入，沒有鎖定或原子操作。若兩個建置同時執行（例如 CI 平行建置），可能讀到相同的舊值，導致產生相同的 `versionCode`，造成 Google Play 上傳衝突。\n\n建議：使用檔案鎖（如 `flock`）或將遞增邏輯移至建置系統中確保原子性。",
+    "existing_code": "let last_version_code = std::fs::read_to_string(&app_tauri_properties_path)\n        .ok()\n        .and_then(|content| {\n          content\n            .lines()\n            .find(|line| line.starts_with(\"tauri.android.versionCode=\"))\n            .and_then(|line| line.split('=').nth(1))\n            .and_then(|s| s.trim().parse::<u32>().ok())\n        });\n      let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "diff 中新增的 `generate_tauri_properties` 函式直接讀取檔案並加 1，沒有同步機制。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 645,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "讀取失敗時靜默重置 versionCode 為 1",
+    "body": "當 `tauri.properties` 不存在或解析失敗時，`last_version_code` 為 `None`，`new_version_code` 會被設為 1。這可能導致意外重置版本碼，尤其是在檔案被誤刪或格式錯誤時，造成 Google Play 上傳失敗。\n\n建議：在無法讀取時發出警告或錯誤，或提供明確的 fallback 策略。",
+    "existing_code": "let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "diff 中 `unwrap_or(1)` 在讀取失敗時直接使用 1。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 645,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "自動遞增時未檢查 versionCode 上限",
+    "body": "當 `auto_increment_version_code` 為 true 時，直接使用 `saturating_add(1)`，但未檢查是否超過 Google Play 的 2100000000 上限。若已達上限，`saturating_add` 會停留在 2100000000，可能導致上傳失敗。\n\n建議：在遞增後檢查上限，若超過則報錯。",
+    "existing_code": "let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);\n      app_tauri_properties.push(format!(\"tauri.android.versionCode={new_version_code}\"));",
+    "evidence": "diff 中未見上限檢查，且 `saturating_add` 可能隱藏溢位。"
+  },
+  {
+    "path": "crates/tauri-build/src/mobile.rs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 tauri-build 中的版本檢查可能導致無效版本碼",
+    "body": "原本在 `tauri-build` 中會檢查 semver 版本碼是否為 0 或超過上限，現在該邏輯移至 CLI 的 `generate_tauri_properties`，但 `tauri-build` 仍可能被單獨使用（例如非 CLI 建置）。若使用者直接呼叫 `tauri-build`，將不再有版本碼檢查，可能產生無效的 `tauri.properties`。\n\n建議：保留 `tauri-build` 中的檢查，或確保所有建置路徑都經過 CLI。",
+    "existing_code": "pub fn generate_gradle_files(project_dir: PathBuf) -> Result<()> {",
+    "evidence": "diff 中 `generate_gradle_files` 簽名移除 `config` 參數，且刪除了版本檢查程式碼。"
+  }
+]

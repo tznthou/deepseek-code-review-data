@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 312,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "write_and_make_executable 中先設定權限再寫入檔案，可能導致權限設定失敗或檔案內容被覆蓋",
+    "body": "在 `write_and_make_executable` 函式中，原本的順序是先寫入檔案再設定權限，但此 PR 將其反轉為先設定權限再寫入。這會造成兩個問題：\n1. 如果 `fs::set_permissions` 失敗（例如檔案不存在），函式會回傳錯誤，但此時檔案尚未寫入，可能導致後續流程中斷。\n2. 如果 `fs::write` 成功，它會以預設權限建立或覆蓋檔案，使得先前設定的 0o770 權限失效，最終檔案權限可能不是預期的 0o770。\n\n建議恢復原本的順序：先 `fs::write`，再 `fs::set_permissions`。",
+    "existing_code": "fs::set_permissions(path, fs::Permissions::from_mode(0o770)).map_err(FileWriteError::Permissions)?;\n  fs::write(path, data).map_err(FileWriteError::Write)?;",
+    "evidence": "diff 中顯示原本的 `fs::write(path, data)?;` 和 `fs::set_permissions(...)` 被替換為先 `set_permissions` 再 `write`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 90,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "強制設定 DEPLOY_GTK_VERSION=3，可能導致非 GTK3 應用程式打包失敗",
+    "body": "此腳本中新增了 `DEPLOY_GTK_VERSION=3` 的強制設定，並註解掉了原本的自動偵測邏輯。這會導致所有使用此腳本的應用程式都被視為 GTK3，即使實際使用的是 GTK2 或 GTK4。如果應用程式依賴其他 GTK 版本，打包流程可能會失敗或產生不正確的相依性。\n\n建議保留自動偵測機制，或提供明確的設定方式讓使用者覆蓋。",
+    "existing_code": "DEPLOY_GTK_VERSION=3 # Force GTK3 for tauri apps",
+    "evidence": "diff 中新增了 `DEPLOY_GTK_VERSION=3` 並註解掉原本的 `#DEPLOY_GTK_VERSION=\"${DEPLOY_GTK_VERSION:-0}\"`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "linuxdeploy 下載 URL 中的 arch 變數可能錯誤",
+    "body": "在 `prepare_tools` 中，原本的 linuxdeploy 下載 URL 使用 `linuxdeploy_arch`（其中 i686 被替換為 i383），但此 PR 將其改為直接使用 `arch`。這可能導致在 i686 架構下下載錯誤的檔案（i686 而非 i383），造成後續執行失敗。\n\n建議確認 `linuxdeploy` 的實際發布架構命名，並保留原本的 `linuxdeploy_arch` 邏輯。",
+    "existing_code": "let data = download(&format!(\"https://github.com/tauri-apps/binary-releases/releases/download/linuxdeploy/linuxdeploy-{arch}.AppImage\"))?;",
+    "evidence": "diff 中將 `linuxdeploy-{linuxdeploy_arch}` 改為 `linuxdeploy-{arch}`，且 `linuxdeploy_arch` 的定義仍存在但未被使用。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 243,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "gtk 腳本存在時仍會覆寫，可能導致非預期更新",
+    "body": "原本的邏輯是當 `gtk` 檔案不存在時才下載並寫入，但此 PR 改為當檔案存在時仍使用 `include_bytes!` 的內容覆寫。這可能導致使用者自訂的腳本被覆蓋，或造成不必要的寫入。\n\n建議保留原本的 `if !gtk.exists()` 條件，或明確說明覆寫意圖。",
+    "existing_code": "if gtk.exists() {\n    let data = include_bytes!(\"./linuxdeploy-plugin-gtk.sh\");\n    write_and_make_executable(&gtk, data)?;\n}",
+    "evidence": "diff 中將 `if !gtk.exists()` 改為 `if gtk.exists()`，且移除了原本的下載邏輯。"
+  }
+]

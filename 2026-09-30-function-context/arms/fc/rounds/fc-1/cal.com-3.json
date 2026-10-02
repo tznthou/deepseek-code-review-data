@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/bookingReference/repositories/BookingReferenceRepository.ts",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "靜態方法仍使用全域 prisma，可能繞過注入的 client",
+    "body": "`findDailyVideoReferenceByRoomName` 和 `replaceBookingReferences` 仍為靜態方法，內部直接使用全域 `prisma`，而非注入的 `this.prismaClient`。這會導致在測試或需要替換資料庫連線的場景中，這些方法無法使用注入的 client，可能造成資料不一致或測試困難。建議將這些方法改為實例方法，並改用 `this.prismaClient`。",
+    "existing_code": "static async findDailyVideoReferenceByRoomName({ roomName }: { roomName: string }) {\n    return prisma.bookingReference.findFirst({",
+    "evidence": "diff 中新增了建構子與 `this.prismaClient`，但靜態方法仍直接使用全域 `prisma`。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "updateMany 回傳型別與介面不一致",
+    "body": "`IBookingRepository` 介面定義 `updateMany` 回傳 `Promise<{ count: number }>`，但實作中 `updateMany` 沒有回傳值（`await` 後未回傳）。這會導致呼叫端若依賴回傳值會得到 `undefined`，可能造成執行時期錯誤。建議讓實作回傳 `{ count }` 或調整介面。",
+    "existing_code": "async updateMany({ where, data }: { where: BookingWhereInput; data: BookingUpdateData }) {\n    await this.prismaClient.booking.updateMany({\n      where: where,\n      data,\n    });\n  }",
+    "evidence": "介面定義於 `packages/lib/server/repository/dto/IBookingRepository.ts`，實作未回傳。"
+  },
+  {
+    "path": "packages/features/users/repositories/UserRepository.ts",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 userSelect 中的 locale 欄位可能影響取消流程",
+    "body": "`userSelect` 中移除了 `locale: true`，但 `handleCancelBooking.ts` 中呼叫 `userRepository.findByIdOrThrow` 取得 organizer 後，使用 `organizer.locale` 來取得翻譯。若 `findByIdOrThrow` 使用此 `userSelect`，則 `organizer.locale` 將為 `undefined`，可能導致翻譯失敗或錯誤。請確認 `findByIdOrThrow` 的實作是否包含 `locale`，或保留此欄位。",
+    "existing_code": "locale: true,\n  timeFormat: true,",
+    "evidence": "diff 中刪除了 `locale: true`，而 `handleCancelBooking.ts` 中仍有 `organizer.locale` 的使用。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 89,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Dependencies 型別使用具體類別而非介面",
+    "body": "`Dependencies` 型別中直接使用具體類別（如 `UserRepository`、`BookingRepository`），而非介面（如 `IUserRepository`、`IBookingRepository`）。這會降低可測試性與彈性，未來若要替換實作會較困難。建議改用介面型別。",
+    "existing_code": "type Dependencies = {\n  userRepository: UserRepository;\n  bookingRepository: BookingRepository;\n  profileRepository: ProfileRepository;\n  bookingReferenceRepository: BookingReferenceRepository;\n  attendeeRepository: PrismaBookingAttendeeRepository;\n};",
+    "evidence": "diff 中新增的型別定義。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 140,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "handler 中仍直接使用全域 prisma",
+    "body": "在 `handler` 函式中，仍有直接使用全域 `prisma` 的地方（如 `const prismaClient = prisma;`），這與重構目標（注入 repository）不一致。雖然目前作為 fallback，但可能造成混淆。建議完全移除直接使用，或明確標註為過渡方案。",
+    "existing_code": "const prismaClient = prisma;",
+    "evidence": "diff 中新增了 `const prismaClient = prisma;`，但後續未使用。"
+  }
+]

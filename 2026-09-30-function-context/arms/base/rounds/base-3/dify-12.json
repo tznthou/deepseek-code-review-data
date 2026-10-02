@@ -1,0 +1,57 @@
+[
+  {
+    "path": "api/core/rag/datasource/vdb/clickzetta/clickzetta_vector.py",
+    "line": 991,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "SQL 注入風險：escape_like_pattern 的輸出被直接嵌入 SQL 字串",
+    "body": "此處將 `escaped_query` 直接以 f-string 嵌入 SQL 查詢，且未使用參數化查詢。雖然 `escape_like_pattern` 會跳脫 LIKE 特殊字元，但攻擊者仍可透過注入單引號等方式破壞查詢結構。例如，輸入 `' OR '1'='1` 會導致 `escaped_query` 為 `' OR ''1''=''1`，但由於未參數化，最終 SQL 可能變成 `... LIKE '%' OR ''1''=''1%'`，造成邏輯錯誤或資料外洩。建議改用參數化查詢，將 `escaped_query` 作為綁定參數傳入，而非直接拼接。",
+    "existing_code": "filter_clauses.append(f\"{Field.CONTENT_KEY} LIKE '%{escaped_query}%' ESCAPE '\\\\\\\\'\")",
+    "evidence": "diff 中該行使用 f-string 拼接，且未使用參數化查詢。"
+  },
+  {
+    "path": "api/core/rag/retrieval/dataset_retrieval.py",
+    "line": 1207,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "'not contains' 分支未傳入 escape 參數，跳脫字元失效",
+    "body": "在 'not contains' 條件中，呼叫 `json_field.notlike(f\"%{escaped_value}%\")` 時未傳入 `escape=\"\\\\\"`。這會導致 `escaped_value` 中的反斜線被視為一般字元，而非跳脫字元，因此 `%` 和 `_` 仍會被當作萬用字元。例如，若 value 為 \"50%\"，escaped_value 為 \"50\\\\%\"，但由於未指定 escape，資料庫會將 \"\\\\\" 視為普通字元，而 \"%\" 仍為萬用字元，導致查詢結果不符合預期。建議改為 `json_field.notlike(f\"%{escaped_value}%\", escape=\"\\\\\")`。",
+    "existing_code": "filters.append(json_field.notlike(f\"%{escaped_value}%\"))",
+    "evidence": "diff 中該行新增，且未包含 escape 參數，與其他分支（如 contains）不一致。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/iris/iris_vector.py",
+    "line": 298,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ESCAPE 子句使用 '|' 但 escape_like_pattern 使用 '\\' 作為跳脫字元",
+    "body": "在 IRIS 向量資料庫的 LIKE 查詢中，ESCAPE 子句指定 '|' 作為跳脫字元，但 `escape_like_pattern` 函式使用反斜線 '\\' 進行跳脫。這會導致跳脫字元不一致：例如，輸入 \"50%\" 會被轉成 \"50\\\\%\"，但資料庫會將 '|' 視為跳脫字元，因此 '\\\\' 不會被視為跳脫，而 '%' 仍會被當作萬用字元。建議將 ESCAPE 子句改為 '\\\\'，或修改 escape_like_pattern 以使用 '|'。",
+    "existing_code": "WHERE text LIKE ? ESCAPE '|'",
+    "evidence": "diff 中新增 ESCAPE '|'，但 escape_like_pattern 使用 '\\'。"
+  },
+  {
+    "path": "api/services/workflow_app_service.py",
+    "line": 94,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 unicode_escape 編碼可能改變搜尋行為",
+    "body": "原本的程式碼將關鍵字進行 unicode_escape 編碼，並將 \"\\\\u\" 替換為 \"\\\\\\\\u\"，這可能是為了處理 JSON 欄位中的 Unicode 表示。新程式碼直接使用原始關鍵字，可能導致搜尋行為不一致。例如，若輸入包含非 ASCII 字元，原本的編碼可能使其與 JSON 中的 Unicode 轉義序列匹配，而新程式碼則無法匹配。建議確認此變更是否會影響現有功能，並考慮保留必要的編碼處理。",
+    "existing_code": "keyword_like_val = f\"%{escaped_keyword}%\"",
+    "evidence": "diff 中刪除了原本的 unicode_escape 處理，改為直接使用 escape_like_pattern。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_app_service.py",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "延遲匯入 AppService 可能掩蓋循環依賴問題",
+    "body": "測試檔案中將 `from services.app_service import AppService` 改為在每個測試方法內延遲匯入，並註解說明是為了避免循環依賴。然而，循環依賴通常表示模組結構有問題，延遲匯入只是暫時的解決方案。建議調查並解決根本的循環依賴，而不是在測試中規避。",
+    "existing_code": "# Delay import of AppService to avoid circular dependency\n# from services.app_service import AppService",
+    "evidence": "diff 中新增註解並移除頂部匯入。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "advisory lock key 使用 hash() 可能導致碰撞",
+    "body": "使用 `hash(str(trigger.id)) % (2**63)` 作為 advisory lock 的 key，但 Python 的 `hash()` 對字串會隨機化（PYTHONHASHSEED），且可能產生碰撞。碰撞會導致不同的 trigger 共用同一把鎖，造成不必要的序列化，甚至可能讓不相關的 trigger 互相阻塞。建議改用 UUID 的整數表示（例如 `trigger.id.int`）或直接使用 UUID 的 bytes 轉成整數，以確保唯一性。",
+    "existing_code": "lock_key = hash(str(trigger.id)) % (2**63)",
+    "evidence": "diff 中新增的 `acquire_composite_trigger_lock` 函式內，使用 `hash(str(trigger.id))` 來產生 lock key。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 349,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "advisory lock 取得時機可能不足以完全序列化",
+    "body": "在 `evaluate_composite_trigger` 中，lock 是在 `trigger.num_expected_firings != 1` 且執行 `clear_old_child_firings` 之前取得。但 `clear_old_child_firings` 會刪除過期的 child firings，若兩個 worker 同時執行，其中一個可能在另一個取得 lock 前就刪除了資料，導致後續的 `get_child_firings` 結果不一致。建議將 lock 的取得移至函式最開頭，涵蓋整個評估流程。",
+    "existing_code": "# Acquire an advisory lock to serialize concurrent evaluations for this\n    # compound trigger. This prevents a race condition where multiple child\n    # triggers fire concurrently and neither transaction sees both firings.\n    await acquire_composite_trigger_lock(session, trigger)\n\n    # If we're only looking within a certain time horizon, remove any older firings that\n    # should no longer be considered as satisfying this trigger\n    if trigger.within is not None:\n        await clear_old_child_firings(\n            session, trigger, firing.triggered - trigger.within\n        )",
+    "evidence": "diff 中 `evaluate_composite_trigger` 的修改，lock 在 `clear_old_child_firings` 之前取得，但 `clear_old_child_firings` 本身可能影響後續的判斷。"
+  },
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "SQLite 不支援 advisory lock，但未提供替代方案",
+    "body": "程式碼中註解提到 SQLite 不支援 advisory lock，且 SQLite 會序列化寫入，因此 race condition 較不易發生。但 SQLite 的寫入序列化僅在單一程序內有效，若有多個 worker 程序（例如多個 Prefect server instance）同時存取同一個 SQLite 資料庫，仍可能發生競態。建議在 SQLite 情況下考慮使用其他機制（例如樂觀鎖或應用層級的鎖）來確保一致性。",
+    "existing_code": "# SQLite doesn't support advisory locks, but SQLite also serializes writes\n    # at the database level, so the race condition is less likely to occur",
+    "evidence": "diff 中 `acquire_composite_trigger_lock` 的註解，僅說明 SQLite 不支援，但未提供替代方案。"
+  },
+  {
+    "path": "tests/events/server/triggers/test_composite_triggers.py",
+    "line": 1674,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試未涵蓋 SQLite 路徑",
+    "body": "新增的測試僅在 PostgreSQL 環境下執行（因為使用了 advisory lock），但未測試 SQLite 下的行為。若專案支援 SQLite，應增加對應的測試，確保在 SQLite 下不會因為缺少 lock 而導致錯誤。",
+    "existing_code": "async def test_compound_trigger_does_not_double_fire_when_children_race(\n        self,\n        act: mock.AsyncMock,\n        compound_automation_concurrent: Automation,\n        start_of_test: DateTime,\n    ):",
+    "evidence": "diff 中新增的測試類別 `TestCompoundTriggerConcurrency`，未見針對 SQLite 的測試。"
+  }
+]

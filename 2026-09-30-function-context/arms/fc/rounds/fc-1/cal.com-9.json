@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/web/modules/bookings/components/BookerWebWrapper.tsx",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "移除 useRouter import 但程式碼仍使用 router",
+    "body": "在 diff 中，原本的 `import { useSearchParams, usePathname, useRouter } from \"next/navigation\";` 被改為 `import { useSearchParams, usePathname } from \"next/navigation\";`，且原本的 `const router = useRouter();` 也被移除。然而，在後續的程式碼中仍有多處使用 `router`，例如 `router.push(...)`、`router.push(\"/apps/categories/calendar\")` 等。這會導致執行時出現 `ReferenceError: router is not defined`。\n\n建議：保留 `useRouter` 的 import 與宣告，或改用其他方式取得 router。",
+    "existing_code": "import { useSearchParams, usePathname } from \"next/navigation\";",
+    "evidence": "diff 中移除 `useRouter` 的 import 與 `const router = useRouter();`，但程式碼中仍使用 `router.push`。"
+  },
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "sortHosts 函式邏輯與原始版本不一致",
+    "body": "在遷移 sortHosts 函式時，原本在 HostEditDialogs.tsx 中的實作在 `isRRWeightsEnabled` 為 true 且權重相同時回傳 `priorityB - priorityA`，但新版本回傳 `priorityA - priorityB`，導致排序方向相反。這可能影響依權重排序的主持人清單。\n\n建議：確認此變更是否為預期，若非預期請修正為 `priorityB - priorityA`。",
+    "existing_code": "if (weightA === weightB) {\n      return priorityA - priorityB;\n    } else {\n      return weightB - weightA;\n    }",
+    "evidence": "原始程式碼（HostEditDialogs.tsx）中為 `return priorityB - priorityA;`，新版本改為 `return priorityA - priorityB;`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/components/EventTypeWebWrapper.tsx",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "動態 import 路徑可能不正確",
+    "body": "在 EventTypeWebWrapper.tsx 中，多個動態 import 的路徑從絕對路徑改為相對路徑，例如 `import(\"./tabs/setup/EventSetupTabWebWrapper\")`。需確認這些相對路徑是否正確指向目標檔案，否則會導致模組載入失敗。",
+    "existing_code": "const EventSetupTab = dynamic(\n  () => import(\"./tabs/setup/EventSetupTabWebWrapper\").then((mod) => mod),\n  { loading: () => null }\n);",
+    "evidence": "diff 中將原本的 `import(\"./EventSetupTabWebWrapper\")` 改為 `import(\"./tabs/setup/EventSetupTabWebWrapper\")`，需確認檔案實際位置。"
+  }
+]

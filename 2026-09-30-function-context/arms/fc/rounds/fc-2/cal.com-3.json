@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "updateMany 回傳型別與介面不符",
+    "body": "`IBookingRepository` 介面定義 `updateMany` 回傳 `Promise<{ count: number }>`，但實作中直接回傳 `this.prismaClient.booking.updateMany(...)`，其回傳型別為 `Prisma.BatchPayload`（包含 `count` 屬性），但 TypeScript 可能因型別推斷而無法直接相容。建議明確標註回傳型別或調整介面定義。",
+    "existing_code": "async updateMany({ where, data }: { where: BookingWhereInput; data: BookingUpdateData }) {\n    await this.prismaClient.booking.updateMany({\n      where: where,\n      data,\n    });\n  }",
+    "evidence": "介面定義於 `packages/lib/server/repository/dto/IBookingRepository.ts` 第 20 行，實作於 `packages/features/bookings/repositories/BookingRepository.ts` 第 344 行。"
+  },
+  {
+    "path": "packages/features/bookingReference/repositories/BookingReferenceRepository.ts",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "靜態方法仍使用全域 prisma，可能繞過注入的 client",
+    "body": "`findDailyVideoReferenceByRoomName` 和 `replaceBookingReferences` 仍為靜態方法並使用全域 `prisma`，而新加入的 `updateManyByBookingId` 使用注入的 `prismaClient`。這可能導致在測試或需要交易隔離的場景中，部分操作使用不同的 client，造成資料不一致。建議將這些靜態方法改為實例方法並使用注入的 client。",
+    "existing_code": "static async findDailyVideoReferenceByRoomName({ roomName }: { roomName: string }) {\n    return prisma.bookingReference.findFirst({",
+    "evidence": "diff 中新增了建構子與 `prismaClient` 屬性，但未修改靜態方法。"
+  },
+  {
+    "path": "packages/features/profile/repositories/ProfileRepository.ts",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "ProfileRepository 建構子變更可能影響其他使用靜態方法的程式碼",
+    "body": "`ProfileRepository` 新增了建構子並要求注入 `prismaClient`，但類別中仍有大量靜態方法使用全域 `prisma`。若其他程式碼以 `new ProfileRepository()` 方式建立實例，將因缺少參數而失敗。建議確認所有建立實例的地方都已更新，或提供預設參數。",
+    "existing_code": "constructor(deps: { prismaClient: PrismaClient }) {\n    this.prismaClient = deps.prismaClient;\n  }",
+    "evidence": "diff 中新增建構子，但未修改靜態方法。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 136,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "handler 函式依賴全域 prisma 作為 fallback",
+    "body": "`handler` 函式在未提供 `dependencies` 時，會使用全域 `prisma` 建立 repository 實例。這可能導致在測試或需要隔離的環境中，仍使用全域 client。建議明確要求傳入 dependencies，或提供更安全的預設值。",
+    "existing_code": "const {\n    userRepository,\n    bookingRepository,\n    profileRepository,\n    bookingReferenceRepository,\n    attendeeRepository,\n  } = dependencies || {\n    userRepository: new UserRepository(prismaClient),\n    bookingRepository: new BookingRepository(prismaClient),\n    profileRepository: new ProfileRepository({ prismaClient }),\n    bookingReferenceRepository: new BookingReferenceRepository({ prismaClient }),\n    attendeeRepository: new PrismaBookingAttendeeRepository(prismaClient),\n  };",
+    "evidence": "diff 中新增 fallback 邏輯。"
+  }
+]

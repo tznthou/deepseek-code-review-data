@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "cancelEditMode 條件反轉可能導致編輯模式無法正確取消",
+    "body": "原本條件為 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，現在改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會讓一般網頁（非 Reader Mode）也被視為有效 URL，導致 `url` 被設為非 nil，進而影響取消編輯時的行為。例如，使用者在一般網頁編輯網址列後取消編輯，原本應清空網址列，現在卻可能保留原網址，造成使用者困惑。建議確認此變更是否為 QR code 移除的一部分，若非必要請回復原狀。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `url = (currentURL.isWebPage() && !currentURL.isReaderModeURL) ? url : nil` 改為 `url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil`，邏輯完全相反。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "readerModeState 的 isEnabled 判斷反轉可能導致錯誤的遙測事件",
+    "body": "原本 `case .available: true` 改為 `case .available: false`，且 `default: false` 改為 `default: true`。這會讓 `readerModeButtonTapped` 的 `isEnabled` 參數傳入相反的值，導致遙測數據錯誤。例如，當 Reader Mode 可用時，原本應記錄為 enabled，現在卻記錄為 disabled。請確認此變更是否為預期行為，若非必要請回復。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中此段由 `case .available: true` 改為 `case .available: false`，且 `default: false` 改為 `default: true`。"
+  },
+  {
+    "path": "firefox-ios/Client/Glean/probes/metrics.yaml",
+    "line": 1530,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 Glean metrics 定義後可能殘留引用導致編譯失敗",
+    "body": "此 PR 移除了 `qr_code` 和 `toolbar.qr_scan_button_tapped` 的 metrics 定義，但若程式碼中仍有任何地方引用 `GleanMetrics.QrCode.scanned` 或 `GleanMetrics.Toolbar.qrScanButtonTapped`，將導致編譯錯誤。請確認已搜尋整個程式碼庫，確保沒有殘留引用。",
+    "existing_code": "qr_code:\n  scanned:\n    type: counter",
+    "evidence": "diff 中移除了 `qr_code` 區塊，但未提供其他檔案中是否已移除所有引用。"
+  },
+  {
+    "path": "firefox-ios/Client/Telemetry/TelemetryWrapper.swift",
+    "line": 825,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 QR code 遙測事件後可能殘留引用",
+    "body": "移除了 `case (.action, .scan, .qrCodeText, _, _)` 和 `case (.action, .scan, .qrCodeURL, _, _)` 的處理，但若其他程式碼仍呼叫 `TelemetryWrapper.recordEvent` 並傳入 `.qrCodeText` 或 `.qrCodeURL`，將導致執行時錯誤或未預期的行為。請確認所有呼叫點已移除。",
+    "existing_code": "case (.action, .scan, .qrCodeText, _, _),\n     (.action, .scan, .qrCodeURL, _, _):\n    GleanMetrics.QrCode.scanned.add()",
+    "evidence": "diff 中移除了此 case，但未提供其他檔案中是否已移除所有呼叫。"
+  }
+]

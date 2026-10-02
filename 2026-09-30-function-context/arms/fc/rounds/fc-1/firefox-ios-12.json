@@ -1,0 +1,57 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "XCTWaiter 使用方式錯誤，導致測試必定逾時",
+    "body": "`XCTWaiter.wait(for:timeout:)` 是同步方法，會阻塞當前執行緒直到 expectation 被 fulfill 或逾時。但 `webView.load` 觸發的導航事件需要 RunLoop 持續運作才能處理，因此 delegate 方法永遠不會被呼叫，測試會卡住直到逾時。\n\n建議改用非同步等待方式，例如 `await fulfillment(of: [expect], timeout: timeout)`（需將方法標記為 `async`），或使用 `XCTWaiter` 搭配 `RunLoop.current.run(mode:before:)` 手動驅動 RunLoop。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增的 `WebKitTestHelpers.swift` 第 38 行使用了 `XCTWaiter.wait`，但該方法會阻塞執行緒，而 WebKit 的 delegate 回呼需要 RunLoop 處理，因此會造成死鎖。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "未檢查 XCTWaiter 結果，可能回傳 nil 導致測試失敗",
+    "body": "`XCTWaiter.wait` 的回傳值（`XCTWaiter.Result`）未被檢查。若等待逾時，`capturedFrame` 和 `capturedOrigin` 可能為 nil，函式會回傳 nil，導致呼叫端的 `guard` 失敗並使測試失敗。但此失敗無法區分是逾時還是其他錯誤，且沒有提供足夠的診斷資訊。\n\n建議檢查 waiter 結果，若為 `.timedOut` 則記錄錯誤或直接 `XCTFail`，並考慮增加逾時時間或改用更可靠的等待機制。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中第 39 行未使用 waiter 結果，且後續直接檢查 capturedFrame 和 capturedOrigin 是否為 nil。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "expectation 在 decisionHandler 外被 fulfill，可能導致測試提前結束",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`expectation.fulfill()` 被放在 `wait(for:)` 之後，而不是在 `decisionHandler` 內。這會導致 `wait(for:)` 永遠等不到 expectation 被 fulfill，直到逾時。\n\n應將 `expectation.fulfill()` 移回 `decisionHandler` 內，與其他測試保持一致。",
+    "existing_code": "wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中第 34-35 行顯示 `expectation.fulfill()` 在 `wait` 之後，而其他測試（如 `testRequestMediaCaptureIsActiveFalse`）則在 `decisionHandler` 內 fulfill。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試依賴真實網路，可能不穩定",
+    "body": "`captureFrameAndOrigin` 會載入 `https://example.com`，這需要網路連線。在 CI 環境中，網路可能不可用或不穩定，導致測試逾時或失敗。\n\n建議改用本地 HTML 字串或 `data:` URL 來避免外部依賴，或使用 `WKWebView` 的 `loadHTMLString` 方法。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中第 44 行使用 `URLRequest(url: url)`，而呼叫端傳入的是 `https://example.com`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "FakeWKNavigationDelegate 未處理非 targetFrame 的情況",
+    "body": "`decidePolicyFor` 中直接使用 `navigationAction.targetFrame`，但某些導航（例如新視窗或下載）的 `targetFrame` 可能為 nil。雖然目前測試只使用簡單的 URL，但若未來擴充可能會遇到問題。\n\n建議增加對 nil 的處理，或明確註明此 helper 僅適用於 main frame 導航。",
+    "existing_code": "let frame = navigationAction.targetFrame\n            capturedFrame = frame\n            capturedOrigin = frame?.securityOrigin",
+    "evidence": "diff 中第 17-19 行直接使用 targetFrame，未檢查 nil。"
+  }
+]

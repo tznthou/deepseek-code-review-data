@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`getWarmupLimit` 可能回傳 `Infinity`，呼叫端需能處理",
+    "body": "當 `day > totalDays` 時，函式回傳 `Infinity`。若呼叫端未預期此值，可能導致後續計算（如 `Math.min`、陣列 slice 等）出現非預期行為。建議確認所有呼叫端都能正確處理 `Infinity`，或改回傳一個明確的哨兵值（例如 `emailCount` 或 `Number.MAX_SAFE_INTEGER`）。",
+    "existing_code": "if (day > this.#warmupConfig.totalDays) {\n            return Infinity\n        }",
+    "evidence": "diff 中新增的 `getWarmupLimit` 方法在 `day > totalDays` 時回傳 `Infinity`，而舊版實作回傳 `Math.min(emailCount, ...)`，不會有 `Infinity`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "日期計算可能因時區或浮點數誤差導致天數不正確",
+    "body": "`#getDaysSinceFirstEmail` 使用 `Date.now()` 與 `new Date(created_at).getTime()` 的差值除以 86400000 毫秒，再以 `Math.ceil` 取整。若伺服器時區與 UTC 有偏移，或 `created_at` 包含時間部分，可能導致天數計算與預期不符。此外，浮點數除法後取 ceil 可能因精度問題造成邊界錯誤。建議改用 UTC 日期字串比較或明確指定時區。",
+    "existing_code": "return Math.ceil((Date.now() - new Date(res.data[0].get('created_at') as string).getTime()) / (1000 * 60 * 60 * 24));",
+    "evidence": "diff 中新增的 `#getDaysSinceFirstEmail` 方法直接使用毫秒差值除以一天毫秒數，未考慮時區或 DST。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 93,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "指數成長公式在 `totalDays` 為 1 時會除以零",
+    "body": "公式 `day / (this.#warmupConfig.totalDays - 1)` 在 `totalDays` 為 1 時會產生除以零的錯誤。目前預設值為 42，但若未來允許設定，需防範此狀況。",
+    "existing_code": "day / (this.#warmupConfig.totalDays - 1)",
+    "evidence": "diff 中新增的計算式直接使用 `totalDays - 1` 作為分母，未檢查是否為零。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 239,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試中硬編碼的期望值可能因浮點數捨入而脆弱",
+    "body": "測試中直接寫死 `237`、`280` 等數值，但實際計算使用 `Math.floor`，若浮點數運算結果略有不同（例如 236.999999），測試可能失敗。建議使用近似比較或由公式計算期望值。",
+    "existing_code": "assert.equal(csdCount2, 237, 'Day 1: Should scale to 237');",
+    "evidence": "diff 中測試斷言使用精確數值，而實作使用 `Math.floor` 與浮點指數運算。"
+  }
+]

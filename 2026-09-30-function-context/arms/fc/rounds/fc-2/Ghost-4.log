@@ -1,0 +1,5 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 38768 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:94 → 110（片段唯一命中）
+[info] 定位不到 apps/posts/src/views/comments/components/comments-list.tsx:260（片段多重命中（2 處），不猜）
+[info] 重新定位 apps/posts/src/views/comments/components/comments-list.tsx:72 → 92（片段唯一命中）
+[info] 完成於 12.3s ｜ findings=4 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 9502, "completion_tokens": 1272, "total_tokens": 10774, "prompt_tokens_details": {"cached_tokens": 9472}, "prompt_cache_hit_tokens": 9472, "prompt_cache_miss_tokens": 30}

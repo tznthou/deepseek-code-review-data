@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "concurrency limit 輸入可能產生 NaN 或負數",
+    "body": "在 onChange 中直接使用 `Number(value)`，若使用者輸入非數字字元（例如 'e'、'-'、'+'），可能得到 NaN。此外，沒有驗證最小值，可能送出負數。建議使用 zod schema 驗證（例如 `z.number().int().nonnegative().nullable()`），或在 onChange 中過濾無效輸入。",
+    "existing_code": "onChange={(e) => {\n\tconst value = e.target.value;\n\tfield.onChange(value === \"\" ? null : Number(value));\n}}",
+    "evidence": "diff 中新增的 onChange handler 直接將輸入轉為 Number，未檢查 NaN 或負數。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 59,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "錯誤處理僅顯示 toast，未保留錯誤狀態",
+    "body": "onError 僅顯示 toast，使用者無法得知具體錯誤內容或重試。建議在表單中顯示錯誤訊息，或保留 mutation 的 error 狀態供使用者參考。",
+    "existing_code": "onError: (error) => {\n\ttoast.error(\n\t\t`Failed to update work pool: ${error instanceof Error ? error.message : \"Unknown error\"}`,\n\t);\n},",
+    "evidence": "diff 中 onError 僅呼叫 toast.error，未將錯誤存入 state 或顯示於表單。"
+  }
+]

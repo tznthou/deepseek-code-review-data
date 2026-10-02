@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-cli/metadata-v2.json",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "cli.js 版本與 tauri-cli Cargo.toml 版本不一致",
+    "body": "metadata-v2.json 中的 cli.js 版本從 2.8.1 改為 2.8.2，但 tauri-cli 的 Cargo.toml 版本為 2.8.1。這可能導致發布流程中版本校驗失敗，或使用者安裝的 CLI 版本與實際二進位版本不符。請確認此處是否應為 2.8.1 或 tauri-cli 版本應一併更新。",
+    "existing_code": "\"version\": \"2.8.2\",",
+    "evidence": "diff 顯示 metadata-v2.json 中 cli.js 的 version 從 2.8.1 改為 2.8.2，而 tauri-cli/Cargo.toml 的 version 從 2.8.0 改為 2.8.1。"
+  },
+  {
+    "path": "crates/tauri-cli/config.schema.json",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "schema $id 版本與 tauri 版本不一致",
+    "body": "config.schema.json 的 $id 從 2.8.2 改為 2.8.3，但 tauri 的 Cargo.toml 版本為 2.8.3，而 tauri-cli 的版本為 2.8.1。通常 schema 版本應與 tauri 版本對齊，但此處 tauri-cli 版本較低，可能造成混淆。請確認此變更是否正確。",
+    "existing_code": "\"$id\": \"https://schema.tauri.app/config/2.8.3\",",
+    "evidence": "diff 顯示 config.schema.json 的 $id 從 2.8.2 改為 2.8.3，而 tauri/Cargo.toml 的 version 從 2.8.2 改為 2.8.3，tauri-cli/Cargo.toml 的 version 從 2.8.0 改為 2.8.1。"
+  }
+]

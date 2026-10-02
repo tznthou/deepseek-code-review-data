@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Popover 在觸控裝置上無法透過 hover 開啟",
+    "body": "LimitedBadges 的 Popover 僅透過 onMouseEnter/onMouseLeave 控制開啟，且 handleMouseEnter 在 isMobile 為 true 時直接 return，因此觸控裝置（如手機、平板）的使用者無法看到隱藏的 badges。建議改為點擊觸發（例如使用 PopoverTrigger 的 onClick），或提供明確的點擊目標。",
+    "existing_code": "const handleMouseEnter = useCallback(() => {\n    if (!isMobile) {\n      setIsOpen(true);\n    }\n  }, [isMobile]);",
+    "evidence": "在 LimitedBadges.tsx 中，handleMouseEnter 與 handleMouseLeave 皆檢查 isMobile，若為 true 則不改變 isOpen 狀態，導致 popover 無法開啟。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Popover 內容無法透過鍵盤操作",
+    "body": "PopoverTrigger 使用 Button 元件，但未提供 onKeyDown 或 focus 管理，鍵盤使用者無法開啟或瀏覽 popover 內容。建議加入適當的鍵盤事件處理（例如 Enter/Space 開啟、Escape 關閉），並確保焦點能移至 popover 內。",
+    "existing_code": "<PopoverTrigger asChild>\n            <Button\n              color=\"minimal\"\n              className=\"h-auto p-0 border-0 hover:border-0\"\n              aria-label={`Show ${hiddenItems.length} more items`}\n              onMouseEnter={handleMouseEnter}\n              onMouseLeave={handleMouseLeave}>",
+    "evidence": "Button 僅綁定滑鼠事件，未見任何鍵盤處理，可能違反無障礙規範。"
+  },
+  {
+    "path": "apps/web/modules/users/components/UserTable/UserListTable.tsx",
+    "line": 243,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Attributes 的權重與群組標示改為純文字，降低可讀性",
+    "body": "原本 attributes 的顯示會將權重以獨立 Badge 呈現，並以顏色區分群組選項；現在改為在 label 中附加權重與 \"(group)\" 文字，可能讓使用者難以快速辨識。建議保留原本的視覺區分，或提供更明確的格式。",
+    "existing_code": "let weight = \"\";\n                    if (attribute.isWeightsEnabled) {\n                      weight = `${attributeValue.weight || 100}%`;\n                    }\n                    let groupIndicator = \"\";\n                    if (isAGroupOption) {\n                      groupIndicator = \" (group)\";\n                    }\n                    let label = attributeValue.value;\n                    label = `${label} ${weight}`;\n                    label = `${label}${groupIndicator}`;",
+    "evidence": "在 UserListTable.tsx 的 generateAttributeColumns 中，原本的 Badge 結構被替換為單一 label 字串，失去視覺層次。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "Popover 內容的滑鼠離開處理可能導致閃爍",
+    "body": "PopoverContent 的 onMouseLeave 直接關閉 popover，但若滑鼠在 trigger 與 content 之間移動時，可能因事件順序造成 popover 意外關閉。建議加入延遲關閉或使用 hover intent 邏輯。",
+    "existing_code": "<PopoverContent\n            side=\"bottom\"\n            align=\"start\"\n            className=\"w-fit p-2\"\n            onMouseEnter={handleMouseEnter}\n            onMouseLeave={handleMouseLeave}>",
+    "evidence": "PopoverContent 與 PopoverTrigger 各自綁定 mouse enter/leave，未見任何延遲或緩衝機制。"
+  }
+]

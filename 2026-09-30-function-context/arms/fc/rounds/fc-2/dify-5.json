@@ -1,0 +1,57 @@
+[
+  {
+    "path": "web/app/components/app/configuration/prompt-value-panel/index.tsx",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "number 輸入類型改為 text 可能導致非數字輸入",
+    "body": "原本 number 類型的輸入使用 `<Input type=\"number\">`，此 PR 將其改為 `<Input type=\"text\">`。這會讓使用者可以輸入任意文字，而後續處理可能預期是數字，導致錯誤或非預期行為。若目的是移除 maxLength 限制，應保留 type=\"number\" 並僅移除 maxLength 屬性。",
+    "existing_code": "type=\"text\"",
+    "evidence": "diff 中將 type=\"number\" 改為 type=\"text\""
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 120,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "移除 paragraph 類型的 max_length 設定可能導致無限制輸入",
+    "body": "原本在 handleTypeChange 中，當類型切換為 paragraph 時會設定 `draft.max_length = DEFAULT_VALUE_MAX_LEN`，此 PR 移除了該設定。這表示 paragraph 類型的變數將不再有預設的 max_length，除非使用者手動設定。若後端未提供 max_length，前端將不會限制輸入長度，可能導致超長內容造成 API 錯誤或效能問題。",
+    "existing_code": "if (type === InputVarType.paragraph)\n        draft.max_length = DEFAULT_VALUE_MAX_LEN",
+    "evidence": "diff 中刪除了該段落"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/index.tsx",
+    "line": 60,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "移除 textInput 的 max_length 預設值可能導致無限制輸入",
+    "body": "原本在 buildPromptVariableFromInput 中，若 payload.type 為 textInput 且未設定 max_length，會自動填入 DEFAULT_VALUE_MAX_LEN。此 PR 移除了該邏輯，因此若使用者未設定 max_length，該變數將沒有長度限制。這可能導致後端接收到超長輸入而發生錯誤。",
+    "existing_code": "if (payload.type === InputVarType.textInput)\n    nextItem.max_length = nextItem.max_length || DEFAULT_VALUE_MAX_LEN",
+    "evidence": "diff 中刪除了該段落"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "批次輸入驗證中 max_length 可能為 undefined 導致比較錯誤",
+    "body": "在 checkBatchInputs 中，原本使用 `varItem.max_length || DEFAULT_VALUE_MAX_LEN` 來取得最大長度，現在改為直接使用 `varItem.max_length`。若後端未提供 max_length，則 `varItem.max_length` 為 undefined，與 `item[varIndex].length` 比較時會得到 false，導致驗證失效。建議保留 fallback 或明確處理 undefined 的情況。",
+    "existing_code": "if (item[varIndex].length > varItem.max_length) {",
+    "evidence": "diff 中將 `const maxLen = varItem.max_length || DEFAULT_VALUE_MAX_LEN` 改為直接使用 `varItem.max_length`"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 199,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.95,
+    "title": "移除除錯用的 console.log",
+    "body": "在 checkBatchInputs 函式中新增了一行 `console.log('Checking batch inputs:', { dataLength: data.length, headerData })`，這應該是開發時留下的除錯程式碼，不應出現在正式程式碼中。建議移除。",
+    "existing_code": "console.log('Checking batch inputs:', { dataLength: data.length, headerData })",
+    "evidence": "diff 中新增的該行 console.log"
+  }
+]

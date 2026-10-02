@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 227,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "getRecordings 呼叫缺少 await，可能回傳未解析的 Promise",
+    "body": "在 `getBookingRecordings` 方法中，`this.calVideoService.getRecordings(bookingUid)` 的呼叫移除了 `await`。若 `getRecordings` 是非同步方法（從其他端點如 `getVideoSessions` 使用 `await` 可推測），則回傳的 `recordings` 會是 Promise 物件而非實際資料，導致 API 回傳錯誤的資料型態或序列化失敗。\n\n**失敗情境**：當客戶端呼叫此端點時，回應中的 `data` 欄位會是 Promise 物件，而非錄製陣列，可能造成客戶端解析錯誤或資料外洩。\n\n**建議**：恢復 `await`，改為 `const recordings = await this.calVideoService.getRecordings(bookingUid);`",
+    "existing_code": "const recordings = this.calVideoService.getRecordings(bookingUid);",
+    "evidence": "diff 中此行從 `const recordings = await this.calVideoService.getRecordings(bookingUid);` 改為 `const recordings = this.calVideoService.getRecordings(bookingUid);`，移除了 await。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/controllers/bookings.controller.ts",
+    "line": 184,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "錄製端點權限從 BOOKING_READ 改為 BOOKING_WRITE，可能造成授權不足",
+    "body": "`getBookingRecordings` 端點的 `@Permissions` 從 `BOOKING_READ` 改為 `BOOKING_WRITE`。讀取錄製通常只需要讀取權限，改為寫入權限可能導致僅有讀取權限的 API 金鑰或使用者無法存取錄製，造成不必要的授權失敗。\n\n**失敗情境**：具有 `BOOKING_READ` 權限但無 `BOOKING_WRITE` 權限的 API 金鑰呼叫此端點時，會收到 403 Forbidden，即使該使用者有權讀取錄製。\n\n**建議**：確認此變更是否為刻意設計。若錄製讀取不應要求寫入權限，請改回 `BOOKING_READ`。",
+    "existing_code": "@Permissions([BOOKING_WRITE])",
+    "evidence": "diff 中 `@Permissions([BOOKING_READ])` 改為 `@Permissions([BOOKING_WRITE])`。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "編輯器可編輯條件改為 member?.expertise 可能導致無 expertise 成員無法編輯",
+    "body": "原本條件為 `!!memberName`，現在改為 `!!member?.expertise`。若登入成員沒有 expertise（例如新使用者或未填寫），編輯器將被設為不可編輯，導致無法輸入回覆。建議改回使用 `memberName` 或同時檢查兩者。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 313,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "FormWrapper 的 openForm 改為必填可能影響其他使用情境",
+    "body": "原本 `openForm` 為可選，現在改為必填。若其他元件未傳入 `openForm`，可能導致執行時錯誤。建議確認所有使用 FormWrapper 的地方都有傳入 openForm，或保留可選並處理 undefined。",
+    "existing_code": "const isReplyToReply = !!openForm.in_reply_to_snippet;",
+    "evidence": "diff 中此行由 `const isReplyToReply = !!openForm?.in_reply_to_snippet;` 改為 `const isReplyToReply = !!openForm.in_reply_to_snippet;`"
+  }
+]

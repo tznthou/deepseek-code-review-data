@@ -1,0 +1,57 @@
+[
+  {
+    "path": "eng/Versions.props",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "關閉 ValidateBaseline 可能隱藏套件參考變更",
+    "body": "將 `ValidateBaseline` 從 `true` 改為 `false`，會停用基線驗證。在 servicing 更新中，這可能導致未預期的套件參考變更未被偵測，增加相容性風險。建議確認此變更的必要性，或僅在特定條件下停用。",
+    "existing_code": "<ValidateBaseline>false</ValidateBaseline>",
+    "evidence": "diff 中 `-    <ValidateBaseline>true</ValidateBaseline>` 改為 `+    <ValidateBaseline>false</ValidateBaseline>`"
+  },
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "macOS 映像升級至 macOS-15 可能導致建置失敗",
+    "body": "將 macOS 映像從 macOS-13 升級至 macOS-15，同時 Xcode 版本從 15.2.0 改為 16.4.0。若建置流程或相依工具尚未支援 macOS 15，可能導致建置失敗。建議確認 CI 環境相容性。",
+    "existing_code": "vmImage: macOS-15",
+    "evidence": "diff 中 `-          vmImage: macOS-13` 改為 `+          vmImage: macOS-15`"
+  },
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Xcode 版本升級至 16.4.0 可能導致編譯問題",
+    "body": "將 Xcode 版本從 15.2.0 升級至 16.4.0，可能引入新的編譯器警告或錯誤，或與現有程式碼不相容。建議確認所有專案皆能使用 Xcode 16.4.0 成功建置。",
+    "existing_code": "displayName: Use XCode 16.4.0",
+    "evidence": "diff 中 `-          displayName: Use XCode 15.2.0` 改為 `+          displayName: Use XCode 16.4.0`"
+  },
+  {
+    "path": "eng/targets/ResolveReferences.targets",
+    "line": 211,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "條件式錯誤檢查可能放寬過多",
+    "body": "在 `Error` 條件中新增 `AND '$(AspNetCorePatchVersion)' == '1'`，使得只有 patch version 為 1 時才檢查未使用的基線套件參考。若未來 patch version 改變，此檢查將被跳過，可能隱藏問題。建議確認此條件是否過於侷限。",
+    "existing_code": "Condition=\" '$(IsServicingBuild)' == 'true' AND '@(UnusedBaselinePackageReference->Count())' != '0' AND '$(AspNetCorePatchVersion)' == '1'\"",
+    "evidence": "diff 中新增 `AND '$(AspNetCorePatchVersion)' == '1'`"
+  },
+  {
+    "path": "eng/common/core-templates/steps/install-microbuild.yml",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "MicroBuild 安裝路徑變更可能影響簽署流程",
+    "body": "將 .NET SDK 安裝路徑從 `$(Build.SourcesDirectory)/.dotnet` 改為 `$(Agent.TempDirectory)/.dotnet-microbuild`，並將 MicroBuild 輸出資料夾改為 `$(Agent.TempDirectory)/MicroBuild`。若簽署目標依賴特定路徑，可能導致簽署失敗。建議確認相關簽署邏輯已同步更新。",
+    "existing_code": "installationPath: $(Agent.TempDirectory)/.dotnet-microbuild",
+    "evidence": "diff 中新增 `installationPath: $(Agent.TempDirectory)/.dotnet-microbuild` 並移除 `microBuildOutputFolder` 參數"
+  }
+]

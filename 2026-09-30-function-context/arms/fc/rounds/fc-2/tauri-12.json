@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 353,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "使用 expect 可能導致 panic",
+    "body": "當 `association.name` 為 `None` 且 `association.ext` 為空時，`expect` 會觸發 panic。這會讓使用者在設定檔中未提供 name 且 ext 為空時，在建置階段直接崩潰。建議改回原本的 `unwrap_or(&association.ext[0].0)` 或提供更安全的 fallback（例如使用空字串或預設名稱）。",
+    "existing_code": ".expect(\"File association must have a name\")",
+    "evidence": "diff 中將原本的 `unwrap_or(&association.ext[0].0)` 改為 `expect(\"File association must have a name\")`，但未處理 ext 為空的情況。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "CFBundleTypeExtensions 條件判斷可能顛倒",
+    "body": "原本的程式碼無論 ext 是否為空都會寫入 `CFBundleTypeExtensions`，但修改後變成 `if association.ext.is_empty()` 才寫入，這似乎與預期相反。若 ext 非空，則不會寫入副檔名，可能導致 macOS 無法正確關聯檔案。請確認條件是否應為 `!association.ext.is_empty()`。",
+    "existing_code": "if association.ext.is_empty() {\n              dict.insert(\n                \"CFBundleTypeExtensions\".into(),\n                plist::Value::Array(\n                  association\n                    .ext\n                    .iter()\n                    .map(|ext| ext.to_string().into())\n                    .collect(),\n                ),\n              );\n            }",
+    "evidence": "diff 中新增了 `if association.ext.is_empty()` 條件包住原本的寫入邏輯，但從語意上來看，應該是在 ext 非空時才寫入。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 1185,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "content_types 與 exported_type 缺少 serde 別名",
+    "body": "新增的欄位 `content_types` 和 `exported_type` 在 struct 上使用了 `rename_all = \"camelCase\"`，但沒有像其他欄位（如 `mime_type`）加上 `serde(alias = \"content-types\")` 或 `serde(alias = \"exported-type\")`。這可能導致使用 kebab-case 的舊設定檔無法正確反序列化。建議加上別名以維持相容性。",
+    "existing_code": "pub content_types: Option<Vec<String>>,",
+    "evidence": "diff 中新增的欄位沒有 `serde(alias)` 屬性，而其他欄位如 `mime_type` 有 `#[serde(alias = \"mime-type\")]`。"
+  }
+]

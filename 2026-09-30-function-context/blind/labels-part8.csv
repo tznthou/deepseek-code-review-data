@@ -1,0 +1,101 @@
+pair,label,note
+P0701,same,同一個條件反轉；finding 描述的後果（重複排程）跟 GT（首次永不排程）不同但修法都是改回 !hasScheduled.processOutbox
+P0702,no,GT 是 .service.ts 檔名慣例違規；finding 講 getDisplayEmail 缺單元測試
+P0703,no,GT 是 createTFunction 的 key 查找順序；finding 講 Trans mock 沒處理 components prop（不同函式）
+P0704,same,兩者都指 var 宣告 newValues 應改 const
+P0705,no,GT 是 detailTextRollouts 那行超過 SwiftLint 行寬；finding 講另兩個常數 comment 的引號改動
+P0706,no,GT 是移除 HistoryEntryState null 檢查導致合法登出被擋；finding 講 Task.Yield 造成延遲
+P0707,no,同一行但兩個獨立缺陷：GT 是 Unix 路徑用 OrdinalIgnoreCase；finding 講 Path.GetFullPath 例外被吞
+P0708,no,同一區塊但獨立缺陷：GT 是漏 decrRefCount(argv[2]) 的洩漏；finding 講 argv[5] 陣列越界（那是另一筆 GT 的問題）
+P0709,no,GT 是缺 static 的規則違規；finding 講匯入中 slot 的刪除邏輯
+P0710,no,GT 是重啟時漏更新 jsComponentParametersByIdentifier；finding 講不同 rendererId 時 manager 被覆寫（另一個獨立缺陷）
+P0711,no,同一行但獨立：GT 是缺分號；finding 講回傳 Infinity 的下游風險
+P0712,same,兩者都指跨欄位驗證不該用 field_validator 應改 model_validator
+P0713,no,GT 是 EventTeamAssignmentTab 的 import 漏 .then((mod) => mod)；finding 只猜相對路徑可能不對且指向另一個 import
+P0714,same,兩者都指 trim 跟驗證顯示不一致；finding 建議驗證前先 trim 或保留原值，跟 GT 修法相同
+P0715,same,兩者都指驗證從 <= 0 改成 < 0 讓 0 被放行
+P0716,no,GT 是第二個 descriptor 的 Sequence 斷言該是 1；finding 講 Convert.ToInt64 的型別斷言（不同測試）
+P0717,same,兩者都指 generate_github_mirror_url_from_base 移除 set_path 導致 mirror URL 缺路徑
+P0718,partial,同一個 [QuarantinedTest] 屬性：GT 是它不屬於 xUnit 屬性的規則違規；finding 講隔離會讓測試被跳過而掩蓋問題（問題不同但修法有交集）
+P0719,no,同一段程式但獨立：GT 是 length 檢查讓空陣列略過過濾；finding 講 endsWith 的效能
+P0720,same,兩者都指 Suspense 沒給 fallback
+P0721,no,GT 是丟泛用 Exception 的規則違規；finding 講快取寫入用 bulk_plans 而非 plans_to_cache
+P0722,same,兩者都指 cgroups_ref 為 NULL 時該回傳 0 卻回傳 1
+P0723,same,兩者都指 DisableThrowNavigationException 被設成 true 讓測試失去意義
+P0724,no,GT 是改 config 後沒重新產生 schema；finding 講 Flatpak 的 Display 大小寫
+P0725,same,兩者都指參數查找用 propertyName 而非 metadata.Name
+P0726,no,GT 是 log 用 len(bulk_plans) 而非 len(plans_to_cache)；finding 講 None 進 json.dumps 的序列化（不同語句與問題）
+P0727,no,同一行但獨立：GT 是行寬超限；finding 講 V2 字串未被使用
+P0728,partial,同一個 orgId 條件式：GT 指缺 child.parentId 比對；finding 只質疑是否該含父組織且沒指出缺少條件（指對地方但機制不同）
+P0729,no,GT 是缺明確 access control；finding 講測試依賴真實網路
+P0730,no,GT 是行寬超過 110；finding 講 setUserState 少了 await
+P0731,no,GT 是非 verbose 模式用了 EventLevel.LogAlways；finding 講 listener 未 Dispose
+P0732,no,同一行但獨立：GT 是業務邏輯直接讀 process.env（該注入）；finding 只質疑環境變數的預設語意
+P0733,no,GT 是對 &String 呼叫 to_string 的 clippy 問題；finding 講 expect 取代 fallback 可能 panic
+P0734,same,兩者都指 Session 沒用 context manager 也沒關閉
+P0735,same,兩者都指渲染改用 teamMembers 而非 filteredMembers 讓搜尋失效
+P0736,no,GT 是迴圈內每筆都 flush 該批次處理；finding 講變數不存在只記警告
+P0737,same,兩者都指錄音端點權限被改成 BOOKING_WRITE 應為 BOOKING_READ
+P0738,no,GT 是 addHashFieldToReply 缺 static；finding 講 rewriteClientCommandVector 的參數
+P0739,no,GT 是丟泛用 Exception 的規則違規；finding 講 get_plan_bulk 回傳 None（相距 39 行）
+P0740,same,兩者都指 inherit 判斷式被反轉
+P0741,no,GT 是新增寬泛 except Exception 的規則違規；finding 講兩段 JSON 解析邏輯重複
+P0742,same,兩者都指 require 陳述式缺分號
+P0743,partial,同一個斷言：GT 指 && 該是 ||（不可能同時符合）；finding 只說兩個 Regex 同時比對太嚴且以第三種格式為由（指對地方但機制講錯）
+P0744,no,GT 是 URL 強制解包的 lint 問題；finding 講 expectation.fulfill 的位置
+P0745,partial,GT 是 map 渲染用 teamMembers 導致搜尋失效；finding 指緊鄰的空狀態判斷用 teamMembers.length（同一根因的另一處）
+P0746,no,同一行但獨立：GT 是行寬超限；finding 講 V2 字串未被使用
+P0747,same,兩者都指移除可選串連後 openForm 為 undefined 會執行期錯誤
+P0748,no,GT 是缺 static；finding 講 clusterDelKeysInSlot 第二個參數的語意
+P0749,no,GT 是本地 hashTypeSet 漏 HASH_SET_KEEP_TTL；finding 質疑複寫用的 HSETEX 沒帶 TTL 選項（另一條路徑且 GT 認為複寫端正確）
+P0750,no,GT 是缺 .changes 條目；finding 講 Flatpak 的 Display 大小寫
+P0751,partial,同一個 rewriteClientCommandVector 呼叫：GT 是 argc 寫 6 但實際 7 個參數；finding 只質疑缺 TTL 選項或參數順序（指對地方但機制講錯）
+P0752,no,GT 是三元運算式可讀性的規則問題；finding 講 ehlo(local_host) 的行為改變
+P0753,no,GT 是 total_price 用整數 0 而非 Decimal(0)；finding 講其他價格欄位的預設值變更
+P0754,no,GT 是 Math.floor 該用 Math.round；finding 講天數計算用 Math.ceil（不同函式）
+P0755,same,兩者都指 lastExecutionTime 在 guard 前更新導致節流失效
+P0756,same,兩者都指檔案缺結尾換行
+P0757,same,兩者都指 bootstrapDependencies() 少了 await；finding 的後果（編譯錯誤）跟 GT（競態）不同但修法相同
+P0758,no,GT 是 PostgreSQL 分支用 hash() 導致 lock key 不一致；finding 講 SQLite 分支沒有鎖
+P0759,same,兩者都指 dictFindLink 改用 addedKey 而非原始 key
+P0760,same,兩者都指 split 後的空字串沒被過濾；finding 只抓到清空 textarea 那一種（只抓到一半仍算 same）
+P0761,no,GT 是方法簽章行寬超限；finding 講 hasPendingInviteByUserId 的 accepted 條件
+P0762,no,GT 是 gtk.exists() 判斷被反轉；finding 講 linuxdeploy 下載 URL 的架構變數
+P0763,no,GT 是 map callback 有未使用的 index；finding 講 Popover hover 閃爍
+P0764,no,GT 是缺 target_os 條件編譯；finding 講 versionCode 讀取失敗被重設為 1
+P0765,no,GT 是 semver 分支先驗證再夾限的順序錯；finding 講自動遞增缺上限檢查（不同路徑）
+P0766,same,兩者都指 delete_cookie 誤送 SetCookie
+P0767,no,同一行但獨立：GT 是缺 ConfigureAwait(false) 的規則違規；finding 講 Task.Yield 造成競態
+P0768,no,GT 是缺明確存取修飾詞；finding 講 nonisolated(unsafe) 的執行緒安全
+P0769,no,GT 是 argv[5] 陣列越界；finding 只質疑 shared.integers[1] 有沒有初始化
+P0770,same,兩者都指 remarks 被指派給 Summary 而非 Description
+P0771,no,同一個 catch 但方向相反：GT 是禁止 console.error 的規則；finding 認為只記 console 不夠而要加可見 fallback
+P0772,same,兩者都指 advisory lock 用 hash() 在不同程序不一致
+P0773,same,兩者都指 dictFindLink 用了 stored key（addedKey）而非 lookup key
+P0774,no,GT 是 var 宣告；finding 講 inline 模式 autoCloseOnSelect 的關閉邏輯
+P0775,partial,GT 是本地 hashTypeSet 漏 HASH_SET_KEEP_TTL；finding 提到原本有這個旗標但只質疑複寫用的 HSETEX KEEPTTL（同一主題但沒指出本地漏旗標）
+P0776,same,兩者都指用長度比較而非集合比較；finding 建議的 deleted_ids == firing_ids 就是正解
+P0777,no,GT 是沒存正規化後的 JSON；finding 講 return True 未定義（同區塊獨立缺陷）
+P0778,no,GT 是 lambda 大括號風格；finding 講 Split 沒移除空項
+P0779,no,GT 是缺 static；finding 講遷移中 slot 的 key 可能被誤刪
+P0780,no,GT 是 require 路徑大小寫錯誤；finding 講 require 缺分號
+P0781,no,GT 是 argv[5] 越界寫入；finding 只質疑 shared.integers[1] 有沒有初始化
+P0782,partial,同一個 Task 包裝：GT 是失去 MainActor 隔離；finding 主講時序與錯誤處理，只在建議末尾帶到 completion 的執行緒（機制大多不同）
+P0783,same,兩者都指 TOML 解析錯誤被包成 FormatJson
+P0784,no,同一行但獨立：GT 是直接用 ureq::get 繞過平台憑證驗證；finding 講沒檢查 HTTP 狀態碼
+P0785,no,GT 是未使用變數 total_ranges；finding 講 asmCountKeysInSlots 的效能
+P0786,same,兩者都指 await super.setUp() 少了 try
+P0787,no,GT 是快取迴圈迭代 bulk_plans 而非 plans_to_cache；finding 講 mget 長度不符被吞掉（相距 40 行）
+P0788,no,GT 是 setUp 裡 bootstrapDependencies() 少 await；finding 講 tearDown 的 reset() 是不同呼叫且目前無錯
+P0789,no,GT 是手動實作 Error trait 的規則違規；finding 講 write_and_make_executable 的執行順序
+P0790,no,GT 是 renderer 判斷式 === 被反轉；finding 講 hasInitializedJsComponents 旗標
+P0791,same,兩者都指 sortableKeys 包含了 prefix 項目
+P0792,no,GT 是沒檢查 XCTWaiter 結果；finding 講 targetFrame 可能為 nil
+P0793,no,GT 是 waiter 未使用；finding 講測試依賴真實網路
+P0794,same,兩者都指 parseInt 不該用；finding 的修法（改用 Number）同樣能消掉 GT 說的 NaN（機制描述不同）
+P0795,no,GT 是行寬超限；finding 講 redirect 可能無限迴圈
+P0796,same,兩者都指移除 set_path 讓 mirror URL 缺路徑
+P0797,no,GT 是 ehlo(local_host) 該用 self.server；finding 講 assert smtp is not None 沒作用
+P0798,no,GT 是缺分號；finding 講天數計算的時區與浮點誤差
+P0799,same,兩者都指 run_deployment 別名到純 async 的 arun_deployment 而失去同步支援
+P0800,same,兩者都指 setUpApp() 與 setUpExperimentVariables() 順序被對調

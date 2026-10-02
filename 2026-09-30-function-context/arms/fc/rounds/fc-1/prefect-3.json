@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-array-list.tsx",
+    "line": 142,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "拖放排序索引參數順序錯誤",
+    "body": "在 `handleDragEnd` 中，`moveItem(newIndex, oldIndex)` 的參數順序可能導致排序方向相反。`moveItem` 的實作是 `newValues.splice(to, 0, newValues.splice(from, 1)[0])`，其中 `from` 是來源索引，`to` 是目標索引。但呼叫時傳入 `newIndex` 作為 `from`，`oldIndex` 作為 `to`，會將項目從新位置移回舊位置，造成拖放後順序不變或錯亂。應改為 `moveItem(oldIndex, newIndex)`。",
+    "existing_code": "moveItem(newIndex, oldIndex);",
+    "evidence": "diff 中 `handleDragEnd` 函式內：`moveItem(newIndex, oldIndex);`，而 `moveItem` 定義為 `function moveItem(from: number, to: number) { const newValues = [...localKeyedValues]; newValues.splice(to, 0, newValues.splice(from, 1)[0]); ... }`"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-array-list.tsx",
+    "line": 148,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SortableContext 包含不可拖動的 prefix items",
+    "body": "`sortableKeys` 是從所有 `localKeyedValues` 取得，包含 prefix items（不可拖動）。這可能導致拖放時將項目移動到 prefix 區域，或將 prefix 項目當作拖放目標，造成排序混亂。應僅將可拖動項目的 key 傳入 `SortableContext`，或使用 `disabled` 屬性排除。",
+    "existing_code": "const sortableKeys = localKeyedValues.map((item) => item.key);",
+    "evidence": "diff 中 `const sortableKeys = localKeyedValues.map((item) => item.key);`，但 `getCanMoveForIndex` 會對 prefix items 回傳 false，且 `SchemaFormInputArrayItem` 中 `useSortable` 的 `disabled` 設為 `!canMove`，但 SortableContext 仍包含所有項目。"
+  }
+]

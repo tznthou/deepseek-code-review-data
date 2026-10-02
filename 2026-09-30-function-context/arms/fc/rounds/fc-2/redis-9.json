@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "rewriteClientCommandVector 參數順序可能錯誤",
+    "body": "在 `rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj)` 中，參數順序可能與預期不符。根據 Redis 內部慣例，`rewriteClientCommandVector` 的參數應為 (client, argc, ...argv)，但此處傳入的 `shared.integers[1]` 可能代表數字 1，而 `c->argv[2]` 是欄位名稱。若順序錯誤，複製到 replica 的指令可能變成 `HSETEX key KEEPTTL FIELDS 1 field value`，但實際可能被解讀為 `HSETEX key KEEPTTL FIELDS field 1 value`，導致語法錯誤或行為異常。建議確認 `rewriteClientCommandVector` 的實作與其他呼叫點，確保參數順序正確。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的這一行，與常見的 rewriteClientCommandVector 用法不同，且 shared.integers[1] 是整數 1 的 shared object，可能被誤用為欄位數量。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2572,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "shared.integers[1] 的使用可能造成混淆",
+    "body": "使用 `shared.integers[1]` 來表示欄位數量 1，雖然可行，但可讀性較差。建議改用明確的常數或建立專用的 shared object，例如 `shared.one`，以避免未來維護時誤解。",
+    "existing_code": "shared.integers[1]",
+    "evidence": "diff 中出現 `shared.integers[1]`，但此陣列通常用於整數共享物件，直接使用索引 1 可能讓讀者困惑。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 2000,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試中 TTL 範圍斷言可能過於嚴格",
+    "body": "在測試中，使用 `assert_range [r httl h1 FIELDS 1 f1] 90 100` 來驗證 TTL 範圍。由於測試執行時間可能因環境而異，TTL 可能略低於 90 毫秒，導致測試不穩定。建議放寬範圍或使用更精確的同步機制。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "diff 中新增的測試斷言，TTL 範圍為 90 到 100，但實際 TTL 可能因延遲而低於 90。"
+  }
+]

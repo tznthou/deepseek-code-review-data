@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "錯誤類型從 FormatToml 改為 FormatJson，導致 TOML 解析錯誤被誤報為 JSON 錯誤",
+    "body": "在 `do_parse_toml` 函式中，原本將 `toml::from_str` 的錯誤包裝為 `ConfigError::FormatToml`，但升級後改為 `ConfigError::FormatJson`，並將錯誤轉為 `serde_json::Error`。這會讓 TOML 解析失敗時回報為 JSON 格式錯誤，誤導使用者。應保留 `FormatToml` 變體，或新增對應的錯誤類型。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中顯示原本的 `ConfigError::FormatToml` 被改為 `ConfigError::FormatJson`，且錯誤被轉為 `serde_json::Error`。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Flatpak 的 Display 實作大小寫不一致",
+    "body": "在 `Display for BundleType` 中，其他變體都輸出小寫（如 \"deb\"、\"rpm\"），但新增的 `Flatpak` 輸出 \"Flatpak\"（首字母大寫）。這可能導致序列化或比對時出現不一致，例如在產生 bundle 檔名或與其他工具互動時。建議改為 \"flatpak\"。",
+    "existing_code": "Self::Flatpak => \"Flatpak\",",
+    "evidence": "diff 中新增的 match arm 為 `Self::Flatpak => \"Flatpak\"`，而其他 arm 皆為小寫。"
+  }
+]

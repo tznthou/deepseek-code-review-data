@@ -1,0 +1,79 @@
+[
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "關閉 TypeScript strict 模式",
+    "body": "將 `strict` 從 `true` 改為 `false` 會大幅降低型別安全，可能隱藏潛在的 null/undefined 錯誤。此變更與 PR 目的無關，且會影響整個專案的型別檢查。建議恢復為 `true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.json 的變更：`-    \"strict\": true,` → `+    \"strict\": false,`"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 78,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "輪詢 effect 缺少對 disableBlueskyMutation 的依賴",
+    "body": "在 `useEffect` 中呼叫了 `disableBlueskyMutation.mutateAsync()`，但依賴陣列僅包含 `account?.blueskyEnabled`, `account?.blueskyHandleConfirmed`, `confirmHandle`，並註解 `disableBlueskyMutation is stable`。若 mutation 函式因 hook 重新渲染而改變（例如 queryClient 或 handle 變化），可能導致 effect 使用過時的 mutation 函式。建議將 `disableBlueskyMutation` 加入依賴陣列，或確認其穩定性。",
+    "existing_code": "// eslint-disable-next-line react-hooks/exhaustive-deps\n    }, [account?.blueskyEnabled, account?.blueskyHandleConfirmed, confirmHandle]); // disableBlueskyMutation is stable",
+    "evidence": "diff 中新增的 useEffect 依賴陣列未包含 `disableBlueskyMutation`，且註解聲稱其穩定。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "輪詢可能重複觸發 confirmHandle",
+    "body": "在 `setInterval` 中呼叫 `confirmHandle()`，但 `confirmHandle` 內部使用 `confirmBlueskyHandleMutation.mutateAsync()`。若前一次請求尚未完成，下一次 interval 仍會觸發新的請求，可能導致多個併發請求。建議在 `confirmHandle` 中加入進行中標誌，或使用 `isLoading` 狀態防止重入。",
+    "existing_code": "const confirmHandleInterval = setInterval(async () => {\n            if (retryCountRef.current >= MAX_CONFIRMATION_RETRIES) {\n                clearInterval(confirmHandleInterval);\n\n                toast.error('Something went wrong, please try again.');\n\n                await disableBlueskyMutation.mutateAsync();\n                setLoading(false);\n\n                return;\n            }\n\n            retryCountRef.current += 1;\n            confirmHandle();\n        }, CONFIRMATION_INTERVAL);",
+    "evidence": "diff 中新增的 setInterval 回呼直接呼叫 confirmHandle，無任何防護。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "confirmHandle 的錯誤處理可能導致未處理的 rejection",
+    "body": "`confirmHandle` 使用 `.then()` 但沒有 `.catch()`。若 `confirmBlueskyHandleMutation.mutateAsync()` 失敗（例如網路錯誤），會產生未處理的 Promise rejection。建議加入 `.catch()` 處理錯誤，或使用 try/catch。",
+    "existing_code": "const confirmHandle = useCallback(() => {\n        confirmBlueskyHandleMutation.mutateAsync().then((handle) => {\n            if (handle) {\n                setHandleConfirmed(true);\n            }\n        });\n        // eslint-disable-next-line react-hooks/exhaustive-deps\n    }, []); // Empty deps - mutations are stable in practice",
+    "evidence": "diff 中新增的 confirmHandle 函式缺少錯誤處理。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2833,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "useConfirmBlueskyHandleMutationForUser 缺少 accountFollows 查詢的 invalidate",
+    "body": "在 `useConfirmBlueskyHandleMutationForUser` 的 `onSuccess` 中，更新了帳戶快取，但沒有 invalidate `accountFollows` 查詢。註解也提到「Missing invalidation of accountFollows query that should happen here」。若確認 handle 後會影響 following 列表（例如 brid.gy 帳戶的追蹤狀態），UI 可能不會即時更新。建議加入相應的 invalidateQueries。",
+    "existing_code": "// Note: Missing invalidation of accountFollows query that should happen here",
+    "evidence": "diff 中新增的 mutation 缺少 invalidateQueries，且有註解指出。"
+  },
+  {
+    "path": "apps/activitypub/src/api/activitypub.ts",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Account 介面中 blueskyHandle 型別改為 string | null 可能影響其他程式碼",
+    "body": "`blueskyHandle` 從 `string` 改為 `string | null`，並新增 `blueskyHandleConfirmed`。這可能導致其他使用 `blueskyHandle` 的地方需要處理 null，若未處理可能產生執行時期錯誤。建議搜尋所有使用處並確認 null 處理。",
+    "existing_code": "blueskyHandleConfirmed?: boolean;\n    blueskyHandle?: string | null;",
+    "evidence": "diff 中 Account 介面的變更。"
+  },
+  {
+    "path": "apps/activitypub/src/api/activitypub.ts",
+    "line": 711,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "enableBluesky 和 disableBluesky 的回傳型別未明確標示",
+    "body": "`enableBluesky` 和 `disableBluesky` 沒有標示回傳型別（隱含 `Promise<void>`），但呼叫端可能期望回傳值。建議明確標示 `Promise<void>` 以增加可讀性。",
+    "existing_code": "async enableBluesky() {\n        const url = new URL('.ghost/activitypub/v2/actions/bluesky/enable', this.apiUrl);\n\n        await this.fetchJSON(url, 'POST');\n    }\n\n    async disableBluesky() {\n        const url = new URL('.ghost/activitypub/v2/actions/bluesky/disable', this.apiUrl);\n\n        await this.fetchJSON(url, 'POST');\n    }",
+    "evidence": "diff 中新增的方法未標示回傳型別。"
+  }
+]

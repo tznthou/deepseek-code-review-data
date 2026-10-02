@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 50,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "favicon 路徑可能指向不存在的檔案",
+    "body": "`stateType` 包含 `CANCELLING` 和 `PAUSED`，但 `public` 目錄中只有 `cancelled.svg`、`completed.svg`、`crashed.svg`、`failed.svg`、`pending.svg`、`running.svg`、`scheduled.svg`。當狀態為 `CANCELLING` 或 `PAUSED` 時，會嘗試載入 `/cancelling.svg` 或 `/paused.svg`，導致 404 並顯示預設 favicon。建議為所有可能的狀態提供對應的 SVG，或將不支援的狀態映射到現有圖示。",
+    "existing_code": "const faviconPath = `/${stateType.toLowerCase()}.svg`;",
+    "evidence": "diff 中新增的 `use-state-favicon.ts` 第 44 行，以及 `public` 目錄下缺少 `cancelling.svg` 和 `paused.svg`。"
+  },
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "未監聽系統主題變更",
+    "body": "`getPreferredColorScheme` 只在 effect 執行時讀取一次，若使用者在頁面開啟期間切換系統深淺色模式，favicon 不會更新。建議使用 `matchMedia` 的 `change` 事件監聽，或將 `colorScheme` 加入依賴陣列並在變更時重新執行 effect。",
+    "existing_code": "const colorScheme = getPreferredColorScheme();",
+    "evidence": "diff 中 `use-state-favicon.ts` 第 29 行，effect 依賴陣列僅有 `[stateType]`。"
+  },
+  {
+    "path": "ui-v2/src/components/task-runs/task-run-details/task-run-details.tsx",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 `||` 可能將 0 或空字串顯示為 'None'",
+    "body": "`taskRun.run_count || 0` 在 `run_count` 為 0 時會顯示 0，但若 `run_count` 為 `null` 或 `undefined` 也會顯示 0，可能誤導。同樣地，`taskRun.cache_key || \"None\"` 和 `taskRun.dynamic_key || \"None\"` 在值為空字串時會顯示 'None'，但空字串可能是合法值。建議使用 `??` 或明確檢查 `null`/`undefined`。",
+    "existing_code": "<dd className=\"\">{taskRun.run_count || 0}</dd>",
+    "evidence": "diff 中 `task-run-details.tsx` 第 121 行，以及後續的 `cache_key` 和 `dynamic_key` 使用 `||`。"
+  },
+  {
+    "path": "ui-v2/src/components/task-runs/task-run-details/task-run-details.tsx",
+    "line": 163,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Retries 顯示邏輯可能不一致",
+    "body": "`taskRun.empirical_policy?.retries ?? \"0\"` 在 `retries` 為 0 時會顯示 0，但若為 `null` 或 `undefined` 則顯示字串 '0'，型別不一致。建議統一使用數字或字串，或明確處理 null/undefined。",
+    "existing_code": "{taskRun.empirical_policy?.retries ?? \"0\"}",
+    "evidence": "diff 中 `task-run-details.tsx` 第 137 行。"
+  }
+]

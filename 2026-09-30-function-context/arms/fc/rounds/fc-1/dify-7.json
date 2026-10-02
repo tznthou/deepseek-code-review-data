@@ -1,0 +1,46 @@
+[
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Trans mock 未處理 components prop，可能導致依賴該 prop 的測試失敗",
+    "body": "`createTransMock` 回傳的 `Trans` 元件僅接收 `i18nKey` 和 `children`，但實際 react-i18next 的 `Trans` 元件常使用 `components` prop 來插入自訂元件。若元件使用 `<Trans i18nKey=\"...\" components={{ trustSource: <TrustSource /> }} />`，此 mock 會忽略 `components`，導致渲染結果與實際不符，可能使測試無法正確驗證。建議在 `Trans` mock 中處理 `components` prop，例如將 `components` 中的元件渲染在對應位置。",
+    "existing_code": "Trans: ({ i18nKey, children }: {\n      i18nKey: string\n      children?: React.ReactNode\n    }) => {\n      const text = translations[i18nKey] ?? i18nKey\n      return React.createElement('span', { 'data-i18n-key': i18nKey }, children ?? text)\n    },",
+    "evidence": "diff 中新增的 `createTransMock` 函式，其 `Trans` 元件參數僅有 `i18nKey` 和 `children`，未包含 `components`。"
+  },
+  {
+    "path": "web/vitest.setup.ts",
+    "line": 91,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "全域 mock 整合 createReactI18nextMock 後，useTranslation 的 returnObjects 行為遺失",
+    "body": "原本全域 mock 的 `useTranslation` 有處理 `options.returnObjects`，當設定為 true 時回傳陣列。新的 `createReactI18nextMock` 中的 `createTFunction` 未處理 `returnObjects`，可能導致依賴此行為的測試失敗。建議在 `createTFunction` 中加入 `returnObjects` 的處理，或保留原本的邏輯。",
+    "existing_code": "const { createReactI18nextMock } = await import('./test/i18n-mock')\n  return {\n    ...actual,\n    ...createReactI18nextMock(),\n  }",
+    "evidence": "diff 中 `web/vitest.setup.ts` 的修改，原本的 `useTranslation` 有 `if (options?.returnObjects) return [...]`，但新的 `createReactI18nextMock` 未包含此邏輯。"
+  },
+  {
+    "path": "web/app/components/plugins/marketplace/index.spec.tsx",
+    "line": 33,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "i18next-config mock 的 getFixedT 實作與全域 mock 不一致",
+    "body": "此測試檔案中 `vi.mock('@/i18n-config/i18next-config', ...)` 的 `getFixedT` 回傳的函式現在會處理 `options.ns`，但全域 mock 的 `useMixedTranslation` 可能依賴此 mock 的行為。若 `useMixedTranslation` 使用 `getFixedT` 並傳入 `ns`，此處的實作會回傳 `ns.key`，但全域 mock 的 `createTFunction` 也會處理 `ns`，可能造成不一致。建議確認 `useMixedTranslation` 的實作，確保兩者行為一致。",
+    "existing_code": "getFixedT: (_locale: string) => (key: string, options?: Record<string, unknown>) => {\n      if (options && options.ns) {\n        return `${options.ns}.${key}`\n      }\n      else {\n        return key\n      }\n    },",
+    "evidence": "diff 中 `web/app/components/plugins/marketplace/index.spec.tsx` 的修改，`getFixedT` 的實作被改為處理 `options.ns`。"
+  },
+  {
+    "path": "web/app/components/plugins/install-plugin/install-from-local-package/steps/install.spec.tsx",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "動態匯入 createReactI18nextMock 可能造成非同步 mock 問題",
+    "body": "在 `vi.mock` 中使用 `await import('@/test/i18n-mock')` 是可行的，但需確保該模組在測試環境中可被正確解析。若路徑別名 `@/` 在 Vitest 設定中未涵蓋 `web/test`，可能導致匯入失敗。建議確認 Vitest 的 alias 設定包含 `@/test`。",
+    "existing_code": "const { createReactI18nextMock } = await import('@/test/i18n-mock')",
+    "evidence": "diff 中 `web/app/components/plugins/install-plugin/install-from-local-package/steps/install.spec.tsx` 的修改，使用動態匯入。"
+  }
+]

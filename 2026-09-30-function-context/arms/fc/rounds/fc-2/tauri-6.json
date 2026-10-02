@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "webView 可能為 null 時使用 !! 強制解參考，可能導致 NullPointerException",
+    "body": "在 `handleOnBackPressed` 中，當 `hasListener(BACK_BUTTON_EVENT)` 為 false 且 `webView?.canGoBack()` 不為 true 時，會執行 `this@AppPlugin.webView!!.goBack()`。但 `webView` 屬性在 `load(webView: WebView)` 被呼叫前為 null，若返回鍵在 WebView 載入前被觸發，則會拋出 NullPointerException。建議改用安全呼叫或延遲處理。",
+    "existing_code": "this@AppPlugin.webView!!.goBack()",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 31 行：`this@AppPlugin.webView!!.goBack()`，而 `webView` 為 nullable 且僅在 `load` 中賦值。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "強制轉型 activity 為 AppCompatActivity 可能導致 ClassCastException",
+    "body": "在建構子中直接將 `activity` 轉型為 `AppCompatActivity`，但 Tauri 可能支援其他 Activity 型別（如 ComponentActivity），若傳入非 AppCompatActivity 的實例，將在初始化時拋出 ClassCastException。建議檢查型別或改用 ComponentActivity 的 `onBackPressedDispatcher`。",
+    "existing_code": "(activity as AppCompatActivity).onBackPressedDispatcher.addCallback(activity, callback)",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 40 行：`(activity as AppCompatActivity).onBackPressedDispatcher.addCallback(activity, callback)`。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "事件觸發後未提供 preventDefault 機制，前端無法阻止預設行為",
+    "body": "當有 listener 時，僅觸發事件並傳遞 `canGoBack` 資訊，但未提供類似 `preventDefault` 的機制讓前端阻止預設的返回行為（例如關閉頁面或退出應用）。這可能限制前端對返回鍵的完全控制。建議參考其他 Tauri 事件（如 `onCloseRequested`）提供可選的 preventDefault 功能。",
+    "existing_code": "trigger(BACK_BUTTON_EVENT, data)",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 35 行：`trigger(BACK_BUTTON_EVENT, data)`，且無任何 preventDefault 相關邏輯。"
+  }
+]

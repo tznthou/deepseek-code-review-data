@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "createInvite 回傳錯誤的 token 欄位",
+    "body": "在 `createInvite` 中，原本回傳 `token`（隨機產生的 token），但修改後回傳 `newToken.identifier`。`identifier` 是 `invite-link-for-teamId-${teamId}`，並非實際的邀請 token。這會導致回傳給客戶端的 token 不正確，邀請連結中的 token 也與資料庫中的 token 不一致，使用者將無法透過該 token 加入團隊。\n\n建議改回傳 `token` 變數，或明確使用 `newToken.token`。",
+    "existing_code": "token: newToken.identifier,",
+    "evidence": "diff 中 `-    await prisma.verificationToken.create({` 改為 `+    const newToken = await prisma.verificationToken.create({`，且回傳值從 `-      token,` 改為 `+      token: newToken.identifier,`。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "buildInviteLink 條件判斷反轉",
+    "body": "原本的邏輯是 `if (!isOrgContext) { return teamInviteLink; }`，代表非組織情境使用團隊邀請連結；修改後變成 `if (isOrgContext) { return teamInviteLink; }`，導致組織情境反而回傳團隊邀請連結，非組織情境則回傳組織邀請連結。這會讓邀請連結的格式錯誤，使用者可能被導向錯誤的頁面。\n\n建議將條件改回 `if (!isOrgContext)`，或根據實際需求調整。",
+    "existing_code": "if (isOrgContext) {\n      return teamInviteLink;\n    }",
+    "evidence": "diff 中 `-    if (!isOrgContext) {` 改為 `+    if (isOrgContext) {`。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "缺少團隊管理員權限驗證",
+    "body": "控制器使用 `@Roles(\"TEAM_MEMBER\")`，但建立邀請連結通常需要管理員權限。目前任何團隊成員（甚至非管理員）都可以呼叫此端點，可能導致權限提升。建議改為 `@Roles(\"TEAM_ADMIN\")` 或加入自訂的權限檢查，確保只有管理員能建立邀請。",
+    "existing_code": "@Roles(\"TEAM_MEMBER\")",
+    "evidence": "控制器中 `@Roles(\"TEAM_MEMBER\")` 裝飾器，且測試中非管理員成員預期 403，但實際可能通過。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "未處理團隊不存在或無權限的例外",
+    "body": "`TeamService.createInvite` 在團隊不存在時會拋出 `ErrorWithCode(ErrorCode.NotFound)`，但控制器未捕獲此例外，可能導致 500 錯誤而非 404。建議加入例外處理或使用全域例外過濾器，確保回傳適當的 HTTP 狀態碼。",
+    "existing_code": "const result = await TeamService.createInvite(teamId);",
+    "evidence": "控制器直接呼叫 `TeamService.createInvite`，未使用 try/catch 或檢查回傳值。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.e2e-spec.ts",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試未驗證邀請連結的實際可用性",
+    "body": "測試僅檢查 token 長度大於 0 且 inviteLink 包含 token，但未驗證該 token 是否真的存在於資料庫且未過期。建議加入後續使用該 token 加入團隊的測試，以確保邀請流程完整。",
+    "existing_code": "expect(response.body.data.token.length).toBeGreaterThan(0);\n          expect(response.body.data.inviteLink).toEqual(expect.any(String));\n          expect(response.body.data.inviteLink).toContain(response.body.data.token);",
+    "evidence": "測試中僅有基本斷言，未涵蓋邀請連結的實際使用。"
+  }
+]

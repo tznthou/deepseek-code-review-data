@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "cancelEditMode 條件變更可能導致非網頁 URL 被保留",
+    "body": "原本條件為 `currentURL.isWebPage() && !currentURL.isReaderModeURL`，現在改為 `currentURL.isWebPage() || currentURL.isReaderModeURL`。這會讓非網頁但為閱讀模式 URL 的網址在取消編輯時被保留，可能導致網址列顯示不正確的內容。請確認此變更是否為移除 QR code 時的必要調整，若非必要請還原。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&&` 改為 `||`，且 `!` 被移除。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "readerModeState 的 isEnabled 判斷反轉可能導致遙測錯誤",
+    "body": "原本 `case .available: true` 改為 `case .available: false`，且 `default: false` 改為 `default: true`。這會讓閱讀模式按鈕的遙測事件記錄相反的啟用狀態，影響數據分析。請確認此變更是否為移除 QR code 時的必要調整，若非必要請還原。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中兩行註解與布林值同時反轉。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 String(format:) 搭配本地化字串可能導致崩潰",
+    "body": "`SettingsTextFormatter` 中的 `formatStudiesText` 和 `formatRolloutsText` 使用 `String(format: strings.detailTextStudies, appName)`。`detailTextStudies` 和 `detailTextRollouts` 是本地化字串，其內容可能包含額外的格式說明符（例如翻譯後的字串可能包含 `%d` 或 `%2$@`），這會導致 `String(format:)` 在執行時期因參數數量不符而崩潰，或顯示錯誤的內容。建議改用 `String.localizedStringWithFormat` 或避免使用格式字串，直接使用字串插值或替換。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {\n            return String(format: strings.detailTextStudies, appName)\n        }\n\n        func formatRolloutsText(appName: String) -> String {\n            return String(format: strings.detailTextRollouts, appName)\n        }",
+    "evidence": "diff 中新增的 `SettingsTextFormatter` 類別，第 432 行附近。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 417,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增的 SettingsTextFormatter 可能未被使用",
+    "body": "`SettingsTextFormatter` 類別被新增，但在此 diff 中未看到任何使用它的程式碼。如果沒有其他地方使用，這將是死代碼，增加維護負擔。建議確認是否有後續 PR 會使用，或考慮延後加入。",
+    "existing_code": "// Helper class for formatting Study and Rollout settings text for display\n    class SettingsTextFormatter {\n        static let shared = SettingsTextFormatter()\n\n        private init() {}\n\n        func formatStudiesText(appName: String) -> String {\n            return String(format: strings.detailTextStudies, appName)\n        }\n\n        func formatRolloutsText(appName: String) -> String {\n            return String(format: strings.detailTextRollouts, appName)\n        }\n    }",
+    "evidence": "diff 中新增的類別，但未見使用。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 202,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "comment 中的引號變更可能影響翻譯工具",
+    "body": "`detailTextSendUsageData` 和 `detailTextStudies` 的 comment 從智慧引號（“ ”）改為直引號（\" \"）。這可能導致翻譯工具將這些 comment 視為不同，造成翻譯記憶庫不一致。建議確認此變更是否必要，並保持 comment 風格一致。",
+    "existing_code": "static let detailTextSendUsageData = NSLocalizedString(\"Settings.detailTextSendUsageData\", value: \"Mozilla strives to collect only what we need to provide and improve %@ for everyone.\", comment: \"Description associated to the Send Usage Data toggle on main screen. %@ is the app name (for example \\\"Firefox Focus\\\" or \\\"Firefox Klar\\\").\")\n        static let detailTextSendUsageDataV2 = NSLocalizedString(\"Settings.detailTextSendUsageData.v2\", value: \"Mozilla strives to collect only what we need to provide and improve %@ for everyone.\", comment: \"Description associated to the Send Usage Data toggle on main screen. %@ is the app name (for example \\\"Firefox Focus\\\" or \\\"Firefox Klar\\\").\")\n        static let labelStudies = NSLocalizedString(\"Settings.toggleStudies\", value: \"Studies\", comment: \"Label for Studies toggle on the settings screen\")\n        static let detailTextStudies = NSLocalizedString(\"Settings.detailTextStudies\", value: \"%@ may install and run studies from time to time.\", comment: \"Description associated to the Studies toggle on the settings screen. %@ is the app name (for example \\\"Firefox Focus\\\" or \\\"Firefox Klar\\\").\")",
+    "evidence": "diff 中 comment 的引號變更。"
+  }
+]

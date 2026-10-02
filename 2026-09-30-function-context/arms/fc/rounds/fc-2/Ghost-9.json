@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "暖機完成後回傳 Infinity 可能導致所有郵件都從自訂網域發送",
+    "body": "當 `day > totalDays` 時，`getWarmupLimit` 回傳 `Infinity`。這會使呼叫端（例如批次發送服務）將所有郵件都分配到自訂網域，完全繞過 fallback 網域。若自訂網域尚未完全建立信譽，可能導致大量郵件被歸類為垃圾郵件或發送延遲。建議回傳 `emailCount`（即不限制）或設定一個明確的最大值，而不是 `Infinity`。",
+    "existing_code": "if (day > this.#warmupConfig.totalDays) {\n    return Infinity\n}",
+    "evidence": "diff 中新增的程式碼片段：`if (day > this.#warmupConfig.totalDays) { return Infinity }`。此行為與先前版本不同，先前版本會回傳一個有限值（`Math.min(emailCount, targetLimit)`）。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "日期計算使用 Math.ceil 可能導致天數計算不準確",
+    "body": "`#getDaysSinceFirstEmail` 使用 `Math.ceil((Date.now() - firstEmailTime) / (1000 * 60 * 60 * 24))` 來計算天數。這會將任何不滿 24 小時的差都進位為 1 天，導致在第一天內發送多封郵件時，第二封郵件可能被視為第 1 天而非第 0 天，造成暖機進度提前。建議改用 `Math.floor` 或明確的日曆天計算。",
+    "existing_code": "return Math.ceil((Date.now() - new Date(res.data[0].get('created_at') as string).getTime()) / (1000 * 60 * 60 * 24));",
+    "evidence": "diff 中新增的程式碼片段：`return Math.ceil((Date.now() - new Date(res.data[0].get('created_at') as string).getTime()) / (1000 * 60 * 60 * 24));`。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 302,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試中使用 Math.round 與實作中的 Math.floor 不一致",
+    "body": "在整合測試的 `getExpectedLimit` 函式中，使用了 `Math.round` 來計算期望值，但實作中 `getWarmupLimit` 使用的是 `Math.floor`。這可能導致在某些天數下測試期望值與實作結果不同，造成測試不穩定或錯誤。建議統一使用 `Math.floor` 或調整實作以符合測試。",
+    "existing_code": "return Math.round(start * Math.pow(end / start, day / (totalDays - 1)));",
+    "evidence": "diff 中測試程式碼片段：`return Math.round(start * Math.pow(end / start, day / (totalDays - 1)));`，而實作中為 `Math.floor(...)`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "查詢條件 `csd_email_count:-null` 可能無法正確過濾 null 值",
+    "body": "在 `#getDaysSinceFirstEmail` 中，使用 `filter: 'csd_email_count:-null'` 來查詢有 `csd_email_count` 的郵件。但根據 Ghost 的查詢語法，`-null` 可能不是有效的運算子，或者無法正確過濾 null 值。建議確認正確的過濾方式，例如使用 `csd_email_count:>0` 或 `csd_email_count:not null`。",
+    "existing_code": "filter: 'csd_email_count:-null',",
+    "evidence": "diff 中新增的程式碼片段：`filter: 'csd_email_count:-null',`。"
+  }
+]

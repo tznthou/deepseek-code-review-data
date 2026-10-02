@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "cancelEditMode 條件變更可能導致非預期行為",
+    "body": "原本條件為 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，現在改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會讓 reader mode URL 也被保留，可能導致取消編輯時網址列顯示 reader mode URL 而非空白。請確認此變更是否為預期，並補充測試。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&&` 改為 `||`，且未附帶任何說明或測試變更。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "reader mode 狀態布林值對調可能導致 telemetry 錯誤",
+    "body": "原本 `case .available: true`、`default: false`，現在改為 `case .available: false`、`default: true`。這會讓 reader mode 按鈕的 telemetry 記錄相反的啟用狀態，可能影響數據分析。請確認此變更是否為預期，並補充測試。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中此兩行布林值對調，且未附帶任何說明或測試變更。"
+  }
+]

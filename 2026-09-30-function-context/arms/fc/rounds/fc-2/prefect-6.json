@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`run_deployment` 不再支援同步呼叫，破壞向後相容性",
+    "body": "原本的 `run_deployment` 使用 `@sync_compatible` 裝飾器，允許在同步與非同步環境中呼叫。現在 `run_deployment` 只是 `arun_deployment` 的別名，而 `arun_deployment` 是純 async 函式。任何現有同步呼叫 `run_deployment(...)` 的程式碼都會收到 coroutine 物件而非 FlowRun，導致執行錯誤。\n\n失敗情境：\n```python\nflow_run = run_deployment(\"my-flow/my-deployment\")  # 回傳 coroutine，未 await\nprint(flow_run.state)  # AttributeError: 'coroutine' object has no attribute 'state'\n```\n\n建議：保留同步包裝，例如使用 `sync_compatible` 裝飾器或提供獨立的同步函式。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中 `run_deployment = arun_deployment` 取代了原本的 `@sync_compatible` 裝飾器。"
+  },
+  {
+    "path": "tests/deployment/test_flow_runs.py",
+    "line": 633,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試使用未定義的 `_sync` 參數",
+    "body": "測試中呼叫 `run_deployment(..., _sync=True)`，但 `arun_deployment` 的簽名中沒有 `_sync` 參數。這會導致 TypeError: unexpected keyword argument '_sync'。\n\n失敗情境：執行 `test_run_deployment_sync_basic` 時，會拋出 TypeError。\n\n建議：移除 `_sync` 參數，或修改函式簽名以支援該參數。",
+    "existing_code": "flow_run = run_deployment(\n            f\"foo-sync/{deployment.name}\",\n            timeout=0,\n            poll_interval=0,\n            _sync=True,\n        )",
+    "evidence": "diff 中測試新增的 `_sync=True` 參數，但函式簽名未包含。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "`client` 參數可能被 `get_or_create_client` 覆寫為 None",
+    "body": "`get_or_create_client(client)` 若傳入的 `client` 為 None，會建立新的 client 並回傳；但若傳入的 client 不是 None，則會回傳該 client。然而，函式簽名中 `client` 的預設值為 None，且型別為 Optional。在 `client, _ = get_or_create_client(client)` 之後，`client` 變數被重新指派為回傳值，但若 `get_or_create_client` 內部因某些原因回傳 None（例如設定錯誤），後續 `client.read_deployment` 就會拋出 AttributeError。\n\n失敗情境：當 `get_or_create_client` 無法建立 client 且未拋出例外時，`client` 為 None，下一行 `deployment = await client.read_deployment(...)` 會失敗。\n\n建議：檢查回傳值是否為 None，或直接使用 `client = get_or_create_client(client)` 並確保其永不回傳 None。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中新增的 `client, _ = get_or_create_client(client)` 行。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 123,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`deployment_id` 可能為 None，傳入 `create_flow_run_from_deployment` 會出錯",
+    "body": "在名稱解析路徑中，若 `name` 不是 UUID 且無法轉換為 UUID，`deployment_id` 保持為 None。之後呼叫 `client.create_flow_run_from_deployment(deployment_id, ...)` 時，若該函式預期 deployment_id 為 UUID 或字串，傳入 None 可能導致型別錯誤或 API 請求失敗。\n\n失敗情境：`name` 為不合法的 UUID 字串且不是有效的 deployment 名稱時，`deployment_id` 為 None，`create_flow_run_from_deployment` 可能拋出 ValidationError 或伺服器端錯誤。\n\n建議：在呼叫前檢查 `deployment_id` 是否為 None，或確保 `read_deployment_by_name` 失敗時會拋出例外。",
+    "existing_code": "deployment_id = None",
+    "evidence": "diff 中 `deployment_id = None` 初始化，且後續 `create_flow_run_from_deployment(deployment_id, ...)` 使用該變數。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`collect_task_run_inputs` 改為同步呼叫，可能造成事件迴圈阻塞",
+    "body": "原本 `await collect_task_run_inputs(v)` 是非同步呼叫，現在改為 `collect_task_run_inputs(v)` 同步呼叫。若該函式內部有 I/O 或耗時操作，會阻塞事件迴圈。\n\n失敗情境：在高併發環境下，多個 subflow 建立時可能造成效能瓶頸。\n\n建議：確認 `collect_task_run_inputs` 是否為純 CPU 操作，否則應保留 await。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中將 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`。"
+  }
+]

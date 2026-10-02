@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 80,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Error::source() 未涵蓋所有可提供來源的變體",
+    "body": "手動實作的 `source()` 僅回傳 `TempDir`、`FailedToUploadApp`、`CommandFailed`、`Fs` 的底層錯誤，但 `Plist`、`X509Certificate`、`FailedToCreateSelfSignedCertificate`、`FailedToEncodeDER` 等變體也包含底層錯誤，卻未回傳。這會讓使用 `Error::source()` 的錯誤鏈走訪中斷，影響錯誤診斷。建議為所有包含底層錯誤的變體實作 `source()`。",
+    "existing_code": "impl std::error::Error for Error {\n  fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {\n    match self {\n      Error::TempDir(e) => Some(e),\n      Error::FailedToUploadApp { error } => Some(error),\n      Error::CommandFailed { error, .. } => Some(error),\n      Error::Fs { error, .. } => Some(error),\n      _ => None,\n    }\n  }\n}",
+    "evidence": "diff 中新增的 `source()` 實作只處理四個變體，但 `Error` 列舉中 `Plist { error: plist::Error }`、`X509Certificate { error: x509_certificate::X509CertificateError }`、`FailedToCreateSelfSignedCertificate { error: Box<apple_codesign::AppleCodesignError> }`、`FailedToEncodeDER { error: std::io::Error }` 也包含底層錯誤。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 233,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "notarize_inner 中 wait 參數的邏輯可能反轉",
+    "body": "原本 `submit_output.status.map_or(!wait, |s| s == \"Accepted\")` 在 `wait` 為 false 時，若 status 為 None 會進入成功分支；改為 `map_or(wait, ...)` 後，`wait` 為 false 且 status 為 None 時會進入失敗分支。這可能導致非等待模式下，若 notarytool 未回傳 status（例如剛提交尚未有狀態），程式會誤判為失敗。請確認此變更是否為預期行為。",
+    "existing_code": "if submit_output.status.map_or(wait, |s| s == \"Accepted\") {",
+    "evidence": "diff 中此行由 `map_or(!wait, ...)` 改為 `map_or(wait, ...)`，邏輯相反。"
+  },
+  {
+    "path": "crates/tauri-macos-sign/src/lib.rs",
+    "line": 64,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Display 實作與原本 thiserror 格式不完全一致",
+    "body": "原本 `thiserror` 的 `#[error(\"{context} {path}: {error}\")]` 會直接使用 `path` 的 Display，但手動實作改為 `path.display()`，兩者輸出可能不同（例如 `PathBuf` 的 Display 與 `path.display()` 通常相同，但若 path 包含非 UTF-8 字元，`display()` 會使用替代字元）。建議確認是否可接受。",
+    "existing_code": "Error::Plist { context, path, error } => write!(f, \"{} {}: {}\", context, path.display(), error),",
+    "evidence": "diff 中 `Plist` 的 Display 實作使用 `path.display()`，而原本 thiserror 的格式為 `{path}`。"
+  }
+]

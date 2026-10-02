@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1112,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "extractSlotFromKeysResult 迴圈邊界錯誤導致越界讀取",
+    "body": "在 `extractSlotFromKeysResult` 中，迴圈條件 `j <= keys_result->numkeys` 應為 `j < keys_result->numkeys`。當 `j == numkeys` 時，`keys_result->keys[j]` 會讀取到陣列之外，造成未定義行為，可能導致程式崩潰或洩漏記憶體內容。\n\n建議修正為：\n```c\nfor (int j = 0; j < keys_result->numkeys; j++) {\n```",
+    "existing_code": "for (int j = 0; j <= keys_result->numkeys; j++) {",
+    "evidence": "diff 中新增的迴圈條件為 `j <= keys_result->numkeys`，而 `keys_result->keys` 陣列大小為 `numkeys`，因此最後一次迭代會越界。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "slot_buffer 分配後未檢查 malloc 失敗",
+    "body": "`slot_buffer = malloc(sizeof(int) * keys_result->numkeys);` 未檢查回傳值是否為 NULL。若記憶體不足，後續寫入 `slot_buffer[j]` 會導致 NULL pointer dereference。\n\n建議加入檢查：\n```c\nint *slot_buffer = malloc(sizeof(int) * keys_result->numkeys);\nif (!slot_buffer) return INVALID_CLUSTER_SLOT;\n```",
+    "existing_code": "int *slot_buffer = malloc(sizeof(int) * keys_result->numkeys);",
+    "evidence": "diff 中新增的 malloc 呼叫沒有 NULL 檢查，且後續直接使用 slot_buffer。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1057,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "slot_buffer 在 cross-slot 時釋放後仍可能被使用",
+    "body": "在偵測到 cross-slot 時，程式碼執行 `free(slot_buffer); return CLUSTER_CROSSSLOT;`，但若後續程式碼（例如在迴圈外）仍嘗試使用 slot_buffer，會造成 use-after-free。目前程式碼在 cross-slot 時直接 return，因此暫時安全，但未來修改時容易出錯。建議將 slot_buffer 的生命週期限制在迴圈內，或使用更安全的管理方式。",
+    "existing_code": "free(slot_buffer);\n            return CLUSTER_CROSSSLOT;",
+    "evidence": "diff 中在 cross-slot 分支釋放 slot_buffer 後立即 return，但若未來在 return 前加入其他使用 slot_buffer 的程式碼，將導致 use-after-free。"
+  },
+  {
+    "path": "src/db.c",
+    "line": 3201,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "extractKeysAndSlot 可能留下未初始化的 *slot",
+    "body": "在 `extractKeysAndSlot` 中，原本 `*slot = INVALID_CLUSTER_SLOT;` 被移除，改為僅在 `num_keys > 0` 時設定 `*slot`。若 `num_keys == 0` 或 `num_keys < 0`，`*slot` 將保持呼叫者傳入的未初始化值，可能導致後續使用未定義行為。\n\n建議在函式開頭初始化 `*slot = INVALID_CLUSTER_SLOT;`，或確保所有呼叫者在呼叫前已初始化。",
+    "existing_code": "if (num_keys > 0) {\n        *slot = extractSlotFromKeysResult(argv, result);\n    }",
+    "evidence": "diff 中移除了 `*slot = INVALID_CLUSTER_SLOT;` 的初始化，且僅在 `num_keys > 0` 時賦值。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 4143,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "preprocessCommand 中 cross-slot 處理後未設定 slot 為 INVALID_CLUSTER_SLOT",
+    "body": "在 `preprocessCommand` 中，當 `pcmd->slot == CLUSTER_CROSSSLOT` 時，程式碼設定 `pcmd->read_error = CLIENT_READ_CROSS_SLOT;` 並將 `pcmd->slot = INVALID_CLUSTER_SLOT;`。但若後續程式碼依賴 `pcmd->slot` 為有效值，可能會誤用。建議確認此處重設 slot 的必要性，或考慮在錯誤時直接 return。",
+    "existing_code": "if (pcmd->slot == CLUSTER_CROSSSLOT) {\n            pcmd->read_error = CLIENT_READ_CROSS_SLOT;\n            pcmd->slot = INVALID_CLUSTER_SLOT;\n        }",
+    "evidence": "diff 中新增了 cross-slot 的處理，但未明確說明為何需要重設 slot。"
+  }
+]

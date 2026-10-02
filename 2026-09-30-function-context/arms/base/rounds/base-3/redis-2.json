@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1867,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "slotRangeArraySortAndMerge 未處理重疊範圍，可能導致驗證失效",
+    "body": "函式僅合併相鄰範圍（prev.end + 1 == next.start），但未處理重疊範圍（例如 100-200 和 150-250）。若輸入包含重疊範圍，合併後仍保留重疊，後續 validateSlotRanges 會偵測到重疊並回傳錯誤，但若重疊範圍在合併後變成相鄰（例如 100-200 和 201-300 合併為 100-300），則可能掩蓋原始的重疊問題。此外，若重疊範圍未合併，validateSlotRanges 仍會偵測到，但錯誤訊息可能不如預期。建議在合併前先檢查重疊，或明確規定重疊範圍為非法輸入。",
+    "existing_code": "if (slots->ranges[idx].end + 1 == slots->ranges[i].start)\n            slots->ranges[idx].end = slots->ranges[i].end;\n        else\n            slots->ranges[++idx] = slots->ranges[i];",
+    "evidence": "diff 中新增的 slotRangeArraySortAndMerge 函式，僅處理相鄰合併，未處理重疊。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.85,
+    "title": "asmCreateImportTask 所有權轉移可能導致 double-free 或 use-after-free",
+    "body": "原本 asmCreateImportTask 會複製 slots（slotRangeArrayDup），現在改為直接指派 task->slots = slots，並在錯誤路徑釋放 slots。這表示呼叫端（clusterMigrationCommandImport 和 clusterAsmProcess）不再擁有 slots 的所有權，但 clusterMigrationCommandImport 已移除 slotRangeArrayFree(slots)，而 clusterAsmProcess 在呼叫前會先複製一份再傳入，因此不會 double-free。然而，若未來有其他呼叫端未遵循此所有權轉移，可能導致 double-free 或 use-after-free。建議明確文件化所有權轉移，或改為在成功時轉移、失敗時由呼叫端釋放。",
+    "existing_code": "task->slots = slots;",
+    "evidence": "diff 中將 slotRangeArrayDup(slots) 改為 slots，並在錯誤路徑新增 slotRangeArrayFree(slots)。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "parseSlotRangesOrReply 錯誤路徑未回覆錯誤訊息",
+    "body": "原本在 validateSlotRanges 失敗時會呼叫 addReplyErrorSds(c, err) 回覆錯誤，現在改為 sdsfree(err) 後直接回傳 NULL，未回覆任何錯誤給客戶端。這可能導致客戶端收到空回覆或連線中斷，而非明確的錯誤訊息。建議保留 addReplyErrorSds 或改為 addReplyError(c, err)。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n        sdsfree(err);\n        slotRangeArrayFree(slots);\n        return NULL;\n    }",
+    "evidence": "diff 中移除了 addReplyErrorSds(c, err)，改為 sdsfree(err)。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 1018,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "asmCountKeysInSlots 可能造成效能問題或非預期行為",
+    "body": "asmCountKeysInSlots 會對每個 slot 呼叫 kvstoreDictSize，若 slot 範圍很大（例如 0-16383），可能導致大量的函式呼叫，影響效能。此外，此函式在 asmLogTaskEvent 中被呼叫，而 asmLogTaskEvent 可能在任務生命週期的多個事件中被呼叫，若 slot 範圍大且 key 數量多，可能造成明顯延遲。建議考慮快取或使用更有效率的方式計算 key 數量。",
+    "existing_code": "for (int j = slots->ranges[i].start; j <= slots->ranges[i].end; j++) {\n            key_count += kvstoreDictSize(server.db[0].keys, j);\n        }",
+    "evidence": "diff 中新增的 asmCountKeysInSlots 函式，在迴圈中逐一呼叫 kvstoreDictSize。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 2871,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "clusterAsmProcess 中 slotRangeArrayDup 後未檢查 NULL",
+    "body": "clusterAsmProcess 在 ASM_EVENT_IMPORT_START 分支中呼叫 slotRangeArrayDup(arg)，但未檢查回傳值是否為 NULL。若記憶體不足，slotRangeArrayDup 可能回傳 NULL，後續 slotRangeArrayNormalizeAndValidate 會對 NULL 指標進行操作，導致 crash。建議檢查回傳值並處理錯誤。",
+    "existing_code": "slotRangeArray *slots = slotRangeArrayDup(arg);\n            if (slotRangeArrayNormalizeAndValidate(slots, &errsds) != C_OK) {",
+    "evidence": "diff 中新增的程式碼，未檢查 slotRangeArrayDup 的回傳值。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1796,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "slotRangeArrayToString 對 NULL 或空陣列的處理不一致",
+    "body": "slotRangeArrayToString 新增了對 NULL 或 num_ranges == 0 的檢查，回傳空 sds。但其他函式（如 slotRangeArrayIsEqual）可能未預期 NULL 或空陣列，可能導致不一致行為。建議確認所有呼叫端都能正確處理空字串。",
+    "existing_code": "if (slots == NULL || slots->num_ranges == 0) return s;",
+    "evidence": "diff 中新增的檢查。"
+  }
+]

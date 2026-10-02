@@ -1,0 +1,12 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 233248 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 crates/tauri-cli/src/helpers/config.rs:175 → 253（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/interface/rust.rs:541 → 595（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/build.rs:118 → 154（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/ios/build.rs:167 → 187（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/ios/dev.rs:139 → 187（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/mod.rs:246 → 289（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/helpers/app_paths.rs:127 → 140（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/helpers/config.rs:139 → 274（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/interface/rust.rs:459 → 466（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/android_studio_script.rs:38 → 49（片段唯一命中）
+[info] 完成於 25.5s ｜ findings=10 ｜ relocated=10 ｜ verdict=comment ｜ usage={"prompt_tokens": 66708, "completion_tokens": 3045, "total_tokens": 69753, "prompt_tokens_details": {"cached_tokens": 66688}, "prompt_cache_hit_tokens": 66688, "prompt_cache_miss_tokens": 20}

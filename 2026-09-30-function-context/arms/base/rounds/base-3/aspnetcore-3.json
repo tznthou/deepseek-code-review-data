@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較使用 OrdinalIgnoreCase 在 Linux 上可能導致誤判",
+    "body": "在 Linux 上，檔案路徑是區分大小寫的。使用 `StringComparison.OrdinalIgnoreCase` 比較路徑可能將不同目錄視為相同（例如 `/Certs` 與 `/certs`），導致錯誤地認為憑證目錄已存在於 SSL_CERT_DIR 中，進而跳過必要的設定。建議在 Unix 平台上使用 `StringComparison.Ordinal`，或根據作業系統動態選擇比較方式。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的程式碼使用了 `StringComparison.OrdinalIgnoreCase`，而此程式碼位於 Unix 專用的 `UnixCertificateManager.cs` 中。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 378,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "過度寬泛的例外處理可能隱藏真實錯誤",
+    "body": "在解析 SSL_CERT_DIR 中的每個目錄時，使用 `catch` 捕捉所有例外並忽略，可能掩蓋了非預期的錯誤（例如 `Path.GetFullPath` 因權限不足或路徑格式錯誤而拋出的例外）。建議至少記錄例外資訊，或僅捕捉預期的例外類型（如 `ArgumentException`、`NotSupportedException`、`PathTooLongException`）。",
+    "existing_code": "catch\n{\n    // Ignore invalid directory entries in SSL_CERT_DIR\n    return false;\n}",
+    "evidence": "diff 中新增的 catch 區塊沒有指定例外類型，且註解表示忽略所有例外。"
+  },
+  {
+    "path": "src/Tools/dotnet-dev-certs/src/Program.cs",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "非 verbose 模式下啟用 LogAlways 可能導致過多輸出",
+    "body": "在非 verbose 模式下，將事件監聽器設為 `EventLevel.LogAlways` 會顯示所有 LogAlways 等級的事件。這可能包括原本設計為僅在 verbose 模式顯示的訊息，導致輸出過於冗長。建議確認所有 LogAlways 事件是否都適合在一般模式下顯示，或考慮使用更精確的過濾。",
+    "existing_code": "listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);",
+    "evidence": "diff 中新增了 else 分支，在非 verbose 模式下啟用 LogAlways 等級的事件監聽。"
+  }
+]

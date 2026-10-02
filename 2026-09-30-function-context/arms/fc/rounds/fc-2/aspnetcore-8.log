@@ -1,0 +1,5 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 109030 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 src/OpenApi/gen/XmlCommentGenerator.Emitter.cs:421 → 444（片段唯一命中）
+[info] 重新定位 src/OpenApi/gen/XmlCommentGenerator.Emitter.cs:429 → 452（片段唯一命中）
+[info] 定位不到 src/OpenApi/gen/XmlCommentGenerator.Emitter.cs:440（片段多重命中（2 處），不猜）
+[info] 完成於 9.3s ｜ findings=3 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 20129, "completion_tokens": 961, "total_tokens": 21090, "prompt_tokens_details": {"cached_tokens": 20096}, "prompt_cache_hit_tokens": 20096, "prompt_cache_miss_tokens": 33}

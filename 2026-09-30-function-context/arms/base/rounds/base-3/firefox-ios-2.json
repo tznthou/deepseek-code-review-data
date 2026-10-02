@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 508,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "IpadOnlyTestCase.setUp 中呼叫 super.setUp() 缺少 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp` 中，`super.setUp()` 現在是 `async throws`，但呼叫處沒有加上 `try`，會導致編譯錯誤。請改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中顯示 `IpadOnlyTestCase` 的 `setUp` 內呼叫 `await super.setUp()`，但 `BaseTestCase.setUp` 已改為 `async throws`，因此需要 `try await`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "全域變數加上 @MainActor 可能造成跨執行緒存取問題",
+    "body": "`urlBarAddress` 和 `homepageSearchBar` 等全域變數被加上 `@MainActor`，但若在其他非主執行緒的 context 中存取（例如某些測試輔助函式），可能導致編譯錯誤或 runtime crash。請確認所有存取點都在主執行緒，或改用其他同步機制。",
+    "existing_code": "@MainActor\nlet urlBarAddress = XCUIApplication().textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]\n@MainActor\nlet homepageSearchBar = XCUIApplication().cells[AccessibilityIdentifiers.FirefoxHomepage.SearchBar.itemCell]",
+    "evidence": "diff 中新增 `@MainActor` 於全域變數，但未提供其他執行緒存取的保護。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "setUp 中呼叫順序變更可能影響測試行為",
+    "body": "原本 `setUpExperimentVariables()` 在 `setUpApp()` 之前呼叫，現在順序對調。若 `setUpApp()` 依賴實驗變數已設定，可能導致測試行為改變。請確認此順序變更是有意且安全的。",
+    "existing_code": "setUpApp()\n        setUpExperimentVariables()",
+    "evidence": "diff 顯示 `setUpExperimentVariables()` 和 `setUpApp()` 的順序被交換。"
+  }
+]

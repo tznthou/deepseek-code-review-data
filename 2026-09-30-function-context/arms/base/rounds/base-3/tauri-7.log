@@ -1,0 +1,4 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 8148 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 crates/tauri-bundler/src/utils/http_utils.rs:55 → 52（片段唯一命中）
+[info] 重新定位 crates/tauri-bundler/src/utils/http_utils.rs:100 → 99（片段唯一命中）
+[info] 完成於 6.9s ｜ findings=2 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 4737, "completion_tokens": 675, "total_tokens": 5412, "prompt_tokens_details": {"cached_tokens": 4736}, "prompt_cache_hit_tokens": 4736, "prompt_cache_miss_tokens": 1}

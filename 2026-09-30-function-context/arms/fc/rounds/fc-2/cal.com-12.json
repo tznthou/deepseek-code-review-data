@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "渲染列表改用 teamMembers，導致搜尋與 assignAllTeamMembers 過濾失效",
+    "body": "原本使用 `filteredMembers` 來渲染成員列表，但此 PR 將其改為 `teamMembers`。這會導致：\n1. 搜尋框輸入關鍵字時，列表不會過濾。\n2. 當 `assignAllTeamMembers` 為 false 時，原本只顯示已指派成員的過濾邏輯失效，會顯示所有團隊成員。\n\n建議改回使用 `filteredMembers`，或將過濾邏輯整合到 `teamMembers` 的來源。",
+    "existing_code": "{teamMembers.map((member) => (\n  <TeamMemberItem key={member.value} member={member} onWeightChange={handleWeightChange} />\n))}\n{teamMembers.length === 0 && (\n  <div className=\"text-subtle py-4 text-center text-sm\">{t(\"no_members_found\")}</div>\n)}",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且 `filteredMembers.length === 0` 改為 `teamMembers.length === 0`。"
+  },
+  {
+    "path": "biome.json",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "biome.json 設定檔格式錯誤：多餘的逗號",
+    "body": "在新增的設定區塊中，`\"includes\"` 陣列後多了一個逗號，這會導致 JSON 解析錯誤，使整個 biome 設定失效。請移除該逗號。",
+    "existing_code": "{\n  \"includes\": [\n    \"packages/platform/atoms/**/*.{ts,tsx,js,jsx,mts,mjs,cjs,cts}\"\n  ],",
+    "evidence": "diff 中新增的 biome.json 區塊，`includes` 陣列結尾有逗號。"
+  },
+  {
+    "path": "apps/web/modules/event-types/hooks/useTeamMembersWithSegment.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "傳給 useProcessTeamMembersData 的 matchingTeamMembersWithResult 型別可能不相容",
+    "body": "`useProcessTeamMembersData` 預期 `matchingTeamMembersWithResult` 為 `{ result: TeamMemberDto[] | null }`，但此處傳入的 `matchingTeamMembersWithResult` 是 tRPC query 的結果，其型別可能包含其他欄位（如 `isPending` 等）。雖然目前使用條件式包裝，但若 `matchingTeamMembersWithResult` 為 undefined 時，會傳入 undefined，可能導致型別錯誤。建議明確處理 undefined 的情況，或調整 `useProcessTeamMembersData` 的型別定義。",
+    "existing_code": "matchingTeamMembersWithResult: matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult,",
+    "evidence": "diff 中新增的 hook 內，將 tRPC query 結果直接傳給 `useProcessTeamMembersData`。"
+  },
+  {
+    "path": "packages/platform/atoms/event-types/hooks/useTeamMembersWithSegmentPlatform.tsx",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾沒有換行符，可能導致某些工具或 diff 顯示異常。建議在最後一行加上換行。",
+    "existing_code": "};\n\\ No newline at end of file",
+    "evidence": "diff 中顯示 `\\ No newline at end of file`。"
+  }
+]

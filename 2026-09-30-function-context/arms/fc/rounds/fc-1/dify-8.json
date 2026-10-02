@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "React Scan 載入失敗時僅回傳空元件，且錯誤僅記錄於 console",
+    "body": "當 `import('./scan')` 失敗時，catch 區塊回傳 `{ default: () => null }`，這會讓開發者無法在 UI 上察覺 devtools 未載入。雖然有 `console.error`，但在生產環境中可能被忽略。建議在開發模式下顯示一個明確的錯誤提示元件，或至少提供一個可視的 fallback。",
+    "existing_code": "console.error('Failed to load React Scan devtools:', error)\n    return { default: () => null }",
+    "evidence": "diff 中新增的 loader.tsx 第 9-11 行顯示 catch 區塊僅記錄錯誤並回傳空元件。"
+  },
+  {
+    "path": "web/app/components/devtools/tanstack/loader.tsx",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "TanStack devtools 載入失敗時完全靜默",
+    "body": "catch 區塊直接回傳 `{ default: () => null }`，沒有任何錯誤記錄。這使得開發者無法得知 devtools 載入失敗，可能導致問題難以診斷。建議至少加入 `console.error` 或類似的日誌。",
+    "existing_code": "return { default: () => null }",
+    "evidence": "diff 中新增的 loader.tsx 第 9-11 行顯示 catch 區塊僅回傳空元件，沒有錯誤處理。"
+  }
+]

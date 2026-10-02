@@ -1,0 +1,6 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 30402 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 web/test/i18n-mock.ts:24 → 13（片段唯一命中）
+[info] 重新定位 web/test/i18n-mock.ts:27 → 24（片段唯一命中）
+[info] 重新定位 web/test/i18n-mock.ts:1 → 10（片段唯一命中）
+[info] 重新定位 web/app/components/plugins/install-plugin/install-from-local-package/steps/install.spec.tsx:67 → 69（片段唯一命中）
+[info] 完成於 9.9s ｜ findings=4 ｜ relocated=4 ｜ verdict=comment ｜ usage={"prompt_tokens": 10301, "completion_tokens": 1093, "total_tokens": 11394, "prompt_tokens_details": {"cached_tokens": 10240}, "prompt_cache_hit_tokens": 10240, "prompt_cache_miss_tokens": 61}

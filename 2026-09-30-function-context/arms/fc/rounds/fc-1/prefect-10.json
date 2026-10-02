@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ui-v2/tsconfig.app.json",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "關閉 TypeScript strict 模式",
+    "body": "將 `strict` 從 `true` 改為 `false` 會大幅降低型別安全，可能隱藏潛在的 null/undefined 錯誤。此變更與新增的元件無直接關聯，且會影響整個專案。建議恢復為 `true`，並修正任何因 strict 模式而產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.app.json 的變更：`- \"strict\": true,` → `+ \"strict\": false,`"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/custom-trigger-fields.tsx",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "空字串轉換為 undefined 可能導致非預期行為",
+    "body": "在 `onChange` 中，當使用者清空 textarea 時，`lines` 會是 `['']`，因此 `lines.length > 0` 為 true，會將 `['']` 設為值，而不是 `undefined`。這可能導致表單驗證或後續處理出現問題。建議改為：`field.onChange(lines.length > 0 && lines[0] !== '' ? lines : undefined)` 或類似邏輯。",
+    "existing_code": "const lines = e.target.value.split(\"\\n\");\nfield.onChange(lines.length > 0 ? lines : undefined);",
+    "evidence": "在 custom-trigger-fields.tsx 的 Textarea onChange 中，未處理空字串的情況。"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/work-pool-status-trigger-fields.tsx",
+    "line": 78,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "threshold 欄位使用 parseInt 而非 Number",
+    "body": "在其他元件中，threshold 的 onChange 使用 `Number(e.target.value)`，但此處使用 `parseInt(e.target.value)`。`parseInt` 會忽略非數字字元，例如輸入 '12abc' 會得到 12，而 `Number` 會得到 NaN。建議統一使用 `Number` 以保持一致性並避免非預期行為。",
+    "existing_code": "onChange={(e) => field.onChange(parseInt(e.target.value))}",
+    "evidence": "work-pool-status-trigger-fields.tsx 中的 threshold Input onChange 使用 parseInt，而其他元件使用 Number。"
+  }
+]

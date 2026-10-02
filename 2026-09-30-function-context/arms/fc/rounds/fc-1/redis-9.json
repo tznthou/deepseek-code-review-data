@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "HINCRBYFLOAT 複寫為 HSETEX KEEPTTL 可能遺失欄位 TTL",
+    "body": "原程式碼使用 `HASH_SET_KEEP_TTL` 保留欄位 TTL，但複寫指令改為 `HSETEX KEEPTTL`。若 `HSETEX KEEPTTL` 的實作在欄位不存在時不會設定 TTL，則複本上原本沒有 TTL 的欄位將維持無 TTL，但主節點上該欄位可能因 `HINCRBYFLOAT` 而獲得 TTL（例如原本有 TTL 的欄位被更新後，TTL 應保留）。需確認 `HSETEX KEEPTTL` 在欄位不存在時的行為是否與 `HASH_SET_KEEP_TTL` 一致。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中 `hashTypeSet` 的 flags 從 `HASH_SET_TAKE_VALUE | HASH_SET_KEEP_TTL` 改為 `HASH_SET_TAKE_VALUE`，且複寫指令改為 `HSETEX KEEPTTL`。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "複寫指令參數順序可能錯誤",
+    "body": "`rewriteClientCommandVector` 的參數順序為 `(c, argc, ...)`，此處傳入 6 個參數，但 `HSETEX` 指令的語法為 `HSETEX key [NX|XX] [KEEPTTL] [EX|PX|EXAT|PXAT] FIELDS num field value [field value ...]`。目前建構的指令為 `HSETEX key KEEPTTL FIELDS 1 field value`，缺少 TTL 選項，可能導致語法錯誤或行為不符預期。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 `rewriteClientCommandVector` 呼叫。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "複寫指令未包含 TTL 參數，可能無法保留過期時間",
+    "body": "`HSETEX` 指令若未指定 TTL 選項，可能預設為不設定過期時間，導致複本上欄位 TTL 遺失。需確認 `HSETEX` 在僅有 `KEEPTTL` 而無 TTL 選項時的行為。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的 `rewriteClientCommandVector` 呼叫。"
+  }
+]

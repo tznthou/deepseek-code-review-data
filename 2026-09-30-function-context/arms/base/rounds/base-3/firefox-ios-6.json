@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "使用 assert 取代 XCTAssertTrue 可能導致測試在 release 建置中失效",
+    "body": "在測試方法 `testRequestAuthorization` 中，原本的 `XCTAssertTrue` 被改為 Swift 標準庫的 `assert`。`assert` 在 release 建置（`-O`）中會被編譯器移除，因此測試將不會驗證任何條件，可能導致測試永遠通過而失去防護力。建議改回 `XCTAssertTrue` 或使用 `XCTAssert` 系列斷言。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\nassert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將原本的 `XCTAssertTrue(granted)` 和 `XCTAssertTrue(self.center.requestAuthorizationWasCalled)` 改為 `assert(granted, ...)` 和 `assert(center?.requestAuthorizationWasCalled ?? false, ...)`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/FxAWebViewModelTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試類別可能缺少 @MainActor 標註",
+    "body": "此測試類別涉及 UI 相關的 ViewModel，但未加上 `@MainActor`。在 Swift 6 嚴格 concurrency 下，若 ViewModel 或相關 API 被標註為 `@MainActor`，此測試類別可能仍會產生 isolation 警告。建議確認是否需要加上 `@MainActor`。",
+    "existing_code": "class FxAWebViewModelTests: XCTestCase {",
+    "evidence": "diff 中此類別未加上 `@MainActor`，而其他 UI 相關測試類別（如 StoriesFeedDiffableDataSourceTests）已加上。"
+  }
+]

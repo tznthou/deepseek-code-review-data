@@ -1,0 +1,5 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 29188 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx:105 → 103（片段唯一命中）
+[info] 重新定位 apps/activitypub/src/hooks/use-activity-pub-queries.ts:2829 → 2833（片段唯一命中）
+[info] 重新定位 apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx:30 → 32（片段唯一命中）
+[info] 完成於 10.7s ｜ findings=4 ｜ relocated=3 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 9444, "completion_tokens": 1190, "total_tokens": 10634, "prompt_tokens_details": {"cached_tokens": 9344}, "prompt_cache_hit_tokens": 9344, "prompt_cache_miss_tokens": 100}

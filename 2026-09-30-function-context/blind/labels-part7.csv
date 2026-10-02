@@ -1,0 +1,101 @@
+pair,label,note
+P0601,same,兩者都指出 sortHosts 在權重相同時 priority 比較方向被反轉（priorityA - priorityB）且修法相同
+P0602,no,GT 是 argv[5] 越界寫入；finding 講 alsoPropagate 回傳值未檢查 與越界無關
+P0603,no,GT 是 recordings 端點權限應為 BOOKING_READ；finding 講 getRecordings 缺 await 是另一個缺陷
+P0604,same,兩者都指出 expectation.fulfill() 被移到 wait 之後導致逾時 修法同為移回 decisionHandler 內（finding 標題講提前結束有誤 內文講逾時）
+P0605,no,GT 是迴圈內每筆都 flush 應批次；finding 講 ConversationVariableNotFoundError 未捕捉 是另一個問題
+P0606,no,GT 是缺 From<FileWriteError> 實作導致編譯失敗；finding 講 set_permissions 先於 write 的順序問題 兩者獨立且位置差 24 行
+P0607,no,GT 是輔助函式缺 static；finding 講 rewriteClientCommandVector 參數順序（且其建議修正與現有程式碼相同）
+P0608,same,finding 第 2 點指出 selectedBlockDocument 取自 filteredData 找不到已選項而顯示 placeholder 與 GT 症狀及機制一致；移除 filteredData 改用 data 即同一修法
+P0609,no,GT 是 servicing 缺 PreReleaseBrandingLabel 條件；finding 講 ValidateBaseline 設為 false 是另一個設定
+P0610,no,GT 是 exit 先 finish 再 resolve 的順序問題；finding 講 AppCompatActivity 強制轉型 兩者獨立
+P0611,no,GT 是 public fn 缺文件註解；finding 講 versionCode 遞增的競態 兩者獨立
+P0612,no,GT 是 slack.listen() 被移除；finding 講 scheduling.init() 少了 apiUrl 參數 是不同的呼叫
+P0613,same,兩者都指出 num_keys 為 0 時 *slot 未被初始化（原本的 INVALID_CLUSTER_SLOT 賦值被移除）
+P0614,same,兩者都指出 download_webview2_offline_installer 直接用 ureq::get 繞過平台憑證設定 修法同為改用帶憑證的 agent
+P0615,same,兩者都指出 bucket_folder in path 是子字串比對 應改 startswith
+P0616,same,兩者都指出 || 被改成 && 使 schema 驗證永遠不執行
+P0617,same,兩者都指出 await super.setUp() 缺 try
+P0618,partial,同一段程式（local_host or None 的建構呼叫）且都與 local_host 空字串處理有關；但 finding 講的是 ehlo(local_host) 空字串 HELO 而非 or None 的多餘轉換
+P0619,same,兩者都指出 ClearCache 只清 _memberInfoCache 沒清 _displayNameCache
+P0620,no,GT 是迴圈內每筆都 flush；finding 講 conversation_id 取得來源不同 兩者獨立
+P0621,no,GT 是該行超過 SwiftLint 長度限制；finding 講 comment 引號變更 是另一個問題
+P0622,no,GT 是該行超過 SwiftLint 長度限制；finding 講 V2 字串可能未被使用 是另一個問題
+P0623,same,兩者都指出 Allow Paste 的 0.5 秒 timeout 過短會讓測試不穩（finding 建議改等待機制 修法方向相同）
+P0624,same,兩者都指出 merge_with 不再把合併結果寫回 config_metadata.inner 只存進 extensions
+P0625,same,兩者都指出測試斷言用了 GenericComponent<string> 而該是 GenericComponent<int>
+P0626,no,GT 是 hashTypeSet 缺 HASH_SET_KEEP_TTL 使本地 TTL 被清；finding 講複寫指令參數順序/缺 TTL 選項 是不同的陳述與問題
+P0627,same,兩者都指出 local_host or None 把空字串轉成 None 有問題；finding 建議直接傳 local_host 與 GT 移除 or None 的修法相同（原因說法略異）
+P0628,no,GT 是檔名 .service.ts 違反命名規則；finding 講 getDisplayEmail 正規表達式 是另一個問題
+P0629,no,GT 是類別成員缺明確存取控制；finding 講 targetFrame 可能為 nil 是另一個問題
+P0630,no,GT 是跨欄位驗證誤用 field_validator；finding 講路徑前綴未正規化 是另一個問題
+P0631,partial,同一行且都在講傳入 useProcessTeamMembersData 的資料形狀/型別不符；但 finding 只講 undefined 直通 沒指出 GT 的重複包裝
+P0632,no,GT 是 argv[5] 越界寫入；finding 片段雖含該行 但講的是 argv[2] 物件未釋放的洩漏 兩者獨立
+P0633,same,兩者都指出 setUpApp() 與 setUpExperimentVariables() 呼叫順序對調（setUpApp 依賴實驗變數）
+P0634,no,GT 是移除 isinstance dict 檢查；finding 講 zip 移除 strict=True 且位置差 38 行
+P0635,no,GT 是 map callback 未使用的 index 參數；finding 講 maxVisible 未限制最小值
+P0636,same,兩者都指出排程條件被反轉 應為 !hasScheduled.processOutbox
+P0637,no,GT 是缺 .changes 變更檔；finding 講 Flatpak Display 大小寫不一致
+P0638,no,GT 是清空 json_schema 少了 jsonObject 型別判斷；finding 講 undefined 可能與後端預期不符 是另一個問題
+P0639,no,GT 是 day > totalDays 應為 >= 的 off-by-one；finding 講回傳 Infinity 的下游風險 是另一個問題
+P0640,no,GT 是 Math.floor 應為 Math.round；finding 講回傳 Infinity 的下游風險 是另一個問題
+P0641,same,兩者都指出驗證從 <= 0 改成 < 0 使 0 被接受 違反 positive 契約
+P0642,no,GT 是 map callback 未使用的 index；finding 講 Popover 鍵盤操作 是另一個問題
+P0643,no,GT 是 default export 違反命名匯出規則；finding 講檔尾缺換行 同一行但兩個獨立缺陷
+P0644,no,GT 是類別缺 final；finding 講類別可能未被使用（死碼）是另一個問題
+P0645,no,GT 是 popover 內隱藏項目遺失 onClick；finding 講 onMouseLeave 關閉造成閃爍 是另一個問題
+P0646,same,兩者都指出自動遞增 versionCode 用 saturating_add 卻沒檢查 2100000000 上限
+P0647,same,兩者都指出條件不該包含 AOF_BROKEN_RECOVERED 且建議移除該項（finding 的後果描述有偏差但修法相同）
+P0648,same,兩者都指出檔案由 file-scoped namespace 改成大括號 namespace 應還原成 file-scoped
+P0649,same,兩者都指出驗證改成 <= 0 使 0 被拒絕 與 non-negative 錯誤訊息矛盾
+P0650,no,GT 是 association.ext.is_empty() 條件反轉；finding 講 expect 取代 fallback 可能 panic 位置差 17 行且獨立
+P0651,same,兩者都指出非 verbose 模式用 LogAlways 會顯示過多事件（GT 指應為 Critical；finding 建議更精確的過濾）
+P0652,same,兩者都指出 Flatpak 的 Display 輸出大寫 Flatpak 與小寫不一致 應改為 flatpak
+P0653,no,GT 是 FileWriteError 手寫 Error trait 應用 thiserror；finding 講 set_permissions 先於 write 的順序 是另一個問題
+P0654,same,兩者都指出使用 typing.Set/Tuple 應改用內建 set/tuple
+P0655,partial,同一行 LogAlways 且指向同一個改動；但 finding 把後果講成效能負擔 且誤認 LogAlways 事件很少 沒指出等級應限縮為 Critical 與輸出過量
+P0656,no,GT 是 child 查詢缺 parentId = orgId 條件；finding 講 orgId 為 null/undefined 的處理 位置差 21 行且是另一個問題
+P0657,same,兩者都指出新增的 console.log 應移除（finding 從資料外洩切入 修法相同）
+P0658,same,兩者都指出 openForm.in_reply_to_snippet 缺少可選串連 應為 openForm?.
+P0659,same,兩者都指出 getFeatureOptInService 每次建立新容器導致不共享狀態
+P0660,no,GT 是 to_string() 多餘的 clippy 問題；finding 講 expect 取代 fallback 可能 panic 是另一個問題
+P0661,same,兩者都指出 sortHosts 權重相同時 priority 比較方向被反轉
+P0662,no,GT 是缺 MARK 分節註解；finding 講 targetFrame 可能為 nil 是另一個問題
+P0663,no,GT 是比較運算元順序；finding 講 versionCode 遞增的競態 位置差 40 行且無關
+P0664,no,GT 是 Math.floor 應為 Math.round；finding 講 totalDays 為 1 時除以零 是同一運算式上獨立的問題
+P0665,no,GT 是 slack.listen() 被移除；finding 講 emailAddressService.init() 的非同步時序 是不同的呼叫
+P0666,no,GT 是缺分號；finding 講 totalDays 為 1 時除以零 是另一個問題
+P0667,same,兩者都指出 lpsize * numele 少了 -1 而多算一個 listpack（finding 的機制說明含糊但指出同一改動與偏高後果）
+P0668,no,GT 是新 pub fn 缺 rustdoc；finding 講 reload_config 覆寫可能遺失欄位 是另一個問題
+P0669,partial,指到同一個 rewriteClientCommandVector 呼叫且後果（複寫指令格式錯誤）相近；但機制講成參數順序 而 GT 是 argc=6 與實際 7 個參數不符 且其建議修正與現有程式碼相同
+P0670,no,GT 是直接使用 UIApplication.shared 未走 protocol；finding 講 isLandscape 未被使用 同一行但兩個獨立缺陷
+P0671,same,兩者都指出 ToolPromptMessage content 誤用 tool_inputs 應為 tool_responses
+P0672,same,兩者都指出第 11 行有多餘的尾端空白
+P0673,same,兩者都指出 generate_github_alternative_url 回傳原始 URL 而非鏡像 URL
+P0674,no,GT 是缺分號；finding 講 useEffect 相依陣列為空 是另一個問題
+P0675,no,GT 是門檻 >= 應為 > 的邊界錯誤；finding 用 400000 當例子卻結論為仍高於當前值 講的是參數變動時目標可能倒退 是另一個問題
+P0676,no,GT 是 async with 範圍在 API 呼叫前就結束；finding 講 semaphore 可能未初始化為 None 是另一個問題
+P0677,no,GT 是誤用 targetFrame 應為 sourceFrame；finding 講 XCTWaiter.wait 結果未檢查 位置差 19 行且無關
+P0678,no,GT 是持久化例外被吞掉；finding 講迴圈內重複 flush 同一段程式但兩個獨立缺陷
+P0679,same,兩者都指出 Session 沒用 context manager 也沒關閉 應改為 with Session(...)
+P0680,same,兩者都指出檔案缺結尾換行
+P0681,no,GT 是 != 應為 !==；finding 講 findPage 回傳值可能缺 data 屬性 是另一個問題
+P0682,same,兩者都指出 isPending 解構後未用於顯示載入狀態
+P0683,same,兩者都指出新增的 print 應改用 logging
+P0684,same,兩者都指出測試移除 expectation 與 wait 使非同步斷言永遠不會被驗證
+P0685,partial,同一處 filteredData 且與 GT 根因相鄰；但 finding 講的是雙重過濾造成選項清單不一致 沒提 selectedBlockDocument 取自 filteredData 導致已選項找不到
+P0686,no,GT 是 map callback 未使用的 index；finding 講 Popover hover/click 互動 是另一個問題
+P0687,same,兩者都指出 max_length 未定義時缺少防護（GT 說 TypeError 而 finding 說比較恆為 false 機制不同但修法同為檢查或給預設值）
+P0688,no,GT 是 default export 違反規則；finding 講檔尾缺換行 同一行但兩個獨立缺陷
+P0689,partial,同一行 fullKey 且都在講 namespace 前綴讓既有測試出問題；但 finding 只講全域 mock 一律加前綴 沒指出 translations[fullKey] 先於 translations[key] 的查找順序反轉
+P0690,no,GT 是 semaphore 初始化晚於 clients 的競態；finding 講 Semaphore 參數不合法時的例外 是另一個問題
+P0691,no,GT 是 gtk.exists() 判斷反轉；finding 講 linuxdeploy 下載 URL 的 arch 變數 是另一個問題
+P0692,same,兩者都指出 dev 模式下驗證先於 clamp 造成超上限時直接失敗
+P0693,same,兩者都指出 nonisolated(unsafe) 與註解說不安全互相矛盾
+P0694,same,兩者都指出 v2_enabled 預設 True 應改為 False（動機不同但修法相同）
+P0695,same,兩者都指出 userSelect 移除 locale 使取消流程 organizer.locale 變 undefined
+P0696,same,兩者都指出 merge_with 不再把合併結果寫回 inner
+P0697,no,GT 是 handleEnable 移除 try-catch 使 loading 卡住；finding 講 useState 初始值依賴 account 位置差 18 行且是另一個問題
+P0698,same,兩者都指出快取寫入迴圈應迭代 plans_to_cache 而非 bulk_plans
+P0699,same,兩者都指出 V2 啟用時 static_subpath 仍用 V1 的路徑
+P0700,no,GT 是 (size_t) 轉型造成減法回繞；finding 講 max size 為 0 時截斷邏輯失效 同一行但兩個獨立缺陷

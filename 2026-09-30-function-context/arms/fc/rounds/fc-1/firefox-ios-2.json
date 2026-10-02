@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 508,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "IpadOnlyTestCase.setUp() 呼叫 super.setUp() 缺少 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp()` 中，`super.setUp()` 現在是 `async throws`，但呼叫時沒有加上 `try`。這會導致編譯錯誤。\n\n建議改為：\n```swift\ntry await super.setUp()\n```",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中 IpadOnlyTestCase 的 setUp 改為 async throws，但呼叫 super.setUp() 時只加了 await，沒有 try。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "setUpApp() 與 setUpExperimentVariables() 順序變更可能影響測試行為",
+    "body": "原本的順序是先 `setUpExperimentVariables()` 再 `setUpApp()`，現在改成先 `setUpApp()` 再 `setUpExperimentVariables()`。如果 `setUpApp()` 依賴實驗變數的設定，這個順序變更可能導致測試行為改變。建議確認此變更是否為刻意為之，並確保不會影響測試結果。",
+    "existing_code": "setUpApp()\nsetUpExperimentVariables()",
+    "evidence": "diff 中 FeatureFlaggedTestSuite 的 setUp 內，setUpApp() 和 setUpExperimentVariables() 的順序對調。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 368,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "scheduling.init() 缺少 apiUrl 參數可能導致排程服務無法正常運作",
+    "body": "原本 `scheduling.init()` 會傳入 `apiUrl` 參數，用於建構排程服務所需的 API URL。移除後，排程服務可能無法正確取得 API 位址，導致排程任務失敗或無法觸發。建議確認 `scheduling.init()` 是否已改為從其他來源取得 API URL，或此參數是否已不再需要。",
+    "existing_code": "scheduling.init(),",
+    "evidence": "diff 中原本的 `scheduling.init({ apiUrl: urlUtils.urlFor('api', {type: 'admin'}, true) })` 被改為 `scheduling.init()`，且 `urlUtils` 仍被保留但未使用於此處。"
+  },
+  {
+    "path": "ghost/core/core/boot.js",
+    "line": 352,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "emailAddressService.init() 改為非同步呼叫可能影響相依服務",
+    "body": "原本 `emailAddressService.init()` 是同步呼叫（前面有 `await`），現在改為在 `Promise.all` 中非同步執行。若其他服務（如 newsletter 或 email service）依賴 email address service 初始化完成，可能導致競態條件。建議確認這些服務是否已正確處理非同步初始化。",
+    "existing_code": "emailAddressService.init(),",
+    "evidence": "diff 中原本的 `await emailAddressService.init(),` 被移除，並在 `Promise.all` 陣列中加入 `emailAddressService.init(),`。"
+  }
+]

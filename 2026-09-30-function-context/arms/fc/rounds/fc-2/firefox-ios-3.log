@@ -1,0 +1,5 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 146601 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/BrowserViewController/WebEngineIntegration/BrowserWebUIDelegate.swift:31 → 42（片段唯一命中）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/BrowserViewController/Extensions/BrowserViewController+WebViewDelegates.swift:42 → 79（片段唯一命中）
+[info] 重新定位 firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift:100 → 112（片段唯一命中）
+[info] 完成於 11.5s ｜ findings=4 ｜ relocated=3 ｜ verdict=comment ｜ usage={"prompt_tokens": 33731, "completion_tokens": 1222, "total_tokens": 34953, "prompt_tokens_details": {"cached_tokens": 33664}, "prompt_cache_hit_tokens": 33664, "prompt_cache_miss_tokens": 67}

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "高流量分支可能導致目標上限低於當前值",
+    "body": "在 `#getTargetLimit` 中，當 `lastCount >= 400_000` 時，計算 `scaledIncrease = Math.ceil(lastCount * 1.2)` 和 `absoluteIncrease = lastCount + 75_000`，然後取兩者最小值。但若 `lastCount` 接近 400,000，例如 400,000，則 `scaledIncrease = 480,000`，`absoluteIncrease = 475,000`，回傳 475,000，仍高於 400,000。但若 `lastCount` 為 500,000，則回傳 575,000，高於 500,000。然而，若 `lastCount` 為 400,000 且 `maxAbsoluteIncrease` 較小（例如 50,000），則可能回傳低於 `lastCount` 的值，導致目標上限倒退。目前設定下，`lastCount=400,000` 時回傳 475,000，仍高於 400,000，但若未來調整參數，可能出現倒退。建議明確確保回傳值至少為 `lastCount`，例如使用 `Math.max(lastCount, Math.min(scaledIncrease, absoluteIncrease))`。",
+    "existing_code": "const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);\nconst absoluteIncrease = lastCount + WARMUP_SCALING_TABLE.highVolume.maxAbsoluteIncrease;\nreturn Math.min(scaledIncrease, absoluteIncrease);",
+    "evidence": "diff 中新增的高流量分支計算，未保證結果大於等於 lastCount。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 123,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試中對 findPage 的模擬與實際 API 不一致",
+    "body": "在單元測試中，使用 `createModelClass({ findAll: [...] })` 來模擬 `findPage`，但 `createModelClass` 可能不會將 `findAll` 轉換為 `findPage` 方法。實際服務呼叫的是 `findPage`，若模擬物件沒有該方法，測試會拋出錯誤或無法正確模擬。建議直接建立包含 `findPage` 方法的模擬物件，例如 `Email = { findPage: async () => ({ data: [...] }) }`，或確認 `createModelClass` 的實作是否支援 `findAll` 轉換。",
+    "existing_code": "Email = createModelClass({\n    findAll: [{\n        csd_email_count: 1000\n    }]\n});",
+    "evidence": "diff 中多處將原本的 `findOne` 模擬改為 `findAll`，但服務程式碼呼叫的是 `findPage`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "findPage 查詢的 filter 使用 <= 可能包含今日資料",
+    "body": "原本 `findOne` 使用 `created_at:<${today}` 排除今日，但改為 `findPage` 後 filter 變成 `created_at:<=${today}`，這會包含今日建立的 email。若今日已有 email，則 `#getHighestCount` 可能取到今日的 csd_email_count，導致 warmup limit 計算錯誤。建議確認是否應排除今日，若需排除，應改回 `<`。",
+    "existing_code": "filter: `created_at:<=${new Date().toISOString().split('T')[0]}`,",
+    "evidence": "diff 中 filter 從 `<` 改為 `<=`。"
+  }
+]

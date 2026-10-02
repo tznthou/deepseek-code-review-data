@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "Session 未關閉導致連線洩漏",
+    "body": "在 `ConversationVariableUpdaterImpl.update` 中，`session = Session(db.engine)` 建立的 Session 在方法結束後沒有呼叫 `close()`。若 `session.commit()` 拋出例外，Session 不會被關閉；即使正常執行，Session 也會殘留直到被垃圾回收，可能導致資料庫連線耗盡。建議使用 `with Session(db.engine) as session:` 或 `try/finally` 確保關閉。",
+    "existing_code": "session = Session(db.engine)\n        row = session.scalar(stmt)\n        if not row:\n            raise ConversationVariableNotFoundError(\"conversation variable not found in the database\")\n        row.data = variable.model_dump_json()\n        session.commit()",
+    "evidence": "diff 中新增的 `session = Session(db.engine)` 沒有對應的 `session.close()`，且方法內可能拋出例外。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "多個變數更新時重複 flush 且未處理例外",
+    "body": "在 `on_event` 中，對每個 updated variable 都呼叫 `self._conversation_variable_updater.update(...)` 後立即 `flush()`。若有多個變數，會造成多次資料庫 commit，降低效能且非原子性。此外，`update` 可能拋出例外（如 `ConversationVariableNotFoundError`），此處未捕捉，可能導致整個 workflow 失敗。建議收集所有更新後一次 flush，並考慮錯誤處理策略。",
+    "existing_code": "self._conversation_variable_updater.update(conversation_id=conversation_id, variable=variable)\n            self._conversation_variable_updater.flush()",
+    "evidence": "diff 中 for 迴圈內連續呼叫 update 和 flush，且無例外處理。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "selector 長度檢查可能不足",
+    "body": "程式碼檢查 `len(selector) < 2` 後才使用 `selector[0]` 和 `selector[1]`，但未驗證 `selector[0]` 是否為 `CONVERSATION_VARIABLE_NODE_ID` 時就呼叫 `variable_pool.get(selector)`。若 selector 格式錯誤，可能導致非預期行為。建議先驗證 selector 結構再進行後續操作。",
+    "existing_code": "if len(selector) < 2:\n                logger.warning(\"Conversation variable selector invalid. selector=%s\", selector)\n                continue\n            if selector[0] != CONVERSATION_VARIABLE_NODE_ID:\n                continue\n            variable = self.graph_runtime_state.variable_pool.get(selector)",
+    "evidence": "diff 中僅檢查長度，未檢查 selector 元素型別或內容。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "天數計算 off-by-one：第一天就被當成 day 1",
+    "body": "`#getDaysSinceFirstEmail` 使用 `Math.ceil` 計算經過天數，導致在暖機開始當天（day 0）就會得到 day 1。這會使暖機進度提前一天，例如在第一天就套用 day 1 的 limit（237），而不是 day 0 的 200。\n\n**失敗情境**：\n- 使用者在 2024-01-15 12:00 建立第一封 email，並在 2024-01-15 13:00 呼叫 `getWarmupLimit`。\n- `#getDaysSinceFirstEmail` 會計算 `(Date.now() - firstEmailTime) / (1000*60*60*24)` ≈ 0.0417，`Math.ceil` 後得到 1。\n- `getWarmupLimit` 會回傳 day 1 的 limit（237），而不是 day 0 的 200。\n\n**建議修法**：\n改用 `Math.floor` 來計算天數，讓 day 0 代表第一天。",
+    "existing_code": "return Math.ceil((Date.now() - new Date(res.data[0].get('created_at') as string).getTime()) / (1000 * 60 * 60 * 24));",
+    "evidence": "diff 中新增的 `#getDaysSinceFirstEmail` 方法使用 `Math.ceil`，而測試中 `daysAgo(0)` 的期望值是 200（day 0），但實際會得到 day 1 的 237。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 150,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "測試期望值與實作不一致：day 0 應為 200，但實作會回傳 237",
+    "body": "在 `should return 200 (start value) when first email was today (day 0)` 測試中，`created_at` 設為 `daysAgo(0)`，期望回傳 200。但由於 `#getDaysSinceFirstEmail` 使用 `Math.ceil`，實際會得到 day 1，因此 `getWarmupLimit` 會回傳 237，導致測試失敗。\n\n**建議修法**：\n修正 `#getDaysSinceFirstEmail` 的 off-by-one 錯誤後，此測試應可通過。",
+    "existing_code": "created_at: daysAgo(0)",
+    "evidence": "測試中 `daysAgo(0)` 對應到 day 0，但實作會將當天視為 day 1。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 175,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "測試期望值與實作不一致：day 1 應為 237，但實作會回傳 280",
+    "body": "在 `should return calculated limit when emailCount is greater` 測試中，`created_at` 設為 `daysAgo(1)`，期望回傳 237。但由於 `#getDaysSinceFirstEmail` 使用 `Math.ceil`，實際會得到 day 2（因為 day 1 的 0.0417 被進位成 1，再 +1？），因此 `getWarmupLimit` 會回傳 day 2 的 limit（280），導致測試失敗。\n\n**建議修法**：\n修正 `#getDaysSinceFirstEmail` 的 off-by-one 錯誤後，此測試應可通過。",
+    "existing_code": "created_at: daysAgo(1)",
+    "evidence": "測試中 `daysAgo(1)` 對應到 day 1，但實作會將前一天視為 day 2。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 262,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "測試期望值與實作不一致：day 41 應為 200000，但實作會回傳 Infinity",
+    "body": "在 `should return correct warmup progression through the days` 測試中，`day: 41` 的期望值是 200000。但由於 `#getDaysSinceFirstEmail` 使用 `Math.ceil`，實際會得到 day 42（因為 day 41 的 0.9583 被進位成 1，再 +41？），因此 `getWarmupLimit` 會回傳 `Infinity`（因為 `day > totalDays`），導致測試失敗。\n\n**建議修法**：\n修正 `#getDaysSinceFirstEmail` 的 off-by-one 錯誤後，此測試應可通過。",
+    "existing_code": "{day: 41, expected: 200000} // Day 41: end value",
+    "evidence": "測試中 `day: 41` 對應到 day 41，但實作會將第 41 天視為 day 42，觸發 `Infinity` 回傳。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "回傳 `Infinity` 可能造成下游型別或比較問題",
+    "body": "當暖機完成後，`getWarmupLimit` 回傳 `Infinity`。這可能導致下游程式碼在進行數值比較或計算時出現非預期行為，例如 `Math.min(emailCount, Infinity)` 會回傳 `emailCount`，但若下游直接使用該值進行算術運算，可能產生 `Infinity` 或 `NaN`。\n\n**建議修法**：\n回傳 `emailCount` 本身，或使用一個明確的哨兵值（例如 `Number.MAX_SAFE_INTEGER`），並在文件或型別中說明。",
+    "existing_code": "if (day > this.#warmupConfig.totalDays) {\n            return Infinity\n        }",
+    "evidence": "diff 中新增的 `getWarmupLimit` 方法在 `day > totalDays` 時回傳 `Infinity`。"
+  }
+]

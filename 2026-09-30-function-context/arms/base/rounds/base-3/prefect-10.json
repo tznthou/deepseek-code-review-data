@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ui-v2/tsconfig.app.json",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "關閉 strict 模式將大幅降低型別安全",
+    "body": "將 `strict` 從 `true` 改為 `false` 會停用所有嚴格型別檢查選項（包括 `noImplicitAny`、`strictNullChecks` 等），可能隱藏潛在的型別錯誤，並與專案既有的嚴格模式慣例相違背。建議恢復為 `true`，並修正因此產生的型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.app.json 的變更：`- \"strict\": true,` 改為 `+ \"strict\": false,`"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/work-pool-status-trigger-fields.tsx",
+    "line": 78,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 parseInt 可能導致 NaN 或非預期結果",
+    "body": "在 Threshold 輸入的 onChange 中使用 `parseInt(e.target.value)`，若輸入為空字串或非數字字元，`parseInt` 會回傳 `NaN`，可能導致表單值變成 `NaN`。其他元件（如 custom-trigger-fields.tsx）使用 `Number(e.target.value)`，行為較一致且可預期。建議改為 `Number(e.target.value)` 或加入驗證。",
+    "existing_code": "onChange={(e) => field.onChange(parseInt(e.target.value))}",
+    "evidence": "diff 中 work-pool-status-trigger-fields.tsx 第 82 行：`onChange={(e) => field.onChange(parseInt(e.target.value))}`，而其他元件使用 `Number(e.target.value)`"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/trigger-step.test.tsx",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試僅驗證欄位可見性，未涵蓋互動行為",
+    "body": "新增的測試僅檢查欄位是否可見，未測試使用者輸入、選項選擇或表單提交等互動行為。建議增加測試以驗證欄位值能正確更新表單狀態，以及在不同 posture 下顯示/隱藏條件欄位。",
+    "existing_code": "expect(screen.getByLabelText(\"select posture\")).toBeVisible();\nexpect(screen.getByLabelText(\"Threshold\")).toBeVisible();",
+    "evidence": "diff 中 trigger-step.test.tsx 的測試內容，僅有可見性斷言"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/interface/rust.rs",
+    "line": 595,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "在條件判斷中取得 Mutex 鎖可能導致死鎖或鎖定時間過長",
+    "body": "在 `run_dev_watcher` 中，`reload_config` 的呼叫被包在 `is_configuration_file(...) && reload_config(&mut config.lock().unwrap(), ...).is_ok()` 的條件中。`config.lock().unwrap()` 取得的 MutexGuard 會一直存活到整個條件式結束，包含 `reload_config` 執行期間。若 `reload_config` 內部或後續的 `rewrite_manifest` 需要再次取得同一個鎖，會造成死鎖。此外，鎖定時間涵蓋了檔案 I/O 與解析，可能阻塞其他執行緒。建議先取得鎖並存入變數，再進行條件判斷與操作，或縮小鎖定範圍。",
+    "existing_code": "if is_configuration_file(self.app_settings.target_platform, event_path)\n                && reload_config(&mut config.lock().unwrap(), merge_configs, dirs.tauri).is_ok()",
+    "evidence": "diff 中新增的 `reload_config(&mut config.lock().unwrap(), ...)` 呼叫位於條件式中，MutexGuard 的生命週期延伸至整個條件式。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/ios/mod.rs",
+    "line": 272,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "iOS 建置設定中 features 欄位從 None 改為 Some(空陣列) 可能改變序列化行為",
+    "body": "原本當 `ios_options.features` 為空時，`features` 欄位設為 `None`；現在改為 `Some(ios_options.features)`，即使為空也會是 `Some(vec![])`。若後續序列化時未特別處理，可能輸出 `features: []` 而非省略該欄位，導致與舊版設定檔或工具不相容。請確認此變更是否會影響產生的 Xcode 專案或設定檔格式。",
+    "existing_code": "features: Some(ios_options.features),",
+    "evidence": "diff 中原本的條件判斷被移除，直接使用 `Some(ios_options.features)`。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 253,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "reload_config 直接覆寫整個 ConfigMetadata 可能遺失未重新載入的欄位",
+    "body": "`reload_config` 現在直接以 `*config = load_config(...)` 覆寫整個結構。若 `load_config` 在解析過程中因某些原因未能完整填入所有欄位（例如新增的欄位在舊版設定檔中不存在），可能導致原本存在於 `config` 中的值被清除。建議確認 `load_config` 是否保證完整重建所有欄位，或改為僅更新必要的部分。",
+    "existing_code": "*config = load_config(merge_configs, true, target, tauri_dir)?;",
+    "evidence": "diff 中 `reload_config` 的實作改為直接指派。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/app_paths.rs",
+    "line": 131,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "resolve_dirs 使用 get_or_init 可能導致 panic 訊息不一致",
+    "body": "`TAURI_DIR.get_or_init` 的初始化閉包中，若 `resolve_tauri_dir()` 回傳 `None`，會 panic。但 `FRONTEND_DIR.get_or_init` 的閉包中，若 `resolve_frontend_dir()` 回傳 `None`，會使用 `tauri.parent().unwrap()`，若 `tauri` 沒有 parent 也會 panic。這些 panic 訊息可能不如原本的 `expect` 明確，且 `get_or_init` 在初始化失敗時不會重試，可能導致後續呼叫永遠 panic。",
+    "existing_code": "let tauri = TAURI_DIR.get_or_init(|| resolve_tauri_dir().unwrap_or_else(|| {\n    let env_var_name = env_tauri_app_path().is_some().then(|| format!(\"`{ENV_TAURI_APP_PATH}`\"));\n    panic!(\"Couldn't recognize the {} folder as a Tauri project. It must contain a `{}`, `{}` or `{}` file in any subfolder.\",\n      env_var_name.as_deref().unwrap_or(\"current\"),\n      ConfigFormat::Json.into_file_name(),\n      ConfigFormat::Json5.into_file_name(),\n      ConfigFormat::Toml.into_file_name()\n    )\n  }));",
+    "evidence": "diff 中 `resolve_dirs` 的實作。"
+  }
+]

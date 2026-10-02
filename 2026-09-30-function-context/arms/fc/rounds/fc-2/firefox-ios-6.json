@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Frontend/SyncContentSettingsViewControllerTests.swift",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試斷言與註解不一致",
+    "body": "此測試的註解說明 engine section children 應為 5（bookmarks, history, tabs, passwords, credit cards），但斷言卻檢查 `XCTAssertEqual(engineSectionChildren?.count, 6)`。這可能是測試本身的錯誤，或是註解未更新。請確認實際預期數量並修正斷言或註解。",
+    "existing_code": "XCTAssertEqual(engineSectionChildren?.count, 6)",
+    "evidence": "diff 中此行未變更，但 PR 觸及此檔案，且此不一致可能導致測試失敗或誤導。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/NotificationManagerTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "使用 assert 取代 XCTAssertTrue 可能導致測試在 release 建置中被略過",
+    "body": "在測試方法 `testRequestAuthorization` 中，原本的 `XCTAssertTrue` 被改為 `assert`。`assert` 在 release 建置中會被編譯器移除，導致測試失去驗證效果。應使用 `XCTAssertTrue` 或 `XCTAssert` 來保留測試斷言。",
+    "existing_code": "assert(granted, \"Authorization should be granted\")\nassert(center?.requestAuthorizationWasCalled ?? false, \"requestAuthorization should be called\")",
+    "evidence": "diff 中將 `XCTAssertTrue(granted)` 改為 `assert(granted, ...)`，且 `assert` 在 Swift 的 release 模式中不會執行。"
+  }
+]

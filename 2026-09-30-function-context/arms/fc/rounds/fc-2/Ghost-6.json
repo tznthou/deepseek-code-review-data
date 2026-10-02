@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "排程條件反轉導致重複排程",
+    "body": "原本的條件 `!hasScheduled.processOutbox` 在尚未排程時才執行排程，但修改後變成 `hasScheduled.processOutbox`，這會導致當 `hasScheduled.processOutbox` 為 true 時再次排程，造成重複排程。應改回 `!hasScheduled.processOutbox`。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中此行由 `if (!hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {` 改為 `if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {`，條件反轉。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 341,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "config 值語意不明可能導致非預期行為",
+    "body": "原本使用 `labs.isSet('welcomeEmails')` 檢查功能是否啟用，現在改為 `config.get('memberWelcomeEmailTestInbox')`。若此 config 值是用來指定測試收件匣，則其存在與否不應直接代表功能啟用，可能造成在正式環境中誤啟用或停用。建議確認 config 值的用途，或改用明確的布林設定。",
+    "existing_code": "const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');\n        if (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)) {",
+    "evidence": "diff 中新增 `const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');` 並將條件改為 `if (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source))`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "config 值可能未定義導致錯誤",
+    "body": "`config.get('memberWelcomeEmailTestInbox')` 若未設定可能回傳 undefined，在 `if (!config.get(...))` 中會被視為 false，但若 config 系統對未定義的 key 拋出錯誤，則可能導致啟動失敗。建議確認 config 系統行為，或使用 `config.get('memberWelcomeEmailTestInbox', false)` 提供預設值。",
+    "existing_code": "if (!config.get('memberWelcomeEmailTestInbox')) {",
+    "evidence": "diff 中此行由 `if (!labs.isSet('welcomeEmails')) {` 改為 `if (!config.get('memberWelcomeEmailTestInbox')) {`。"
+  }
+]

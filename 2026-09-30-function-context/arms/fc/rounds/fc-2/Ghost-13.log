@@ -1,0 +1,11 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 143446 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_kpis_v2.pipe:60 → 93（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_top_devices_v2.pipe:20 → 21（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_top_locations_v2.pipe:15 → 11（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_top_pages_v2.pipe:15 → 12（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_top_sources_v2.pipe:20 → 21（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_top_utm_campaigns_v2.pipe:20 → 21（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_top_utm_contents_v2.pipe:20 → 21（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_top_utm_mediums_v2.pipe:20 → 21（片段唯一命中）
+[info] 重新定位 ghost/core/core/server/data/tinybird/endpoints/api_top_utm_sources_v2.pipe:20 → 21（片段唯一命中）
+[info] 完成於 18.6s ｜ findings=10 ｜ relocated=9 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 44982, "completion_tokens": 2729, "total_tokens": 47711, "prompt_tokens_details": {"cached_tokens": 44928}, "prompt_cache_hit_tokens": 44928, "prompt_cache_miss_tokens": 54}

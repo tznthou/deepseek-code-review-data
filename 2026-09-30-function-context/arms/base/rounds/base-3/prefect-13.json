@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "並行限制輸入未驗證數值範圍與整數",
+    "body": "在 `onChange` 中直接將輸入轉為 `Number(value)`，但未檢查是否為負數、非整數或超出合理範圍。若使用者輸入 `-5` 或 `2.5`，表單會通過驗證並將無效值傳送給 API，可能導致後端錯誤或非預期行為。建議在 zod schema 中增加 `.int().nonnegative()` 驗證，或在此處進行檢查。",
+    "existing_code": "onChange={(e) => {\n\tconst value = e.target.value;\n\tfield.onChange(value === \"\" ? null : Number(value));\n}}",
+    "evidence": "diff 中新增的 `onChange` 處理直接將字串轉為數字，未見任何範圍或整數驗證。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "description 可能為 undefined 導致型別不符",
+    "body": "在 `handleSubmit` 中，`data.description?.trim()` 的結果可能為 `undefined`，但後續將 `trimmedDescription === \"\" ? null : trimmedDescription` 指派給 `description`。若 `data.description` 為 `undefined`，則 `trimmedDescription` 為 `undefined`，最終 `description` 會是 `undefined`，但 `WorkPoolUpdate` 型別可能預期 `string | null`。建議明確處理 `undefined` 情況，例如使用 `data.description?.trim() ?? null`。",
+    "existing_code": "const trimmedDescription = data.description?.trim();\nupdateWorkPool(\n\t{\n\t\tname: workPool.name,\n\t\tworkPool: {\n\t\t\tdescription: trimmedDescription === \"\" ? null : trimmedDescription,",
+    "evidence": "diff 中 `trimmedDescription` 可能為 `undefined`，且未見對 `undefined` 的明確處理。"
+  }
+]

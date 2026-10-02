@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "批次輸入驗證在 max_length 未定義時可能失效",
+    "body": "在 `checkBatchInputs` 中，原本使用 `varItem.max_length || DEFAULT_VALUE_MAX_LEN` 來取得長度上限，現在改為直接使用 `varItem.max_length`。如果後端未提供 `max_length`（例如舊資料或未設定），則 `varItem.max_length` 為 `undefined`，比較 `item[varIndex].length > undefined` 會得到 `false`，導致超長輸入不會被擋下。\n\n**失敗情境**：使用者上傳的 CSV 中某欄位超過後端允許的長度，但該變數的 `max_length` 未定義，驗證會通過，可能造成後續 API 錯誤或資料截斷。\n\n**建議**：確認後端一定提供 `max_length`，或在此處加入 fallback（例如 `varItem.max_length ?? DEFAULT_VALUE_MAX_LEN`，但需保留常數）。",
+    "existing_code": "if (item[varIndex].length > varItem.max_length) {",
+    "evidence": "diff 中刪除了 `const maxLen = varItem.max_length || DEFAULT_VALUE_MAX_LEN`，並將條件改為 `item[varIndex].length > varItem.max_length`。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 199,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "新增 console.log 可能洩漏使用者批次資料",
+    "body": "在 `checkBatchInputs` 函式開頭新增了 `console.log('Checking batch inputs:', { dataLength: data.length, headerData })`。這會將使用者上傳的批次資料（包含標頭）輸出到瀏覽器主控台，可能包含敏感資訊（如使用者輸入的變數名稱或內容）。\n\n**失敗情境**：使用者在公用電腦上操作，或使用開發者工具時，可能無意中暴露資料。\n\n**建議**：移除這行 `console.log`，或改用適當的 logging 機制（如 debug level 且不輸出資料內容）。",
+    "existing_code": "console.log('Checking batch inputs:', { dataLength: data.length, headerData })",
+    "evidence": "diff 中新增了這一行。"
+  },
+  {
+    "path": "web/app/components/app/configuration/prompt-value-panel/index.tsx",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "number 輸入的 type 從 number 改為 text 可能影響使用者體驗",
+    "body": "在 `PromptValuePanel` 中，原本 number 類型的輸入使用 `<Input type=\"number\">`，現在改為 `<Input type=\"text\">`。這會失去瀏覽器原生的數字輸入行為（如上下箭頭、輸入驗證），且可能導致使用者輸入非數字字元。\n\n**失敗情境**：使用者在數字欄位輸入字母，後續處理可能出錯。\n\n**建議**：確認此變更是否為預期。若需保留數字輸入，應維持 `type=\"number\"` 並加上適當驗證。",
+    "existing_code": "type=\"text\"",
+    "evidence": "diff 中將 `type=\"number\"` 改為 `type=\"text\"`。"
+  }
+]

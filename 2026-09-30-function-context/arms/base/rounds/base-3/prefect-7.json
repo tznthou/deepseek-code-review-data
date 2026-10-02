@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "使用 Python hash() 作為 advisory lock key 會因 hash randomization 而失效",
+    "body": "`lock_key = hash(str(trigger.id)) % (2**63)` 使用 Python 內建的 `hash()`，其值在每次程序啟動時會因 hash randomization 而不同（除非設定 PYTHONHASHSEED）。這表示不同的 worker 程序（或甚至同一程序重啟後）對同一個 trigger.id 會計算出不同的 lock key，導致 advisory lock 無法跨程序互斥，競態條件依然存在。\n\n建議改用 trigger.id 的整數表示（例如 `trigger.id.int`）並取模，或使用 `uuid.UUID.int` 屬性，確保跨程序一致。",
+    "existing_code": "lock_key = hash(str(trigger.id)) % (2**63)",
+    "evidence": "diff 中新增的 `acquire_composite_trigger_lock` 函式內，使用 `hash(str(trigger.id))` 產生 lock key。Python 的 hash() 對字串預設使用隨機種子（PYTHONHASHSEED），不同程序間不一致。"
+  },
+  {
+    "path": "src/prefect/server/events/models/composite_trigger_child_firing.py",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SQLite 上完全沒有鎖保護，競態條件仍可能發生",
+    "body": "在 SQLite 上，`acquire_composite_trigger_lock` 直接跳過（註解說明 SQLite 序列化寫入，但讀取與寫入之間仍可能有競態）。`clear_child_firings` 的 DELETE ... RETURNING 雖然能偵測到競爭，但若兩個交易都讀到相同的 child firings，其中一個會刪除成功，另一個刪除 0 筆並跳過觸發，這可能導致複合觸發器永遠不觸發（如果兩個子觸發器事件分別由不同交易處理，且每個交易都只看到自己的 firing）。\n\n建議在 SQLite 上使用其他同步機制（例如 application-level lock 或樂觀鎖），或至少記錄警告。",
+    "existing_code": "# SQLite doesn't support advisory locks, but SQLite also serializes writes\n    # at the database level, so the race condition is less likely to occur",
+    "evidence": "diff 中 `acquire_composite_trigger_lock` 函式內，對非 PostgreSQL 方言直接跳過，沒有提供任何鎖定機制。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "logger 改為標準 logging 可能遺失 Prefect 的日誌上下文",
+    "body": "原本使用 `get_logger(__name__)` 取得 Prefect 的 logger，現在改為 `logging.getLogger(__name__)`。這可能導致日誌訊息失去 Prefect 的日誌格式、額外上下文（例如 flow run id）或日誌級別控制。如果這是無意的變更，建議恢復使用 `get_logger`。",
+    "existing_code": "logger = logging.getLogger(__name__)",
+    "evidence": "diff 中將 `logger: \"logging.Logger\" = get_logger(__name__)` 改為 `logger = logging.getLogger(__name__)`，且移除了 `get_logger` 的 import。"
+  },
+  {
+    "path": "tests/events/server/triggers/test_composite_triggers.py",
+    "line": 1645,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試可能因共用全域 mock 而互相干擾",
+    "body": "兩個測試都使用 `act` fixture（可能是全域的 mock），且都執行 `act.assert_called_once()`。如果測試執行順序不固定，前一個測試的呼叫可能殘留，導致後一個測試誤判。建議在每個測試前重置 mock（例如 `act.reset_mock()`）。",
+    "existing_code": "act.assert_called_once()",
+    "evidence": "diff 中兩個測試方法都使用 `act` 參數，但未見重置 mock 的程式碼。"
+  }
+]

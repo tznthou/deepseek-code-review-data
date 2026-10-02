@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/windows/util.rs",
+    "line": 65,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "download_webview2_offline_installer 未使用 base_ureq_agent，可能忽略 proxy 設定",
+    "body": "此處改用 `ureq::get(url)` 直接建立請求，而非使用 `base_ureq_agent()`。若使用者依賴環境變數設定的 proxy（如企業環境），此下載將繞過 proxy，可能導致連線失敗。建議改為 `base_ureq_agent().get(url)` 以維持一致性。",
+    "existing_code": "let response = ureq::get(url).call().map_err(Box::new)?;",
+    "evidence": "diff 中新增的 `let response = ureq::get(url).call().map_err(Box::new)?;` 取代了原本的 `download(url)?`，而 `download` 內部使用 `base_ureq_agent`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "generate_github_mirror_url_from_base 移除 set_path 可能改變鏡像 URL 行為",
+    "body": "原本 `cdn.set_path(github_url)` 會將鏡像 URL 的 path 設為完整的 GitHub URL，現在直接回傳 `cdn.to_string()`，可能導致鏡像 URL 格式錯誤（例如缺少 path 或 path 不正確）。需確認鏡像服務是否預期此行為，否則可能破壞 GitHub 鏡像功能。",
+    "existing_code": ".map(|cdn| {\n      cdn.to_string()\n    })",
+    "evidence": "diff 中刪除了 `cdn.set_path(github_url);`，僅保留 `cdn.to_string()`。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/cargo_manifest.rs",
+    "line": 194,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "crate_version 中 lock 判斷邏輯修正可能影響版本解析",
+    "body": "將 `crate_lock_packages.is_empty()` 改為 `!crate_lock_packages.is_empty()`，修正了原本的邏輯錯誤。但需確認此修正是否會導致在 lock 檔案存在但未包含該 crate 時，錯誤地設定 lock_version。建議補充測試涵蓋各種 lock 狀態。",
+    "existing_code": "if lock.is_some() && !crate_lock_packages.is_empty() {",
+    "evidence": "diff 中將 `crate_lock_packages.is_empty()` 改為 `!crate_lock_packages.is_empty()`。"
+  }
+]

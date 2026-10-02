@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SSL_CERT_DIR 解析時未處理 Path.GetFullPath 可能擲回的例外",
+    "body": "在解析現有 SSL_CERT_DIR 時，程式碼對每個目錄呼叫 `Path.GetFullPath(dir)`，但僅以 `catch` 捕捉例外並回傳 false。然而，`Path.GetFullPath` 可能因無效路徑字元、過長路徑或權限問題擲回 `ArgumentException`、`PathTooLongException`、`SecurityException` 等。若例外發生，該目錄會被忽略，可能導致誤判憑證目錄已存在或未存在。建議明確捕捉特定例外並記錄，或先驗證路徑格式。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的程式碼片段：`try { return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase); } catch { return false; }`"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "路徑比較使用 OrdinalIgnoreCase 在 Unix 上可能不正確",
+    "body": "Unix 檔案系統通常區分大小寫，但此處使用 `StringComparison.OrdinalIgnoreCase` 比較路徑，可能將不同大小寫的目錄視為相同，導致誤判。例如 `/home/user/.dotnet/corefx/cryptography/x509stores/ca` 與 `/HOME/USER/.DOTNET/...` 會被視為相同，但實際上可能指向不同位置。建議在 Unix 上使用 `StringComparison.Ordinal`，或根據作業系統選擇比較方式。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的程式碼片段：`return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);`"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 364,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "SSL_CERT_DIR 解析時未處理空目錄項目",
+    "body": "程式碼使用 `existingSslCertDir.Split(Path.PathSeparator)` 分割環境變數，但未移除空字串項目。若 SSL_CERT_DIR 包含連續分隔符（如 `dir1::dir2`），會產生空字串，後續 `string.IsNullOrWhiteSpace(dir)` 檢查會將其忽略，但可能導致其他邏輯問題。建議使用 `StringSplitOptions.RemoveEmptyEntries` 分割。",
+    "existing_code": "var existingDirs = existingSslCertDir.Split(Path.PathSeparator);",
+    "evidence": "diff 中新增的程式碼片段：`var existingDirs = existingSslCertDir.Split(Path.PathSeparator);`"
+  },
+  {
+    "path": "src/Tools/dotnet-dev-certs/src/Program.cs",
+    "line": 127,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "ReporterEventListener 未釋放可能造成資源洩漏",
+    "body": "在 `OnExecute` 中建立了 `ReporterEventListener` 實例，但未在結束時呼叫 `Dispose`。`EventListener` 實作 `IDisposable`，若未釋放可能導致事件監聽器持續存在，造成記憶體或資源洩漏。建議使用 `using` 陳述式或明確呼叫 `Dispose`。",
+    "existing_code": "var listener = new ReporterEventListener(reporter);",
+    "evidence": "diff 中新增的程式碼片段：`var listener = new ReporterEventListener(reporter);`"
+  },
+  {
+    "path": "src/Tools/dotnet-dev-certs/src/Program.cs",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "EventSource 監聽器預設啟用 LogAlways 可能影響效能",
+    "body": "在非 verbose 模式下，程式碼現在會以 `EventLevel.LogAlways` 啟用事件監聽器，這可能導致大量事件被處理，影響效能。雖然 `LogAlways` 層級的事件通常較少，但若未來新增更多此層級事件，可能造成不必要的負擔。建議確認此變更的必要性，或考慮使用更精確的過濾條件。",
+    "existing_code": "listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);",
+    "evidence": "diff 中新增的程式碼片段：`listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);`"
+  }
+]

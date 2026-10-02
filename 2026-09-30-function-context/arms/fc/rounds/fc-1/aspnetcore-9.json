@@ -1,0 +1,46 @@
+[
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "macOS 映像升級至 macOS-15 可能導致建置失敗",
+    "body": "將 macOS 映像從 macOS-13 升級至 macOS-15，同時將 Xcode 版本從 15.2.0 升級至 16.4.0。macOS-15 可能包含與現有建置工具或相依性不相容的變更，且 Xcode 16.4.0 可能尚未在 macOS-15 映像中預設安裝，導致 `xcode-select` 失敗。建議確認 macOS-15 映像中是否包含 Xcode 16.4.0，或改用其他方式指定 Xcode 版本。",
+    "existing_code": "vmImage: macOS-15",
+    "evidence": "diff 中將 `vmImage: macOS-13` 改為 `vmImage: macOS-15`，且 `xcode-select` 路徑改為 `/Applications/Xcode_16.4.0.app/Contents/Developer`。"
+  },
+  {
+    "path": "eng/Versions.props",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "ValidateBaseline 設為 false 可能隱藏套件參考變更",
+    "body": "將 `ValidateBaseline` 從 `true` 改為 `false`，這會停用基線驗證，可能導致未預期的套件參考變更被忽略。在 servicing 更新中，這可能允許破壞性變更進入發行版本。建議確認此變更的必要性，並考慮僅在特定條件下停用。",
+    "existing_code": "<ValidateBaseline>false</ValidateBaseline>",
+    "evidence": "diff 中將 `<ValidateBaseline>true</ValidateBaseline>` 改為 `<ValidateBaseline>false</ValidateBaseline>`。"
+  },
+  {
+    "path": "eng/targets/ResolveReferences.targets",
+    "line": 211,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "條件式錯誤檢查可能過於寬鬆",
+    "body": "在 `Error` 條件中新增 `AND '$(AspNetCorePatchVersion)' == '1'`，這表示只有當 patch 版本為 1 時才檢查未使用的基線套件參考。這可能導致後續 servicing 版本（patch > 1）跳過此檢查，增加風險。建議確認此條件是否應涵蓋所有 servicing 版本。",
+    "existing_code": "Condition=\" '$(IsServicingBuild)' == 'true' AND '@(UnusedBaselinePackageReference->Count())' != '0' AND '$(AspNetCorePatchVersion)' == '1'\"",
+    "evidence": "diff 中在 `Error` 條件中新增了 `AND '$(AspNetCorePatchVersion)' == '1'`。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 101,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "新增 QuarantinedTest 屬性可能隱藏測試失敗",
+    "body": "在測試方法上新增 `[QuarantinedTest]` 屬性，表示該測試已知不穩定，將被隔離。這可能導致問題被忽略，建議確認是否已建立追蹤 issue 並安排修復。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/64305\")]",
+    "evidence": "diff 中在 `EmbeddingServerAppInsideIframe_WithCompressionEnabled_Fails` 方法上新增了 `[QuarantinedTest]` 屬性。"
+  }
+]

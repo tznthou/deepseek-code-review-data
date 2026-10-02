@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 Back 改為 Forward 可能導致測試驗證錯誤的頁面",
+    "body": "在測試 `RedirectEnhancedGetToInternal` 中，原本使用 `Browser.Navigate().Back()` 來驗證返回上一頁，但此變更改為 `Forward()`。這可能導致測試驗證錯誤的頁面，因為 Forward 通常用於前進到下一頁，而非返回。若意圖是驗證返回行為，應保留 Back；若意圖是驗證前進行為，則需確認測試名稱與斷言是否相符。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 `Browser.Navigate().Back();` 改為 `Browser.Navigate().Forward();`，且後續斷言仍為 `Browser.Equal(\"Redirections\", () => _originalH1Element.Text);` 與 `Assert.EndsWith(\"/subdir/redirect\", Browser.Url);`，與 Forward 行為可能不一致。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 287,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試被標記為隔離且開關值變更，可能掩蓋問題",
+    "body": "測試 `NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException` 被加上 `[QuarantinedTest]` 屬性，且 `DisableThrowNavigationException` 開關從 `false` 改為 `true`。這可能表示測試目前不穩定或失敗，但隔離測試會使其在 CI 中跳過，無法驗證修復。建議確認隔離原因，並在修復後移除隔離標記。",
+    "existing_code": "[TestMethod]\n    [QuarantinedTest(\"https://github.com/dotnet/aspnetcore/pull/63708/\")]\n    public void NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException()\n    {\n        AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中新增 `[QuarantinedTest]` 屬性並將開關值改為 `true`，可能導致測試不再驗證原始行為。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/webhooks/lib/factory/versioned/v2021-10-20/BookingPayloadBuilder.ts",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "requestReschedule 預設值不一致",
+    "body": "在 v2021-10-20 的 builder 中，`requestReschedule` 使用 `dto.requestReschedule ?? true`，若 DTO 未提供此欄位，payload 會是 `true`。但在 `BookingWebhookFactory.createCancelledEventPayload` 中，預設值為 `false`。這兩個產生路徑的預設行為不同，可能導致下游 webhook 消費者收到不一致的資料。建議統一預設值，或明確在 DTO 層級提供。",
+    "existing_code": "requestReschedule: dto.requestReschedule ?? true,",
+    "evidence": "diff 中新增的這一行，與 BookingWebhookFactory.ts 中的 `requestReschedule: params.requestReschedule ?? false` 形成對比。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 414,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "ENABLE_WEBHOOKS 環境變數可能意外停用所有 webhook",
+    "body": "新增的 `const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";` 表示只要環境變數未設定或設為任何非 \"false\" 的值，webhook 都會啟用。但若部署環境中未設定此變數，且程式碼預期預設為停用，則會意外啟用；反之若預期預設為啟用，則此邏輯正確。需確認此環境變數的預設行為，並考慮加入更明確的設定或文件。",
+    "existing_code": "const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";",
+    "evidence": "diff 中新增的這一行，控制 webhook 是否發送，但未見對應的環境變數設定或測試。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 416,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "webhooksEnabled 為 false 時，promises 為空陣列，但後續仍會執行其他取消邏輯",
+    "body": "當 `webhooksEnabled` 為 false 時，`promises` 為空陣列，`await Promise.all(promises)` 會立即完成，但後續的取消流程（如更新資料庫、發送郵件等）仍會執行。這可能符合預期，但需確認停用 webhook 是否也應停用其他副作用。",
+    "existing_code": "const promises = webhooksEnabled ? webhooks.map((webhook) =>",
+    "evidence": "diff 中新增的條件式，僅控制 webhook 發送，但未影響其他取消邏輯。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleSeats/cancel/cancelAttendeeSeat.ts",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "requestReschedule 在取消座位時固定為 true，可能不準確",
+    "body": "在 `cancelAttendeeSeat` 中，payload 新增 `requestReschedule: true`，但此流程是取消座位，並非 request-reschedule 流程。若此 webhook 被下游用於判斷是否為 reschedule 請求，可能會誤判。建議確認此處的語意。",
+    "existing_code": "requestReschedule: true,",
+    "evidence": "diff 中新增的這一行，位於 cancelAttendeeSeat.ts 的 payload 建構中。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "新增 select 欄位可能影響效能",
+    "body": "在 `findByUidIncludeEventTypeAndReferences` 中新增了 `title`、`length`、`iCalSequence` 欄位，這些欄位可能不是所有呼叫端都需要，增加不必要的資料傳輸。建議確認所有使用此方法的呼叫端是否都需要這些欄位。",
+    "existing_code": "title: true,\n            length: true,",
+    "evidence": "diff 中新增的 select 欄位。"
+  }
+]
