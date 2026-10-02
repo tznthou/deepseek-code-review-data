@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "多 renderer 並存時初始化可能被跳過",
+    "body": "`hasInitializedJsComponents` 是全域變數，一旦設為 true，之後任何 renderer 呼叫 `enableJSRootComponents` 都不會再執行初始化。若頁面同時存在多個不同 renderer（例如一個 Server 和一個 WebAssembly），且第一個 renderer 初始化後，第二個 renderer 的 JS 元件將不會被初始化，導致功能失效。\n\n建議將 `hasInitializedJsComponents` 改為以 rendererId 為鍵的集合，或將初始化邏輯綁定到每個 manager 實例。",
+    "existing_code": "if (!hasInitializedJsComponents) {\n  // Call the registered initializers...\n  ...\n  hasInitializedJsComponents = true;\n}",
+    "evidence": "diff 中新增了全域變數 `let hasInitializedJsComponents = false;`，並在 `enableJSRootComponents` 內以 `if (!hasInitializedJsComponents)` 包裹初始化邏輯，最後設為 true。此變數未與 rendererId 關聯，因此跨 renderer 共用。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 126,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "renderer 切換時可能錯誤拋出例外",
+    "body": "條件 `if (manager && currentRendererId === rendererId)` 只在 manager 存在且 rendererId 相同時拋出例外。若 manager 存在但 rendererId 不同（例如從 Server 切換到 WebAssembly），則不會拋出例外，而是直接覆寫 manager 和 currentRendererId。這可能導致舊 manager 的資源未被正確處理，或新舊 manager 狀態混亂。\n\n建議明確處理 rendererId 不同的情況，例如記錄警告或採取其他措施。",
+    "existing_code": "if (manager && currentRendererId === rendererId) {\n  throw new Error('Dynamic root components have already been enabled.');\n}",
+    "evidence": "diff 中條件從 `if (manager)` 改為 `if (manager && currentRendererId === rendererId)`，但未處理 manager 存在且 rendererId 不同的分支。"
+  },
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 136,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "未更新 jsComponentParametersByIdentifier",
+    "body": "在重新啟用時，程式碼更新了 `manager` 和 `currentRendererId`，但未更新 `jsComponentParametersByIdentifier`。若新的 renderer 提供了不同的參數，舊參數仍會被使用，可能導致元件初始化時使用過時資料。\n\n建議在重新啟用時一併更新 `jsComponentParametersByIdentifier`。",
+    "existing_code": "currentRendererId = rendererId;\nmanager = managerInstance;",
+    "evidence": "diff 中原本有 `jsComponentParametersByIdentifier = jsComponentParameters;`，但被移除，且未在重新啟用路徑中重新賦值。"
+  }
+]

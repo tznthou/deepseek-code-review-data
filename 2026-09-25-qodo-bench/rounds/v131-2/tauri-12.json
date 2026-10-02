@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "CFBundleTypeExtensions 條件判斷相反",
+    "body": "在 `create_info_plist` 中，原本無條件插入 `CFBundleTypeExtensions`，現在改為 `if association.ext.is_empty()` 才插入。這會導致當 `ext` 非空時（即一般情況），`CFBundleTypeExtensions` 不會被加入 plist，使得 macOS 無法將檔案副檔名與應用程式關聯。應改為 `if !association.ext.is_empty()`。",
+    "existing_code": "if association.ext.is_empty() {\n  dict.insert(\n    \"CFBundleTypeExtensions\".into(),\n    plist::Value::Array(\n      association\n        .ext\n        .iter()\n        .map(|ext| ext.to_string().into())\n        .collect(),\n    ),\n  );\n}",
+    "evidence": "diff 中新增的條件判斷 `if association.ext.is_empty()` 與原本的無條件插入形成對比，且語意上應為「有副檔名才插入」。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "CFBundleTypeName 使用 expect 可能導致 panic",
+    "body": "原本使用 `unwrap_or(&association.ext[0].0)` 提供預設值，現在改為 `expect(\"File association must have a name\")`。若使用者未設定 `name` 且 `ext` 為空（例如僅使用 contentTypes 的關聯），則會在建置時 panic。建議保留原本的 fallback 邏輯，或提供更明確的錯誤處理。",
+    "existing_code": "dict.insert(\n  \"CFBundleTypeName\".into(),\n  association\n    .name\n    .as_ref()\n    .expect(\"File association must have a name\")\n    .to_string()\n    .into(),\n);",
+    "evidence": "diff 中將 `unwrap_or(&association.ext[0].0)` 改為 `expect`，且 `name` 為 `Option<String>`，未處理 `None` 情況。"
+  }
+]

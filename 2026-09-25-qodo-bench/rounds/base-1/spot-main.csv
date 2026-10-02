@@ -1,0 +1,31 @@
+pair,label,note
+base-1:Ghost-1:2|Ghost-1#1,no,apiUrl 被拿掉 vs slack.listen 被移除
+base-1:Ghost-1:2|Ghost-1#3,no,apiUrl vs 初始化競爭
+base-1:aspnetcore-1:2|aspnetcore-1#6,no,SetSwitch 值 vs 非 xUnit 屬性
+base-1:aspnetcore-6:1|aspnetcore-6#2,same,同一個 null 檢查被拿掉
+base-1:aspnetcore-8:1|aspnetcore-8#1,same,remarks 寫進 Summary；改回 Description 兩者都修好（邊界：finding 講的後果不同）
+base-1:cal.com-11:1|cal.com-11#3,same,requestReschedule 預設 true
+base-1:cal.com-16:2|cal.com-16#3,no,權限 READ→WRITE vs guard 順序
+base-1:cal.com-6:1|cal.com-6#2,no,token identifier vs 邀請網址邏輯反轉
+base-1:cal.com-6:3|cal.com-6#1,partial,同一個 @Roles 授權過寬但主張不同（邊界：可能是 no）
+base-1:cal.com-8:2|cal.com-8#1,no,鍵盤操作 vs onClick 遺失
+base-1:dify-2:1|dify-2#1,no,return True vs 沒有正規化
+base-1:dify-4:2|dify-4#3,no,迴圈內 flush vs 錯誤被吞掉
+base-1:dify-4:4|dify-4#1,no,selector 檢查 vs flush 批次
+base-1:dify-7:2|dify-7#3,same,缺 returnObjects 支援
+base-1:firefox-ios-1:2|firefox-ios-1#1,no,類別未使用 vs 字串常數引用錯
+base-1:firefox-ios-11:1|firefox-ios-11#2,same,重複 browserActionStack
+base-1:firefox-ios-3:3|firefox-ios-3#0,same,魔法數字 40 取代 UX 常數
+base-1:firefox-ios-7:1|firefox-ios-7#2,same,非主執行緒回傳 nil；修好函式兩者都解（邊界：finding 建議的修法較弱）
+base-1:prefect-3:2|prefect-3#2,same,prefix items 進了 SortableContext
+base-1:prefect-5:1|prefect-5#0,no,路徑比對過鬆 vs field_validator
+base-1:prefect-6:5|prefect-6#3,no,deployment_id 型別 vs 輪詢先睡
+base-1:redis-2:3|redis-2#6,no,效能 vs 缺 static
+base-1:redis-4:5|redis-4#3,no,沒存設定 vs 缺 static
+base-1:redis-5:1|redis-5#1,same,samples 取代 elecount
+base-1:tauri-1:1|tauri-1#1,no,versionCode 上限 vs dev 模式也遞增（邊界：同一功能區塊）
+base-1:tauri-10:2|tauri-10#3,no,cfg(desktop) vs 視窗命名
+base-1:tauri-10:2|tauri-10#5,no,cfg(desktop) vs unwrap
+base-1:tauri-11:1|tauri-11#3,same,條件被反轉（邊界：finding 語氣保留）
+base-1:tauri-12:1|tauri-12#2,same,is_empty 條件反轉
+base-1:tauri-6:2|tauri-6#1,no,返回鍵狀態 vs finish 在 resolve 之前

@@ -1,0 +1,13 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/State/TabsPanelState.swift",
+    "line": 143,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "滾動索引超出範圍",
+    "body": "在 `createTabScrollBehavior` 中，當沒有選取分頁時，回傳的 `toIndex` 使用了 `state.tabs.count`，但陣列索引是從 0 開始，因此最後一個有效索引是 `count - 1`。這會導致 `IndexPath(row:section:)` 使用無效的 row，可能造成滾動到錯誤位置或當機。\n\n建議改為 `state.tabs.count - 1`。",
+    "existing_code": "return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)",
+    "evidence": "diff 中此行由原本的 `state.tabs.count - 1` 改為 `state.tabs.count`，且測試 `testCreateTabScrollBehavior_forScrollToSelectedTab_noSelectedTab_returnsLastTab_ifTabsNotEmpty` 仍預期 `toIndex` 為 `tabCount - 1`，但測試尚未更新，可能導致測試失敗。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 312,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "write_and_make_executable 先設定權限再寫入，可能導致權限被覆蓋",
+    "body": "函式 `write_and_make_executable` 原本先寫入檔案再設定權限，現在改為先設定權限再寫入。若檔案已存在，`fs::write` 會以預設權限（通常為 0644）覆寫內容，導致先前設定的執行權限（0770）遺失。建議改回先寫入再設定權限，或使用 `OpenOptions` 明確指定權限。",
+    "existing_code": "fs::set_permissions(path, fs::Permissions::from_mode(0o770)).map_err(FileWriteError::Permissions)?;\n  fs::write(path, data).map_err(FileWriteError::Write)?;",
+    "evidence": "diff 中顯示原本順序為 `fs::write` 後 `fs::set_permissions`，現在順序顛倒。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "linuxdeploy 下載 URL 使用 arch 而非 linuxdeploy_arch，可能導致 i686 架構下載錯誤",
+    "body": "原本下載 linuxdeploy 時使用 `linuxdeploy_arch`（i686 對應 i383），但修改後改為使用 `arch`。若 `arch` 為 `i686`，則會嘗試下載 `linuxdeploy-i686.AppImage`，但實際檔案名稱可能為 `linuxdeploy-i383.AppImage`，導致下載失敗。建議保留 `linuxdeploy_arch` 變數。",
+    "existing_code": "let data = download(&format!(\"https://github.com/tauri-apps/binary-releases/releases/download/linuxdeploy/linuxdeploy-{arch}.AppImage\"))?;",
+    "evidence": "diff 中原本使用 `linuxdeploy_arch`，現在改為 `arch`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 316,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "find 指令使用 -exec 搭配 dirname 可能無法正確處理含空格路徑",
+    "body": "`find /usr/lib* -name libgiognutls.so -exec mkdir -p \"$APPDIR\"/\"$(dirname '{}')\" \\; -exec cp --parents '{}' \"$APPDIR/\" \\;` 中，`dirname '{}'` 在 find 的 -exec 中不會被 shell 展開，而是直接將 `{}` 傳給 dirname，可能導致路徑錯誤。建議改用 `-exec sh -c '...'` 或 `-execdir`。",
+    "existing_code": "find /usr/lib* -name libgiognutls.so -exec mkdir -p \"$APPDIR\"/\"$(dirname '{}')\" \\; -exec cp --parents '{}' \"$APPDIR/\" \\; || true",
+    "evidence": "diff 中新增的這一行。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 326,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "sed 對 libwebkit 檔案進行二進位替換可能損壞檔案",
+    "body": "`find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;` 直接對二進位檔案執行 sed 替換，可能破壞檔案內容。建議使用 `sed -i.bak` 或確認檔案為文字格式，或改用 `patchelf` 等工具。",
+    "existing_code": "find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;",
+    "evidence": "diff 中新增的這一行。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "GStreamer 0.10 的 AppRun hook 使用了錯誤的路徑",
+    "body": "在 `GSTREAMER_VERSION == \"0.10\"` 的分支中，`GST_PLUGIN_SYSTEM_PATH_0_10` 被設定為 `${APPDIR}/usr/lib/gstreamer-1.0`，但 0.10 版本應使用 `gstreamer-0.10`。這可能導致 0.10 應用程式找不到外掛。",
+    "existing_code": "export GST_PLUGIN_SYSTEM_PATH_0_10=\"${APPDIR}/usr/lib/gstreamer-1.0\"",
+    "evidence": "diff 中該行位於 0.10 分支。"
+  }
+]

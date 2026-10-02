@@ -1,0 +1,109 @@
+pair,label,note
+base-1:Ghost-1:1|Ghost-1#1,no,"講 email 初始化順序，GT 是 slack.listen 被移除"
+base-1:Ghost-1:1|Ghost-1#2,no,"講 email 初始化順序，GT 是排程缺 apiUrl"
+base-1:Ghost-1:1|Ghost-1#3,same,同指 emailAddressService 改並行破壞相依順序
+base-1:Ghost-1:2|Ghost-1#1,no,"講排程缺 apiUrl，GT 是 slack.listen 被移除"
+base-1:Ghost-1:2|Ghost-1#2,same,同指 scheduling.init 少傳 apiUrl
+base-1:Ghost-1:2|Ghost-1#3,no,"講排程缺 apiUrl，GT 是 email 初始化順序"
+base-1:Ghost-10:1|Ghost-10#0,same,同指 tsconfig 的 strict 被改成 false
+base-1:Ghost-10:2|Ghost-10#2,partial,"同段輪詢，但講請求重疊與 ref 重設，非 off-by-one"
+base-1:Ghost-10:3|Ghost-10#2,no,"講達上限後自動停用，GT 是重試次數 off-by-one"
+base-1:Ghost-10:4|Ghost-10#3,same,同指 confirm 後漏 invalidate accountFollows
+base-1:Ghost-11:3|Ghost-11#0,no,"講 autoClose 行為，GT 是 var 宣告規則"
+base-1:Ghost-11:3|Ghost-11#4,partial,"同一行，但說會意外關閉；GT 是沒 setOpen(false) 關不掉"
+base-1:Ghost-11:4|Ghost-11#2,no,"講多選分支，GT 是單選路徑漏呼叫 handleClose"
+base-1:Ghost-12:1|Ghost-12#2,same,同指 decode 取代 verify 略過簽章驗證
+base-1:Ghost-12:1|Ghost-12#3,no,"講 decode 略過驗簽，GT 是移除 noTimestamp"
+base-1:Ghost-12:2|Ghost-12#1,same,同指 _serverToken 改存整個物件而非字串
+base-1:Ghost-12:2|Ghost-12#4,same,同一根因：存物件；改存字串即修好 _isJWTExpired 型別錯
+base-1:Ghost-12:3|Ghost-12#2,no,"講移除 noTimestamp，GT 是 decode 略過驗簽"
+base-1:Ghost-12:3|Ghost-12#3,same,同指移除 noTimestamp 改變 token 格式
+base-1:Ghost-13:1|Ghost-13#1,same,同指版本字尾順序與後端相反
+base-1:Ghost-13:3|Ghost-13#2,same,同指 source 參數沒再傳給 Tinybird
+base-1:Ghost-2:1|Ghost-2#2,same,"內文點出改用 expertise 而非 name，建議改回"
+base-1:Ghost-2:2|Ghost-2#1,same,同指 openForm 少了 optional chaining
+base-1:Ghost-2:3|Ghost-2#3,same,同指 in_reply_to_id 改成 parent.id
+base-1:Ghost-3:1|Ghost-3#1,same,"同指 < 改成 <= 納入今天，後果推論不同"
+base-1:Ghost-3:3|Ghost-3#2,partial,"同一高流量分支，但講 min 公式，非 400k 邊界 >="
+base-1:Ghost-3:3|Ghost-3#3,no,"講高流量分支公式，GT 是門檻迴圈 < 應為 <="
+base-1:Ghost-4:1|Ghost-4#0,no,"講 XSS，GT 是缺分號規則"
+base-1:Ghost-4:1|Ghost-4#5,no,"講 XSS，GT 是缺分號規則"
+base-1:Ghost-4:2|Ghost-4#0,no,"講 useEffect 依賴，GT 是缺分號規則"
+base-1:Ghost-4:2|Ghost-4#1,same,同指 useEffect 依賴陣列缺 item.html
+base-1:Ghost-4:2|Ghost-4#5,no,"講 useEffect 依賴，GT 是缺分號規則"
+base-1:Ghost-5:1|Ghost-5#2,same,同指 minimal 模式拿掉 setLoading(false)
+base-1:Ghost-5:2|Ghost-5#0,no,"講回傳 null，GT 是雙引號規則"
+base-1:Ghost-5:2|Ghost-5#1,same,同指拿掉 if (history) 檢查致回傳空值
+base-1:Ghost-5:3|Ghost-5#3,same,"同指 trim 只在送出，驗證用未 trim 的值"
+base-1:Ghost-6:1|Ghost-6#1,same,"同指 hasScheduled 條件反轉，首次不排程"
+base-1:Ghost-6:2|Ghost-6#0,no,"講 config 值未驗證，GT 是 var 宣告規則"
+base-1:Ghost-6:2|Ghost-6#2,partial,"同一行條件，但講 config 未驗證，沒抓到 || 應為 &&"
+base-1:Ghost-6:3|Ghost-6#1,no,"講 config 值未驗證，GT 是 hasScheduled 條件反轉"
+base-1:Ghost-7:1|Ghost-7#0,same,finding 明講移除所有行尾分號
+base-1:Ghost-7:1|Ghost-7#1,no,"講混入格式變更，GT 是 MagicLink require 路徑錯"
+base-1:Ghost-7:2|Ghost-7#0,no,"講路徑大小寫部署風險，GT 是缺分號規則"
+base-1:Ghost-7:2|Ghost-7#1,no,"泛談其他 require 大小寫風險，沒指出 MagicLink 未改名"
+base-1:Ghost-8:1|Ghost-8#2,same,同指譯文漏掉 {newsletterName}
+base-1:Ghost-8:1|Ghost-8#6,no,"同一行，但 GT 是縮排規則，與漏變數無關"
+base-1:Ghost-8:3|Ghost-8#1,same,同指 Name 在 portal 與 ghost 譯法不一致
+base-1:Ghost-9:1|Ghost-9#0,no,"講回傳 Infinity，GT 是缺分號規則"
+base-1:Ghost-9:1|Ghost-9#1,no,"講回傳 Infinity，GT 是 ceil 算天數"
+base-1:Ghost-9:1|Ghost-9#2,partial,"同一行，但講回傳 Infinity，沒抓到 > 應為 >="
+base-1:Ghost-9:1|Ghost-9#3,no,"講回傳 Infinity，GT 是 floor 應為 round"
+base-1:Ghost-9:2|Ghost-9#0,no,"講 Date.now 測試不穩，GT 是缺分號規則"
+base-1:Ghost-9:2|Ghost-9#1,partial,"同一行天數計算，但講時鐘注入，非 ceil 應為 floor"
+base-1:Ghost-9:2|Ghost-9#2,no,"講 Date.now 測試不穩，GT 是完成判斷 off-by-one"
+base-1:Ghost-9:2|Ghost-9#3,no,"講 Date.now 測試不穩，GT 是 floor 應為 round"
+base-1:Ghost-9:3|Ghost-9#0,no,"講 NQL 過濾條件，GT 是缺分號規則"
+base-1:Ghost-9:3|Ghost-9#1,no,"講查詢過濾條件，GT 是 ceil 取整多算一天"
+base-1:Ghost-9:3|Ghost-9#2,no,"講查詢過濾條件，GT 是 > 應為 >="
+base-1:Ghost-9:4|Ghost-9#0,no,"講 created_at 為 null，GT 是缺分號規則"
+base-1:Ghost-9:4|Ghost-9#1,partial,"同一行天數計算，但講 null 產生 NaN，非 ceil 取整"
+base-1:Ghost-9:4|Ghost-9#2,no,"講 created_at 為 null，GT 是 > 應為 >="
+base-1:Ghost-9:4|Ghost-9#3,no,"講 created_at 為 null，GT 是 floor 應為 round"
+base-1:aspnetcore-1:1|aspnetcore-1#2,same,同指 Forward() 應為 Back()
+base-1:aspnetcore-1:2|aspnetcore-1#0,no,"講 SetSwitch 值，GT 是 MSTest 屬性規則"
+base-1:aspnetcore-1:2|aspnetcore-1#3,same,同指 switch 改 true 使測試失去意義
+base-1:aspnetcore-1:2|aspnetcore-1#6,no,"講 SetSwitch 值，GT 是 QuarantinedTest 屬性規則"
+base-1:aspnetcore-10:1|aspnetcore-10#2,same,"同指 < 0 放行 0，違反 positive 契約"
+base-1:aspnetcore-10:2|aspnetcore-10#1,same,"同指 <= 0 拒絕 0，與 non-negative 矛盾"
+base-1:aspnetcore-10:3|aspnetcore-10#3,same,"同指 null 賦值移到開頭，還原即修；finding 把影響講輕"
+base-1:aspnetcore-10:4|aspnetcore-10#0,partial,"看到大括號位置改變，但判定只是格式、無問題"
+base-1:aspnetcore-10:4|aspnetcore-10#3,no,"講另一方法的格式，GT 是 out 參數提早賦 null"
+base-1:aspnetcore-2:2|aspnetcore-2#3,same,同指 TCS 在零位元組檢查前就重建
+base-1:aspnetcore-2:3|aspnetcore-2#1,partial,"同一斷言，但當成可讀性問題，沒指出 && 應為 ||"
+base-1:aspnetcore-2:3|aspnetcore-2#4,no,"講斷言寫法，GT 是缺 AAA 註解規則"
+base-1:aspnetcore-3:1|aspnetcore-3#1,partial,"同一行比較，但講尾端分隔符，非大小寫不敏感"
+base-1:aspnetcore-3:1|aspnetcore-3#2,no,"症狀相同但根因是尾端分隔符，GT 是誤用 prettyCertDir"
+base-1:aspnetcore-3:1|aspnetcore-3#4,no,"講路徑比較，GT 是 lambda 大括號風格"
+base-1:aspnetcore-3:3|aspnetcore-3#3,same,同指非 verbose 設 LogAlways 導致輸出過多
+base-1:aspnetcore-3:4|aspnetcore-3#0,same,同指 NssDb 改回傳統建構子而非 primary
+base-1:aspnetcore-4:1|aspnetcore-4#0,no,"講顯示名稱不更新，GT 是 namespace 風格規則"
+base-1:aspnetcore-4:1|aspnetcore-4#1,partial,"同一段，但說更新不足；GT 說多餘重繪，方向相反"
+base-1:aspnetcore-4:2|aspnetcore-4#2,no,"講 hot reload 沒清快取，GT 是查詢時不再用快取"
+base-1:aspnetcore-4:2|aspnetcore-4#3,same,同指 ClearCache 沒清 _displayNameCache
+base-1:aspnetcore-4:3|aspnetcore-4#2,no,"講例外訊息不明確，GT 是拿掉顯示名稱快取"
+base-1:aspnetcore-5:1|aspnetcore-5#3,same,同指斷言誤用 GenericComponent<string>
+base-1:aspnetcore-5:1|aspnetcore-5#7,no,"講泛型型別不一致，GT 是缺 Async 字尾規則"
+base-1:aspnetcore-5:2|aspnetcore-5#0,same,同指改成 block-scoped namespace
+base-1:aspnetcore-6:1|aspnetcore-6#2,same,同指拿掉 InteractiveRequestUrl 的 null 檢查
+base-1:aspnetcore-6:2|aspnetcore-6#0,partial,"同行 Task.Yield，講時序；GT 是缺 ConfigureAwait"
+base-1:aspnetcore-6:2|aspnetcore-6#1,no,"講 Task.Yield 時序，GT 是登出驗證拿掉 null 檢查"
+base-1:aspnetcore-7:1|aspnetcore-7#0,no,"講全域初始化旗標，GT 是 for 迴圈缺大括號"
+base-1:aspnetcore-7:1|aspnetcore-7#1,no,"講全域初始化旗標，GT 是 renderer 判斷寫反"
+base-1:aspnetcore-7:1|aspnetcore-7#2,no,"講全域初始化旗標，GT 是漏更新 parameters"
+base-1:aspnetcore-7:2|aspnetcore-7#1,partial,"看到不同 renderer 會覆寫 manager，沒指出條件寫反"
+base-1:aspnetcore-7:2|aspnetcore-7#2,no,"同區塊但講舊 manager 未處理，GT 是漏更新 parameters"
+base-1:aspnetcore-8:1|aspnetcore-8#1,same,同指 remarks 寫進 Summary 而非 Description
+base-1:aspnetcore-8:2|aspnetcore-8#2,same,同指用 propertyName 取代 metadata.Name
+base-1:aspnetcore-8:2|aspnetcore-8#3,no,"講參數名比對，GT 是 Description 設定順序"
+base-1:aspnetcore-8:3|aspnetcore-8#2,no,"講 Description 設定順序，GT 是參數名比對"
+base-1:aspnetcore-8:3|aspnetcore-8#3,same,同指 Description 移到範例處理後可能漏設
+base-1:aspnetcore-9:1|aspnetcore-9#2,no,"講停用基線驗證，GT 是 servicing 缺 branding 標籤"
+base-1:cal.com-1:1|cal.com-1#2,no,"講 undefined 轉型，GT 是子團隊缺 parentId 條件"
+base-1:cal.com-1:2|cal.com-1#2,same,同指子團隊條件漏 child.parentId
+base-1:cal.com-1:3|cal.com-1#2,no,"講 null 處理，GT 是子團隊缺 parentId 條件"
+base-1:cal.com-1:5|cal.com-1#3,same,同指 isCurrentUser 改 includes 造成權限繞過
+base-1:cal.com-10:1|cal.com-10#1,same,同指單筆接受時 oldStatus 寫死 ACCEPTED
+base-1:cal.com-10:4|cal.com-10#0,no,"講 schema 相容性，GT 是行寬超過 110"
+base-1:cal.com-10:5|cal.com-10#3,no,"講 oldStatus 來源，GT 是事件早於 DB 更新"

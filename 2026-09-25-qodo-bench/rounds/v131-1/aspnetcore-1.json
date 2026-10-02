@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Navigate 呼叫順序變更可能導致測試不穩定",
+    "body": "原本先 Navigate 再取得 h1 元素，現在改為先取得 h1 元素再 Navigate。若 Navigate 會觸發頁面重新載入，則先前取得的元素參考可能失效，導致後續 Browser.Equal 失敗。建議確認此變更是否為修正既有問題，並確保元素參考在導航後仍有效。",
+    "existing_code": "_originalH1Element = Browser.Exists(By.TagName(\"h1\"));\nNavigate($\"{ServerPathBase}/redirect\");",
+    "evidence": "diff 中顯示原本的 Navigate 在取得元素之前，現在移到之後。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Forward 取代 Back 可能不符合測試意圖",
+    "body": "原本測試使用 Back 來驗證返回上一頁，現在改為 Forward。若測試目的是驗證返回行為，此變更可能使測試失去意義。需確認是否為預期修正，否則應保留 Back。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中顯示原本的 Back 被改為 Forward。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "AppContext.SetSwitch 參數反轉可能導致測試失效",
+    "body": "原本設定 DisableThrowNavigationException 為 false，現在改為 true。若測試目的是驗證例外拋出，設為 true 會停用例外，可能使測試無法觸發預期行為。需確認此變更是否為預期修正。",
+    "existing_code": "AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中顯示原本的 false 被改為 true。"
+  }
+]

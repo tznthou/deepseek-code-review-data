@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "cancelEditMode 條件判斷反轉，導致 URL 處理錯誤",
+    "body": "原本的條件是 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，表示只有當 URL 是網頁且不是閱讀模式時才保留 URL。修改後變成 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`，這會讓任何網頁 URL 或閱讀模式 URL 都被保留，包括非網頁的 URL（例如 `about:blank`）也會被保留，可能導致取消編輯時 URL 欄位顯示不正確的內容。\n\n建議改回原本的邏輯，或確認此變更是否為有意為之。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&& !` 改為 `||`，邏輯完全相反。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "readerModeState 遙測旗標邏輯顛倒",
+    "body": "原本 `case .available: true` 表示當閱讀模式可用時，遙測事件記錄 `isEnabled = true`。修改後變成 `case .available: false`，而 `default: true`，這會導致當閱讀模式可用時記錄為未啟用，反之亦然，造成遙測數據錯誤。\n\n建議改回原本的邏輯，或確認此變更是否為有意為之。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中將 `true` 改為 `false`，`false` 改為 `true`，註解未變更。"
+  }
+]

@@ -1,0 +1,79 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "async setUp 中呼叫 @MainActor async 方法缺少 await",
+    "body": "在 `setUp() async throws` 中呼叫 `DependencyHelperMock().bootstrapDependencies()`，但該方法已標記為 `@MainActor` 且為 async，此處未加 `await`，將導致編譯錯誤。\n\n建議改為：\n```swift\nawait DependencyHelperMock().bootstrapDependencies()\n```",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未加 await，而其他檔案（如 FormAutofillHelperTests.swift）已改為 `await DependencyHelperMock().bootstrapDependencies()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "setUp 中呼叫 @MainActor 方法可能造成執行緒問題",
+    "body": "`bootstrapDependencies` 現在是 `@MainActor`，但此測試類別未標記為 `@MainActor`，且 `setUp` 為 async，呼叫時若未在 MainActor 上執行，可能導致 runtime crash 或資料競爭。建議將測試類別標記為 `@MainActor` 或確保在 MainActor 上呼叫。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "其他測試類別如 `DownloadProgressManagerTests` 有標記 `@MainActor`，此處未標記。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DependencyInjection/DependencyHelperMock.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "bootstrapDependencies 標記 @MainActor 但未處理非 MainActor 呼叫",
+    "body": "將 `bootstrapDependencies` 標記為 `@MainActor` 後，所有呼叫端都必須在 MainActor 上執行。但仍有部分測試類別（如 `LaunchScreenViewModelTests`）未標記 `@MainActor`，且呼叫時未使用 `await`，可能導致編譯錯誤或 runtime 問題。建議全面檢查所有呼叫端，確保在 MainActor 上呼叫或使用 `await MainActor.run`。",
+    "existing_code": "@MainActor\n    func bootstrapDependencies(",
+    "evidence": "diff 中新增 `@MainActor` 屬性，但未修改所有呼叫端。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/TestSetup.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除 TestSetup.swift 可能影響其他測試",
+    "body": "刪除 `TestSetup.swift` 檔案，但該檔案可能被其他測試或程式碼引用。若仍有引用，將導致編譯失敗。建議確認所有引用已移除。",
+    "existing_code": "class TestSetup: NSObject {\n    override init() {\n        DependencyHelperMock().bootstrapDependencies()\n    }\n}",
+    "evidence": "diff 顯示整個檔案被刪除，但未確認其他檔案是否引用。"
+  },
+  {
+    "path": "firefox-ios/Client.xcodeproj/project.pbxproj",
+    "line": 13745,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 TestSetup.swift 的檔案引用",
+    "body": "從專案檔中移除 `TestSetup.swift` 的引用，但若該檔案仍存在於檔案系統中，可能造成專案不一致。建議確認檔案已刪除。",
+    "existing_code": "5A70EF1C295E3C3500790249 /* TestSetup.swift */",
+    "evidence": "diff 中移除該行。"
+  },
+  {
+    "path": "firefox-ios/Client.xcodeproj/project.pbxproj",
+    "line": 14844,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 OnboardingMultipeChoiceButtonModel.swift 引用",
+    "body": "從專案檔中移除 `OnboardingMultipeChoiceButtonModel.swift` 的引用，但未看到對應的檔案刪除。若檔案仍存在，可能造成專案不一致。",
+    "existing_code": "81055B552BAB7CE200E166B3 /* OnboardingMultipeChoiceButtonModel.swift */",
+    "evidence": "diff 中移除該行，但未見檔案刪除。"
+  },
+  {
+    "path": "firefox-ios/Client.xcodeproj/project.pbxproj",
+    "line": 18982,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 Locale+possibilitiesForLanguageIdentifier.swift 引用",
+    "body": "從專案檔中移除 `Locale+possibilitiesForLanguageIdentifier.swift` 的引用，但未看到對應的檔案刪除。若檔案仍存在，可能造成專案不一致。",
+    "existing_code": "ED07C0E62CCACD7E006C0627 /* Locale+possibilitiesForLanguageIdentifier.swift */",
+    "evidence": "diff 中移除該行，但未見檔案刪除。"
+  }
+]

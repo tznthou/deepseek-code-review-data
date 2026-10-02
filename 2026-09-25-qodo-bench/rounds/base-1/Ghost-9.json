@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "暖機完成後回傳 Infinity 可能導致非預期行為",
+    "body": "在 `getWarmupLimit` 中，當 `day > totalDays` 時回傳 `Infinity`。這會使呼叫端在執行 `Math.min(emailCount, Infinity)` 時得到 `emailCount`，看似正確，但若呼叫端未預期到 `Infinity` 值，可能導致後續計算錯誤或型別問題。建議改為回傳 `emailCount`，或明確回傳一個極大值（如 `Number.MAX_SAFE_INTEGER`），並在文件或型別上說明。",
+    "existing_code": "if (day > this.#warmupConfig.totalDays) {\n    return Infinity\n}",
+    "evidence": "diff 中新增的程式碼片段，直接回傳 `Infinity`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "天數計算使用 Date.now() 導致測試不穩定",
+    "body": "`#getDaysSinceFirstEmail` 使用 `Date.now()` 計算天數，但在測試中使用了 `sinon.useFakeTimers` 固定時間，而此方法並未使用注入的時鐘，可能導致測試結果與實際時間不一致，造成 flaky tests。建議將時間來源注入或使用可替換的 clock。",
+    "existing_code": "return Math.ceil((Date.now() - new Date(res.data[0].get('created_at') as string).getTime()) / (1000 * 60 * 60 * 24));",
+    "evidence": "diff 中新增的程式碼片段，使用 `Date.now()`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "查詢條件 csd_email_count:-null 可能無法正確過濾 null",
+    "body": "`#getDaysSinceFirstEmail` 使用 filter `'csd_email_count:-null'` 來取得第一封有 csd_email_count 的郵件。但 `-null` 在 Ghost 的 NQL 中可能表示「不等於 null」，而非「不為 null」，這可能導致查詢結果包含 null 值，進而使 `created_at` 為 null 或錯誤的資料被選中。建議確認 NQL 語法，或改用 `csd_email_count:>0` 等明確條件。",
+    "existing_code": "filter: 'csd_email_count:-null',",
+    "evidence": "diff 中新增的查詢條件。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "未處理 created_at 為 null 的情況",
+    "body": "`#getDaysSinceFirstEmail` 假設 `res.data[0].get('created_at')` 一定存在且為有效日期字串。若資料庫中該欄位為 null 或格式不符，`new Date(...)` 會產生 Invalid Date，導致計算結果為 NaN。建議加入防禦性檢查，例如驗證日期有效性或提供預設值。",
+    "existing_code": "return Math.ceil((Date.now() - new Date(res.data[0].get('created_at') as string).getTime()) / (1000 * 60 * 60 * 24));",
+    "evidence": "diff 中新增的程式碼片段，未對 `created_at` 進行 null 或格式檢查。"
+  }
+]

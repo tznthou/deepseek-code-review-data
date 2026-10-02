@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1316,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`window_features` 方法中 size 與 position 的設定順序可能影響視窗初始位置",
+    "body": "在 `window_features` 方法中，原本先設定 position 再設定 size，現在改為先設定 size 再設定 position。在某些平台或視窗管理器中，設定順序可能影響最終視窗位置（例如先設定 size 可能導致 position 被重設）。建議確認此變更不會造成回歸，或考慮保持原有順序。",
+    "existing_code": "if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 中顯示原本的順序是先 position 後 size，現在改為先 size 後 position。"
+  },
+  {
+    "path": "examples/api/src-tauri/src/lib.rs",
+    "line": 76,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`on_new_window` 回呼僅在桌面平台註冊，可能導致非桌面平台行為不一致",
+    "body": "原本 `on_new_window` 回呼在所有平台都會註冊，現在被移至 `#[cfg(all(desktop, not(test)))]` 區塊內。這表示在非桌面平台（如行動裝置）上，新視窗請求將不會被處理，可能導致應用程式無法開啟新視窗。若此為預期行為，建議在文件或註解中說明；否則應考慮保留跨平台支援。",
+    "existing_code": "let app_ = app.handle().clone();\n        let mut created_window_count = std::sync::atomic::AtomicUsize::new(0);\n\n        window_builder = window_builder\n          .title(\"Tauri API Validation\")\n          .inner_size(1000., 800.)\n          .min_inner_size(600., 400.)\n          .menu(tauri::menu::Menu::default(app.handle())?)\n          .on_new_window(move |url, features| {",
+    "evidence": "diff 顯示 `on_new_window` 設定被移入 `#[cfg(all(desktop, not(test)))]` 區塊。"
+  }
+]

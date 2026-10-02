@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Slot.userIds 型別從 number[] 改為 string[] 可能造成執行時期錯誤",
+    "body": "原本 `@calcom/trpc/server/routers/viewer/slots/types` 中的 `Slot.userIds` 型別為 `number[]`，但此處新定義為 `string[]`。若實際 API 回傳的 userIds 是數字陣列，使用此型別的程式碼（例如將 userIds 傳入需要 number 的函式）會在執行時期發生型別不符的錯誤。建議確認 API 實際回傳型別，若為 number[] 則應改回 `number[]`，或使用 union type 並進行轉換。",
+    "existing_code": "userIds?: string[];",
+    "evidence": "diff 中新增的 Slot 型別定義 `userIds?: string[];` 與被刪除的原始定義 `userIds?: number[];` 不一致。"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Schedule 型別缺少部分原始欄位，可能導致型別不相容",
+    "body": "新定義的 `Schedule` 型別僅包含 `id`、`userId`、`name`、`timeZone`，但原始 `@calcom/trpc` 中的 Schedule 型別可能包含更多欄位（如 `availability`、`isDefault` 等）。若其他程式碼依賴這些欄位，型別檢查會失敗或執行時期出現 undefined。建議完整複製原始型別定義，或使用 `Pick`/`Omit` 明確選擇所需欄位。",
+    "existing_code": "type Schedule = {\n  id: number;\n  userId: number;\n  name: string;\n  timeZone: string | null;\n};",
+    "evidence": "diff 中新增的 Schedule 型別定義，與原本從 @calcom/trpc 匯入的型別可能不同。"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "validateCreateScheduleInput 驗證不足，可能讓無效資料進入 API",
+    "body": "此函式僅檢查 `name` 是否為非空字串，未驗證 `schedule` 和 `eventTypeId` 的型別與格式。若呼叫端傳入錯誤型別（例如 `schedule` 不是二維陣列或元素不是 {start, end}），可能導致後續 API 呼叫失敗或產生非預期行為。建議使用 zod 或其他驗證函式庫完整驗證輸入，或至少手動檢查每個欄位。",
+    "existing_code": "export function validateCreateScheduleInput(input: unknown): CreateScheduleInput {\n  if (!input || typeof input !== 'object') {\n    throw new Error('Invalid input: must be an object');\n  }\n\n  const data = input as Record<string, unknown>;\n\n  if (typeof data.name !== 'string' || data.name.length === 0) {\n    throw new Error('Invalid input: name must be a non-empty string');\n  }\n\n  return data as CreateScheduleInput;\n}",
+    "evidence": "diff 中新增的 validateCreateScheduleInput 函式，僅驗證 name 欄位。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 \"./booker\" export 可能造成 breaking change",
+    "body": "原本 package.json 中有 `\"./booker\": \"./booker/index.ts\"`，現在改為 `\"./booker/types\": \"./booker/types.ts\"`，移除了 `./booker` 這個 export。若有外部使用者直接 import `@calcom/atoms/booker`，升級後會出現 module not found 錯誤。建議保留 `./booker` export 或提供 deprecation 警告。",
+    "existing_code": "\"./booker/types\": \"./booker/types.ts\",",
+    "evidence": "diff 中刪除了 `\"./booker\": \"./booker/index.ts\"` 並新增 `\"./booker/types\"`。"
+  }
+]

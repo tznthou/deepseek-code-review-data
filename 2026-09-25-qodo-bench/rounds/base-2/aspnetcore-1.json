@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 113,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中將 Back() 改為 Forward() 可能導致測試失效",
+    "body": "在 `RedirectEnhancedGetToInternal` 測試中，原本使用 `Browser.Navigate().Back()` 來驗證返回上一頁的行為，但此 PR 將其改為 `Browser.Navigate().Forward()`。這可能導致測試無法正確驗證預期的瀏覽器歷史記錄行為，甚至可能因為沒有可前進的歷史記錄而拋出例外。建議確認此變更的意圖，並確保測試仍能有效驗證重定向後返回的功能。",
+    "existing_code": "Browser.Navigate().Forward();",
+    "evidence": "diff 中將 `Browser.Navigate().Back();` 改為 `Browser.Navigate().Forward();`，但測試名稱與後續斷言仍與返回行為相關。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "AppContext 開關值反轉可能導致測試無法觸發預期行為",
+    "body": "在 `NavigationException_InAsyncContext_DoesNotBecomeUnobservedTaskException` 測試中，`AppContext.SetSwitch` 的第二個參數從 `false` 改為 `true`。此開關名稱暗示其用途是「停用拋出導航例外」，若設為 `true` 可能導致測試無法觸發原本要驗證的例外情境，使測試失去意義。建議確認此變更是否為刻意調整，並檢查測試是否仍能有效驗證目標行為。",
+    "existing_code": "AppContext.SetSwitch(\"Microsoft.AspNetCore.Components.Endpoints.NavigationManager.DisableThrowNavigationException\", true);",
+    "evidence": "diff 中將 `false` 改為 `true`，但測試名稱與目的似乎與停用例外相反。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerRenderingTests/RedirectionTest.cs",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Navigate 呼叫順序變更可能影響測試初始化",
+    "body": "在 `InitializeAsync` 中，原本先 `Navigate` 再取得 `_originalH1Element`，現在改為先取得元素再 `Navigate`。這可能導致 `_originalH1Element` 在頁面尚未載入時就被取得，進而影響後續測試。建議確認此變更是否會造成元素找不到或狀態不一致的問題。",
+    "existing_code": "_originalH1Element = Browser.Exists(By.TagName(\"h1\"));\n        Navigate($\"{ServerPathBase}/redirect\");",
+    "evidence": "diff 中將 `Navigate` 與 `Browser.Exists` 的順序對調。"
+  }
+]

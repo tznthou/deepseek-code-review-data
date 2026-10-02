@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "當 `For` 參數未變更時，元件不會重新渲染，導致顯示名稱可能過期",
+    "body": "在 `SetParametersAsync` 中，只有當 `For != _previousFieldAccessor` 時才會重新計算並渲染。如果父元件重新渲染但傳入相同的 `For` 表達式，且顯示名稱的來源（例如資源檔或屬性）已變更，此元件不會更新。例如，若使用本地化且使用者切換語言，但 `For` 表達式相同，顯示名稱將保持舊語言。建議移除條件判斷，或在每次 `SetParametersAsync` 時都重新計算並渲染。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中 `DisplayName.cs` 第 45-53 行顯示條件渲染邏輯。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Hot Reload 時未清除顯示名稱快取，可能導致顯示名稱不一致",
+    "body": "`ClearCache` 方法僅清除 `_memberInfoCache`，未清除 `_displayNameCache`。若在 Hot Reload 期間修改了屬性的 `DisplayAttribute` 或 `DisplayNameAttribute`，`_displayNameCache` 仍保留舊值，導致顯示名稱錯誤。建議同時清除 `_displayNameCache`。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 `ExpressionMemberAccessor.cs` 第 82-85 行。"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/Register.razor",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "標籤缺少 `class=\"form-label\"`，可能影響樣式",
+    "body": "在 `Register.razor` 中，第一個 `<label>` 標籤缺少 `class=\"form-label\"`，而其他標籤都有。這可能導致樣式不一致。建議加上 `class=\"form-label\"`。",
+    "existing_code": "<label for=\"Input.Email\">\n    <DisplayName For=\"() => Input.Email\" />\n</label>",
+    "evidence": "diff 中 `Register.razor` 第 32-34 行。"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/Login.razor",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "縮排不一致",
+    "body": "在 `Login.razor` 中，密碼欄位的 `<InputText>` 和相關標籤的縮排與其他欄位不一致，可能影響可讀性。建議調整縮排以保持一致性。",
+    "existing_code": "<InputText type=\"password\" @bind-Value=\"Input.Password\" id=\"Input.Password\" class=\"form-control\" autocomplete=\"current-password\" aria-required=\"true\" placeholder=\"password\" />\n<label for=\"Input.Password\" class=\"form-label\">\n    <DisplayName For=\"() => Input.Password\" />\n</label>\n<ValidationMessage For=\"() => Input.Password\" class=\"text-danger\" />",
+    "evidence": "diff 中 `Login.razor` 第 31-35 行。"
+  }
+]

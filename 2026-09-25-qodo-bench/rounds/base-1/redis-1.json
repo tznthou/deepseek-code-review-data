@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 914,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "dictSetKeyAtLink 在 newItem=0 時使用 addedKey 查找可能失敗",
+    "body": "在 dictSetKeyAtLink 中，當 newItem=0 且 *link 為 NULL 時，程式碼使用 addedKey 呼叫 dictFindLink。但 addedKey 是經過 keyDup 處理後的鍵，可能與原始 key 不同（例如 keyDup 可能複製或轉換鍵）。如果 dictFindLink 使用 addedKey 找不到對應的 entry，則會觸發 assert(*link != NULL) 失敗。\n\n失敗情境：當 dictType.keyDup 非 NULL 且會改變鍵的內容（例如複製 sds 或進行其他轉換），且呼叫者傳入的 key 與儲存的鍵不同時，dictFindLink 將無法找到 entry。\n\n建議：應使用原始 key（或 dictStoredKey2Key(d, key)）進行查找，而不是 addedKey。",
+    "existing_code": "*link = dictFindLink(d, addedKey, NULL);",
+    "evidence": "diff 中此行將原本的 `*link = dictFindLink(d, key, NULL);` 改為 `*link = dictFindLink(d, addedKey, NULL);`，但 addedKey 是 `d->type->keyDup(d, key)` 的結果，可能與原始 key 不同。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "validateStoredKeyConversion 函式未被使用",
+    "body": "新增的 validateStoredKeyConversion 函式在整個 diff 中沒有被呼叫。這可能是未完成的功能或遺留的除錯程式碼。\n\n建議：如果不需要，應移除此函式；如果需要，應在適當的地方呼叫它。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增了此函式，但搜尋整個 diff 未發現任何呼叫。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 1807,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "dictGetHash 的註解可能誤導",
+    "body": "新增的註解「Compiler inlines this for internal calls within dict.c (verified with -O3)」可能不準確，因為編譯器是否內聯取決於多種因素，且此函式是全域函式，可能被外部呼叫。\n\n建議：移除或修正此註解，避免誤導。",
+    "existing_code": "/* Compiler inlines this for internal calls within dict.c (verified with -O3). */",
+    "evidence": "diff 中新增了此註解，但無法驗證其正確性。"
+  }
+]

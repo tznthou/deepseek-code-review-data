@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/admin-x-framework/src/utils/stats-config.ts",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "版本前綴組合方式與後端不一致",
+    "body": "前端將 `config.version` 直接加在 endpointName 前面（例如 `v2_api_kpis`），但後端 `tinybird.js` 是加在後面（`api_kpis_v2`）。這會導致前端呼叫不存在的管線，所有 v2 端點都會失敗。\n\n建議：改為與後端一致的 `${endpointName}_${config.version}`。",
+    "existing_code": "const finalEndpointName = config.version ? `${config.version}_${endpointName}` : endpointName;",
+    "evidence": "diff 中新增的這一行，與後端 `tinybird.js` 的 `/v0/pipes/${pipeName}_${version}.json` 不一致。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/pipes/filtered_sessions_v2.pipe",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "session 屬性過濾的時區處理可能造成邊界資料遺漏",
+    "body": "在 `sessions_filtered_by_session_attributes` 節點中，`first_pageview` 是直接從 `_mv_session_data_v2` 取得的 `minMerge(first_pageview)`，其值為 UTC 時間戳。但過濾條件使用 `toDateTime({{ Date(date_from) }}, {{ String(timezone) }})` 將日期轉換為指定時區的 DateTime，兩者比較時可能因時區不同而漏掉邊界上的 session。\n\n建議：先將 `first_pageview` 轉換到目標時區再比較，或統一使用 UTC 進行比較。",
+    "existing_code": "and first_pageview >= toDateTime({{ Date(date_from) }}, {{ String(timezone, 'Etc/UTC', description=\"Site timezone\", required=True) }})",
+    "evidence": "diff 中該行直接比較 `first_pageview` 與帶時區的 DateTime，未做時區轉換。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_kpis_v2.pipe",
+    "line": 100,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`pathname_pageviews` 節點缺少 `site_uuid` 過濾條件",
+    "body": "在 `pathname_pageviews` 節點中，查詢 `_mv_hits` 時只透過 `filtered_sessions_v2` 間接過濾 session，但沒有直接加上 `site_uuid` 條件。若 `filtered_sessions_v2` 因某些原因未能正確過濾（例如參數缺失），可能導致跨租戶資料洩漏。\n\n建議：在 `where` 子句中明確加入 `site_uuid = {{ String(site_uuid, ...) }}`。",
+    "existing_code": "inner join filtered_sessions_v2 fs\n                on fs.session_id = h.session_id\n            where\n                site_uuid = {{ String(site_uuid, 'mock_site_uuid', description=\"Tenant ID\", required=True) }}",
+    "evidence": "diff 中 `pathname_pageviews` 節點的 `where` 子句沒有 `site_uuid` 條件。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_top_locations_v2.pipe",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`member_status` 過濾邏輯可能與其他端點不一致",
+    "body": "在 `api_top_locations_v2.pipe` 中，`member_status` 的過濾條件使用了 `select arrayJoin(...)` 子查詢，而其他端點（如 `api_top_pages_v2.pipe`）直接使用 `IN` 搭配 `Array` 參數。雖然功能可能相同，但風格不一致，且子查詢可能影響效能。\n\n建議：統一使用 `IN` 搭配 `Array` 參數，或確認此寫法為必要。",
+    "existing_code": "and member_status IN (\n                    select arrayJoin(\n                        {{ Array(member_status, \"'undefined', 'free', 'paid'\", description=\"Member status to filter on\", required=False) }}\n                        || if('paid' IN {{ Array(member_status) }}, ['comped'], [])\n                    )\n                )",
+    "evidence": "diff 中該端點使用子查詢，而其他端點使用直接 `IN`。"
+  }
+]

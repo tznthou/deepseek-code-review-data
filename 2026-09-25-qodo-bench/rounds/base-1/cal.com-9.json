@@ -1,0 +1,24 @@
+[
+  {
+    "path": "packages/lib/bookings/hostGroupUtils.ts",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "sortHosts 函式在移動時被意外修改，priority 比較方向反轉",
+    "body": "在將 `sortHosts` 從 `HostEditDialogs.tsx` 移至 `hostGroupUtils.ts` 時，原本的 `return priorityB - priorityA;` 被改成了 `return priorityA - priorityB;`（在 `isRRWeightsEnabled` 為 true 且權重相等時）。這會反轉優先權排序，可能導致主機選擇錯誤。\n\n**失敗情境**：當啟用 RR 權重且兩個主機權重相同時，優先權較低（數值較大）的主機會被排在前面，違反預期。\n\n**建議**：將該行改回 `return priorityB - priorityA;`，與原始邏輯一致。",
+    "existing_code": "return priorityA - priorityB;",
+    "evidence": "diff 中新增的 sortHosts 函式內，`if (weightA === weightB) { return priorityA - priorityB; }`，而原始程式碼（HostEditDialogs.tsx 中被刪除的版本）為 `return priorityB - priorityA;`。"
+  },
+  {
+    "path": "apps/web/components/apps/DestinationCalendarSettingsWebWrapper.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用相對路徑匯入跨 package 的模組，增加耦合",
+    "body": "此檔案從 `packages/platform/atoms` 移至 `apps/web/components/apps` 後，匯入 `AtomsWrapper` 和 `DestinationCalendarSettings` 改為相對路徑 `../../../../packages/platform/atoms/...`。這會讓 apps/web 直接依賴 packages/platform 的內部檔案結構，未來若 packages/platform 調整路徑，此處需同步修改。建議考慮使用 package exports 或 alias 來維持模組邊界。",
+    "existing_code": "import { AtomsWrapper } from \"../../../../packages/platform/atoms/src/components/atoms-wrapper\";\nimport { DestinationCalendarSettings } from \"../../../../packages/platform/atoms/destination-calendar/DestinationCalendar\";",
+    "evidence": "diff 中將原本的 `@calcom/atoms` 匯入改為相對路徑，跨越了 package 邊界。"
+  }
+]

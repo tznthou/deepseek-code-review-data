@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試中泛型型別參數不一致",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，使用 `typeof(GenericComponent<int>)` 進行 prerender，但後續斷言卻使用 `typeof(GenericComponent<string>)` 來比對 Assembly 與 TypeName。這會導致斷言失敗，因為實際渲染的元件型別是 `GenericComponent<int>`，而非 `GenericComponent<string>`。建議將斷言中的型別改為 `GenericComponent<int>`。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\nAssert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 內，`PrerenderComponentAsync` 使用 `typeof(GenericComponent<int>)`，但後續斷言使用 `typeof(GenericComponent<string>)`。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "命名空間與類別縮排變更可能造成不必要的 diff",
+    "body": "此變更將原本的 file-scoped namespace 改為 block-scoped namespace，並調整類別縮排。這與專案中其他測試檔案的風格可能不一致，且增加了 diff 的噪音。若無特殊原因，建議維持原本的 file-scoped namespace 寫法。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{\n    public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 顯示原本的 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 被改為 block-scoped namespace，並將類別縮排。"
+  }
+]

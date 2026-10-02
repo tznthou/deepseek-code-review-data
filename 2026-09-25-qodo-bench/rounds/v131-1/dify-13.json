@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "start_execution 在 enqueue 之前呼叫可能導致狀態不一致",
+    "body": "在 `enqueue_node` 之前呼叫 `start_execution` 可能造成節點狀態被標記為執行中，但尚未進入佇列。若後續 `enqueue_node` 失敗或拋出例外，節點會停留在執行中狀態而無法被正確處理。建議確認 `start_execution` 的實作是否具冪等性，或調整呼叫順序。",
+    "existing_code": "self._state_manager.start_execution(downstream_node_id)\nself._state_manager.enqueue_node(downstream_node_id)",
+    "evidence": "diff 中新增的 start_execution 呼叫，位於 enqueue_node 之前。"
+  },
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "使用 print 輸出執行資訊，應改用 logger",
+    "body": "新增的 `print(f\"Starting execution for node: {downstream_node_id}\")` 會將訊息輸出到 stdout，可能污染正式環境的 log 或影響效能。建議改用專案的 logger（例如 `logging.getLogger(__name__)`）並設定適當的 log level。",
+    "existing_code": "print(f\"Starting execution for node: {downstream_node_id}\")",
+    "evidence": "diff 中新增的 print 陳述式，位於 skip_propagator.py 第 62 行。"
+  },
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "mark_edge_skipped 順序調整可能影響遞迴邏輯",
+    "body": "將 `mark_edge_skipped` 移到 `propagate_skip_from_edge` 之後，可能導致在遞迴過程中邊的狀態尚未被標記為 skipped，若遞迴中再次檢查該邊的狀態可能得到不一致的結果。建議確認此順序調整是否為必要，並確保不會影響其他邏輯。",
+    "existing_code": "self.propagate_skip_from_edge(edge.id)\nself._state_manager.mark_edge_skipped(edge.id)",
+    "evidence": "diff 中調整了 mark_edge_skipped 的呼叫順序。"
+  }
+]

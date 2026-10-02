@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6260,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "格式佔位符不一致可能導致執行時期錯誤",
+    "body": "在 `RolloutsSettingMessage` 的 value 中使用了 `%@`，但 comment 中說明為 `%1$@`。若翻譯人員依照 comment 使用 `%1$@`，則在執行時期使用 `String(format:)` 時，若只傳入一個參數，`%1$@` 是合法的（指定第一個參數），但若程式碼預期使用 `%@` 而翻譯使用 `%1$@`，可能導致格式字串與參數不匹配。建議統一使用 `%@` 或 `%1$@`，並確保所有翻譯遵循相同格式。",
+    "existing_code": "value: \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\",\ncomment: \"A short description that explains that Mozilla may change features remotely. %1$@ is the app name (e.g. Firefox).\"",
+    "evidence": "diff 中新增的 `RolloutsSettingMessage` 定義，value 使用 `%@`，comment 使用 `%1$@`。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "新增的 SettingsTextFormatter 類別未被使用",
+    "body": "新增的 `SettingsTextFormatter` 類別提供了 `formatStudiesText` 和 `formatRolloutsText` 方法，但在這個 diff 中沒有看到任何呼叫點。如果這個類別是為了未來使用，建議先不要加入，或加入對應的使用程式碼。此外，`shared` 單例若未被使用，會造成不必要的記憶體佔用。",
+    "existing_code": "class SettingsTextFormatter {\n    static let shared = SettingsTextFormatter()\n\n    private init() {}\n\n    func formatStudiesText(appName: String) -> String {\n        return String(format: strings.detailTextStudies, appName)\n    }\n\n    func formatRolloutsText(appName: String) -> String {\n        return String(format: strings.detailTextRollouts, appName)\n    }\n}",
+    "evidence": "diff 中新增的 `SettingsTextFormatter` 類別，但沒有看到任何使用它的程式碼。"
+  }
+]

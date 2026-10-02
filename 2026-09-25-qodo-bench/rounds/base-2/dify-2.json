@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "回傳值 True 應為 true",
+    "body": "在 handleJSONSchemaChange 中，成功解析 JSON 後回傳了 `True`（Python 風格），但在 JavaScript/TypeScript 中應為 `true`。這會導致呼叫端若依賴此回傳值判斷是否成功，將得到 ReferenceError（若未定義 True）或非預期的 truthy 值。\n\n建議改為 `return true`。",
+    "existing_code": "return True",
+    "evidence": "diff 中新增的 `return True` 行，位於 handleJSONSchemaChange 函式內。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 255,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "payloadToSave 可能意外移除 json_schema",
+    "body": "在 handleConfirm 中，若 isSchemaEmpty 為 true，則將 json_schema 設為 undefined。但此邏輯套用於所有型別，而不僅限於 jsonObject。若其他型別（如 string、number）的 tempPayload 中殘留了 json_schema 欄位（例如使用者先選 jsonObject 再切換型別），此變更會將該欄位移除，可能導致非預期的資料遺失。\n\n建議僅在 type === InputVarType.jsonObject 時才進行此正規化。",
+    "existing_code": "const payloadToSave = isSchemaEmpty\n      ? { ...tempPayload, json_schema: undefined }\n      : tempPayload",
+    "evidence": "diff 中新增的 payloadToSave 計算，未檢查 type。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 314,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "JSON Schema 驗證僅檢查 type 為 object，未驗證完整結構",
+    "body": "在 handleConfirm 的 jsonObject 分支中，僅檢查 schema.type === 'object'，但未驗證 schema 是否符合 JSON Schema 規範（例如 properties 是否為物件、required 是否為陣列等）。若後端依賴 schema 的完整性，可能導致後續處理錯誤。\n\n建議使用 JSON Schema 驗證函式庫（如 ajv）進行完整驗證，或至少檢查必要欄位。",
+    "existing_code": "if (schema?.type !== 'object') {\n            Toast.notify({ type: 'error', message: t('variableConfig.errorMsg.jsonSchemaMustBeObject', { ns: 'appDebug' }) })\n            return\n          }",
+    "evidence": "diff 中新增的驗證邏輯僅檢查 type。"
+  }
+]

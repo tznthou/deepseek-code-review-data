@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "listFeaturesForUser 過濾條件反轉，回傳未啟用的功能",
+    "body": "在 `listFeaturesForUser` 中，原本的 `.filter((state) => state.globalEnabled)` 被改為 `.filter((state) => !state.globalEnabled)`，這會導致只回傳 `globalEnabled` 為 false 的功能，與方法註解「Only returns features that are in the allowlist, globally enabled, and scoped to \"user\"」矛盾。這將使前端無法取得任何已啟用的功能，造成功能失效。\n\n**建議修法**：將條件改回 `state.globalEnabled`。",
+    "existing_code": "return featureIds.map((featureId) => resolvedStates[featureId]).filter((state) => !state.globalEnabled);",
+    "evidence": "diff 中此行由 `.filter((state) => state.globalEnabled)` 改為 `.filter((state) => !state.globalEnabled)`，且方法註解明確指出應回傳 globally enabled 的功能。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "setUserFeatureState 條件判斷反轉，可能導致 assignedBy 處理錯誤",
+    "body": "原本的 `if (state === \"inherit\")` 被改為 `if (state !== \"inherit\")`，這使得當 state 為 \"enabled\" 或 \"disabled\" 時，會進入原本處理 inherit 的分支，嘗試從 input 中取得 `assignedBy` 並呼叫 `setUserFeatureState`。但 TypeScript 的 union type 保證在 state 非 inherit 時 input 一定包含 `assignedBy`，因此不會有 runtime error，但邏輯上與原本意圖相反。\n\n**建議修法**：改回 `if (state === \"inherit\")`。",
+    "existing_code": "if (state !== \"inherit\") {",
+    "evidence": "diff 中此行由 `if (state === \"inherit\")` 改為 `if (state !== \"inherit\")`，且後續的 else 分支處理 inherit 狀態。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/config.ts",
+    "line": 5,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "未使用的常數 UNUSED_CONSTANT",
+    "body": "新增的 `UNUSED_CONSTANT` 常數未被使用，且其值為字串，可能觸發 lint 規則（如 no-unused-vars）。建議移除。",
+    "existing_code": "const UNUSED_CONSTANT = \"this-should-be-removed\";",
+    "evidence": "diff 中新增此行，且後續程式碼未引用此常數。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "整合測試 mock isFeatureAllowedForScope 可能掩蓋實際問題",
+    "body": "在整合測試中，`isFeatureAllowedForScope` 被 mock 為永遠回傳 true，這可能導致測試無法涵蓋 scope 驗證的整合行為。雖然單元測試有覆蓋驗證邏輯，但整合測試應確保實際的 config 與服務層互動正確。建議考慮使用真實的 config 或至少驗證 mock 的呼叫次數。",
+    "existing_code": "vi.mock(\"../config\", async (importOriginal) => {\n  const actual = await importOriginal<typeof import(\"../config\")>();\n  return {\n    ...actual,\n    isFeatureAllowedForScope: () => true,\n  };\n});",
+    "evidence": "diff 中新增此 mock，且未在其他測試中驗證 isFeatureAllowedForScope 的呼叫。"
+  }
+]

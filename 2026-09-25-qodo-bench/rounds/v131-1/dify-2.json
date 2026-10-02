@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳值型別錯誤：使用 Python 的 `True` 而非 JavaScript 的 `true`",
+    "body": "在 `handleJSONSchemaChange` 函式中，成功解析 JSON 後回傳了 `True`（Python 布林值），但在 JavaScript/TypeScript 中應為 `true`。這會導致回傳值型別不一致，且若呼叫端依賴此回傳值，可能造成非預期行為。建議改為 `return true`。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的 `return True` 位於 `handleJSONSchemaChange` 函式內，該函式預期回傳布林值或 null，但 `True` 在 JavaScript 中未定義，會拋出 ReferenceError。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "JSON Schema 儲存格式變更可能破壞向後相容性",
+    "body": "原本 `json_schema` 儲存的是 `{type:'object', properties: ...}` 的包裝格式，現在改為直接儲存使用者輸入的完整 schema。若後端或其他程式碼依賴舊格式，可能導致資料不相容。建議確認所有使用 `json_schema` 的地方都已同步更新，或提供遷移機制。",
+    "existing_code": "return JSON.stringify(JSON.parse(tempPayload.json_schema), null, 2)",
+    "evidence": "diff 中 `jsonSchemaStr` 的計算從 `JSON.parse(tempPayload.json_schema).properties` 改為 `JSON.parse(tempPayload.json_schema)`，顯示儲存格式已變更。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "空值處理可能遺失原始資料",
+    "body": "當輸入為空時，`handleJSONSchemaChange` 會將 `json_schema` 設為 `undefined`，這可能導致使用者清除欄位後無法恢復先前值。建議確認此行為是否符合預期，或改為儲存空字串。",
+    "existing_code": "if (isEmpty) {\n      handlePayloadChange('json_schema')(undefined)\n      return null\n    }",
+    "evidence": "diff 中新增的空值處理邏輯直接將 `json_schema` 設為 `undefined`，可能造成資料遺失。"
+  }
+]

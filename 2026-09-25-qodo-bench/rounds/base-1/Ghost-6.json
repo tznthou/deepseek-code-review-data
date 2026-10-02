@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "排程條件反轉導致重複排程",
+    "body": "原本條件 `!hasScheduled.processOutbox` 在未排程時才排程，現在改為 `hasScheduled.processOutbox`，變成已排程時才排程。這會導致：\n1. 首次呼叫時 `hasScheduled.processOutbox` 為 false，不會排程。\n2. 若之後某次呼叫時 `hasScheduled.processOutbox` 被設為 true（例如手動設定或未來程式碼變更），則會重複排程。\n建議改回 `!hasScheduled.processOutbox`。",
+    "existing_code": "if (hasScheduled.processOutbox && !process.env.NODE_ENV.startsWith('test')) {",
+    "evidence": "diff 中此行由 `if (!hasScheduled.processOutbox && ...)` 改為 `if (hasScheduled.processOutbox && ...)`，邏輯相反。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/repositories/MemberRepository.js",
+    "line": 341,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "config 值未驗證，可能導致非預期行為",
+    "body": "`config.get('memberWelcomeEmailTestInbox')` 的回傳值直接作為條件判斷，但未驗證其型別或內容。若 config 值為空字串、0、false 等 falsy 值，則條件為 false，不會建立 outbox；若為任意 truthy 值（例如 'false' 字串），則會建立 outbox。建議明確驗證該值是否為有效的 email 或布林值。",
+    "existing_code": "const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');\n        if (welcomeEmailConfig || WELCOME_EMAIL_SOURCES.includes(source)) {",
+    "evidence": "diff 中新增 `const welcomeEmailConfig = config.get('memberWelcomeEmailTestInbox');` 並直接以 `welcomeEmailConfig` 作為條件。"
+  },
+  {
+    "path": "ghost/core/core/server/services/member-welcome-emails/jobs/index.js",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "config 值未驗證，可能導致排程邏輯錯誤",
+    "body": "`config.get('memberWelcomeEmailTestInbox')` 的回傳值直接作為條件判斷，若 config 值為空字串或未定義，則不會排程；若為任意 truthy 值（例如 'false' 字串），則會排程。建議明確驗證該值是否為有效的 email 或布林值。",
+    "existing_code": "if (!config.get('memberWelcomeEmailTestInbox')) {",
+    "evidence": "diff 中此行由 `if (!labs.isSet('welcomeEmails'))` 改為 `if (!config.get('memberWelcomeEmailTestInbox'))`，未對 config 值做驗證。"
+  }
+]

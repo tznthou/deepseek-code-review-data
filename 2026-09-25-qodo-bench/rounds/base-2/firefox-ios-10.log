@@ -1,0 +1,5 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 21146 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift:30 → 27（片段唯一命中）
+[info] 重新定位 BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift:205 → 208（片段唯一命中）
+[info] 定位不到 BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift:38（片段多重命中（3 處），不猜）
+[info] 完成於 11.2s ｜ findings=4 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 6914, "completion_tokens": 1146, "total_tokens": 8060, "prompt_tokens_details": {"cached_tokens": 6912}, "prompt_cache_hit_tokens": 6912, "prompt_cache_miss_tokens": 2}

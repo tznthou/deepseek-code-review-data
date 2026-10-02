@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "客戶端過濾可能導致已選取的區塊文件無法顯示",
+    "body": "`filteredData` 使用 `deferredSearch` 進行客戶端過濾，但 `selectedBlockDocument` 是從 `filteredData` 中尋找。若使用者選取了一個區塊文件後，輸入的搜尋字串與該文件名稱不符，則 `selectedBlockDocument` 會變成 `undefined`，導致觸發器顯示「Select a block...」而非已選取的名稱。\n\n**失敗情境**：使用者選取了名為 `my_block_0` 的區塊文件，然後在搜尋框中輸入 `xyz`，此時 `filteredData` 為空，`selectedBlockDocument` 為 `undefined`，觸發器顯示佔位文字，但實際上仍有選取值。\n\n**建議**：`selectedBlockDocument` 應從原始 `data` 中尋找，而非 `filteredData`。",
+    "existing_code": "const selectedBlockDocument = useMemo(() => {\n\t\treturn filteredData.find(\n\t\t\t(blockDocument) => blockDocument.id === selectedBlockDocumentId,\n\t\t);\n\t}, [filteredData, selectedBlockDocumentId]);",
+    "evidence": "diff 中第 72-76 行顯示 `selectedBlockDocument` 依賴於 `filteredData`，而 `filteredData` 是根據 `deferredSearch` 過濾後的結果。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 161,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "表單驗證錯誤處理邏輯可能不正確",
+    "body": "在 `onSave` 中，呼叫 `await validateForm({ schema: values })` 後，檢查 `errors.length > 0` 來決定是否繼續。但 `errors` 是從 `useSchemaForm` 取得的狀態，可能不會在 `validateForm` 後立即更新，導致檢查到舊的錯誤狀態。\n\n**失敗情境**：使用者提交表單時，`validateForm` 發現錯誤並更新 `errors`，但由於 React 狀態更新是非同步的，`errors.length` 可能仍為 0，導致程式繼續執行 `createBlockDocument`，送出無效資料。\n\n**建議**：`validateForm` 應回傳驗證結果（例如 boolean 或錯誤陣列），並直接使用回傳值來判斷，而不是依賴外部狀態。",
+    "existing_code": "await validateForm({ schema: values });\n\t\t\tif (errors.length > 0) {\n\t\t\t\treturn;\n\t\t\t}",
+    "evidence": "diff 中第 163-166 行顯示 `validateForm` 被呼叫後立即檢查 `errors.length`，但 `errors` 是狀態變數，可能尚未更新。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 179,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "錯誤處理中重複的錯誤訊息與不必要的 console.error",
+    "body": "在 `onError` 回呼中，錯誤訊息被設定為固定的「Unknown error while creating block.」，並使用 `console.error` 記錄。這可能導致使用者看到不明確的錯誤訊息，且開發者難以從日誌中區分錯誤來源。\n\n**建議**：使用 `err.message` 或伺服器回傳的錯誤訊息來提供更具體的錯誤資訊，並考慮使用結構化日誌。",
+    "existing_code": "onError: (err) => {\n\t\t\t\t\t\tconst message = \"Unknown error while creating block.\";\n\t\t\t\t\t\ttoast.error(message);\n\t\t\t\t\t\tconsole.error(message, err);\n\t\t\t\t\t},",
+    "evidence": "diff 中第 175-179 行顯示錯誤處理邏輯。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "搜尋過濾同時在伺服器端與客戶端進行，可能導致不一致",
+    "body": "查詢參數中已包含 `name: { like_: deferredSearch }`，但又在客戶端使用 `filteredData` 進行過濾。這可能導致不必要的客戶端計算，且若伺服器端過濾邏輯與客戶端不同（例如大小寫處理），可能出現不一致的結果。\n\n**建議**：移除客戶端過濾，完全依賴伺服器端過濾，或確保兩者邏輯一致。",
+    "existing_code": "const filteredData = useMemo(() => {\n    return data.filter((blockDocument) =>\n      blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),\n    );\n  }, [data, deferredSearch]);",
+    "evidence": "diff 中第 64-68 行顯示客戶端過濾邏輯，而查詢參數中已有 `name: { like_: deferredSearch }`。"
+  }
+]

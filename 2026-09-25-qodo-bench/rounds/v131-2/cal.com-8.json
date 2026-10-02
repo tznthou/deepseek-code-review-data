@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "Popover 僅靠 hover 觸發，桌面端無法點擊隱藏項目",
+    "body": "在桌面端，Popover 的開啟與關閉完全依賴 onMouseEnter/onMouseLeave。當使用者將滑鼠移入觸發按鈕時，popover 會開啟，但當滑鼠移向 popover 內容時，因為 popover 與按鈕之間可能存在間隙，或 popover 本身沒有正確處理 hover 狀態，可能導致 popover 關閉，使用者無法點擊其中的項目。建議改用 click 觸發，或確保 popover 與觸發按鈕之間沒有間隙，並在 popover 上維持 hover 狀態。",
+    "existing_code": "onMouseEnter={handleMouseEnter}\n              onMouseLeave={handleMouseLeave}>",
+    "evidence": "LimitedBadges.tsx 第 73-74 行，PopoverTrigger 上的 onMouseEnter/onMouseLeave 處理。"
+  },
+  {
+    "path": "apps/web/modules/users/components/UserTable/UserListTable.tsx",
+    "line": 251,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "屬性 badge 的權重與群組標記合併，可能造成視覺回歸",
+    "body": "原本的實作中，權重（如 80%）會顯示在獨立的 badge 中，且群組選項會以橘色 badge 顯示。新的實作將權重與群組標記直接附加在 label 文字中，例如「選項 80% (group)」，這可能導致視覺擁擠，且權重不再有獨立的背景色，可能影響使用者對權重的辨識。建議保留原本的雙 badge 設計，或提供選項讓權重以獨立樣式呈現。",
+    "existing_code": "let label = attributeValue.value;\n                    label = `${label} ${weight}`;\n                    label = `${label}${groupIndicator}`;",
+    "evidence": "UserListTable.tsx 第 246-248 行，將 weight 與 groupIndicator 直接串接至 label。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 82,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Popover 內容中的項目缺少點擊處理",
+    "body": "在 LimitedBadges 元件中，隱藏項目僅以 span 呈現，沒有 onClick 處理。雖然 BadgeItem 型別有 onClick 屬性，但此處並未使用。若未來需要讓隱藏項目可點擊（例如在 UserListTable 的 teams 欄位中，點擊團隊名稱應觸發篩選），則此處需要加上 onClick 處理。",
+    "existing_code": "<span\n                  key={item.label}\n                  className=\"text-default cursor-pointer text-sm hover:text-emphasis\">\n                  {item.label}\n                </span>",
+    "evidence": "LimitedBadges.tsx 第 82-86 行，隱藏項目僅為 span，無 onClick。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "Popover 觸發按鈕缺少可存取性屬性",
+    "body": "PopoverTrigger 內的 Button 僅有 aria-label，但未設定 aria-haspopup 或 aria-expanded，可能影響螢幕閱讀器使用者。建議加上 aria-haspopup=\"dialog\" 與動態的 aria-expanded。",
+    "existing_code": "aria-label={`Show ${hiddenItems.length} more items`}",
+    "evidence": "LimitedBadges.tsx 第 68 行，僅有 aria-label。"
+  }
+]

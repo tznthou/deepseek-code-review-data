@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 220,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 strict=True 可能導致 zip 截斷而遺漏工作池",
+    "body": "在 `_fetch_work_pools_parallel` 中，原本使用 `zip(pool_names_list, results, strict=True)` 確保兩個序列長度一致。移除 `strict=True` 後，若 `results` 的長度小於 `pool_names_list`（例如某個 task 被取消或未回傳），zip 會靜默截斷，導致部分工作池未被處理，且不會有任何警告。這可能造成 SDK 資料不完整，且難以察覺。建議保留 `strict=True`，或明確處理長度不一致的情況。",
+    "existing_code": "for name, result in zip(pool_names_list, results):",
+    "evidence": "diff 中將 `zip(pool_names_list, results, strict=True)` 改為 `zip(pool_names_list, results)`，移除了 strict 參數。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 182,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "對 base_job_template[\"variables\"] 的型別假設可能導致執行期錯誤",
+    "body": "在 `_fetch_work_pool` 中，原本有檢查 `isinstance(variables, dict)` 才指派給 `job_vars_schema`。移除檢查後，直接將 `base_job_template[\"variables\"]` 指派給 `job_vars_schema`，但該值可能不是 dict（例如是 list 或 None）。後續程式碼若假設 `job_vars_schema` 是 dict（例如呼叫 `.items()` 或進行 dict 操作），會拋出 AttributeError 或 TypeError。建議保留型別檢查，或確保上游資料一定為 dict。",
+    "existing_code": "job_vars_schema = base_job_template[\"variables\"]",
+    "evidence": "diff 中刪除了 `if isinstance(variables, dict):` 的檢查，直接指派。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 397,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "部署名稱過濾邏輯變更可能改變行為",
+    "body": "原本的過濾條件是 `full_name not in deployment_names`，現在改為 `dep.name not in deployment_names`。這可能導致當使用者指定完整名稱（如 `flow-name/deployment-name`）時，過濾邏輯無法正確匹配，因為 `dep.name` 只包含部署名稱，不包含 flow 名稱。需要確認此變更是否為預期，並確保過濾行為符合文件描述。",
+    "existing_code": "if deployment_names and dep.name not in deployment_names:",
+    "evidence": "diff 中將 `full_name not in deployment_names` 改為 `dep.name not in deployment_names`。"
+  }
+]

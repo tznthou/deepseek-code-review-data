@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "新增的 Task.Yield() 可能造成非預期的非同步行為",
+    "body": "在 ProcessLogOut 中新增 `await Task.Yield();` 可能改變執行流程，特別是在驗證登出狀態後、取得驗證狀態前。此舉可能引入競態條件或延遲，且未提供明確理由。建議移除或提供詳細說明，並確保有對應測試涵蓋此行為。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\n        await Task.Yield();",
+    "evidence": "diff 中新增的兩行，位於 ProcessLogOut 方法內，緊接在 AuthenticationState.ReturnUrl = returnUrl; 之後。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Redirect 方法中可能使用 null 的 InteractiveRequestUrl",
+    "body": "在 `Redirect()` 方法中，條件從 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 改為僅檢查 `_tokenResult.InteractionOptions != null`，然後在 else 分支中使用 `_tokenResult.InteractiveRequestUrl!`。若 `InteractiveRequestUrl` 為 null，將導致 NullReferenceException。建議保留 null 檢查或確保該屬性在 InteractionOptions 存在時必定非 null。",
+    "existing_code": "if (_tokenResult.InteractionOptions != null)\n        {\n            _navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, _tokenResult.InteractionOptions);\n        }\n        else\n        {\n            _navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);\n        }",
+    "evidence": "diff 中條件判斷的修改，以及 else 分支中對 InteractiveRequestUrl 的使用。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 SignOutSessionStateManager 後，登出狀態驗證邏輯可能不完整",
+    "body": "原本的登出流程會同時檢查 HistoryEntryState 和 SignOutSessionStateManager，現在僅依賴 HistoryEntryState。若某些用戶端或情境未正確設定 HistoryEntryState，可能導致登出驗證失敗或安全漏洞。建議確認所有登出路徑都已更新為使用 HistoryEntryState。",
+    "existing_code": "if (!ValidateSignOutRequestState())\n        {\n            Log.LogoutOperationInitiatedExternally(Logger);\n            Navigation.NavigateTo(ApplicationPaths.LogOutFailedPath, AuthenticationNavigationOptions with { HistoryEntryState = \"The logout was not initiated from within the page.\" });",
+    "evidence": "diff 中刪除了原本包含 SignOutManager.ValidateSignOutState() 的條件分支。"
+  }
+]

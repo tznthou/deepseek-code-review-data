@@ -1,0 +1,57 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "async setUp 中呼叫 bootstrapDependencies 缺少 await",
+    "body": "在 async setUp 方法中，`DependencyHelperMock().bootstrapDependencies()` 現在是 async 方法，但此處未加上 `await`，會導致編譯錯誤。請改為 `await DependencyHelperMock().bootstrapDependencies()`。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中該行未加上 await，而其他檔案均已加上 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中呼叫 reset 未處理 async 或順序",
+    "body": "tearDown 改為 async throws 後，`DependencyHelperMock().reset()` 仍為同步呼叫，但若 reset 未來改為 async 可能遺漏。目前 reset 為同步，但建議確認 reset 是否也需 await。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但 reset 未加 await。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DependencyInjection/DependencyHelperMock.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "bootstrapDependencies 標記 @MainActor 但未處理非主執行緒呼叫",
+    "body": "方法標記 @MainActor 後，所有呼叫者必須在主執行緒或使用 await。但部分測試類別可能未在主執行緒呼叫（例如非 @MainActor 的 setUp），若未加 await 會導致編譯錯誤或 runtime crash。請確認所有呼叫點均已正確處理。",
+    "existing_code": "@MainActor\n    func bootstrapDependencies(",
+    "evidence": "diff 中新增 @MainActor，但部分呼叫點未加 await（如 LaunchScreenViewModelTests）。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Helpers/TestSetup.swift",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "刪除 TestSetup.swift 可能影響其他測試",
+    "body": "TestSetup.swift 被刪除，且從 project.pbxproj 移除。需確認沒有其他測試檔案依賴此類別。",
+    "existing_code": "class TestSetup: NSObject {",
+    "evidence": "diff 顯示檔案被刪除。"
+  },
+  {
+    "path": "firefox-ios/Client.xcodeproj/project.pbxproj",
+    "line": 14847,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 OnboardingMultipeChoiceButtonModel.swift 引用",
+    "body": "從 project.pbxproj 移除 OnboardingMultipeChoiceButtonModel.swift 的引用，但未看到檔案刪除。若檔案仍存在，可能導致專案不一致。",
+    "existing_code": "81055B552BAB7CE200E166B3 /* OnboardingMultipeChoiceButtonModel.swift */",
+    "evidence": "diff 中移除了該行。"
+  }
+]

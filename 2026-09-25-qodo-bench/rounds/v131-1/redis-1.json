@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 914,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "dictSetKeyAtLink 使用未轉換的 key 進行查找",
+    "body": "在 dictSetKeyAtLink 中，當 *link 為 NULL 時，程式碼使用 `dictFindLink(d, addedKey, NULL)` 來查找現有 entry。然而，`addedKey` 是經過 keyDup 處理後的 stored-key，而 `dictFindLink` 預期的是 lookup key。若 dictType 有設定 keyFromStoredKey，則此處應先將 addedKey 轉換為 lookup key，否則可能找不到正確的 entry，導致資料不一致或錯誤。\n\n失敗情境：當 dict 使用 keyFromStoredKey（例如 dbDictType），且呼叫 dictSetKeyAtLink 更新現有 entry 的 key 時，若 stored-key 與 lookup key 不同，dictFindLink 會使用錯誤的 key 進行比較，可能找不到 entry 或找到錯誤的 entry。\n\n建議修正：將 `dictFindLink(d, addedKey, NULL)` 改為 `dictFindLink(d, dictStoredKey2Key(d, addedKey), NULL)`。",
+    "existing_code": "*link = dictFindLink(d, addedKey, NULL);",
+    "evidence": "diff 中第 912 行：`*link = dictFindLink(d, addedKey, NULL);`，而 addedKey 是 stored-key，但 dictFindLink 需要 lookup key。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "validateStoredKeyConversion 函式未使用",
+    "body": "新增的 `validateStoredKeyConversion` 函式在整個 diff 中沒有被呼叫。這可能是開發中的除錯程式碼，若無用途應移除，以免造成混淆。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增了此函式，但搜尋整個 diff 未見任何呼叫。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "dictStoredKey2Key 可能回傳 NULL 導致後續錯誤",
+    "body": "`dictStoredKey2Key` 直接呼叫 `d->type->keyFromStoredKey(key)`，若該回呼實作可能回傳 NULL（例如錯誤處理），則後續的 hash 或比較函式可能收到 NULL 指標而導致 crash。雖然目前提供的回呼（kvGetKey）不會回傳 NULL，但 API 設計上應考慮防禦。",
+    "existing_code": "return (d->type->keyFromStoredKey) ? d->type->keyFromStoredKey(key) : key;",
+    "evidence": "diff 中新增的 dictStoredKey2Key 函式，未檢查回呼回傳值。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 342,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "rehash 時使用 dictGetHash 可能與既有 hash 不一致",
+    "body": "在 `rehashEntriesInBucketAtIndex` 中，原本使用 `dictHashKey(d, key, 1)` 來計算 stored-key 的 hash，現在改為先取得 lookup key 再呼叫 `dictGetHash`。若 dictType 的 hashFunction 與 storedHashFunction 不同（例如舊版 API 中兩者可能不同），則新舊 hash 可能不一致，導致 rehash 後 key 被放到錯誤的 bucket。\n\n失敗情境：若某 dictType 的 storedHashFunction 與 hashFunction 實作不同，且 keyFromStoredKey 轉換後得到的 key 與原本 stored-key 的 hash 不同，則 rehash 後 key 可能無法被找到。\n\n建議：確認所有使用此 dict 的 dictType 中，hashFunction 與 storedHashFunction 的關係，或確保 keyFromStoredKey 轉換後的 key 與 stored-key 的 hash 一致。",
+    "existing_code": "const void *key = dictStoredKey2Key(d, storedKey);\n            h = dictGetHash(d, key) & DICTHT_SIZE_MASK(d->ht_size_exp[1]);",
+    "evidence": "diff 中 rehashEntriesInBucketAtIndex 的修改，從 dictHashKey(d, key, 1) 改為 dictGetHash(d, key)。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 890,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "dictSetKeyAtLink 中 keyDup 可能重複轉換 key",
+    "body": "在 `dictSetKeyAtLink` 中，`addedKey` 是透過 `d->type->keyDup(d, key)` 產生的。若 keyDup 實作假設輸入是 lookup key，但此處傳入的是 stored-key，可能導致錯誤。需要確認所有 keyDup 實作是否相容於 stored-key。",
+    "existing_code": "void *addedKey = (d->type->keyDup) ? d->type->keyDup(d, key) : key;",
+    "evidence": "diff 中 dictSetKeyAtLink 的修改，keyDup 的輸入參數 key 被標記為 __stored_key，但 keyDup 的實作可能未預期 stored-key。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 97,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "dictStoredKey2Key 名稱可能造成混淆",
+    "body": "函式名稱 `dictStoredKey2Key` 中的 '2' 可能被誤解為 'to'，但實際上它是轉換函式。建議使用更明確的名稱，如 `dictGetKeyFromStoredKey`。",
+    "existing_code": "static const void *dictStoredKey2Key(dict *d, const void *key __stored_key) {",
+    "evidence": "diff 中新增的函式名稱。"
+  }
+]

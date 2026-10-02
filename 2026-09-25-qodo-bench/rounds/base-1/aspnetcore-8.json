@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 382,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 remarks 寫入 Summary 可能改變既有 API 文件行為",
+    "body": "原本 `operation.Description = remarks;` 改為 `operation.Summary = remarks;`。這會將 `<remarks>` 的內容放到 OpenAPI 的 `summary` 欄位，而非 `description`。若既有使用者依賴 `description` 來顯示備註，此變更會造成文件內容遺失或錯置。建議確認此變更是否符合預期，或考慮同時設定兩者。",
+    "existing_code": "operation.Summary = remarks;",
+    "evidence": "diff 中 `- operation.Description = remarks;` 改為 `+ operation.Summary = remarks;`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 452,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 propertyName 取代 metadata.Name 可能導致參數名稱不一致",
+    "body": "原本 `p.Name == metadata.Name` 改為 `p.Name == propertyName`。若 `metadata.Name` 與 `propertyName` 不同（例如使用別名或序列化名稱），可能找不到對應的參數。建議確認兩者是否永遠相同，或保留原本的比對方式。",
+    "existing_code": "var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == propertyName);",
+    "evidence": "diff 中 `- var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == metadata.Name);` 改為 `+ var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == propertyName);`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 479,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "RequestBody.Description 設定位置變更可能影響範例處理",
+    "body": "原本 `operation.RequestBody.Description = description;` 在 if 區塊開頭，現在移到範例處理之後。若 `propertyComment.Examples` 存在但 `content` 為 null，會執行 `continue`，導致 `Description` 不會被設定。建議確認此情境是否會發生，或將 Description 設定保持在區塊開頭。",
+    "existing_code": "operation.RequestBody.Description = description;",
+    "evidence": "diff 中 `- operation.RequestBody.Description = description;` 被移除，並在範例處理後新增 `+ operation.RequestBody.Description = description;`"
+  }
+]

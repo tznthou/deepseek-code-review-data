@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 1112,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "迴圈邊界錯誤導致 heap buffer overflow",
+    "body": "迴圈條件 `j <= keys_result->numkeys` 會讓 `j` 等於 `numkeys` 時仍進入迴圈，此時 `slot_buffer[j]` 寫入超出配置的記憶體（配置大小為 `numkeys`）。這會造成 heap buffer overflow，可能導致程式崩潰或安全漏洞。\n\n建議改為 `j < keys_result->numkeys`。",
+    "existing_code": "for (int j = 0; j <= keys_result->numkeys; j++) {",
+    "evidence": "diff 中新增的迴圈條件為 `j <= keys_result->numkeys`，而 `slot_buffer` 配置大小為 `sizeof(int) * keys_result->numkeys`，因此當 `j == numkeys` 時寫入越界。"
+  },
+  {
+    "path": "src/db.c",
+    "line": 3201,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "slot 可能未初始化即被使用",
+    "body": "在 `extractKeysAndSlot` 中，原本 `*slot` 會先被設為 `INVALID_CLUSTER_SLOT`，但修改後只有當 `num_keys > 0` 時才呼叫 `extractSlotFromKeysResult` 設定 `*slot`。若 `num_keys == 0`，`*slot` 將保持呼叫者傳入的值，可能導致未初始化變數被使用。\n\n建議在函式開頭明確初始化 `*slot = INVALID_CLUSTER_SLOT`，或確保所有呼叫者都已初始化。",
+    "existing_code": "if (num_keys > 0) {\n        *slot = extractSlotFromKeysResult(argv, result);\n    }",
+    "evidence": "diff 中移除了 `*slot = INVALID_CLUSTER_SLOT;` 這一行，且新增的條件只在 `num_keys > 0` 時設定 `*slot`。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "malloc 未檢查失敗",
+    "body": "`malloc` 可能回傳 NULL，但程式碼未檢查，後續寫入 `slot_buffer[j]` 會導致 NULL pointer dereference。\n\n建議檢查 `slot_buffer` 是否為 NULL，若為 NULL 則回傳錯誤或採取其他處理。",
+    "existing_code": "int *slot_buffer = malloc(sizeof(int) * keys_result->numkeys);",
+    "evidence": "diff 中新增的 `malloc` 呼叫沒有對回傳值做 NULL 檢查。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 4141,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "條件判斷變更可能影響無 key 命令的處理",
+    "body": "原本 `else if (num_keys > 0)` 只在有 key 時檢查 cross-slot，現在改為 `else if (num_keys >= 0)`，這會讓 `num_keys == 0` 的命令也進入檢查。若 `pcmd->slot` 為 `CLUSTER_CROSSSLOT`（不太可能，因為無 key 命令不會有 cross-slot），則會設定錯誤。但更可能的是，原本 `num_keys == 0` 時會跳過此區塊，現在會執行，可能影響後續邏輯。\n\n建議確認此變更是否必要，或改回 `num_keys > 0`。",
+    "existing_code": "} else if (num_keys >= 0) {\n        /* Handle cross-slot keys: mark error and reset slot. */\n        if (pcmd->slot == CLUSTER_CROSSSLOT) {\n            pcmd->read_error = CLIENT_READ_CROSS_SLOT;\n            pcmd->slot = INVALID_CLUSTER_SLOT;\n        }\n    }",
+    "evidence": "diff 中將條件從 `num_keys > 0` 改為 `num_keys >= 0`。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 1110,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "slot_buffer 可能造成不必要的記憶體分配",
+    "body": "原本的實作不需要額外記憶體，現在為了追蹤 slot 而分配 `slot_buffer`。雖然在 cross-slot 時可以釋放，但若所有 key 都在同一 slot，仍會分配並釋放記憶體。若此函式被頻繁呼叫，可能影響效能。\n\n建議考慮是否真的需要此 buffer，或改用其他方式。",
+    "existing_code": "int *slot_buffer = malloc(sizeof(int) * keys_result->numkeys);",
+    "evidence": "diff 中新增了 `slot_buffer` 的分配與釋放。"
+  }
+]

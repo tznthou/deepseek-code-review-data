@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_renderer.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "render_template 可能回傳 None，導致後續 len() 拋出 TypeError",
+    "body": "`render_template` 方法在 `rendered` 為 None 時直接回傳 None，但呼叫端 `TemplateTransformNode._run` 會對回傳值執行 `len(rendered)`，若為 None 將拋出 `TypeError`。應在回傳前檢查 None 並拋出 `TemplateRenderError`，或確保回傳型別為 str。",
+    "existing_code": "rendered = result.get(\"result\")\n        if rendered is not None and not isinstance(rendered, str):\n            raise TemplateRenderError(\"Template render result must be a string.\")\n        return rendered",
+    "evidence": "diff 中 `template_renderer.py` 第 36-39 行：`rendered = result.get(\"result\")` 可能為 None，且未處理；而 `template_transform_node.py` 第 68 行呼叫 `len(rendered)`。"
+  },
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_transform_node.py",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "CodeExecutorJinja2TemplateRenderer 未傳入 code_executor，可能導致依賴注入失效",
+    "body": "在建構 `CodeExecutorJinja2TemplateRenderer` 時未傳入 `code_executor`，若 `CodeExecutor` 類別依賴其他元件（如設定），可能無法正確初始化。建議從 `NodeFactory` 傳入已建立的 `code_executor` 實例，或確認此處使用預設值是否安全。",
+    "existing_code": "self._template_renderer = template_renderer or CodeExecutorJinja2TemplateRenderer()",
+    "evidence": "diff 中 `template_transform_node.py` 第 41 行：`CodeExecutorJinja2TemplateRenderer()` 未傳入任何參數，而 `NodeFactory` 中已建立 `code_executor` 並傳給其他節點。"
+  }
+]

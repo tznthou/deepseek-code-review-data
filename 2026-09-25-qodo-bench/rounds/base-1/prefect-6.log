@@ -1,0 +1,5 @@
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 17420 字元、thinking=disabled、max_tokens=8192）
+[info] 定位不到 tests/deployment/test_flow_runs.py:626（片段多重命中（5 處），不猜）
+[info] 重新定位 tests/deployment/test_flow_runs.py:931 → 930（片段唯一命中）
+[info] 完成於 14.2s ｜ findings=6 ｜ relocated=1 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 6860, "completion_tokens": 1473, "total_tokens": 8333, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 5324}

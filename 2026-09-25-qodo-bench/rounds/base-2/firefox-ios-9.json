@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/State/BrowserViewControllerState.swift",
+    "line": 566,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "displayView 從 .readerMode 改為 .readerModeLongPressAction，可能顯示錯誤畫面",
+    "body": "在 `handleShowReaderModeLongPressAction` 中，原本設定 `displayView: .readerMode`，但此 PR 將其改為 `.readerModeLongPressAction`。這會導致長按閱讀模式按鈕時，畫面顯示錯誤的視圖（可能是長按選單而非閱讀模式）。請確認此變更是否為預期行為，若非預期請還原。",
+    "existing_code": "displayView: .readerModeLongPressAction,",
+    "evidence": "diff 中該行由 `displayView: .readerMode` 改為 `displayView: .readerModeLongPressAction`，且此變更與 QR code 移除無關。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "cancelEditMode 中的 URL 判斷條件由 AND 改為 OR，可能導致非預期行為",
+    "body": "在 `cancelEditMode` 中，原本條件為 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，現在改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會讓閱讀模式 URL 也被視為有效 URL 而保留，可能導致取消編輯時 URL 欄顯示閱讀模式 URL，而非預期的空白或一般 URL。請確認此變更是否為預期行為。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中該行由 `&&` 改為 `||`，且此變更與 QR code 移除無關。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "isReaderModeEnabled 的布林值邏輯反轉，可能導致遙測資料錯誤",
+    "body": "原本 `case .available: true` 與 `default: false`，現在改為 `case .available: false` 與 `default: true`。這會讓閱讀模式按鈕的遙測事件記錄錯誤的啟用狀態，影響數據分析。請確認此變更是否為預期行為。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中該 switch 的兩個分支回傳值被反轉，且此變更與 QR code 移除無關。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "並行限制輸入未驗證，可能送出負數或非整數值",
+    "body": "在 `onChange` 中直接將輸入轉為 `Number`，但未檢查是否為有效整數或正數。若使用者輸入 `-5` 或 `2.5`，表單會接受並在提交時送出，可能導致 API 錯誤或非預期的行為。建議在 zod schema 中加入 `.int().positive()` 驗證，或在 `onChange` 中過濾無效值。",
+    "existing_code": "onChange={(e) => {\n\tconst value = e.target.value;\n\tfield.onChange(value === \"\" ? null : Number(value));\n}}",
+    "evidence": "diff 中新增的 `onChange` 處理直接將輸入轉為數字，沒有驗證範圍或整數性。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "表單提交時未檢查欄位是否變更，可能造成不必要的 API 呼叫",
+    "body": "即使使用者未修改任何欄位，點擊 Save 仍會呼叫 `updateWorkPool`。這可能導致不必要的網路請求，並在 API 端產生無意義的更新。建議使用 `form.formState.isDirty` 來判斷是否真的需要提交，或在提交前比較初始值。",
+    "existing_code": "const handleSubmit = (data: WorkPoolEditFormValues) => {\n\tconst trimmedDescription = data.description?.trim();\n\tupdateWorkPool(",
+    "evidence": "`handleSubmit` 中沒有檢查 `form.formState.isDirty`，直接呼叫 `updateWorkPool`。"
+  }
+]

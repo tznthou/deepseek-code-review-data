@@ -1,0 +1,24 @@
+[
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "格式化字串參數數量不符",
+    "body": "`detailTextStudiesV2` 與 `detailTextRollouts` 的字串值包含一個 `%@` 佔位符，但 `SettingsTextFormatter` 中的 `formatStudiesText` 與 `formatRolloutsText` 方法僅傳入一個 `appName` 參數，數量相符。然而，`detailTextStudies` 與 `detailTextSendUsageData` 的原始字串也包含 `%@`，但未提供對應的格式化方法，可能導致呼叫端自行格式化時出錯。建議確認所有使用這些字串的程式碼都正確處理了格式化參數。",
+    "existing_code": "static let detailTextStudiesV2 = NSLocalizedString(\"Settings.detailTextStudies.v2\", value: \"%@ randomly selects users to test features, which improves quality for everyone.\", comment: \"Description associated to the Studies toggle on the settings screen. %@ is the app name (for example \\\"Firefox Focus\\\" or \\\"Firefox Klar\\\").\")",
+    "evidence": "diff 中新增的 `detailTextStudiesV2` 與 `detailTextRollouts` 字串包含 `%@`，但 `SettingsTextFormatter` 的方法僅接受一個參數，若呼叫端傳入多個參數或未傳入，將導致執行時期錯誤。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 418,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增的 SettingsTextFormatter 未被使用",
+    "body": "新增的 `SettingsTextFormatter` 類別目前沒有被任何程式碼引用，可能是為了未來使用而預留，但若無計畫使用，建議移除以避免死代碼。",
+    "existing_code": "class SettingsTextFormatter {",
+    "evidence": "diff 中新增了 `SettingsTextFormatter` 類別，但未見任何呼叫點。"
+  }
+]

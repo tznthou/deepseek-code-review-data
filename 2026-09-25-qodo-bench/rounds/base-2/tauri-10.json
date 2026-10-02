@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1316,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "window_features 中 size 與 position 的處理順序變更可能影響視窗初始位置",
+    "body": "原本先處理 position 再處理 size，現在順序對調。在部分平台上，設定 size 後再設定 position 可能導致視窗位置被重置或偏移。建議確認此變更是否為預期行為，並在相關平台上測試。",
+    "existing_code": "if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 中顯示原本先處理 position 再處理 size，現在順序對調。"
+  },
+  {
+    "path": "examples/api/src-tauri/src/lib.rs",
+    "line": 84,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "on_new_window 移至桌面平台專屬區塊可能導致非桌面平台行為不一致",
+    "body": "原本 on_new_window 在所有平台都會設定，現在僅在桌面平台（desktop）設定。若其他平台需要處理新視窗，可能導致功能缺失。請確認此變更是否為預期。",
+    "existing_code": ".on_new_window(move |url, features| {",
+    "evidence": "diff 中顯示 on_new_window 被移入 #[cfg(all(desktop, not(test)))] 區塊。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/DisplaySettingsTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試斷言對象可能錯誤",
+    "body": "原本測試在選擇 Light 主題後，檢查 `lightThemeView` 的值是否為 \"1\"。修改後改為檢查 `darkThemeView` 的值，但變數名稱仍為 `lightIsSelected`，且後續選擇 Dark 主題的斷言可能未同步調整。這可能導致測試無法正確驗證主題選擇，或產生誤導性的測試結果。建議確認此修改是否為預期行為，並同步更新變數名稱與後續斷言。",
+    "existing_code": "let lightIsSelected = app.buttons[AccessibilityIdentifiers.Settings.Appearance.darkThemeView].value",
+    "evidence": "diff 中將原本的 `lightThemeView` 改為 `darkThemeView`，但變數名稱未變，且後續 Dark 主題的斷言未在 diff 中顯示，可能造成邏輯不一致。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/HomePageSettingsUITest.swift",
+    "line": 155,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試步驟順序調整可能影響穩定性",
+    "body": "原本先執行 `navigator.goto(NewTabScreen)` 再點擊 \"Done\" 按鈕，修改後順序對調。若 \"Done\" 按鈕的點擊會觸發畫面跳轉，先點擊可能導致後續 `navigator.goto(NewTabScreen)` 失敗或行為不符預期。建議確認此順序調整是否為修正既有問題，並確保測試仍能穩定通過。",
+    "existing_code": "app.buttons[\"Done\"].waitAndTap()\nnavigator.goto(NewTabScreen)",
+    "evidence": "diff 中將兩行順序對調，可能影響測試流程。"
+  }
+]

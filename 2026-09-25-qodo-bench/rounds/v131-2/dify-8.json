@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/devtools/tanstack/loader.tsx",
+    "line": 7,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "TanStack devtools 載入失敗被靜默吞掉",
+    "body": "在 `import('./devtools')` 的 `.catch()` 中直接回傳 `{ default: () => null }`，沒有記錄任何錯誤。這會讓開發者在 devtools 載入失敗時完全沒有線索，難以診斷問題。建議至少加上 `console.error` 記錄錯誤，或提供更明確的 fallback UI。",
+    "existing_code": "import('./devtools').then(module => ({\n    default: module.TanStackDevtoolsWrapper,\n  })).catch(() => {\n    return { default: () => null }\n  }),",
+    "evidence": "diff 中新增的 loader.tsx 第 8-12 行，catch 區塊沒有錯誤處理。"
+  },
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 7,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "React Scan 錯誤處理回傳無效元件",
+    "body": "在 `.catch()` 中回傳 `{ default: () => null }`，但 `ReactScan` 元件可能預期有特定的 props 或行為。若 `ReactScan` 在掛載時呼叫 hooks 或依賴 context，這個 fallback 可能導致執行時期錯誤。建議確認 `ReactScan` 的介面，或提供一個安全的 fallback 元件。",
+    "existing_code": "import('./scan').then(module => ({\n    default: module.ReactScan,\n  })).catch((error) => {\n    console.error('Failed to load React Scan devtools:', error)\n    return { default: () => null }\n  }),",
+    "evidence": "diff 中新增的 loader.tsx 第 7-12 行，catch 回傳的元件可能不符合預期。"
+  },
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Suspense fallback 顯示載入文字可能造成版面跳動",
+    "body": "在 devtools 載入期間顯示「Loading devtools...」文字，可能造成版面跳動或影響使用者體驗。建議使用 `null` 或 invisible fallback，或將 fallback 設計為不佔空間的元素。",
+    "existing_code": "<Suspense fallback={<div className=\"text-xs text-gray-500\">Loading devtools...</div>}>",
+    "evidence": "diff 中新增的 loader.tsx 第 18 行。"
+  }
+]

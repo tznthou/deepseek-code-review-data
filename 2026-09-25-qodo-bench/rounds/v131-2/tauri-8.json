@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "MouseButtonState 轉換邏輯反轉",
+    "body": "在 `From<tray_icon::MouseButtonState>` 的實作中，原本的對應關係被反轉：`tray_icon::MouseButtonState::Up` 現在對應到 `MouseButtonState::Down`，反之亦然。這會導致所有依賴此轉換的程式碼（例如處理 tray icon 點擊事件）得到相反的按鈕狀態，造成行為錯誤。\n\n建議修正為：\n```rust\nmatch value {\n    tray_icon::MouseButtonState::Up => MouseButtonState::Up,\n    tray_icon::MouseButtonState::Down => MouseButtonState::Down,\n}\n```",
+    "existing_code": "tray_icon::MouseButtonState::Up => MouseButtonState::Down,\n      tray_icon::MouseButtonState::Down => MouseButtonState::Up,",
+    "evidence": "diff 中原本的 `tray_icon::MouseButtonState::Up => MouseButtonState::Up` 被改為 `tray_icon::MouseButtonState::Up => MouseButtonState::Down`，且 `Down` 對應也被反轉。"
+  },
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 140,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "new_click 使用硬編碼零值可能造成誤判",
+    "body": "新增的 `TrayIconEvent::new_click` 方法將 `position`、`rect` 和 `size` 全部設為 0.0。若此方法用於測試或模擬事件，後續邏輯若依賴這些值（例如判斷點擊位置是否在特定區域內），可能會得到錯誤結果。建議改為接受參數或使用更明確的預設值，並在文件註解中說明其用途與限制。",
+    "existing_code": "pub fn new_click(id: TrayIconId) -> Self {\n    TrayIconEvent::Click {\n      id,\n      position: PhysicalPosition { x: 0.0, y: 0.0 },\n      rect: Rect {\n        position: PhysicalPosition { x: 0.0, y: 0.0 },\n        size: crate::PhysicalSize {\n          width: 0.0,\n          height: 0.0,\n        },\n      },\n      button: MouseButton::default(),\n      button_state: MouseButtonState::default(),\n    }\n  }",
+    "evidence": "diff 新增的 `new_click` 方法中，所有座標與尺寸均為 0.0。"
+  }
+]

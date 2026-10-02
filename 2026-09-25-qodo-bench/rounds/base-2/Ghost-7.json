@@ -1,0 +1,57 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 陳述式移除分號",
+    "body": "此檔案中多個 require 陳述式移除了行尾分號（例如 `const {Router} = require('express')`），與專案其他檔案的風格不一致。若專案有 ESLint 規則強制分號，可能導致 CI 失敗。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中可見原本有分號的 require 被改為無分號，但其他檔案仍保留分號。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 解析失敗",
+    "body": "路徑從 `./services/MemberBREADService` 改為 `./services/member-bread-service`，但實際檔案名稱已改為 `member-bread-service.js`。在大小寫不敏感的檔案系統上，若舊檔案未刪除，可能解析到舊檔或產生衝突。",
+    "existing_code": "const MemberBREADService = require('./services/member-bread-service')",
+    "evidence": "diff 中可見路徑變更，且檔案重新命名為小寫。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 解析失敗",
+    "body": "路徑從 `../../email-suppression-list/EmailSuppressionList` 改為 `../../email-suppression-list/email-suppression-list`，但實際檔案名稱已改為 `email-suppression-list.js`。在大小寫不敏感的檔案系統上，若舊檔案未刪除，可能解析到舊檔或產生衝突。",
+    "existing_code": "const {EmailSuppressedEvent} = require('../../email-suppression-list/email-suppression-list');",
+    "evidence": "diff 中可見路徑變更，且檔案重新命名為小寫。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "require 路徑大小寫變更可能導致 macOS/Windows 解析失敗",
+    "body": "路徑從 `../../lib/magic-link/MagicLink` 改為 `../../lib/magic-link/magic-link`，但實際檔案名稱已改為 `magic-link.js`。在大小寫不敏感的檔案系統上，若舊檔案未刪除，可能解析到舊檔或產生衝突。",
+    "existing_code": "const MagicLink = require('../../lib/magic-link/magic-link');",
+    "evidence": "diff 中可見路徑變更，且檔案重新命名為小寫。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "require 陳述式移除分號可能違反 ESLint 規則",
+    "body": "此檔案中多個 require 陳述式移除了行尾分號，若專案使用 ESLint 的 `semi` 規則，可能導致 lint 失敗。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 中可見原本有分號的 require 被改為無分號。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 512,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "IpadOnlyTestCase.setUp() 呼叫 super.setUp() 缺少 try",
+    "body": "在 `IpadOnlyTestCase` 的 `setUp()` 中，`super.setUp()` 現在是 `async throws`，但呼叫時僅使用 `await super.setUp()`，缺少 `try`。這會導致編譯錯誤，因為 throwing 函式必須以 `try` 呼叫。\n\n建議改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中 BaseTestCase.swift 的 IpadOnlyTestCase 區塊：\n```\n-            super.setUp()\n+            await super.setUp()\n```\n而其他類別（如 IphoneOnlyTestCase）皆使用 `try await super.setUp()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "setUp() 中 setUpApp() 與 setUpExperimentVariables() 順序變更可能影響測試行為",
+    "body": "原本 `setUpExperimentVariables()` 在 `setUpApp()` 之前呼叫，現在順序對調。若 `setUpApp()` 依賴實驗變數已設定（例如啟動參數或功能旗標），可能導致測試行為不一致。\n\n建議確認此順序變更是否為必要，或恢復原順序。",
+    "existing_code": "setUpApp()\nsetUpExperimentVariables()",
+    "evidence": "diff 中 FeatureFlaggedTestBase.swift：\n```\n-        setUpExperimentVariables()\n         setUpApp()\n+        setUpExperimentVariables()\n```"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/registerSettingsNavigation.swift",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "@MainActor 與 swiftlint 指令在同一行可能導致 lint 失效",
+    "body": "將 `@MainActor` 與 `// swiftlint:disable:next function_body_length` 放在同一行，可能使 swiftlint 無法正確解析 disable 指令，導致 function_body_length 警告重新出現。\n\n建議將 swiftlint 指令移至下一行，或確認 lint 設定。",
+    "existing_code": "@MainActor // swiftlint:disable:next function_body_length",
+    "evidence": "diff 中 registerSettingsNavigation.swift：\n```\n-// swiftlint:disable:next function_body_length\n+@MainActor // swiftlint:disable:next function_body_length\n```"
+  }
+]

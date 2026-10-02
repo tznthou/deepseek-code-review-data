@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 177,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "讀取錯誤的設定欄位：應為 `identifier` 而非 `bundle`",
+    "body": "在 `get_internal` 中，原本從設定物件讀取 `identifier` 欄位，但此變更改為讀取 `bundle`。這會導致 `original_identifier` 取得錯誤的值，可能影響後續的識別碼處理或驗證邏輯。請確認此變更是否為預期，若非預期應改回 `identifier`。",
+    "existing_code": ".and_then(|config| config.get(\"bundle\"))",
+    "evidence": "diff 中將 `config.get(\"identifier\")` 改為 `config.get(\"bundle\")`，但變數名稱仍為 `original_identifier`，且後續使用可能依賴正確的識別碼。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 201,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "條件判斷從 OR 改為 AND，導致 JSON 設定檔不再進行驗證",
+    "body": "原本的條件是當副檔名為 `json` 或 `json5` 時進行驗證，但改為 AND 後，只有副檔名同時為 `json` 和 `json5`（不可能）才會驗證，實際上完全停用了驗證。這會讓所有 JSON 設定檔跳過 schema 驗證，可能導致錯誤的設定被接受。請改回 OR 邏輯。",
+    "existing_code": "if config_path.extension() == Some(OsStr::new(\"json\"))\n    && config_path.extension() == Some(OsStr::new(\"json5\"))",
+    "evidence": "diff 中將 `||` 改為 `&&`，且條件兩邊檢查不同的副檔名，邏輯上不可能同時成立。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 289,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`merge_with` 不再合併設定，而是儲存擴充資料，可能破壞合併功能",
+    "body": "原本的程式碼會將 `merge_config` 合併到 `config_metadata.inner` 中，但此變更改為將 `merge_config` 存入 `extensions`。這可能導致合併功能失效，影響依賴此行為的呼叫者。請確認此變更的意圖，若需保留合併行為，應保留原本的合併邏輯。",
+    "existing_code": "config_metadata.extensions.insert(MERGE_CONFIG_EXTENSION_NAME.into(), merge_config);",
+    "evidence": "diff 中移除了 `serde_json::from_value(value)` 的合併步驟，改為插入擴充資料。"
+  }
+]

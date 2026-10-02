@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 382,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 remarks 指派給 Summary 可能改變既有 API 文件語意",
+    "body": "原本 `operation.Description = remarks;` 改為 `operation.Summary = remarks;`。在 OpenAPI 中，Summary 與 Description 有不同用途：Summary 通常較簡短，Description 較詳細。若既有 XML 註解中 `<remarks>` 內容較長，此變更可能導致產生的 OpenAPI 文件不符合預期。建議確認此變更為有意為之，並考慮是否應同時設定兩者或保留原行為。",
+    "existing_code": "operation.Summary = remarks;",
+    "evidence": "diff 中 `- operation.Description = remarks;` 改為 `+ operation.Summary = remarks;`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 444,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "metadata 為 null 時跳過處理可能遺失部分 XML 註解",
+    "body": "新增 `metadata is not null` 條件後，當 `parameterDescription.ModelMetadata` 為 null 時會直接跳過整個區塊。若此情況在實際執行中可能發生（例如某些參數沒有對應的 ModelMetadata），則原本可能套用的 XML 註解將不再套用。建議確認此行為是否符合預期，或考慮在 null 時採取其他處理方式。",
+    "existing_code": "if (metadata is not null\n                    && metadata.MetadataKind == ModelMetadataKind.Property",
+    "evidence": "diff 中新增 `metadata is not null &&` 條件"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 452,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "使用 propertyName 取代 metadata.Name 可能影響參數比對",
+    "body": "原本 `p.Name == metadata.Name` 改為 `p.Name == propertyName`。若 `metadata.Name` 與 `propertyName` 可能不同（例如 metadata 名稱經過轉換），此變更可能導致找不到對應的 operation parameter，進而將描述套用到 RequestBody 而非參數。建議確認兩者在此情境下是否恆等。",
+    "existing_code": "var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == propertyName);",
+    "evidence": "diff 中 `- var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == metadata.Name);` 改為 `+ var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == propertyName);`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 479,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.4,
+    "title": "RequestBody.Description 指派位置變更可能影響範例處理",
+    "body": "原本 `operation.RequestBody.Description = description;` 在處理範例之前，現在移到範例處理之後。若 `propertyComment.Examples` 存在且解析失敗，原本仍會設定 Description，現在則可能不會。建議確認此順序變更是否會造成行為差異。",
+    "existing_code": "operation.RequestBody.Description = description;",
+    "evidence": "diff 中 `- operation.RequestBody.Description = description;` 被移除，並在範例處理後新增 `+ operation.RequestBody.Description = description;`"
+  }
+]

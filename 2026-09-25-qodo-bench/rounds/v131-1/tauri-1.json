@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 636,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "並行建置可能產生相同的 versionCode",
+    "body": "在 `generate_tauri_properties` 中，讀取舊的 versionCode 後直接加 1 寫入，沒有使用鎖定或原子操作。如果兩個建置同時執行（例如 CI 中並行觸發），它們可能讀到相同的舊值，並產生相同的 versionCode，導致上架衝突。建議使用檔案鎖（例如 `flock`）或將 versionCode 儲存在可原子更新的位置（如資料庫或遠端服務）。",
+    "existing_code": "let last_version_code = std::fs::read_to_string(&app_tauri_properties_path)\n        .ok()\n        .and_then(|content| {\n          content\n            .lines()\n            .find(|line| line.starts_with(\"tauri.android.versionCode=\"))\n            .and_then(|line| line.split('=').nth(1))\n            .and_then(|s| s.trim().parse::<u32>().ok())\n        });\n      let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "diff 中新增的程式碼直接讀取檔案並加 1，沒有同步機制。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 645,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "versionCode 達到上限時靜默飽和",
+    "body": "使用 `saturating_add` 在 versionCode 達到 `u32::MAX` 時會停留在最大值，但 Android 的 versionCode 上限是 2100000000。如果超過此上限，Google Play 會拒絕上傳。建議在遞增前檢查是否超過上限，並提供明確的錯誤訊息。",
+    "existing_code": "let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "diff 中新增的程式碼使用 `saturating_add`，沒有檢查 Android 的上限。"
+  },
+  {
+    "path": "crates/tauri-build/src/lib.rs",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.6,
+    "title": "函式簽名變更可能影響其他呼叫者",
+    "body": "`generate_gradle_files` 的簽名從 `(project_dir, &config)` 改為 `(project_dir)`，移除了 config 參數。如果其他 crate 或外部工具依賴此函式，將導致編譯錯誤。建議確認此函式是否為公開 API，並考慮保留向後相容性或更新所有呼叫者。",
+    "existing_code": "mobile::generate_gradle_files(project_dir)?;",
+    "evidence": "diff 中呼叫處的變更，以及函式定義的變更。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 636,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少對新功能的測試",
+    "body": "新增的自動遞增邏輯沒有對應的單元測試或整合測試。建議添加測試覆蓋以下情境：首次建置、正常遞增、檔案不存在、檔案格式錯誤、並行建置（如果實作鎖定）等。",
+    "existing_code": "let last_version_code = std::fs::read_to_string(&app_tauri_properties_path)\n        .ok()\n        .and_then(|content| {\n          content\n            .lines()\n            .find(|line| line.starts_with(\"tauri.android.versionCode=\"))\n            .and_then(|line| line.split('=').nth(1))\n            .and_then(|s| s.trim().parse::<u32>().ok())\n        });",
+    "evidence": "diff 中新增的程式碼沒有對應的測試。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 45,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "getUrlHistory 回傳型別從 URLHistory | undefined 改為 URLHistory，可能導致呼叫端型別錯誤",
+    "body": "原本的程式碼在 history 為 falsy 時會回傳 undefined，現在直接回傳 history，但函式簽章仍為 `URLHistory`。如果 `getDefaultUrlHistory()` 回傳 `undefined`（例如 sessionStorage 中沒有資料），此函式會回傳 `undefined`，與宣告的型別不符。呼叫端若未處理 undefined，可能導致執行時期錯誤。建議確認 `getDefaultUrlHistory` 是否可能回傳 undefined，並調整型別或保留原本的條件判斷。",
+    "existing_code": "return history;",
+    "evidence": "diff 中刪除了原本的 `if (history) { return history; }` 條件，改為直接 `return history;`，但函式簽章仍為 `URLHistory`。"
+  },
+  {
+    "path": "apps/signup-form/src/components/pages/form-page.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 minimal 模式下的 setLoading(false) 可能導致 UI 狀態不一致",
+    "body": "在 minimal 模式下，送出成功後原本會呼叫 `setLoading(false)` 來停止載入狀態，但此 PR 移除了該行。如果 `setLoading(false)` 是必要的，移除後可能導致按鈕持續顯示載入中，或無法再次送出。建議確認 minimal 模式的 UI 流程，若需要停止載入，應保留該行。",
+    "existing_code": "setSuccess(true);",
+    "evidence": "diff 中刪除了 `setLoading(false);` 這一行，但未見其他替代處理。"
+  },
+  {
+    "path": "apps/signup-form/src/components/pages/form-view.tsx",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "email 輸入 trim 可能改變既有行為，需確認是否為預期",
+    "body": "在 submitHandler 中，將 `onSubmit({email})` 改為 `onSubmit({email: email.trim()})`。這會移除使用者輸入前後的空白，可能影響驗證或後端處理。若原本允許空白（例如作為密碼的一部分），此變更可能造成問題。建議確認 email 欄位的驗證邏輯，並確保 trim 是預期行為。",
+    "existing_code": "onSubmit({email: email.trim()});",
+    "evidence": "diff 中將 `onSubmit({email})` 改為 `onSubmit({email: email.trim()})`。"
+  }
+]

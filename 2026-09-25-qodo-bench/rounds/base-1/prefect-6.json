@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "移除 `@sync_compatible` 導致同步呼叫失敗",
+    "body": "原本 `run_deployment` 使用 `@sync_compatible` 裝飾器，允許在同步環境中直接呼叫。現在改為 `arun_deployment` 且僅以 `run_deployment = arun_deployment` 別名，未提供同步包裝。若使用者原本在同步程式碼中呼叫 `run_deployment(...)`，現在會得到一個 coroutine 物件而非 FlowRun，導致程式錯誤。\n\n建議：保留一個同步包裝函式，例如使用 `asyncio.run` 或 `anyio.run` 來呼叫 `arun_deployment`，或繼續使用 `@sync_compatible` 裝飾器。",
+    "existing_code": "async def arun_deployment(",
+    "evidence": "diff 中移除了 `@sync_compatible` 裝飾器，且新增 `run_deployment = arun_deployment` 別名，未提供同步執行路徑。"
+  },
+  {
+    "path": "tests/deployment/test_flow_runs.py",
+    "line": 626,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試中使用未定義的 `_sync` 參數",
+    "body": "在 `TestRunDeploymentSyncContext` 的測試中，呼叫 `run_deployment(..., _sync=True)`，但 `arun_deployment` 的簽名中沒有 `_sync` 參數。這會導致測試拋出 `TypeError`。\n\n建議：移除 `_sync` 參數，或修改函式簽名以支援同步呼叫。",
+    "existing_code": "_sync=True,",
+    "evidence": "diff 中多次出現 `_sync=True`，但函式定義中無此參數。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`get_or_create_client` 可能建立非預期的 client",
+    "body": "原本使用 `@inject_client` 裝飾器，會根據上下文注入 client，若未提供則建立新的 client。現在改為 `get_or_create_client(client)`，其行為可能不同：若 `client` 為 None，它會建立一個新的 client，但可能未正確處理與目前執行中 flow run 的關聯（例如使用相同的 API URL 或認證）。這可能導致在 flow 內呼叫時無法正確連結父子關係。\n\n建議：確認 `get_or_create_client` 的實作是否符合預期，或保留原本的 `@inject_client` 機制。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中將 `@inject_client` 移除，改為在函式內呼叫 `get_or_create_client`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`collect_task_run_inputs` 改為同步呼叫可能阻塞事件迴圈",
+    "body": "原本 `await collect_task_run_inputs(v)` 是非同步呼叫，現在改為 `collect_task_run_inputs(v)` 同步呼叫。若該函式內部有 I/O 或耗時操作，會阻塞事件迴圈，影響效能。\n\n建議：確認 `collect_task_run_inputs` 是否為非同步函式，若是則應保留 `await`。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中移除了 `await`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 212,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "使用 `deployment_id` 而非 `deployment.id` 可能導致型別錯誤",
+    "body": "原本 `client.create_flow_run_from_deployment(deployment.id, ...)` 使用 `deployment.id`，現在改為 `deployment_id`。若 `deployment_id` 是字串（例如從名稱解析而來），而 API 期望 UUID，可能導致型別錯誤。\n\n建議：確認 `deployment_id` 的型別，必要時轉換為 UUID。",
+    "existing_code": "deployment_id,",
+    "evidence": "diff 中將 `deployment.id` 改為 `deployment_id`。"
+  },
+  {
+    "path": "tests/deployment/test_flow_runs.py",
+    "line": 930,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中斷言 `run_deployment.aio is arun_deployment` 可能不成立",
+    "body": "若 `run_deployment` 是 `arun_deployment` 的別名，則 `run_deployment.aio` 屬性可能不存在，除非 `arun_deployment` 有定義 `aio` 屬性。此測試可能失敗。\n\n建議：確認 `arun_deployment` 是否有 `aio` 屬性，或調整測試。",
+    "existing_code": "assert run_deployment.aio is arun_deployment",
+    "evidence": "diff 中新增此斷言。"
+  }
+]

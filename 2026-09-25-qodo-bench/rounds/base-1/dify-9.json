@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除否定運算子可能反轉搜尋模式判斷",
+    "body": "在 `useMarketplaceSearchMode` 中，原本 `!(PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType))` 改為 `PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)`，移除了否定運算子。這會導致當 activePluginType 屬於 PLUGIN_CATEGORY_WITH_COLLECTIONS 時，原本應為非搜尋模式，現在卻會被視為搜尋模式，反之亦然。請確認此變更是否為預期行為，若非預期，請恢復否定運算子。",
+    "existing_code": "|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))",
+    "evidence": "diff 中此行由 `|| (searchMode ?? (!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))` 改為 `|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))`，移除了 `!`。"
+  },
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "query key 從 'category' 改為 'tab' 可能破壞既有連結",
+    "body": "`useActivePluginType` 的 query key 從 `'category'` 改為 `'tab'`。若使用者已將帶有 `?category=...` 的網址加入書籤或分享，升級後這些連結將不再生效，可能導致使用者看到非預期的分類。建議考慮保留舊 key 的相容性，或確認此變更為可接受的 breaking change。",
+    "existing_code": "return useQueryState('tab', marketplaceSearchParamsParsers.category)",
+    "evidence": "diff 中 `useQueryState('category', ...)` 改為 `useQueryState('tab', ...)`。"
+  },
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "selector 參數型別從函式放寬為 any，喪失型別安全",
+    "body": "`usePluginPageContext` 的 selector 參數型別從 `(value: PluginPageContextValue) => any` 改為 `any`。這會讓呼叫端可以傳入任意值，若傳入非函式，`useContextSelector` 可能拋出錯誤或產生非預期行為。建議保留原本的函式型別，或使用更精確的泛型。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中此行由 `export function usePluginPageContext(selector: (value: PluginPageContextValue) => any) {` 改為 `export function usePluginPageContext(selector: any) {`。"
+  }
+]

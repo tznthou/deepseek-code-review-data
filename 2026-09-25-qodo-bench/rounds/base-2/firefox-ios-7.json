@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Utils/MainThreadThrottler.swift",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "throttle 方法中 lastExecutionTime 更新順序錯誤",
+    "body": "在 throttle 方法中，原本先檢查時間間隔再更新 lastExecutionTime，現在改成先更新 lastExecutionTime 再檢查。這會導致每次呼叫都更新時間戳，使得節流條件永遠無法滿足（除非 threshold <= 0），節流功能失效。\n\n失敗情境：假設 threshold = 1 秒，連續快速呼叫 throttle 兩次，第一次呼叫後 lastExecutionTime 設為現在，第二次呼叫時，因為 lastExecutionTime 剛被更新，時間間隔小於 threshold，所以不會執行 completion，但 lastExecutionTime 又被更新，導致後續呼叫永遠被節流。\n\n建議：將 lastExecutionTime = Date() 移回 guard 檢查之後。",
+    "existing_code": "lastExecutionTime = Date()\nguard threshold <= 0 || lastExecutionTime.timeIntervalSinceNow < -threshold else { return }",
+    "evidence": "diff 中顯示原本的順序是 guard 在前，lastExecutionTime 更新在後，現在被調換了。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/Extensions/BrowserViewController+WebViewDelegates.swift",
+    "line": 1343,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "直接呼叫 completionHandler 可能違反執行緒安全",
+    "body": "在 handleServerTrust 中，原本使用 ensureMainThread 來確保 completionHandler 在主執行緒上執行，現在改成直接呼叫 completionHandler。但 handleServerTrust 是在 dispatchQueue.async 中執行的，該佇列可能是背景佇列，因此 completionHandler 可能在背景執行緒被呼叫，而 completionHandler 被標記為 @MainActor，這可能導致執行緒安全問題或 runtime crash。\n\n失敗情境：當憑證不在信任清單中時，completionHandler 會在背景執行緒被呼叫，若 completionHandler 內部存取 UI 或 main actor 隔離的狀態，可能導致資料競爭或 crash。\n\n建議：保留 ensureMainThread 包裝，或確保 dispatchQueue 是 main queue。",
+    "existing_code": "completionHandler(.performDefaultHandling, nil)",
+    "evidence": "diff 中移除了 ensureMainThread 包裝，直接呼叫 completionHandler。"
+  }
+]

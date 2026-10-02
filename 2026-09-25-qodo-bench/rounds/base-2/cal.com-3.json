@@ -1,0 +1,79 @@
+[
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1509,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`update` 方法缺少 `select`，回傳物件缺少 `references` 與 `workflowReminders`",
+    "body": "在 `handleCancelBooking.ts` 中，`bookingRepository.updateIncludeWorkflowRemindersAndReferences` 被呼叫後，回傳值被 push 到 `updatedBookings`，後續程式碼會存取 `updatedBooking.references` 與 `updatedBooking.workflowReminders`。但 `BookingRepository.update` 方法（第 1512 行）沒有指定 `select`，因此回傳的 `Booking` 物件不會包含這兩個關聯欄位，導致執行時錯誤。\n\n建議在 `update` 方法中加入與 `updateIncludeWorkflowRemindersAndReferences` 相同的 `select`，或直接改用 `updateIncludeWorkflowRemindersAndReferences`。",
+    "existing_code": "async update({ where, data }: { where: BookingWhereUniqueInput; data: BookingUpdateData }) {\n    return await this.prismaClient.booking.update({\n      where,\n      data,\n    });\n  }",
+    "evidence": "diff 中 `handleCancelBooking.ts` 將原本的 `prisma.booking.update` 改為 `bookingRepository.updateIncludeWorkflowRemindersAndReferences`，但 `BookingRepository.update` 方法沒有 select，回傳型別為 `Booking`，不包含 `references` 與 `workflowReminders`。"
+  },
+  {
+    "path": "packages/features/users/repositories/UserRepository.ts",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "移除 `locale` 欄位導致取消流程中 `organizer.locale` 可能為 undefined",
+    "body": "`UserRepository` 的 `userSelect` 移除了 `locale` 欄位，但 `handleCancelBooking.ts` 中仍使用 `organizer.locale`（例如 `getTranslation(organizer.locale ?? \"en\", \"common\")`）。若 `findByIdOrThrow` 使用此 select，回傳的 organizer 將沒有 `locale` 屬性，可能導致執行時錯誤或 fallback 行為不如預期。\n\n請確認 `findByIdOrThrow` 是否使用此 select，並考慮保留 `locale` 欄位或調整取消流程的處理。",
+    "existing_code": "createdDate: true,\n  trialEndsAt: true,\n  completedOnboarding: true,\n  timeFormat: true,",
+    "evidence": "diff 中 `UserRepository.ts` 刪除了 `locale: true`，而 `handleCancelBooking.ts` 中仍使用 `organizer.locale`。"
+  },
+  {
+    "path": "packages/lib/server/repository/dto/IBookingRepository.ts",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`IBookingRepository` 介面缺少 `updateIncludeWorkflowRemindersAndReferences` 方法",
+    "body": "`BookingRepository` 實作了 `IBookingRepository`，但介面中未宣告 `updateIncludeWorkflowRemindersAndReferences` 方法。這可能導致型別檢查不一致，且未來其他實作可能遺漏此方法。\n\n建議在介面中加入此方法的簽章。",
+    "existing_code": "export interface IBookingRepository {\n  // ... Add existing methods as well here\n  updateMany(params: { where: BookingWhereInput; data: BookingUpdateData }): Promise<{ count: number }>;\n\n  update(params: { where: BookingWhereUniqueInput; data: BookingUpdateData }): Promise<Booking>;\n\n  findManyIncludeWorkflowRemindersAndReferences(params: {\n    where: BookingWhereInput;\n  }): Promise<BookingWithWorkflowReminders[]>;\n}",
+    "evidence": "diff 中 `BookingRepository` 新增了 `updateIncludeWorkflowRemindersAndReferences` 方法，但 `IBookingRepository` 介面未包含此方法。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking/test/handleCancelBooking.test.ts",
+    "line": 1057,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "新增測試未驗證資料庫狀態，僅檢查回傳值",
+    "body": "新增的四個測試僅驗證 `result.success`、`result.onlyRemovedAttendee` 和 `result.bookingId`，未驗證資料庫中的實際變更（例如 attendees 是否被刪除、booking status 是否更新、booking references 是否被標記為 deleted）。這可能讓測試無法捕捉到 repository 實作中的錯誤。\n\n建議加入對資料庫狀態的斷言，例如使用 Prisma 查詢確認。",
+    "existing_code": "expect(result.success).toBe(true);\n    expect(result.onlyRemovedAttendee).toBe(false);\n    expect(result.bookingId).toBe(idOfBookingToBeCancelled);",
+    "evidence": "diff 中新增的測試僅有這些斷言，未查詢資料庫。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 497,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "`gte` 條件從 `new Date()` 改為 `bookingToDelete.startTime` 可能改變行為",
+    "body": "在取消後續 recurring bookings 時，原本的 `gte: new Date()` 被改為 `gte: bookingToDelete.startTime`。這可能導致取消的 bookings 集合不同：如果 `bookingToDelete.startTime` 早於目前時間，會包含過去已發生的 bookings；如果晚於目前時間，則可能遺漏應取消的 bookings。\n\n請確認此變更是否符合預期，並考慮是否應保留原本的 `new Date()` 或使用其他條件。",
+    "existing_code": "startTime: {\n          gte: bookingToDelete.startTime,\n        },",
+    "evidence": "diff 中 `handleCancelBooking.ts` 將 `gte: new Date()` 改為 `gte: bookingToDelete.startTime`。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1502,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`updateMany` 方法缺少回傳值",
+    "body": "`updateMany` 方法沒有回傳 `count`，但介面 `IBookingRepository` 定義回傳 `Promise<{ count: number }>`。雖然目前呼叫端未使用回傳值，但型別不一致可能導致未來誤用。\n\n建議回傳 `this.prismaClient.booking.updateMany` 的結果。",
+    "existing_code": "async updateMany({ where, data }: { where: BookingWhereInput; data: BookingUpdateData }) {\n    await this.prismaClient.booking.updateMany({\n      where: where,\n      data,\n    });\n  }",
+    "evidence": "diff 中 `updateMany` 方法未回傳值，但介面定義回傳 `Promise<{ count: number }>`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "依賴注入 fallback 使用全域 `prisma` 可能造成測試隔離問題",
+    "body": "當 `dependencies` 未提供時，handler 會使用全域 `prisma` 建立 repositories。這在測試中可能導致測試之間共享狀態，且難以 mock。建議在測試中一律注入 dependencies，或提供明確的測試用 prisma client。",
+    "existing_code": "} = dependencies || {\n    userRepository: new UserRepository(prismaClient),\n    bookingRepository: new BookingRepository(prismaClient),\n    profileRepository: new ProfileRepository({ prismaClient }),\n    bookingReferenceRepository: new BookingReferenceRepository({ prismaClient }),\n    attendeeRepository: new PrismaBookingAttendeeRepository(prismaClient),\n  };",
+    "evidence": "diff 中 handler 的 fallback 使用全域 `prisma`。"
+  }
+]

@@ -1,0 +1,13 @@
+[
+  {
+    "path": "api/core/workflow/nodes/template_transform/template_renderer.py",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "render_template 可能回傳 None，導致後續 len() 拋出 TypeError",
+    "body": "在 `CodeExecutorJinja2TemplateRenderer.render_template` 中，若 `execute_workflow_code_template` 回傳的 dict 中 `result` 鍵的值為 `None`，則方法會直接回傳 `None`。呼叫端 `TemplateTransformNode._run` 接著執行 `len(rendered)`，對 `None` 呼叫 `len()` 會拋出 `TypeError`，且此例外未被捕捉，導致節點以未處理例外失敗，而非回傳明確的錯誤訊息。\n\n**失敗情境**：當模板渲染結果為空（例如模板僅包含註解或空白控制）時，`execute_workflow_code_template` 可能回傳 `{'result': None}`，觸發此問題。\n\n**建議修法**：在 `render_template` 中，若 `rendered` 為 `None`，應拋出 `TemplateRenderError`，例如：\n```python\nif rendered is None:\n    raise TemplateRenderError(\"Template render result is None.\")\n```\n或將型別檢查改為：\n```python\nif not isinstance(rendered, str):\n    raise TemplateRenderError(\"Template render result must be a string.\")\n```",
+    "existing_code": "rendered = result.get(\"result\")\n        if rendered is not None and not isinstance(rendered, str):\n            raise TemplateRenderError(\"Template render result must be a string.\")\n        return rendered",
+    "evidence": "diff 中新增的 `template_renderer.py` 第 36-39 行顯示：`rendered = result.get(\"result\")`，接著僅在 `rendered is not None` 時檢查型別，否則直接回傳 `rendered`。而呼叫端 `template_transform_node.py` 第 68 行執行 `len(rendered)`，若 `rendered` 為 `None` 將拋出 `TypeError`。"
+  }
+]

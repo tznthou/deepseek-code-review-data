@@ -1,0 +1,35 @@
+[
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "macOS 映像從 13 升級到 15 可能導致建置失敗",
+    "body": "將 macOS 映像從 macOS-13 升級到 macOS-15，同時將 Xcode 版本從 15.2.0 升級到 16.4.0。macOS 15 可能包含與現有建置工具鏈不相容的變更，且 Xcode 16.4.0 的路徑 `/Applications/Xcode_16.4.0.app` 是否已存在於映像中需確認。若映像未預先安裝該版本，`xcode-select` 指令將失敗。建議先在 CI 中驗證此組合，或確認映像已包含所需 Xcode 版本。",
+    "existing_code": "vmImage: macOS-15",
+    "evidence": "diff 中將 `vmImage: macOS-13` 改為 `vmImage: macOS-15`，且 `xcode-select` 路徑改為 `/Applications/Xcode_16.4.0.app`。"
+  },
+  {
+    "path": "eng/Versions.props",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "停用基準驗證可能隱藏套件參考變更",
+    "body": "將 `ValidateBaseline` 從 `true` 改為 `false`，這會停用對基準套件參考的驗證。在 servicing 更新中，這可能允許未預期的套件參考變更進入發行版本，增加相容性風險。建議確認此變更的必要性，並考慮僅在特定條件下停用。",
+    "existing_code": "<ValidateBaseline>false</ValidateBaseline>",
+    "evidence": "diff 中將 `<ValidateBaseline>true</ValidateBaseline>` 改為 `<ValidateBaseline>false</ValidateBaseline>`。"
+  },
+  {
+    "path": "eng/targets/ResolveReferences.targets",
+    "line": 211,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "條件新增 `AspNetCorePatchVersion == '1'` 可能過度限制錯誤檢查",
+    "body": "在錯誤條件中新增 `AND '$(AspNetCorePatchVersion)' == '1'`，這表示只有當 patch 版本為 1 時才會檢查未使用的基準套件參考。若未來 patch 版本增加，此檢查將被跳過，可能導致未預期的套件參考變更未被發現。建議確認此限制是否為有意為之，並考慮使用更通用的條件。",
+    "existing_code": "Condition=\" '$(IsServicingBuild)' == 'true' AND '@(UnusedBaselinePackageReference->Count())' != '0' AND '$(AspNetCorePatchVersion)' == '1'\"",
+    "evidence": "diff 中在條件中新增了 `AND '$(AspNetCorePatchVersion)' == '1'`。"
+  }
+]

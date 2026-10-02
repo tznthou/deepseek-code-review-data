@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.95,
+    "title": "ClientMode 測試中型別不一致：使用 GenericComponent<int> 渲染，但斷言檢查 GenericComponent<string>",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，使用 `typeof(GenericComponent<int>)` 進行渲染，但後續的斷言卻檢查 `typeof(GenericComponent<string>).Assembly.GetName().Name` 和 `typeof(GenericComponent<string>).FullName`。這會導致斷言失敗，因為實際渲染的元件型別是 `GenericComponent<int>`，而不是 `GenericComponent<string>`。\n\n**失敗情境**：執行此測試時，`preambleMarker.Assembly` 和 `preambleMarker.TypeName` 將對應到 `GenericComponent<int>` 的組件與型別名稱，但斷言期望的是 `GenericComponent<string>` 的資訊，因此測試會失敗。\n\n**建議修法**：將斷言中的 `GenericComponent<string>` 改為 `GenericComponent<int>`，以符合實際渲染的型別。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\n        Assert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 使用 `typeof(GenericComponent<int>)` 作為渲染參數，但斷言部分使用了 `typeof(GenericComponent<string>)`。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "命名空間與類別宣告格式變更與專案慣例不一致",
+    "body": "此檔案將原本的 file-scoped namespace 宣告（`namespace Microsoft.AspNetCore.Components.Server.Circuits;`）改為 block-scoped namespace，並將類別宣告從頂層改為巢狀。這與專案中其他測試檔案的慣例不一致，可能導致程式碼風格不一致。\n\n**建議修法**：除非有特定原因，否則建議還原為 file-scoped namespace 宣告，以維持專案一致性。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{\n    public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 顯示 namespace 宣告從 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 改為 block-scoped，且類別宣告縮排增加。"
+  }
+]

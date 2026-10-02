@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中提前 return 可能略過清理步驟",
+    "body": "在 `tearDown()` 中，當 `self.name.contains(\"testSelectBottomPlacement\") || iPad()` 成立時直接 `return`，導致後續的 `app.terminate()` 與 `super.tearDown()` 不會被執行。這可能造成測試狀態殘留，影響後續測試的隔離性。建議改為使用 `if` 條件包住主題切換，但保留 `app.terminate()` 與 `super.tearDown()` 的執行。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 中新增的 `return` 位於 `tearDown()` 內，且後續仍有 `app.terminate()` 與 `try await super.tearDown()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試方法改名為 verify 開頭可能導致不被 XCTest 執行",
+    "body": "將 `testBookmarksShareNormalWebsiteReminders` 改名為 `verifyBookmarksShareNormalWebsiteReminders`。XCTest 預設只會執行以 `test` 開頭的方法，除非測試計畫明確列出此方法，否則此測試將不會被執行。請確認相關 `.xctestplan` 檔案是否已更新包含此新名稱，或考慮保留 `test` 前綴。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中方法名稱從 `testBookmarksShareNormalWebsiteReminders` 改為 `verifyBookmarksShareNormalWebsiteReminders`，且未見測試計畫檔案同步更新。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/plugins/marketplace/atoms.ts",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "布林邏輯變更可能導致搜尋模式判斷錯誤",
+    "body": "原本的條件是 `(searchMode ?? (!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))`，現在變成 `(searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))`，移除了 `!`。這會反轉當 `searchMode` 為 null/undefined 時的預設行為：原本不在集合中的分類會進入搜尋模式，現在變成在集合中的分類才會進入搜尋模式。請確認此變更是否為預期，否則可能導致 marketplace 在非搜尋情境下錯誤顯示搜尋模式。",
+    "existing_code": "|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))",
+    "evidence": "diff 中此行由 `|| (searchMode ?? (!PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))` 改為 `|| (searchMode ?? (PLUGIN_CATEGORY_WITH_COLLECTIONS.has(activePluginType)))`，移除了邏輯 NOT。"
+  },
+  {
+    "path": "web/app/components/plugins/plugin-page/context.tsx",
+    "line": 51,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "selector 型別放寬為 any 喪失型別安全",
+    "body": "`usePluginPageContext` 的 selector 參數型別從 `(value: PluginPageContextValue) => any` 改為 `any`，這會讓呼叫端可以傳入任何值，失去編譯時期的型別檢查。若傳入非函式，`useContextSelector` 可能拋出錯誤或產生非預期行為。建議保留原本的函式型別，或至少使用 `(value: PluginPageContextValue) => unknown`。",
+    "existing_code": "export function usePluginPageContext(selector: any) {",
+    "evidence": "diff 中此行由 `export function usePluginPageContext(selector: (value: PluginPageContextValue) => any) {` 改為 `export function usePluginPageContext(selector: any) {`。"
+  }
+]

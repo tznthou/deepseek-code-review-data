@@ -1,0 +1,24 @@
+[
+  {
+    "path": "eng/common/core-templates/job/source-index-stage1.yml",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "condition 變更可能導致非 main 分支無法執行 source index",
+    "body": "原本 condition 為空字串（代表永遠執行），現在改為 `eq(variables['Build.SourceBranch'], 'refs/heads/main')`，這會讓 source index 只在 main 分支執行。如果其他分支（例如 release 分支）也需要 source index，此變更會造成功能遺失。請確認此限制是否為預期行為。",
+    "existing_code": "condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')",
+    "evidence": "diff 中將 condition 從空字串改為特定分支條件。"
+  },
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "Visual Studio 需求處理邏輯變更可能影響建置",
+    "body": "原本直接指派 `$vsRequirements = $GlobalJson.tools.vs`，現在改為先檢查 `vs` 屬性是否存在，若不存在則設為 `$null`。後續使用 `$vsRequirements` 時也增加了 null 檢查。這項變更可能影響 Visual Studio 的偵測與參數傳遞，請確認在沒有 `vs` 設定的情況下行為仍符合預期。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n      $vsRequirements = $GlobalJson.tools.vs\n    } else {\n      $vsRequirements = $null\n    }\n  }",
+    "evidence": "diff 中新增了條件判斷與 null 指派。"
+  }
+]

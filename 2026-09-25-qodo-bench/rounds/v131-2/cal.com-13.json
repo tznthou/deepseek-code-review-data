@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "moduleLoader.token 設定錯誤，導致 DI 解析失敗",
+    "body": "在 `moduleLoader` 物件中，`token` 屬性被設定為 `moduleToken`，但其他模組（如 `FeatureOptInService.ts`）的 `moduleLoader.token` 是設定為實際的服務 token（例如 `FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE`）。這會導致當其他模組依賴 `featuresRepositoryModuleLoader` 時，使用 `featuresRepositoryModuleLoader.token` 取得的 token 是模組 token 而非服務 token，造成 DI 容器無法正確解析 `FeaturesRepository` 實例。\n\n**失敗情境**：任何使用 `featuresRepositoryModuleLoader` 作為依賴的模組（例如 `FeatureOptInService`）在載入時，會嘗試以 `FEATURES_REPOSITORY_MODULE` token 取得 `FeaturesRepository`，但該 token 並未綁定到類別，導致解析失敗並拋出錯誤。\n\n**建議修法**：將 `moduleLoader` 的 `token` 屬性改為 `token`（即 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY`），與其他模組保持一致。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中新增的 `packages/features/di/modules/FeaturesRepository.ts` 第 21 行明確設定 `token: moduleToken`，而對照 `packages/features/di/modules/FeatureOptInService.ts` 第 21 行設定 `token` 為服務 token。"
+  },
+  {
+    "path": "packages/features/di/containers/FeatureOptInService.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "每次呼叫都建立新的 DI 容器，可能造成資源浪費與狀態不一致",
+    "body": "`getFeatureOptInService()` 每次呼叫都會執行 `createContainer()` 並載入模組，這會建立全新的容器與服務實例。若服務內部有狀態（例如快取）或依賴的資源（如資料庫連線）需要共享，這種做法會導致狀態無法共享，且頻繁建立容器可能影響效能。\n\n**失敗情境**：在多個請求同時呼叫 `getFeatureOptInService()` 時，每個請求都會建立獨立的服務實例，若服務內部有跨請求的狀態（如記憶體快取），將無法共享，可能導致資料不一致或效能下降。\n\n**建議修法**：考慮使用單例模式，在模組載入時建立一次容器並重用，或使用應用程式層級的 DI 容器來管理生命週期。",
+    "existing_code": "export function getFeatureOptInService(): IFeatureOptInService {\n  const featureOptInServiceContainer = createContainer();\n  featureOptInServiceModuleLoader.loadModule(featureOptInServiceContainer);\n  return featureOptInServiceContainer.get<IFeatureOptInService>(featureOptInServiceModuleLoader.token);\n}",
+    "evidence": "diff 中新增的 `packages/features/di/containers/FeatureOptInService.ts` 第 6-8 行顯示每次呼叫都會建立新容器。"
+  },
+  {
+    "path": "packages/features/di/containers/FeaturesRepository.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "每次呼叫都建立新的 DI 容器，可能造成資源浪費與狀態不一致",
+    "body": "`getFeaturesRepository()` 每次呼叫都會執行 `createContainer()` 並載入模組，這會建立全新的容器與 `FeaturesRepository` 實例。若 `FeaturesRepository` 內部有狀態或依賴的資源（如 Prisma client）需要共享，這種做法會導致資源重複建立，且可能造成連線池耗盡。\n\n**失敗情境**：在高併發情境下，每個請求都建立新的 `FeaturesRepository` 與 Prisma client，可能導致資料庫連線數過多，影響效能或觸發連線上限。\n\n**建議修法**：考慮使用單例模式，在模組載入時建立一次容器並重用，或使用應用程式層級的 DI 容器來管理生命週期。",
+    "existing_code": "export function getFeaturesRepository(): FeaturesRepository {\n  const featuresRepositoryContainer = createContainer();\n  featuresRepositoryModuleLoader.loadModule(featuresRepositoryContainer);\n  return featuresRepositoryContainer.get<FeaturesRepository>(featuresRepositoryModuleLoader.token);\n}",
+    "evidence": "diff 中新增的 `packages/features/di/containers/FeaturesRepository.ts` 第 5-7 行顯示每次呼叫都會建立新容器。"
+  }
+]

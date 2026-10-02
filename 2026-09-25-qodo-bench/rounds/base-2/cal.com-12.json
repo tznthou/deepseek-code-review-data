@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 teamMembers 取代 filteredMembers 可能顯示未過濾的成員",
+    "body": "原本使用 `filteredMembers` 來顯示成員，現在改為 `teamMembers`。若 `filteredMembers` 是根據搜尋條件或權重過濾後的結果，直接使用 `teamMembers` 會顯示所有成員，導致 UI 行為改變。請確認此變更是否為預期，或應保留 `filteredMembers`。",
+    "existing_code": "{teamMembers.map((member) => (",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且空狀態判斷也改為 `teamMembers.length === 0`。"
+  },
+  {
+    "path": "apps/web/modules/event-types/hooks/useTeamMembersWithSegment.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "傳遞給 useProcessTeamMembersData 的 matchingTeamMembersWithResult 型別可能不符",
+    "body": "在 `useTeamMembersWithSegment` 中，將 `matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult` 傳給 `useProcessTeamMembersData`。若 `matchingTeamMembersWithResult` 的型別與 `useProcessTeamMembersData` 預期的 `matchingTeamMembersWithResult` 參數型別不一致，可能導致執行時期錯誤或型別錯誤。請確認型別定義。",
+    "existing_code": "matchingTeamMembersWithResult: matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult,",
+    "evidence": "diff 中新增的 hook 內有此條件式，且 `useProcessTeamMembersData` 的參數型別未在 diff 中顯示。"
+  },
+  {
+    "path": "packages/platform/atoms/availability/AvailabilitySettings.tsx",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "travelSchedules 型別變更可能造成型別不相容",
+    "body": "將 `travelSchedules` 的型別從 `RouterOutputs[\"viewer\"][\"travelSchedules\"][\"get\"]` 改為 `Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>`。若兩者結構不完全相同，可能導致使用此屬性的元件出現型別錯誤。請確認此變更是否必要，並檢查所有使用處。",
+    "existing_code": "travelSchedules?: Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>;",
+    "evidence": "diff 中修改了型別定義，但未顯示 `TravelScheduleRepository` 的定義。"
+  }
+]

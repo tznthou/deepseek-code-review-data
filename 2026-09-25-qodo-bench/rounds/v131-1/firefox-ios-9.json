@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "cancelEditMode 條件變更可能導致非網頁 URL 被錯誤保留",
+    "body": "原本條件 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)` 改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會讓 reader mode URL 也被保留，但 reader mode URL 並非一般網頁，可能導致取消編輯時網址列顯示 reader mode 的內部 URL，而非使用者預期的內容。建議確認此變更是否為預期行為，若非必要請回復原條件。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中此行由 `&&` 改為 `||`，且無相關說明。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "reader mode 狀態布林值對調可能造成遙測數據錯誤",
+    "body": "原本 `case .available: true` 改為 `false`，`default: false` 改為 `true`。這會使 `isReaderModeEnabled` 的語意相反，導致 `readerModeButtonTapped` 遙測事件記錄錯誤的啟用狀態。若此變更非預期，請修正；若為預期，請確認遙測定義是否需同步調整。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中布林值對調，且註解未更新。"
+  },
+  {
+    "path": "firefox-ios/Client/Glean/probes/metrics.yaml",
+    "line": 1530,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 QR code 遙測定義可能導致其他模組編譯失敗",
+    "body": "移除了 `qr_code` 區塊，但若其他程式碼仍引用 `GleanMetrics.QrCode`，將導致編譯錯誤。請確認所有引用已一併移除（例如 `TelemetryWrapper.swift` 中的 `GleanMetrics.QrCode.scanned.add()` 已移除，但需檢查是否有其他檔案）。",
+    "existing_code": "# QR Code metrics\nqr_code:\n  scanned:\n    type: counter\n    description: |\n      Counts the number of times a QR code is scanned.\n    bugs:\n      - https://bugzilla.mozilla.org/show_bug.cgi?id=1644846\n    data_reviews:\n      - https://bugzilla.mozilla.org/show_bug.cgi?id=1644846\n      - https://github.com/mozilla-mobile/firefox-ios/pull/9673\n      - https://github.com/mozilla-mobile/firefox-ios/pull/12334\n      - https://github.com/mozilla-mobile/firefox-ios/pull/14102\n    notification_emails:\n      - fx-ios-data-stewards@mozilla.com\n    expires: never",
+    "evidence": "diff 中刪除了整個 `qr_code` 區塊。"
+  },
+  {
+    "path": "firefox-ios/Client/Glean/probes/toolbar.yaml",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 toolbar 遙測定義可能導致其他模組編譯失敗",
+    "body": "移除了 `qr_scan_button_tapped` 事件定義，若其他程式碼仍引用 `GleanMetrics.Toolbar.qrScanButtonTapped`，將導致編譯錯誤。請確認所有引用已移除（例如 `ToolbarTelemetry.swift` 中的 `qrCodeButtonTapped` 已移除，但需檢查其他檔案）。",
+    "existing_code": "toolbar:\n  qr_scan_button_tapped:\n    type: event\n    description: |\n        Counts the number of times a user taps the qr code scan button\n        in the address toolbar\n    extra_keys:\n      is_private:\n        description: Whether the user is in private mode or not\n        type: boolean\n    bugs:\n      - https://github.com/mozilla-mobile/firefox-ios/issues/19327\n    data_reviews:\n      - https://github.com/mozilla-mobile/firefox-ios/pull/22325\n    notification_emails:\n      - fx-ios-data-stewards@mozilla.com\n    expires: never",
+    "evidence": "diff 中刪除了整個 `qr_scan_button_tapped` 區塊。"
+  }
+]

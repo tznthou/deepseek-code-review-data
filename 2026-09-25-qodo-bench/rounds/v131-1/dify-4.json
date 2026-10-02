@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/services/conversation_variable_updater.py",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "Session 未正確關閉，可能導致連線洩漏",
+    "body": "`ConversationVariableUpdaterImpl.update` 中直接建立 `Session(db.engine)` 但未在方法結束時關閉，也未使用 context manager。若 `session.commit()` 拋出例外，session 不會被關閉，造成連線洩漏。建議使用 `with Session(db.engine) as session:` 確保 session 正確關閉。",
+    "existing_code": "session = Session(db.engine)\n        row = session.scalar(stmt)\n        if not row:\n            raise ConversationVariableNotFoundError(\"conversation variable not found in the database\")\n        row.data = variable.model_dump_json()\n        session.commit()",
+    "evidence": "diff 中新增的 `session = Session(db.engine)` 沒有對應的 `session.close()` 或 context manager。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "多個變數更新時多次 flush，可能導致部分更新遺失",
+    "body": "在 `on_event` 中，對每個 updated variable 呼叫 `update` 後立即呼叫 `flush`。若有多個變數需要更新，且其中一個更新失敗，先前已 flush 的變更不會被回滾，導致資料不一致。建議收集所有更新後只 flush 一次，或使用交易包裹所有更新。",
+    "existing_code": "self._conversation_variable_updater.update(conversation_id=conversation_id, variable=variable)\n            self._conversation_variable_updater.flush()",
+    "evidence": "diff 中 `for item in updated_variables:` 迴圈內呼叫 `update` 和 `flush`。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "selector 長度檢查不足，可能導致 IndexError",
+    "body": "程式碼檢查 `len(selector) < 2` 後才存取 `selector[0]`，但若 selector 長度為 0 或 1，會觸發 IndexError。雖然有檢查，但檢查在存取之後，實際上 `selector[0]` 在 `len(selector) < 2` 時仍會執行，導致錯誤。應先檢查長度再存取。",
+    "existing_code": "if len(selector) < 2:\n                logger.warning(\"Conversation variable selector invalid. selector=%s\", selector)\n                continue\n            if selector[0] != CONVERSATION_VARIABLE_NODE_ID:",
+    "evidence": "diff 中 `if len(selector) < 2:` 後才 `continue`，但下一行 `selector[0]` 在長度不足時仍會執行。"
+  },
+  {
+    "path": "api/core/app/layers/conversation_variable_persist_layer.py",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "變數不存在時僅記錄警告，可能導致資料遺失",
+    "body": "當 `variable_pool.get(selector)` 回傳非 `Variable` 時，僅記錄警告並跳過，但該變數可能已從節點輸出中標記為更新，卻未持久化，導致資料不一致。建議考慮拋出例外或採取其他補救措施。",
+    "existing_code": "if not isinstance(variable, Variable):\n                logger.warning(\n                    \"Conversation variable not found in variable pool. selector=%s\",\n                    selector,\n                )\n                continue",
+    "evidence": "diff 中 `if not isinstance(variable, Variable):` 後僅記錄警告並 `continue`。"
+  }
+]

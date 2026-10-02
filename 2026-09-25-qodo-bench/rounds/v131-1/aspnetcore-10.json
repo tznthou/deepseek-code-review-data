@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Logging.AzureAppServices/src/AzureFileLoggerOptions.cs",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "RetainedFileCountLimit 驗證條件變更可能允許 0 值",
+    "body": "原本的驗證條件 `value <= 0` 會拒絕 0 和負數，但變更後只拒絕負數，允許 0。若設定為 0，可能導致不保留任何檔案，造成資料遺失或非預期行為。建議確認 0 是否為有效值，若不是，應維持原本的 `<= 0` 驗證。",
+    "existing_code": "if (value < 0)",
+    "evidence": "diff 中此行由 `if (value <= 0)` 改為 `if (value < 0)`，且錯誤訊息仍為 \"must be positive\"，顯示 0 不應被允許。"
+  },
+  {
+    "path": "src/Logging.AzureAppServices/src/BatchingLoggerOptions.cs",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "BackgroundQueueSize 驗證條件變更可能禁止 0 值",
+    "body": "原本的驗證條件 `value < 0` 允許 0（表示無佇列），但變更後 `value <= 0` 會拒絕 0。若原本有使用者設定 0 來停用佇列，此變更將導致例外。建議確認 0 是否為有效值，若不是，應更新文件說明；若是，應維持原本的驗證。",
+    "existing_code": "if (value <= 0)",
+    "evidence": "diff 中此行由 `if (value < 0)` 改為 `if (value <= 0)`，且錯誤訊息仍為 \"must be non-negative\"，顯示 0 應被允許。"
+  }
+]

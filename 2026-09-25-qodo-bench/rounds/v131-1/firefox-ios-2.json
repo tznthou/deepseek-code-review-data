@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 512,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "IpadOnlyTestCase 中呼叫 super.setUp() 缺少 try",
+    "body": "在 IpadOnlyTestCase 的 setUp() 中，呼叫 `await super.setUp()` 但未加上 `try`。由於父類別的 setUp() 現在是 `async throws`，此處會導致編譯錯誤。應改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中顯示 `-            super.setUp()` 改為 `+            await super.setUp()`，但未加上 try。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/FeatureFlaggedTestBase.swift",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "setUp() 中 setUpApp() 與 setUpExperimentVariables() 順序變更可能影響測試",
+    "body": "原本的順序是 `setUpExperimentVariables()` 在 `setUpApp()` 之前，現在被調換。若 setUpExperimentVariables() 依賴 setUpApp() 設定的某些狀態，或反之，可能導致測試行為改變。需確認兩者之間是否有相依性。",
+    "existing_code": "setUpApp()\nsetUpExperimentVariables()",
+    "evidence": "diff 顯示 `-        setUpExperimentVariables()` 被移到 `+        setUpApp()` 之後。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "全域變數加上 @MainActor 可能造成初始化時機問題",
+    "body": "`urlBarAddress` 和 `homepageSearchBar` 等全域變數加上 @MainActor 後，若在非 main actor 環境中存取，可能導致 runtime crash 或編譯錯誤。需確認所有存取點都在 main actor 上。",
+    "existing_code": "@MainActor\nlet urlBarAddress = XCUIApplication().textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]",
+    "evidence": "diff 中新增 @MainActor 標註。"
+  }
+]

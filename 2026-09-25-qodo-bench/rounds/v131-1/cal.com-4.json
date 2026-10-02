@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 96,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "正規表達式可能誤刪合法 email 中的加號標籤",
+    "body": "`getDisplayEmail` 使用 `/\\+[a-zA-Z0-9]{25}/` 移除 email 中加號後綴，但此模式會匹配任何 email 中加號後恰好 25 個英數字元的片段。例如 `user+tag@example.com` 若 `tag` 長度為 25，則整個 `+tag` 會被移除，導致 displayEmail 變成 `user@example.com`，但原始 email 的加號部分可能是使用者自訂的合法標籤，而非 OAuth CUID。這可能造成顯示錯誤的 email。\n\n建議：確認 OAuth CUID 的實際格式，並使用更精確的匹配（例如固定前綴或更嚴格的長度與字元集），或改為從資料庫中直接取得原始 email，而非事後用正規表達式移除。",
+    "existing_code": "private getDisplayEmail(email: string): string {\n    return email.replace(/\\+[a-zA-Z0-9]{25}/, \"\");\n  }",
+    "evidence": "diff 中新增的 getDisplayEmail 方法使用正規表達式 /\\+[a-zA-Z0-9]{25}/，可能誤刪合法 email 中的加號標籤。"
+  },
+  {
+    "path": "packages/platform/types/bookings/2024-08-13/outputs/booking.output.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "displayEmail 被標記為必填，可能破壞 API 相容性",
+    "body": "在 BookingAttendee、BookingHost、ReassignedToDto 等類別中，新增的 displayEmail 欄位被標記為必填（沒有 @IsOptional()），且 OpenAPI 規格中也將 displayEmail 加入 required 陣列。這表示所有 API 回應都必須包含 displayEmail，否則可能導致驗證失敗或客戶端解析錯誤。然而，此欄位是新增的，既有客戶端可能未預期此欄位，若客戶端使用嚴格的 schema 驗證，可能因額外欄位而失敗。\n\n建議：將 displayEmail 設為可選（加上 @IsOptional()），並在 OpenAPI 中不要列為 required，以維持向後相容性。",
+    "existing_code": "@ApiProperty({ type: String, example: \"john@example.com\", description: \"Clean email for display purposes\" })\n  @IsString()\n  @Expose()\n  displayEmail!: string;",
+    "evidence": "diff 中新增的 displayEmail 欄位沒有 @IsOptional()，且 OpenAPI 的 required 陣列加入了 displayEmail。"
+  },
+  {
+    "path": "apps/api/v2/src/ee/bookings/2024-08-13/services/output.service.ts",
+    "line": 424,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除排序可能改變回應順序",
+    "body": "在 getOutputRecurringSeatedBookings 方法中，原本有依 start 時間排序的邏輯，但此 PR 移除了該排序（`return transformed.sort(...)` 改為 `return transformed`）。這可能導致回應中的預約順序不再按時間排序，影響客戶端依賴順序的行為。\n\n建議：確認移除排序是否為預期變更，若需維持原有行為，應保留排序。",
+    "existing_code": "return transformed;",
+    "evidence": "diff 中將 `return transformed.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());` 改為 `return transformed;`"
+  }
+]

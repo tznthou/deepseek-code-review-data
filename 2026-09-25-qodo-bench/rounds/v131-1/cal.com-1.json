@@ -1,0 +1,79 @@
+[
+  {
+    "path": "packages/features/pbac/infrastructure/repositories/PermissionRepository.ts",
+    "line": 280,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "orgId 型別轉換可能導致 SQL 錯誤或錯誤結果",
+    "body": "在 `getTeamsWithPBACPermissions` 的 SQL 中，`${orgId}::bigint` 的寫法在 orgId 為 undefined 時會產生 `undefined::bigint`，這在 PostgreSQL 中會導致語法錯誤。即使 orgId 有值，直接將參數內插到 SQL 字串中也存在 SQL injection 風險（雖然 orgId 來自內部，但應使用參數化查詢）。建議改用 Prisma 的參數化查詢，例如 `orgId ? Prisma.sql`${orgId}`` : Prisma.sql`NULL``，或使用 `Prisma.join` 等方式。",
+    "existing_code": "AND (${orgId}::bigint IS NULL OR t.\"id\" = ${orgId} OR t.\"parentId\" = ${orgId})",
+    "evidence": "diff 中新增的 SQL 條件直接將 orgId 內插並轉型，未使用參數化，且未處理 undefined 情況。"
+  },
+  {
+    "path": "packages/features/pbac/infrastructure/repositories/PermissionRepository.ts",
+    "line": 309,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "orgId 型別轉換可能導致 SQL 錯誤或錯誤結果",
+    "body": "在 `getTeamsWithPBACPermissions` 的第二個 UNION 查詢中，同樣使用 `${orgId}::bigint`，存在與前述相同的問題。此外，條件 `child.\"id\" = ${orgId}` 可能不正確：若 orgId 是組織 ID，則 child.id 是團隊 ID，不應相等；應改為 `child.\"parentId\" = ${orgId}` 或類似條件。",
+    "existing_code": "AND (${orgId}::bigint IS NULL OR org.\"id\" = ${orgId} OR child.\"id\" = ${orgId})",
+    "evidence": "diff 中新增的 SQL 條件，且 child.id 與 orgId 的比較邏輯可疑。"
+  },
+  {
+    "path": "packages/features/pbac/infrastructure/repositories/PermissionRepository.ts",
+    "line": 357,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "orgId 型別轉換可能導致 SQL 錯誤或錯誤結果",
+    "body": "在 `getTeamsWithFallbackRoles` 的 SQL 中，同樣使用 `${orgId}::bigint`，存在型別轉換與 SQL injection 風險。此外，條件 `child.\"parentId\" = ${orgId}` 可能不正確：若 orgId 是組織 ID，則 child.parentId 是團隊 ID，不應相等；應改為 `org.\"id\" = ${orgId} OR child.\"parentId\" = ${orgId}` 或類似條件。",
+    "existing_code": "AND (${orgId}::bigint IS NULL OR org.\"id\" = ${orgId} OR child.\"id\" = ${orgId} OR child.\"parentId\" = ${orgId})",
+    "evidence": "diff 中新增的 SQL 條件，且 child.parentId 與 orgId 的比較邏輯可疑。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.ts",
+    "line": 145,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "userIds 過濾的權限檢查可能過於嚴格或寬鬆",
+    "body": "在 `getBookings` 中，當 `filters.userIds` 提供時，程式碼檢查 `filters.userIds.every((userId) => allAccessibleUserIds.includes(userId))`。但 `allAccessibleUserIds` 是從 `getUserIdsAndEmailsFromTeamIds` 取得的，該函數只回傳團隊成員的 ID，不包含組織層級的使用者。若使用者具有組織層級的 booking.read 權限，但目標使用者不是任何團隊成員（例如組織管理員），則此檢查會錯誤地拒絕存取。建議改為使用 `permissionCheckService` 檢查每個 userId 是否在可存取的團隊中，或直接查詢使用者是否屬於可存取的團隊。",
+    "existing_code": "const areUserIdsWithinUserOrgOrTeam = filters.userIds.every((userId) =>\n      allAccessibleUserIds.includes(userId)\n    );",
+    "evidence": "diff 中將原本的 `userIdsWhereUserIsAdminOrOwner` 改為 `allAccessibleUserIds`，但後者僅包含團隊成員，可能遺漏組織層級的使用者。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.ts",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "isCurrentUser 判斷可能錯誤",
+    "body": "原本的 `isCurrentUser` 判斷是 `filters.userIds.length === 1 && user.id === filters.userIds[0]`，現在改為 `filters.userIds.includes(user.id)`。這可能導致當 userIds 包含多個 ID 且其中包含當前使用者時，被視為「僅查詢自己」，從而繞過權限檢查。建議保留原本的嚴格判斷，或明確處理多個 userId 的情況。",
+    "existing_code": "const isCurrentUser = filters.userIds.includes(user.id);",
+    "evidence": "diff 中將原本的嚴格判斷改為寬鬆的 includes，可能導致權限繞過。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.ts",
+    "line": 114,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "PermissionCheckService 實例化可能缺少依賴注入",
+    "body": "在 `getBookings` 中直接 `new PermissionCheckService()`，但該服務可能需要依賴注入（例如 Prisma client 或 repository）。若建構子需要參數，此處會出錯。建議檢查 `PermissionCheckService` 的建構子，並考慮從外部傳入相依物件。",
+    "existing_code": "const permissionCheckService = new PermissionCheckService();",
+    "evidence": "diff 中新增的程式碼，未傳入任何參數。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.ts",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "getEventTypeIdsFromTeamIdsFilter 可能被誤用",
+    "body": "原本的 `getEventTypeIdsWhereUserIsAdminOrOwner` 被替換為 `getEventTypeIdsFromTeamIdsFilter(prisma, teamIdsWithBookingPermission)`。但 `getEventTypeIdsFromTeamIdsFilter` 的實作可能只處理直接團隊，不包含子團隊或組織層級，導致事件類型範圍不完整。建議確認該函數的實作是否符合預期。",
+    "existing_code": "getEventTypeIdsFromTeamIdsFilter(prisma, teamIdsWithBookingPermission),",
+    "evidence": "diff 中將原本的函數替換為 `getEventTypeIdsFromTeamIdsFilter`，但未確認其行為。"
+  }
+]

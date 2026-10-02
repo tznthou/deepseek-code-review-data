@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Tabs/State/TabsPanelState.swift",
+    "line": 143,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "scrollToTab 的 toIndex 可能越界",
+    "body": "在 `createTabScrollBehavior` 中，當沒有選取的 tab 時，回傳的 `toIndex` 為 `state.tabs.count`，但陣列索引應為 `count - 1`。這會導致滾動到不存在的索引，可能造成 collection view 崩潰或滾動到錯誤位置。\n\n建議改為 `state.tabs.count - 1`。",
+    "existing_code": "return ScrollState(toIndex: state.tabs.count, withAnimation: shouldAnimate)",
+    "evidence": "diff 中此行將原本的 `state.tabs.count - 1` 改為 `state.tabs.count`，但未調整其他邏輯。"
+  },
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 8461,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "新增的 v147 結構體可能造成重複定義",
+    "body": "在 `String.TabsTray` 中新增了 `struct v147`，其中包含與先前刪除的 `InactiveTabs` 結構體相同的靜態屬性。若專案中其他地方已存在 `v147` 結構體，或未來版本更新時可能衝突。建議確認此結構體名稱的唯一性，或考慮使用更明確的名稱。",
+    "existing_code": "struct v147 {",
+    "evidence": "diff 中新增了 `struct v147`，且其內容與刪除的 `InactiveTabs` 結構體重複。"
+  }
+]

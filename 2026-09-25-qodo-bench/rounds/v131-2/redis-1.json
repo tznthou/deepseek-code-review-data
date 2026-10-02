@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "validateStoredKeyConversion 函式未使用",
+    "body": "新增的 validateStoredKeyConversion 函式從未被呼叫，可能遺漏了驗證邏輯。若此函式旨在確保 keyFromStoredKey 回呼的正確性，應在適當位置（如 dictInit 或 dictAddRaw）呼叫，否則應移除。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}",
+    "evidence": "diff 中新增此函式，但未見任何呼叫。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 542,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "dictInsertKeyAtLink 未使用 dictStoredKey2Key 轉換 key",
+    "body": "dictInsertKeyAtLink 接受 stored key，但在內部使用 key 進行 hash 和比較時，未先轉換為 lookup key。若 dictType 有定義 keyFromStoredKey，可能導致 hash 或比較錯誤。建議在函式開頭將 key 轉換為 lookup key，或確保呼叫者傳入的是 lookup key。",
+    "existing_code": "dictEntry *dictInsertKeyAtLink(dict *d, void *key __stored_key, dictEntryLink link) {",
+    "evidence": "函式簽名標記 key 為 __stored_key，但函式內未呼叫 dictStoredKey2Key。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 913,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "dictSetKeyAtLink 中 dictFindLink 使用 addedKey 而非原始 key",
+    "body": "在 dictSetKeyAtLink 中，當 *link 為 NULL 時，使用 addedKey 呼叫 dictFindLink。addedKey 是 keyDup 的結果，可能與原始 key 不同（例如 keyDup 複製了 key）。若 keyDup 有實作，addedKey 可能不是預期的 lookup key，導致找不到正確的 link。建議使用原始 key 或轉換後的 lookup key。",
+    "existing_code": "if (*link == NULL) {\n        *link = dictFindLink(d, addedKey, NULL);\n        assert(*link != NULL);\n    }",
+    "evidence": "addedKey 來自 keyDup，可能與原始 key 不同。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 1807,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "dictGetHash 註解宣稱編譯器會 inline，但未使用 inline 關鍵字",
+    "body": "註解寫「Compiler inlines this for internal calls within dict.c (verified with -O3)」，但函式定義未加上 inline 關鍵字。雖然編譯器可能自動 inline，但依賴最佳化行為可能導致不同編譯設定下效能不一致。建議明確加上 inline 或移除註解。",
+    "existing_code": "/* Compiler inlines this for internal calls within dict.c (verified with -O3). */\nuint64_t dictGetHash(dict *d, const void *key) {\n    return d->type->hashFunction(key);\n}",
+    "evidence": "函式定義未使用 inline 關鍵字。"
+  },
+  {
+    "path": "src/dict.h",
+    "line": 157,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "pauseAutoResize 型別從 bitfield 改為 int16_t，可能影響 ABI 相容性",
+    "body": "struct dict 中 pauseAutoResize 從 bitfield 改為 int16_t，可能改變結構體佈局，影響與外部模組的 ABI 相容性。若 Redis 作為動態連結庫使用，可能導致崩潰。建議確認此變更的必要性，或保留 bitfield 以維持 ABI。",
+    "existing_code": "int16_t pauseAutoResize;  /* If >0 automatic resizing is disallowed (<0 indicates coding error) */",
+    "evidence": "型別變更可能影響結構體大小與對齊。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 316,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "kvGetKey 回傳 sds，但 keyFromStoredKey 預期回傳 const void*",
+    "body": "kvGetKey 回傳 sds（即 char*），但 dictType.keyFromStoredKey 的簽名為 const void *(*)(const void *)。雖然隱式轉換可行，但可能遺失型別安全性。建議明確轉型為 const void*。",
+    "existing_code": "static const void *kvGetKey(const void *kv) {\n    sds sdsKey = kvobjGetKey((kvobj *) kv);\n    return sdsKey;\n}",
+    "evidence": "回傳型別為 sds，與函式簽名不完全匹配。"
+  }
+]

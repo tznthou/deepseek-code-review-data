@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-array-list.tsx",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "拖曳排序索引計算未考慮 prefixItems，可能導致資料順序錯誤",
+    "body": "在 `handleDragEnd` 中，`oldIndex` 和 `newIndex` 是基於 `localKeyedValues` 的完整陣列索引，但 `moveItem` 函式預期的是「可移動項目」的索引（即扣除 prefixItems 後的索引）。當陣列包含 prefixItems 時，這兩個索引會錯位，導致拖曳後資料順序不正確。\n\n例如：prefixItems 有 2 個，使用者將第一個可移動項目（完整索引 2）拖到第二個可移動項目（完整索引 3）的位置，`oldIndex=2`、`newIndex=3`，但 `moveItem(3, 2)` 會嘗試移動可移動項目中的索引 3 和 2，實際上可移動項目只有索引 0 和 1，造成錯誤。\n\n建議：在計算索引時，先扣除 prefixItems 的數量，或改用 `item.key` 直接操作資料陣列。",
+    "existing_code": "const oldIndex = localKeyedValues.findIndex(\n\t\t\t\t(item) => item.key === active.id,\n\t\t\t);\n\t\t\tconst newIndex = localKeyedValues.findIndex(\n\t\t\t\t(item) => item.key === over.id,\n\t\t\t);\n\n\t\t\tif (oldIndex !== -1 && newIndex !== -1) {\n\t\t\t\tmoveItem(newIndex, oldIndex);\n\t\t\t}",
+    "evidence": "diff 中新增的 `handleDragEnd` 函式直接使用 `localKeyedValues` 的索引，而 `moveItem` 的實作（未在 diff 中顯示）預期是基於可移動項目的索引。從 `getCanMoveForIndex` 的邏輯可推測 prefixItems 不可移動，因此索引會錯位。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-array-list.tsx",
+    "line": 148,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SortableContext 包含不可拖曳的 prefix items，可能導致拖曳行為異常",
+    "body": "`sortableKeys` 是 `localKeyedValues` 的所有 key，包含 prefixItems 的 key。但 prefixItems 的 `canMove` 為 false，其對應的 `SchemaFormInputArrayItem` 不會渲染拖曳把手，且 `useSortable` 的 `disabled` 設為 true。將 disabled 的項目納入 SortableContext 可能導致 dnd-kit 在計算排序時出現非預期行為，例如拖曳時跳過 disabled 項目或無法正確定位。\n\n建議：僅將可移動項目的 key 傳入 SortableContext，例如 `localKeyedValues.filter((_, index) => getCanMoveForIndex(index)).map(item => item.key)`。",
+    "existing_code": "const sortableKeys = localKeyedValues.map((item) => item.key);",
+    "evidence": "diff 中新增的 `sortableKeys` 直接映射所有項目，而 `SchemaFormInputArrayItem` 中 `useSortable` 的 `disabled: !canMove` 表示 prefixItems 不可拖曳。"
+  }
+]

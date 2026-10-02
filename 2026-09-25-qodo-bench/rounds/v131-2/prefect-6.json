@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`collect_task_run_inputs` 改為同步呼叫可能導致效能問題",
+    "body": "原本 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`，若該函式為非同步，則會回傳 coroutine 而非實際值，可能導致後續處理錯誤或效能問題。建議確認 `collect_task_run_inputs` 的實作，若為非同步則應保留 `await`。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中將 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`，但未提供該函式的定義，無法確認其同步性。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`run_deployment` 別名可能破壞向後相容性",
+    "body": "將 `run_deployment` 設為 `arun_deployment` 的別名，但原本的 `run_deployment` 具有 `@sync_compatible` 裝飾器，可同時支援同步與非同步呼叫。若 `arun_deployment` 未保留此行為，則同步呼叫 `run_deployment` 的使用者將遇到錯誤。建議確認 `arun_deployment` 是否也具備同步相容性，或保留原本的包裝。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中直接將 `run_deployment` 指派為 `arun_deployment`，但未顯示 `arun_deployment` 的裝飾器，可能遺失同步支援。"
+  }
+]

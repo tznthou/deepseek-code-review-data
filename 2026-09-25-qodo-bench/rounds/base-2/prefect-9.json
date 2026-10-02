@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Storybook 全域 QueryClient 可能導致測試間狀態污染",
+    "body": "`queryClient` 在模組頂層建立，且 `createTestRouter` 內部又建立新的 `QueryClient` 但未使用。全域 `queryClient` 會被所有 story 共用，若某個 story 的快取資料被修改，可能影響其他 story 的渲染結果，導致測試不穩定。建議在每個 decorator 中建立新的 `QueryClient`，或使用 `QueryClientProvider` 的 `key` prop 強制重新掛載。",
+    "existing_code": "const queryClient = new QueryClient({\n\tdefaultOptions: {\n\t\tqueries: {\n\t\t\tretry: false,\n\t\t},\n\t},\n});",
+    "evidence": "第 10-16 行建立全域 queryClient，第 24 行在 createTestRouter 中又建立新的 QueryClient 但未使用，第 37 行 decorator 使用全域 queryClient。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "缺少錯誤處理，查詢失敗時元件會直接拋出錯誤",
+    "body": "`useSuspenseQuery` 在查詢失敗時會拋出錯誤，若沒有 ErrorBoundary 包覆，整個應用程式可能崩潰。建議在元件外層加入 ErrorBoundary，或在查詢選項中設定 `retry` 與 `onError` 處理。",
+    "existing_code": "const { data: flow } = useSuspenseQuery(buildFLowDetailsQuery(flowId));",
+    "evidence": "第 22 行使用 useSuspenseQuery，但元件本身沒有錯誤處理邏輯，且未見 ErrorBoundary 包覆。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "連結缺少可存取性標籤",
+    "body": "連結內容只有圖示和流程名稱，但圖示可能無法被螢幕閱讀器正確讀取，建議加入 `aria-label` 或 `title` 屬性，提供更明確的描述。",
+    "existing_code": "<Link\n\t\t\tto=\"/flows/flow/$id\"\n\t\t\tparams={{ id: flow.id }}\n\t\t\tclassName=\"flex items-center gap-1\"\n\t\t>",
+    "evidence": "第 27-31 行的 Link 元件沒有 aria-label 或 title。"
+  }
+]

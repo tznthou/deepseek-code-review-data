@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/di/tokens.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "DI token 合併可能造成 Symbol 重複或型別衝突",
+    "body": "在 `DI_TOKENS` 物件中直接展開 `FLAGS_DI_TOKENS` 與 `FEATURE_OPT_IN_DI_TOKENS`，若這些 token 物件中有與現有 `DI_TOKENS` 相同的 key，後面的展開會覆蓋前面的值，導致 token 不一致。此外，`Symbol` 的描述字串可能重複，但 Symbol 本身是唯一的，因此不會造成實際衝突，但可能造成除錯困難。建議明確列出需要的 token，或使用 `Object.assign` 並檢查衝突。",
+    "existing_code": "...FLAGS_DI_TOKENS,\n  ...FEATURE_OPT_IN_DI_TOKENS,",
+    "evidence": "diff 中新增了 `...FLAGS_DI_TOKENS` 與 `...FEATURE_OPT_IN_DI_TOKENS`，且刪除了原本的 `FEATURES_REPOSITORY` 與 `FEATURES_REPOSITORY_MODULE`。"
+  },
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "moduleLoader 的 token 可能設定錯誤",
+    "body": "`moduleLoader` 的 `token` 屬性被設定為 `moduleToken`，但其他模組（如 `FeatureOptInService.ts`）的 `moduleLoader.token` 是設定為實際的服務 token。這可能導致容器在取得服務時使用錯誤的 token。請確認 `moduleLoader.token` 應該是要回傳哪一個 token。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "在 `FeatureOptInService.ts` 中，`moduleLoader.token` 是 `FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE`，而此處是 `moduleToken`。"
+  },
+  {
+    "path": "packages/features/di/containers/FeatureOptInService.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "每次呼叫都建立新容器，可能造成效能與狀態問題",
+    "body": "`getFeatureOptInService()` 每次呼叫都會建立新的容器並載入模組，這可能導致不必要的效能開銷，且若服務內部有狀態（例如快取），每次取得都會是全新的實例。建議考慮使用單例模式或模組層級的容器。",
+    "existing_code": "export function getFeatureOptInService(): IFeatureOptInService {\n  const featureOptInServiceContainer = createContainer();\n  featureOptInServiceModuleLoader.loadModule(featureOptInServiceContainer);\n  return featureOptInServiceContainer.get<IFeatureOptInService>(featureOptInServiceModuleLoader.token);\n}",
+    "evidence": "diff 中新增的容器函式每次呼叫都建立新容器。"
+  },
+  {
+    "path": "packages/features/di/containers/FeaturesRepository.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "每次呼叫都建立新容器，可能造成效能與狀態問題",
+    "body": "`getFeaturesRepository()` 每次呼叫都會建立新的容器並載入模組，這可能導致不必要的效能開銷，且若 repository 內部有狀態（例如快取），每次取得都會是全新的實例。建議考慮使用單例模式或模組層級的容器。",
+    "existing_code": "export function getFeaturesRepository(): FeaturesRepository {\n  const featuresRepositoryContainer = createContainer();\n  featuresRepositoryModuleLoader.loadModule(featuresRepositoryContainer);\n  return featuresRepositoryContainer.get<FeaturesRepository>(featuresRepositoryModuleLoader.token);\n}",
+    "evidence": "diff 中新增的容器函式每次呼叫都建立新容器。"
+  }
+]

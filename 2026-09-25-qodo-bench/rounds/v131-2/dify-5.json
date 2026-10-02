@@ -1,0 +1,57 @@
+[
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 199,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "新增 console.log 可能洩漏使用者輸入資料",
+    "body": "在批次輸入驗證前新增了 `console.log('Checking batch inputs:', { dataLength: data.length, headerData })`。這會將使用者上傳的 CSV 標頭資料輸出到瀏覽器主控台，可能包含敏感資訊（如欄位名稱）。在生產環境中不應留下此類除錯日誌。建議移除該行。",
+    "existing_code": "console.log('Checking batch inputs:', { dataLength: data.length, headerData })",
+    "evidence": "diff 中新增的 console.log 行，位於 text-generation/index.tsx 的批次輸入處理函式中。"
+  },
+  {
+    "path": "web/app/components/app/configuration/prompt-value-panel/index.tsx",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "number 輸入的 type 從 'number' 改為 'text' 可能允許非數字輸入",
+    "body": "原本 `<Input type=\"number\" ...>` 改為 `<Input type=\"text\" ...>`。這會讓使用者可以輸入任意文字，而後端可能預期數字，導致提交時錯誤或資料不一致。若目的是移除 maxLength 限制，應保留 type=\"number\" 並僅移除 maxLength 屬性。",
+    "existing_code": "type=\"text\"",
+    "evidence": "diff 中 type 屬性的變更，位於 prompt-value-panel/index.tsx 的 number 輸入區塊。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除預設 max_length 後，若後端未提供 max_length 將無長度限制",
+    "body": "原本 `const maxLen = varItem.max_length || DEFAULT_VALUE_MAX_LEN` 確保有預設上限，現在改為 `if (item[varIndex].length > varItem.max_length)`。若 `varItem.max_length` 為 undefined，則比較結果永遠為 false，導致無長度驗證。需確認後端是否總是提供 max_length，否則應保留預設值或明確處理 undefined。",
+    "existing_code": "if (item[varIndex].length > varItem.max_length) {",
+    "evidence": "diff 中移除了 `|| DEFAULT_VALUE_MAX_LEN` 的邏輯。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 200,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 paragraph 類型的 max_length 設定可能導致無限制輸入",
+    "body": "原本在型別變更為 paragraph 時會設定 `draft.max_length = DEFAULT_VALUE_MAX_LEN`，現在移除後，paragraph 輸入將沒有預設長度限制。若後端未提供 max_length，使用者可輸入任意長度，可能造成效能或儲存問題。建議確認後端行為或保留預設值。",
+    "existing_code": "if (type === InputVarType.paragraph)\n        draft.max_length = DEFAULT_VALUE_MAX_LEN",
+    "evidence": "diff 中刪除了設定 max_length 的程式碼。"
+  },
+  {
+    "path": "web/app/components/rag-pipeline/components/panel/input-field/editor/form/hooks.ts",
+    "line": 89,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 paragraph 類型的 maxLength 設定可能導致無限制輸入",
+    "body": "原本在型別變更為 paragraph 時會呼叫 `setFieldValue('maxLength', DEFAULT_VALUE_MAX_LEN)`，現在移除後，paragraph 輸入將沒有預設長度限制。需確認後端是否提供 maxLength，否則應保留預設值。",
+    "existing_code": "if (type === PipelineInputVarType.paragraph)\n      setFieldValue('maxLength', DEFAULT_VALUE_MAX_LEN)",
+    "evidence": "diff 中刪除了設定 maxLength 的程式碼。"
+  }
+]

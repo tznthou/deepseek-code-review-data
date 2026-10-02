@@ -1,0 +1,13 @@
+[
+  {
+    "path": "ui-v2/src/components/task-runs/task-run-details/task-run-details.tsx",
+    "line": 45,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Flow Run 連結可能顯示空白文字",
+    "body": "原本條件為 `taskRun.flow_run_name && taskRun.flow_run_id`，現在改為僅檢查 `taskRun.flow_run_id`。若後端資料存在 `flow_run_id` 但 `flow_run_name` 為空或未定義，則連結文字會是空的，使用者只看到一個沒有文字的連結。建議保留原本的條件，或提供 fallback 文字。",
+    "existing_code": "{taskRun.flow_run_id ? (",
+    "evidence": "diff 中將條件從 `taskRun.flow_run_name && taskRun.flow_run_id` 改為 `taskRun.flow_run_id ?`，但下方連結文字仍使用 `taskRun.flow_run_name`。"
+  }
+]

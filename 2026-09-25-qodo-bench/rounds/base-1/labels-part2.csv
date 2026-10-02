@@ -1,0 +1,109 @@
+pair,label,note
+base-1:cal.com-11:1|cal.com-11#3,same,同一行 ?? true 預設值錯誤；改 false 即修好
+base-1:cal.com-11:2|cal.com-11#0,partial,同行 process.env；finding 談撞名；GT 要改注入
+base-1:cal.com-11:4|cal.com-11#1,same,同指取消座位時 requestReschedule 硬編 true
+base-1:cal.com-12:1|cal.com-12#2,same,同指渲染 teamMembers 而非 filteredMembers
+base-1:cal.com-12:3|cal.com-12#1,no,finding 談 teamId 為 0；GT 是雙層包裝
+base-1:cal.com-12:4|cal.com-12#5,same,同指檔尾缺換行
+base-1:cal.com-13:2|cal.com-13#3,same,同指每次呼叫都建新容器
+base-1:cal.com-13:2|cal.com-13#4,no,GT 是行長超限；finding 談每次建容器
+base-1:cal.com-13:3|cal.com-13#1,same,同指每次呼叫都建新容器
+base-1:cal.com-13:3|cal.com-13#5,no,GT 是行長超限；finding 談每次建容器
+base-1:cal.com-13:4|cal.com-13#2,same,同指 moduleLoader.token 與綁定 token 不一致
+base-1:cal.com-14:1|cal.com-14#3,same,同指 globalEnabled 過濾條件反轉
+base-1:cal.com-14:2|cal.com-14#0,same,同指未使用的 UNUSED_CONSTANT
+base-1:cal.com-15:1|cal.com-15#1,same,同指 Slot.userIds 改成 string[]
+base-1:cal.com-15:2|cal.com-15#0,partial,同函式；finding 談驗證不足；GT 談放錯檔案
+base-1:cal.com-15:2|cal.com-15#3,no,GT 是 days 型別錯；finding 談驗證不足
+base-1:cal.com-15:2|cal.com-15#4,same,同指手寫驗證不足、應改回 zod
+base-1:cal.com-15:2|cal.com-15#6,no,GT 是單引號格式；finding 談驗證不足
+base-1:cal.com-15:2|cal.com-15#7,no,GT 是泛用 Error；finding 談驗證不足
+base-1:cal.com-15:4|cal.com-15#0,no,finding 談 Schedule 缺欄位；GT 是驗證放錯檔
+base-1:cal.com-15:4|cal.com-15#3,no,finding 談 Schedule 缺欄位；GT 是 days 型別錯
+base-1:cal.com-15:4|cal.com-15#4,no,finding 談 Schedule 缺欄位；GT 是 zod 被取代
+base-1:cal.com-15:4|cal.com-15#6,no,finding 談 Schedule 缺欄位；GT 是單引號
+base-1:cal.com-15:4|cal.com-15#7,no,finding 談 Schedule 缺欄位；GT 是泛用 Error
+base-1:cal.com-16:1|cal.com-16#1,no,finding 談缺 await；GT 是權限用 WRITE
+base-1:cal.com-16:1|cal.com-16#2,same,同指 getRecordings 缺 await
+base-1:cal.com-16:1|cal.com-16#3,no,finding 談缺 await；GT 是 guard 順序錯
+base-1:cal.com-16:2|cal.com-16#1,same,同指錄音端點應用 BOOKING_READ
+base-1:cal.com-16:2|cal.com-16#3,no,finding 談權限等級；GT 是 guard 順序錯
+base-1:cal.com-16:3|cal.com-16#1,no,finding 談 guard 順序；GT 是權限用 WRITE
+base-1:cal.com-16:3|cal.com-16#3,same,同指 guard 順序；移前 ApiAuthGuard 即修；低估嚴重度
+base-1:cal.com-2:1|cal.com-2#1,same,同指 accepted 條件寫反
+base-1:cal.com-2:2|cal.com-2#2,same,同指 && 被改成 ||
+base-1:cal.com-3:1|cal.com-3#2,same,同指 updateMany 未回傳 count
+base-1:cal.com-3:2|cal.com-3#3,same,同指 userSelect 移除 locale
+base-1:cal.com-3:3|cal.com-3#1,no,finding 談回傳值未檢查；GT 是時間門檻不一致
+base-1:cal.com-3:4|cal.com-3#1,partial,指到同一查詢條件但講時區；GT 是門檻不一致
+base-1:cal.com-3:5|cal.com-3#1,no,finding 談 where 改用 uid；GT 是日期門檻
+base-1:cal.com-3:6|cal.com-3#2,no,finding 談 update 未用 select；GT 是未回傳
+base-1:cal.com-4:1|cal.com-4#4,no,GT 是檔名命名違規；finding 談 email 正則
+base-1:cal.com-4:2|cal.com-4#1,same,同指 map 直接傳方法致 this 遺失
+base-1:cal.com-4:2|cal.com-4#5,no,GT 是行長超限；finding 談 this 綁定
+base-1:cal.com-4:3|cal.com-4#2,same,同指排序邏輯被移除
+base-1:cal.com-4:4|cal.com-4#6,same,同指 openapi.json 的 required 縮排被移除
+base-1:cal.com-5:1|cal.com-5#2,partial,同段前綴組字；finding 談埠號；GT 是多了協定
+base-1:cal.com-5:3|cal.com-5#3,same,同指複製連結未用 bookingUrl
+base-1:cal.com-6:1|cal.com-6#2,no,finding 談回傳 identifier；GT 是條件反轉
+base-1:cal.com-6:1|cal.com-6#3,same,同指回傳 identifier 而非真 token
+base-1:cal.com-6:2|cal.com-6#2,same,同指 buildInviteLink 條件反轉
+base-1:cal.com-6:2|cal.com-6#3,no,finding 談條件反轉；GT 是回傳 identifier
+base-1:cal.com-6:3|cal.com-6#1,partial,同一 @Roles 行；finding 談跨團隊；GT 要 admin
+base-1:cal.com-6:4|cal.com-6#6,no,GT 是測試行長超限；finding 談 token 斷言
+base-1:cal.com-7:1|cal.com-7#2,partial,同段過濾條件；finding 談誤排；GT 是 length 判斷
+base-1:cal.com-8:1|cal.com-8#1,no,finding 談 hover 閃爍；GT 是隱藏項目缺 onClick
+base-1:cal.com-8:1|cal.com-8#3,no,GT 是 index 未使用；finding 談 hover 閃爍
+base-1:cal.com-8:1|cal.com-8#4,no,GT 是 index 未使用；finding 談 hover 閃爍
+base-1:cal.com-8:2|cal.com-8#1,partial,同一 span；finding 談鍵盤操作；GT 是缺 onClick
+base-1:cal.com-8:2|cal.com-8#3,no,GT 是 index 未使用；finding 談鍵盤無障礙
+base-1:cal.com-8:2|cal.com-8#4,no,GT 是 index 未使用；finding 談鍵盤無障礙
+base-1:cal.com-8:3|cal.com-8#2,partial,同一行 weight 串接；finding 談可讀性；GT 是尾端空白
+base-1:cal.com-8:4|cal.com-8#1,no,finding 談 key 重複；GT 是隱藏項目缺 onClick
+base-1:cal.com-8:4|cal.com-8#3,partial,finding 建議 index 當 key；GT 是 index 未用
+base-1:cal.com-8:4|cal.com-8#4,partial,涵蓋 hiddenItems 建議用 index；GT 是 index 未用
+base-1:cal.com-8:5|cal.com-8#1,no,finding 談 Badge 的 onClick；GT 是隱藏項目缺
+base-1:cal.com-8:5|cal.com-8#3,no,GT 是 index 未使用；finding 談 Badge onClick
+base-1:cal.com-8:5|cal.com-8#4,no,GT 是 index 未使用；finding 談 Badge onClick
+base-1:cal.com-9:1|cal.com-9#2,same,同指權重相等時 priority 比較反轉
+base-1:dify-1:1|dify-1#0,partial,同行型別提示；finding 要 Iterable；GT 要新語法
+base-1:dify-1:1|dify-1#1,partial,同函式型別；finding 談參數太嚴；GT 是未轉 tuple
+base-1:dify-1:2|dify-1#3,no,finding 談 chunk 斷言太嚴；GT 是 selector 比較
+base-1:dify-10:1|dify-10#2,same,同指驗證失敗塞 None 違反回傳型別
+base-1:dify-10:1|dify-10#4,no,GT 是泛用 Exception；finding 談回傳 None
+base-1:dify-10:2|dify-10#1,no,同段但 finding 談 Redis 故障；GT 是迭代錯字典
+base-1:dify-10:2|dify-10#3,no,GT 是 log 筆數錯；finding 談 Redis 故障
+base-1:dify-11:1|dify-11#3,same,同指 content 誤用 tool_inputs
+base-1:dify-11:1|dify-11#4,no,GT 是 broad except；finding 談誤用 inputs
+base-1:dify-11:1|dify-11#5,no,GT 是 broad except；finding 談誤用 inputs
+base-1:dify-11:3|dify-11#0,partial,抓到 v1 語法但建議 allow；GT 要 forbid
+base-1:dify-12:2|dify-12#1,same,同指 notlike 未帶 escape 參數
+base-1:dify-12:3|dify-12#2,same,同指 ESCAPE 字元與反斜線跳脫不一致
+base-1:dify-13:1|dify-13#0,same,同指正式程式碼留有 print
+base-1:dify-13:1|dify-13#1,no,GT 是執行早於 enqueue；finding 談 print
+base-1:dify-2:1|dify-2#0,same,同指 return True 未定義
+base-1:dify-2:1|dify-2#1,no,GT 是未正規化就存；finding 談 return True
+base-1:dify-2:2|dify-2#3,partial,同一驗證條件；finding 談物件跳過；GT 要驗正規化值
+base-1:dify-3:1|dify-3#1,same,同指 None 可通過檢查被回傳
+base-1:dify-4:1|dify-4#0,same,同指 Session 未用 context manager
+base-1:dify-4:1|dify-4#4,no,GT 是缺 tenant_id；finding 談 Session 未關
+base-1:dify-4:2|dify-4#1,same,同指 flush 在迴圈內；應移到迴圈外
+base-1:dify-4:2|dify-4#3,no,同段但 GT 是例外被吞；finding 談 flush 位置
+base-1:dify-4:4|dify-4#1,no,finding 談 selector 驗證；GT 是 flush 在迴圈內
+base-1:dify-4:4|dify-4#3,no,finding 談 selector 驗證；GT 是例外被吞
+base-1:dify-5:1|dify-5#0,same,同指正式程式碼留有 console.log
+base-1:dify-5:2|dify-5#1,same,同指 max_length 缺 undefined 檢查
+base-1:dify-5:2|dify-5#4,same,同指 max_length 可能 undefined 需先檢查
+base-1:dify-5:3|dify-5#3,same,同指數字輸入框被改成 type=text
+base-1:dify-6:1|dify-6#0,no,GT 是三元選類別可讀性；finding 談 local_hostname
+base-1:dify-6:1|dify-6#1,no,GT 是 ehlo 應用 self.server；finding 談建構子
+base-1:dify-6:1|dify-6#2,partial,同談空字串 vs None；finding 錨在已有 or None 行
+base-1:dify-6:1|dify-6#3,partial,同一行 or None；finding 要轉 None；GT 要移除
+base-1:dify-6:2|dify-6#0,no,GT 是三元選類別可讀性；finding 談 assert
+base-1:dify-6:2|dify-6#1,no,GT 是 ehlo 參數錯；finding 談 assert
+base-1:dify-6:2|dify-6#3,no,GT 是多餘的 or None；finding 談 assert
+base-1:dify-7:1|dify-7#1,partial,finding 順帶提 defaultNs；GT 是未傳 defaultNs
+base-1:dify-7:1|dify-7#2,partial,同一 ns 計算；finding 談預設 ns；GT 是查找順序
+base-1:dify-7:1|dify-7#3,no,GT 是缺 returnObjects；finding 談預設 ns
+base-1:dify-7:2|dify-7#1,no,GT 未傳 defaultNs；finding 談 returnObjects
+base-1:dify-7:2|dify-7#2,no,GT 是查找順序；finding 談 returnObjects

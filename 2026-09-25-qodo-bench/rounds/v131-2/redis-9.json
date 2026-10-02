@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "rewriteClientCommandVector 參數順序可能錯誤",
+    "body": "在 `rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj)` 中，參數順序可能不正確。根據 Redis 內部慣例，HSETEX 的語法為 `HSETEX key [KEEPTTL] FIELDS num field value [field value ...]`，因此參數順序應為：指令名稱、key、KEEPTTL、FIELDS、欄位數量、欄位名稱、值。目前程式碼將 `c->argv[2]`（欄位名稱）放在 `shared.integers[1]`（數量）之後，但 `newobj`（值）放在最後，這可能導致複寫出的指令參數順序錯誤。建議確認 `rewriteClientCommandVector` 的參數順序是否正確，並調整為正確的順序。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的這一行，參數順序為：指令、key、keepttl、fields、數量、欄位名稱、值。但 HSETEX 的語法要求欄位名稱在值之前，因此可能導致複寫錯誤。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 2153,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "shared.fields 字串長度可能錯誤",
+    "body": "`shared.fields = createStringObject(\"FIELDS\",6);` 中，字串 \"FIELDS\" 的長度為 6，但 `createStringObject` 的第二個參數是長度，因此長度應為 6，但需確認是否正確。實際上 \"FIELDS\" 的長度為 6，所以此處可能正確，但需注意其他 shared object 的長度是否一致。",
+    "existing_code": "shared.fields = createStringObject(\"FIELDS\",6);",
+    "evidence": "diff 中新增的這一行，字串長度為 6，但需確認是否與其他 shared object 的長度一致。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1980,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中 TTL 斷言可能過於嚴格",
+    "body": "在測試中，`assert_range [r httl h1 FIELDS 1 f1] 90 100` 假設 TTL 在 90 到 100 秒之間，但由於測試執行時間可能超過 10 秒，TTL 可能低於 90，導致測試不穩定。建議放寬範圍或使用更精確的斷言方式。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "diff 中新增的測試斷言，TTL 範圍為 90-100，但測試執行時間可能導致 TTL 低於 90。"
+  }
+]

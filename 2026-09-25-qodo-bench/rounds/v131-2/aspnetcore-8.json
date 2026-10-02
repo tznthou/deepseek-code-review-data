@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 382,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 remarks 指派給 Summary 可能改變既有語意",
+    "body": "原本將 methodComment.Remarks 指派給 operation.Description，現在改為指派給 operation.Summary。這可能導致既有使用 Description 欄位的用戶端行為改變。若 remarks 原本用於提供較長的說明，現在放在 Summary 可能不符合 OpenAPI 慣例（Summary 應簡短）。建議確認此變更是否為預期行為，或考慮同時設定兩者。",
+    "existing_code": "operation.Summary = remarks;",
+    "evidence": "diff 中將 `operation.Description = remarks;` 改為 `operation.Summary = remarks;`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 452,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "參數名稱比對改用 propertyName 可能導致找不到對應參數",
+    "body": "原本使用 `metadata.Name` 來比對 operation.Parameters 中的參數名稱，現在改為使用 `propertyName`。若 `metadata.Name` 與 `propertyName` 不同（例如 metadata.Name 可能包含前綴或不同大小寫），可能導致找不到對應的參數，進而將描述誤設到 RequestBody。建議確認兩者是否總是一致，或保留 fallback 邏輯。",
+    "existing_code": "var parameter = operation.Parameters?.SingleOrDefault(p => p.Name == propertyName);",
+    "evidence": "diff 中將 `p.Name == metadata.Name` 改為 `p.Name == propertyName`"
+  },
+  {
+    "path": "src/OpenApi/gen/XmlCommentGenerator.Emitter.cs",
+    "line": 479,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "RequestBody.Description 設定時機延後可能影響範例處理",
+    "body": "原本在設定範例之前就設定 RequestBody.Description，現在移到範例處理之後。若範例處理過程中發生例外（例如 jsonString.Parse() 失敗），Description 將不會被設定。建議確認此變更是否為預期，或考慮在 try-catch 中處理。",
+    "existing_code": "operation.RequestBody.Description = description;",
+    "evidence": "diff 中將 `operation.RequestBody.Description = description;` 從範例處理前移至範例處理後"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "local_hostname 設為 None 可能導致非預期的 HELO 名稱",
+    "body": "當 SMTP_LOCAL_HOSTNAME 未設定或為空字串時，local_host 為空字串，傳入 local_hostname 的參數為 None。這會使 smtplib 在建構時使用 socket.getfqdn() 的結果作為 local_hostname，而非原本的 server 參數。這可能導致 HELO/EHLO 命令使用不同的主機名稱，進而影響郵件伺服器的接受度。建議改為：若 local_host 為空，則傳入 self.server 或省略 local_hostname 參數。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中新增的程式碼將 local_hostname 設為 local_host or None，而 local_host 來自 dify_config.SMTP_LOCAL_HOSTNAME，預設為 None，因此當未設定時會傳入 None。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "assert smtp is not None 可能被停用且無助於錯誤處理",
+    "body": "assert smtp is not None 在 Python 最佳化模式（-O）下會被移除，且此處 smtp 必定不為 None（因為建構子成功回傳），因此 assert 沒有實際作用。若建構子拋出例外，smtp 變數可能未定義，後續的 smtp.ehlo 會導致 UnboundLocalError。建議移除 assert，並確保例外處理能正確關閉連線。",
+    "existing_code": "assert smtp is not None",
+    "evidence": "diff 中新增 assert smtp is not None，但 smtp 在建構成功後必定非 None，且若建構失敗，程式會拋出例外，不會執行到 assert。"
+  }
+]

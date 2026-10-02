@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "表單提交未處理非同步錯誤",
+    "body": "`handleSubmit` 呼叫 `updateWorkPool` 時，若 mutation 本身拋出同步例外（例如網路錯誤），由於 `onSubmit` 使用 `void form.handleSubmit(handleSubmit)(e)`，錯誤不會被捕獲，可能導致 unhandled rejection。建議在 `handleSubmit` 內使用 try/catch 或確保 `updateWorkPool` 回傳的 promise 有被 catch。",
+    "existing_code": "onSubmit={(e) => void form.handleSubmit(handleSubmit)(e)}",
+    "evidence": "diff 中新增的 `onSubmit` 處理器直接呼叫 `form.handleSubmit` 並忽略回傳的 promise，若 `handleSubmit` 內拋出錯誤，將無法被捕捉。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 109,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "並行限制輸入未限制最小值",
+    "body": "並行限制輸入使用 `type=\"number\"`，但未設定 `min` 屬性，使用者可以輸入負數或 0。若後端未驗證，可能導致非預期行為。建議加入 `min={0}` 或使用 zod schema 驗證。",
+    "existing_code": "type=\"number\"",
+    "evidence": "diff 中新增的 Input 元件僅設定 `type=\"number\"`，未見 `min` 屬性。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 158,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中對 mock 呼叫參數的型別斷言可能不準確",
+    "body": "在測試 `handles empty concurrency limit as null` 中，使用 `as` 斷言 `mockUpdateWorkPool.mock.calls[0]` 的型別，但實際呼叫參數可能包含額外欄位，斷言可能過於嚴格或錯誤。建議使用 `expect.objectContaining` 或直接檢查特定屬性。",
+    "existing_code": "const callArgs = mockUpdateWorkPool.mock.calls[0] as [\n\t\t\t\t{ name: string; workPool: { concurrency_limit: number | null } },\n\t\t\t\tUpdateWorkPoolOptions,\n\t\t\t];",
+    "evidence": "diff 中測試檔案第 150 行附近的型別斷言。"
+  }
+]

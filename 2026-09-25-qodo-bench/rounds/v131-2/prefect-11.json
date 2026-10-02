@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 132,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "semaphore 未初始化時拋出 RuntimeError 可能中斷啟動流程",
+    "body": "在 `_replicate_pod_event` 中，若 `_startup_event_semaphore` 為 `None`，會直接拋出 `RuntimeError`。這可能發生在 `initialize_clients` 尚未執行或執行失敗時，導致 observer 啟動失敗或事件處理中斷。建議改為記錄警告並跳過 semaphore 限制，或確保初始化順序與錯誤處理更完善。",
+    "existing_code": "if _startup_event_semaphore is None:\n    raise RuntimeError(\"Startup event semaphore not initialized\")",
+    "evidence": "diff 中新增的檢查直接拋出例外，沒有 fallback 機制。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/tests/test_observer.py",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "刪除整個測試檔案降低測試涵蓋率",
+    "body": "此 PR 刪除了 `test_observer.py`，其中包含多個針對 `_replicate_pod_event` 和 observer 啟動/停止的測試。刪除後，新增的 semaphore 邏輯沒有對應的測試，可能導致回歸。建議保留並更新測試，或新增針對 semaphore 行為的測試。",
+    "existing_code": "deleted file mode 100644\nindex 5041face3a79..000000000000",
+    "evidence": "diff 顯示整個測試檔案被刪除。"
+  },
+  {
+    "path": "src/integrations/prefect-kubernetes/prefect_kubernetes/observer.py",
+    "line": 137,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "semaphore 釋放可能因例外而跳過",
+    "body": "使用 `async with _startup_event_semaphore:` 時，若內部程式碼拋出例外，semaphore 會自動釋放，但若例外未被處理，可能導致 semaphore 計數錯誤。建議確認例外處理邏輯，確保 semaphore 正確釋放。",
+    "existing_code": "async with _startup_event_semaphore:",
+    "evidence": "diff 中新增的 async with 區塊。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/signup-form/src/components/pages/form-page.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 setLoading(false) 可能導致 minimal 模式永遠顯示 loading 狀態",
+    "body": "在 minimal 模式下，送出成功後原本會呼叫 setLoading(false) 來停止 loading 動畫，但此 PR 移除了該行。若 loading 狀態沒有在其他地方被重設，使用者會看到無限的 loading 指示。請確認是否有其他機制（例如元件 unmount 或 effect）會重設 loading，否則應保留此行。",
+    "existing_code": "setSuccess(true);",
+    "evidence": "diff 中刪除了 `setLoading(false);` 這一行，且未見其他重設 loading 的程式碼。"
+  },
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 45,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "getUrlHistory 簡化後可能回傳 null，與呼叫端預期不符",
+    "body": "原本的程式碼在 history 為 falsy 時會繼續執行後續邏輯（例如回傳空物件或預設值），但簡化後直接回傳 history（可能為 null）。若呼叫端未處理 null，可能導致執行時錯誤。請確認所有呼叫端都能處理 null 回傳值，或保留原本的條件判斷。",
+    "existing_code": "return history;",
+    "evidence": "diff 中刪除了 `if (history) { return history; }` 的條件判斷，直接回傳 history。"
+  },
+  {
+    "path": "apps/signup-form/src/components/pages/form-view.tsx",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "email.trim() 可能改變原本的驗證行為",
+    "body": "在提交時對 email 進行 trim 是合理的，但需確認驗證邏輯（isValidEmail）是否也應該使用 trim 後的值，否則可能出現前後不一致。例如使用者輸入前後有空白的 email，驗證可能通過但提交的是 trim 後的值，或反之。",
+    "existing_code": "onSubmit({email: email.trim()});",
+    "evidence": "diff 中將 `onSubmit({email})` 改為 `onSubmit({email: email.trim()})`，但未見驗證邏輯同步修改。"
+  }
+]

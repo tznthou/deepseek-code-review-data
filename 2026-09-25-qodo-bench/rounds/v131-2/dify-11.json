@@ -1,0 +1,35 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "tool_call_response 的 content 誤用 tool_inputs 而非 tool_responses",
+    "body": "在 organize_agent_history 中，原本 tool_call_response 的 content 是從 tool_responses 取得，但改動後變成從 tool_inputs 取得。這會導致回傳給使用者的工具回應內容變成輸入參數，而非實際的觀察結果。\n\n失敗情境：當 agent 呼叫工具並取得 observation 後，歷史訊息中的 tool response 會顯示輸入而非輸出，造成對話內容錯誤。\n\n建議：將 `content=str(tool_inputs.get(tool, agent_thought.observation))` 改回 `content=str(tool_responses.get(tool, agent_thought.observation))`。",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中第 499 行將原本的 `tool_responses.get` 改為 `tool_inputs.get`，但變數名稱與用途不符。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "AgentThoughtValidation 模型未被使用且 Config 語法可能過時",
+    "body": "新增的 AgentThoughtValidation 模型在 diff 中沒有被任何地方使用，可能是多餘的程式碼。此外，其 Config 使用 `extra = \"allow\"`，這是 Pydantic v1 的語法；若專案已升級至 Pydantic v2，應改用 `model_config = ConfigDict(extra='allow')`。\n\n建議：移除未使用的模型，或確認其用途並更新至 Pydantic v2 語法。",
+    "existing_code": "class AgentThoughtValidation(BaseModel):\n    \"\"\"\n    Validation model for agent thought data before database persistence.\n    \"\"\"\n\n    message_id: str\n    position: int\n    thought: str | None = None\n    tool: str | None = None\n    tool_input: str | None = None\n    observation: str | None = None\n\n    class Config:\n        extra = \"allow\"  # Pydantic v1 syntax - should use ConfigDict(extra='forbid')",
+    "evidence": "diff 中新增此模型，但未見任何 import 或使用；且註解已指出 Pydantic v1 語法問題。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1838,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "MessageAgentThought 改為 TypeBase 可能影響既有程式碼",
+    "body": "將基底類別從 Base 改為 TypeBase 可能改變 ORM 行為，例如 TypeBase 可能引入不同的預設值或驗證邏輯。需確認所有使用 MessageAgentThought 的地方（包括查詢、建立實例）仍能正常運作。\n\n建議：檢查 TypeBase 的定義，並執行相關測試。",
+    "existing_code": "class MessageAgentThought(TypeBase):",
+    "evidence": "diff 中將 `class MessageAgentThought(Base):` 改為 `class MessageAgentThought(TypeBase):`。"
+  }
+]

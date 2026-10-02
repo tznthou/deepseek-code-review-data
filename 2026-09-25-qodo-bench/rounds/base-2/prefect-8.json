@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 458,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "變數作用域錯誤可能導致 NameError",
+    "body": "在 `create_ui_app` 中，`source_static_path` 和 `static_subpath` 在 `if v2_enabled:` 區塊內賦值，但後續程式碼（如 `static_dir = ... or str(static_subpath)` 和 `copy_directory(str(source_static_path), ...)`）在區塊外使用這些變數。如果 `v2_enabled` 的值不是布林值（例如設定檔中設為字串 `\"false\"`），則條件判斷可能不如預期，導致變數未賦值而拋出 `NameError`。建議在 `if` 之前先設定預設值，或將變數初始化為 `None` 並在後續檢查。",
+    "existing_code": "if v2_enabled:\n        source_static_path = prefect.__ui_v2_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v2:{prefect.__version__}:{base_url}\"\n    else:\n        source_static_path = prefect.__ui_static_path__\n        static_subpath = prefect.__ui_static_subpath__\n        cache_key = f\"v1:{prefect.__version__}:{base_url}\"",
+    "evidence": "diff 中新增的程式碼在 `if` 區塊內賦值，但後續使用點（如 `static_dir = ... or str(static_subpath)`）在區塊外，若條件判斷未涵蓋所有情況，變數可能未定義。"
+  },
+  {
+    "path": "src/prefect/settings/models/server/ui.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "預設啟用 V2 UI 可能造成非預期的行為變更",
+    "body": "新增的 `v2_enabled` 設定預設為 `True`，這會讓所有現有使用者在升級後自動切換到實驗性的 V2 UI。如果 V2 UI 尚未完全穩定或與某些功能不相容，可能導致使用者遇到問題。建議將預設值設為 `False`，並在文件或發布說明中明確告知如何啟用。",
+    "existing_code": "v2_enabled: bool = Field(\n        default=True,\n        description=\"Whether to serve the experimental V2 UI instead of the default V1 UI.\",\n    )",
+    "evidence": "diff 中新增的設定欄位 `v2_enabled` 預設為 `True`，且描述中標明為 experimental。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 530,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "日誌訊息可能造成混淆",
+    "body": "在 `create_ui_static_subpath` 中，當 `v2_enabled` 為真時，會記錄 \"Serving experimental V2 UI\"。但此函式主要負責複製靜態檔案，實際提供服務的邏輯可能在別處。若此日誌在多個地方出現，可能讓使用者誤解。建議將日誌移至實際處理請求的地方，或調整訊息內容。",
+    "existing_code": "if v2_enabled:\n            ui_logger = logging.getLogger(\"ui_server\")\n            ui_logger.info(\"Serving experimental V2 UI\")",
+    "evidence": "diff 中新增的日誌記錄位於 `create_ui_static_subpath` 函式內，但該函式名稱暗示其職責為建立靜態子路徑，而非提供服務。"
+  }
+]

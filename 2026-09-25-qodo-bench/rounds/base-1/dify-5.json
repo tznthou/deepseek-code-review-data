@@ -1,0 +1,46 @@
+[
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 199,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "console.log 可能洩漏使用者輸入資料",
+    "body": "新增的 `console.log` 會將批次輸入的資料（包含使用者提供的內容）輸出到瀏覽器主控台。這可能導致敏感資訊外洩，且不應存在於正式程式碼中。\n\n建議移除該行。",
+    "existing_code": "console.log('Checking batch inputs:', { dataLength: data.length, headerData })",
+    "evidence": "diff 中新增的 console.log 行，位於批次輸入驗證邏輯之前。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/index.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "max_length 為 undefined 時長度驗證失效",
+    "body": "當 `varItem.max_length` 未定義時，`item[varIndex].length > varItem.max_length` 會變成 `length > undefined`，結果永遠為 false，導致長度驗證被跳過。\n\n建議改為：\n```ts\nif (varItem.max_length && item[varIndex].length > varItem.max_length) {\n```\n或使用 `Number.isFinite(varItem.max_length)` 進行檢查。",
+    "existing_code": "if (item[varIndex].length > varItem.max_length) {",
+    "evidence": "diff 中將原本的 `varItem.max_length || DEFAULT_VALUE_MAX_LEN` 改為直接使用 `varItem.max_length`，未處理 undefined 的情況。"
+  },
+  {
+    "path": "web/app/components/app/configuration/prompt-value-panel/index.tsx",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "數字輸入框類型從 number 改為 text 可能影響驗證",
+    "body": "將數字輸入框的 `type` 從 `number` 改為 `text`，可能導致瀏覽器不再自動驗證數字格式，且行動裝置可能顯示不同的鍵盤。若此變更非刻意為之，建議保留 `type=\"number\"`。",
+    "existing_code": "type=\"text\"",
+    "evidence": "diff 中將原本的 `type=\"number\"` 改為 `type=\"text\"`。"
+  },
+  {
+    "path": "web/app/components/share/text-generation/run-once/index.tsx",
+    "line": 142,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "maxLength 屬性可能被設為 undefined",
+    "body": "當 `item.max_length` 未定義時，`maxLength={item.max_length}` 會將屬性設為 undefined，React 不會渲染該屬性，但可能導致非預期行為。建議明確處理：`maxLength={item.max_length || undefined}` 或條件渲染。",
+    "existing_code": "maxLength={item.max_length}",
+    "evidence": "diff 中將原本的 `maxLength={item.max_length || DEFAULT_VALUE_MAX_LEN}` 改為 `maxLength={item.max_length}`。"
+  }
+]

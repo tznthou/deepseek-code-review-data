@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1962,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "active defrag 設定恢復錯誤",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，暫時停用 active defrag 後，恢復時直接將 `server.active_defrag_enabled` 設為 1，而非使用先前儲存的 `orig_active_defrag`。這會導致即使原本設定為停用，函式執行後仍會強制啟用 active defrag，可能造成非預期的記憶體整理行為或效能影響。\n\n建議改為 `server.active_defrag_enabled = orig_active_defrag;`。",
+    "existing_code": "server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n...\n+    server.active_defrag_enabled = 1;\n```\n恢復時未使用 `orig_active_defrag`，而是硬編碼為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "streamEntryIsReferenced 的 null 檢查可能改變行為",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 會在沒有 consumer groups 時直接回傳 1（表示被引用），這可能導致某些刪除或修剪邏輯誤判訊息仍被引用，進而無法正確釋放記憶體或刪除條目。需要確認此變更是否符合預期，並檢查所有呼叫此函式的情境。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的這一行。原本若 `s->cgroups_ref` 為 NULL，`raxFind` 可能處理 NULL 指標而 crash，但直接回傳 1 可能掩蓋了真實的引用狀態。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 70,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "discard_replies_every 邏輯可能錯誤",
+    "body": "新增的輔助函式 `discard_replies_every` 在 `count % frequency == 0` 時不丟棄任何回覆，否則丟棄 `discard_num` 個回覆。這與原本的邏輯相反：原本是每 `frequency` 次丟棄 `discard_num` 個回覆。這可能導致測試中累積過多未讀回覆，造成記憶體問題或測試失敗。\n\n建議修正條件，例如改為 `if {$count % $frequency == 0}` 才丟棄。",
+    "existing_code": "proc discard_replies_every {rd count frequency discard_num} {\n        if {$count % $frequency != 0} {\n            for {set k 0} {$k < $discard_num} {incr k} {\n                $rd read ; # Discard replies\n            }\n        }\n    }",
+    "evidence": "diff 中新增的函式，條件判斷為 `!= 0` 才丟棄，與原本的 `== 0` 相反。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 982,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中可能未正確處理 activedefrag 設定",
+    "body": "在新增的測試中，使用 `catch {$replica config set activedefrag yes} e` 來嘗試啟用 active defrag，但未檢查錯誤內容。若設定失敗，後續的 `if` 條件可能無法正確判斷，導致測試跳過或誤判。建議明確處理錯誤或使用 `assert` 驗證設定成功。",
+    "existing_code": "catch {$replica config set activedefrag yes} e\n                if {[$replica config get activedefrag] eq \"activedefrag yes\"} {",
+    "evidence": "diff 中新增的測試程式碼片段。"
+  }
+]

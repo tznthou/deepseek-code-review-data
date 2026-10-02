@@ -1,0 +1,35 @@
+[
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`$vsRequirements` 可能為 `$null`，後續成員存取可能拋出例外",
+    "body": "在 `LocateVisualStudio` 函式中，當 `$GlobalJson.tools` 沒有 `vs` 屬性時，`$vsRequirements` 會被設為 `$null`。後續的 `if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' ...))` 已加上 `$vsRequirements -and` 條件，但接下來的 `if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'components' ...))` 也同樣有保護。然而，在 `if (!$vsRequirements) { ... }` 區塊之後，程式碼直接使用 `$vsRequirements` 作為 `Get-Member` 的 `-InputObject`，若 `$vsRequirements` 為 `$null`，`Get-Member` 會拋出「Cannot bind argument to parameter 'InputObject' because it is null」的錯誤。建議在呼叫 `Get-Member` 前先檢查 `$vsRequirements` 是否為 `$null`，或使用 `-ErrorAction SilentlyContinue` 並搭配條件判斷。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n      $vsRequirements = $GlobalJson.tools.vs\n    } else {\n      $vsRequirements = $null\n    }\n  }\n\n  $args = @('-latest', '-format', 'json', '-requires', 'Microsoft.Component.MSBuild', '-products', '*')\n\n  if (!$excludePrereleaseVS) {\n    $args += '-prerelease'\n  }\n\n  if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'version' -ErrorAction SilentlyContinue)) {\n    $args += '-version'\n    $args += $vsRequirements.version\n  }\n\n  if ($vsRequirements -and (Get-Member -InputObject $vsRequirements -Name 'components' -ErrorAction SilentlyContinue)) {\n    foreach ($component in $vsRequirements.components) {\n      $args += '-requires'\n      $args += $component\n    }\n  }",
+    "evidence": "diff 中新增了 `$vsRequirements = $null` 的分支，但後續的 `Get-Member` 呼叫未對 `$null` 進行防護。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 408,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`_receiveTcs` 重設時機變更可能影響測試行為",
+    "body": "在 `WebSocketWrapper.ReceiveAsync` 中，原本在處理零位元組讀取後才重設 `_receiveTcs`，現在改為在 await 後立即重設。這可能導致在零位元組讀取時，新的 `_receiveTcs` 被建立，但後續的 `SetReceiveResult` 可能設定到新的 TCS 上，而測試預期的是舊的 TCS。需要確認此變更是否會造成測試不穩定或失敗。",
+    "existing_code": "var res = await _receiveTcs.Task;\n            _receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);\n            // Handle zero-byte reads\n            if (buffer.Count == 0)\n            {\n                return res.Item1;\n            }\n            res.Item2.CopyTo(buffer);\n            return res.Item1;",
+    "evidence": "diff 顯示 `_receiveTcs = new(...)` 從零位元組檢查之後移到之前。"
+  },
+  {
+    "path": "src/Components/test/E2ETest/ServerExecutionTests/WebSocketCompressionTests.cs",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試斷言使用 `Assert.True` 搭配兩個 Regex 的 AND 條件，可能降低可讀性",
+    "body": "原本使用 `Assert.Matches` 檢查單一 Regex，現在改為 `Assert.True` 並同時檢查兩個 Regex 是否都匹配。這可能導致當訊息只符合其中一個 Regex 時，錯誤訊息不夠明確。建議改用 `Assert.Matches` 分別檢查，或使用 `Assert.True` 時提供更詳細的失敗訊息。",
+    "existing_code": "Assert.True(\n            ParseErrorMessageRegexOld.IsMatch(logs[0].Message) &&\n            ParseErrorMessageRegexNew.IsMatch(logs[0].Message),\n            $\"Expected log message to match one of the CSP error patterns: {ParseErrorMessageRegexOld} or {ParseErrorMessageRegexNew}. Actual: {logs[0].Message}\");",
+    "evidence": "diff 顯示測試斷言從 `Assert.Matches` 改為 `Assert.True` 並結合兩個 Regex。"
+  }
+]

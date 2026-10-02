@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6261,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Rollouts 字串的 comment 佔位符不一致",
+    "body": "在 `RolloutsSettingMessage` 的 comment 中使用了 `%1$@`，但 value 中實際使用的是 `%@`。這可能導致翻譯者困惑，不知道應該使用哪種佔位符。建議統一為 `%@` 或 `%1$@`。",
+    "existing_code": "comment: \"A short description that explains that Mozilla may change features remotely. %1$@ is the app name (e.g. Firefox).\")",
+    "evidence": "diff 中新增的 `RolloutsSettingMessage` 定義，comment 使用 `%1$@`，但 value 使用 `%@`。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 205,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "detailTextStudies 的 comment 佔位符不一致",
+    "body": "在 `detailTextStudies` 的 comment 中使用了 `%@`，但 value 中實際使用的是 `%@`，這是一致的。然而，在 `detailTextStudiesV2` 的 comment 中使用了 `%@`，但 value 中也是 `%@`，這是一致的。但 `detailTextRollouts` 的 comment 中使用了 `%@`，但 value 中也是 `%@`，這是一致的。不過，`detailTextSendUsageData` 的 comment 中使用了 `%@`，但 value 中也是 `%@`，這是一致的。整體上，Focus 專案中的佔位符都是 `%@`，但 comment 中有些地方寫成 `%1$@`，可能造成混淆。",
+    "existing_code": "static let detailTextStudies = NSLocalizedString(\"Settings.detailTextStudies\", value: \"%@ may install and run studies from time to time.\", comment: \"Description associated to the Studies toggle on the settings screen. %@ is the app name (for example \\\"Firefox Focus\\\" or \\\"Firefox Klar\\\").\")",
+    "evidence": "diff 中修改的 `detailTextStudies` 行，comment 使用 `%@`，但 value 使用 `%@`，一致。但其他行如 `detailTextSendUsageData` 的 comment 也使用 `%@`，一致。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "SettingsTextFormatter 使用 String(format:) 可能造成格式化錯誤",
+    "body": "新增的 `SettingsTextFormatter` 使用 `String(format: strings.detailTextStudies, appName)`，其中 `strings.detailTextStudies` 包含 `%@` 佔位符。如果 `appName` 包含 `%` 字元，例如應用程式名稱可能包含百分比符號，則會導致格式化錯誤或崩潰。建議使用 `String.localizedStringWithFormat` 或直接替換字串，避免格式化問題。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {\n            return String(format: strings.detailTextStudies, appName)\n        }",
+    "evidence": "diff 中新增的 `SettingsTextFormatter` 類別，使用 `String(format:)` 搭配 `%@`。"
+  }
+]

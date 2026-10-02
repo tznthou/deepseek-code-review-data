@@ -1,0 +1,4 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 16652 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 ghost/core/core/boot.js:364 → 368（片段唯一命中）
+[info] 重新定位 ghost/core/core/boot.js:350 → 352（片段唯一命中）
+[info] 完成於 7.2s ｜ findings=2 ｜ relocated=2 ｜ verdict=comment ｜ usage={"prompt_tokens": 5795, "completion_tokens": 583, "total_tokens": 6378, "prompt_tokens_details": {"cached_tokens": 5760}, "prompt_cache_hit_tokens": 5760, "prompt_cache_miss_tokens": 35}

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/replication.c",
+    "line": 1961,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "active_defrag_enabled 未正確還原，可能意外啟用 defrag",
+    "body": "在 `rdbLoadEmptyDbFunc` 中，程式碼先將 `server.active_defrag_enabled` 存入 `orig_active_defrag`，然後設為 0，但在函式結尾卻直接設為 1，而非還原為 `orig_active_defrag`。這會導致原本停用 active defrag 的伺服器在執行此函式後被強制啟用，可能造成非預期的記憶體整理行為，甚至影響效能或穩定性。\n\n建議修正：\n```c\nserver.active_defrag_enabled = orig_active_defrag;\n```",
+    "existing_code": "/* Restore the original active defragmentation setting. */\n    server.active_defrag_enabled = 1;",
+    "evidence": "diff 中新增的程式碼：\n```c\n+    int orig_active_defrag = server.active_defrag_enabled;\n+    server.active_defrag_enabled = 0;\n...\n+    server.active_defrag_enabled = 1;\n```\n註解聲稱要還原，但實際值固定為 1。"
+  },
+  {
+    "path": "src/t_stream.c",
+    "line": 2708,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "streamEntryIsReferenced 中 cgroups_ref 為 NULL 時回傳 1 可能不正確",
+    "body": "新增的 `if (!s->cgroups_ref) return 1;` 表示當 stream 沒有 consumer groups 時，直接回傳 1（代表被引用）。這可能導致呼叫者誤判 entry 仍被引用，進而無法刪除或處理。需確認此邏輯是否符合預期：若沒有 cgroups，entry 應只被 stream 本身引用，回傳 1 可能造成記憶體無法釋放或錯誤行為。\n\n建議：確認此處應回傳 0 或 1，並補充註解說明。",
+    "existing_code": "if (!s->cgroups_ref) return 1;",
+    "evidence": "diff 中新增的一行，位於 `streamEntryIsReferenced` 函式內，在檢查 PEL 之前。"
+  },
+  {
+    "path": "tests/unit/memefficiency.tcl",
+    "line": 983,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "測試條件判斷可能因型別不符而永遠為真",
+    "body": "在新增的測試中，`if {[$replica config get activedefrag] eq \"activedefrag yes\"}` 的寫法可能有誤。`config get activedefrag` 回傳的是一個 list，例如 `{activedefrag yes}`，直接與字串比較會永遠不相等，導致條件永遠為假，測試主體不會執行。應改為：\n```tcl\nif {[lindex [$replica config get activedefrag] 1] eq \"yes\"} {\n```\n或使用 `[dict get [$replica config get activedefrag] activedefrag]`。",
+    "existing_code": "if {[$replica config get activedefrag] eq \"activedefrag yes\"} {",
+    "evidence": "diff 中新增的測試程式碼，該行用於判斷是否成功啟用 activedefrag。"
+  }
+]

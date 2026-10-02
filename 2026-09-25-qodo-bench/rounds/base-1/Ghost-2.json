@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "member 可能為 null 時存取 member.expertise 可能拋出錯誤",
+    "body": "在 `editor.setEditable(!!member?.expertise && progress !== 'sending')` 中，若 `member` 為 null，`member?.expertise` 會回傳 undefined，`!!undefined` 為 false，因此不會拋出錯誤。但此處邏輯與原本使用 `memberName` 不同，可能導致編輯器在成員沒有 expertise 時被設為不可編輯，即使成員有名字。建議確認此行為是否符合預期，或改用 `member?.name` 或同時檢查兩者。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`，且 dependency array 由 `[editor, memberName, progress]` 改為 `[editor, member, progress]`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 313,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "openForm 可能為 null 時直接存取 in_reply_to_snippet 可能拋出錯誤",
+    "body": "在 `const isReplyToReply = !!openForm.in_reply_to_snippet;` 中，若 `openForm` 為 null 或 undefined，則會拋出 TypeError。原本程式碼使用 `openForm?.in_reply_to_snippet` 可選串連，此變更移除了安全保護。建議保留可選串連或確保 openForm 永遠不為 null。",
+    "existing_code": "const isReplyToReply = !!openForm.in_reply_to_snippet;",
+    "evidence": "diff 中此行由 `const isReplyToReply = !!openForm?.in_reply_to_snippet;` 改為 `const isReplyToReply = !!openForm.in_reply_to_snippet;`"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/reply-form.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "in_reply_to_id 改為 parent.id 可能影響回覆邏輯",
+    "body": "將 `in_reply_to_id` 從 `openForm.in_reply_to_id` 改為 `parent.id`，可能改變回覆的目標。若 `openForm.in_reply_to_id` 原本可能指向不同的父評論（例如回覆回覆），此變更可能導致回覆錯誤。建議確認 parent 是否永遠為正確的回覆目標。",
+    "existing_code": "in_reply_to_id: parent.id,",
+    "evidence": "diff 中此行由 `in_reply_to_id: openForm.in_reply_to_id,` 改為 `in_reply_to_id: parent.id,`"
+  }
+]

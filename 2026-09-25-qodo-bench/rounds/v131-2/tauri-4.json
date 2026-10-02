@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 177,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "讀取錯誤的欄位：應為 `identifier` 而非 `bundle`",
+    "body": "在 `get_internal` 中，原本從 config 物件讀取 `identifier` 欄位，但此變更改為讀取 `bundle`。這會導致 `original_identifier` 取得錯誤的值（可能是物件而非字串），進而影響後續邏輯（例如 identifier 的驗證或合併）。\n\n**失敗情境**：當 config 中 `bundle` 存在且為物件時，`as_str()` 會回傳 `None`，導致 `original_identifier` 為 `None`，可能跳過必要的 identifier 檢查。\n\n**建議**：改回讀取 `identifier`。",
+    "existing_code": ".and_then(|config| config.get(\"bundle\"))",
+    "evidence": "diff 中此行由 `config.get(\"identifier\")` 改為 `config.get(\"bundle\")`，與 PR 標題無關，且明顯是錯誤。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 201,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "驗證條件從 OR 改為 AND，導致 JSON 檔案可能跳過驗證",
+    "body": "原本條件為 `config_path.extension() == Some(OsStr::new(\"json\")) || config_path.extension() == Some(OsStr::new(\"json5\"))`，表示只要副檔名是 json 或 json5 就進行驗證。改為 AND 後，條件變成必須同時是 json 和 json5，這永遠不可能成立，因此驗證區塊永遠不會執行。\n\n**失敗情境**：任何 JSON 或 JSON5 設定檔都不會被驗證，可能讓無效的設定通過。\n\n**建議**：改回 OR 條件。",
+    "existing_code": "if config_path.extension() == Some(OsStr::new(\"json\"))\n    && config_path.extension() == Some(OsStr::new(\"json5\"))",
+    "evidence": "diff 中將 `||` 改為 `&&`，且兩個條件互斥，邏輯上不可能同時成立。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 289,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "合併邏輯被移除，可能導致設定合併失效",
+    "body": "原本 `merge_with` 會將 `merge_config` 合併到 `config_metadata.inner` 中，但此變更改為僅將 `merge_config` 存入 `extensions`，不再更新 `inner`。這可能導致後續使用 `inner` 的程式碼無法取得合併後的設定。\n\n**失敗情境**：呼叫 `merge_with` 後，預期合併的設定值不會反映在 `inner` 中，可能造成行為不一致。\n\n**建議**：確認此變更是否為預期行為；若非預期，應保留原本的合併邏輯。",
+    "existing_code": "config_metadata.extensions.insert(MERGE_CONFIG_EXTENSION_NAME.into(), merge_config);",
+    "evidence": "diff 中移除了 `serde_json::from_value(value)` 的合併步驟，改為插入 extensions。"
+  }
+]

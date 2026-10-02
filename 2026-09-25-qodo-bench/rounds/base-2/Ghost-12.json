@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "_serverToken 儲存整個 tokenData 物件，可能導致後續使用錯誤",
+    "body": "在 `getServerToken` 方法中，原本 `this._serverToken = tokenData.token;` 改為 `this._serverToken = tokenData;`。這會讓 `_serverToken` 變成一個物件而非 token 字串。後續程式碼若直接使用 `this._serverToken` 作為 token 字串（例如在 HTTP header 中），將導致驗證失敗。請確認所有使用 `_serverToken` 的地方，並修正為儲存 `tokenData.token`。",
+    "existing_code": "this._serverToken = tokenData;",
+    "evidence": "diff 中第 98 行：`-                this._serverToken = tokenData.token;` 改為 `+                this._serverToken = tokenData;`"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 noTimestamp 選項可能導致 JWT 產生時間戳，影響過期判斷",
+    "body": "在 `_generateToken` 中，`jwt.sign` 原本有 `{noTimestamp: true}` 選項，現在被移除。這會讓 JWT 包含 `iat`（issued at）欄位。如果 Tinybird 端驗證時預期沒有 `iat`，可能導致 token 被拒絕。另外，`_isJWTExpired` 改用 `jwt.decode` 後，若 token 沒有 `exp` 欄位（因為 `noTimestamp` 移除後可能仍無 `exp`？），會回傳 true，造成 token 永遠被視為過期。請確認 Tinybird 對 JWT 的要求，並確保 `exp` 欄位正確設定。",
+    "existing_code": "const token = jwt.sign(payload, this.tinybirdConfig.adminToken);",
+    "evidence": "diff 中第 147 行：`-        const token = jwt.sign(payload, this.tinybirdConfig.adminToken, {noTimestamp: true});` 改為 `+        const token = jwt.sign(payload, this.tinybirdConfig.adminToken);`"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 164,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 jwt.decode 而非 jwt.verify 可能導致安全性問題",
+    "body": "在 `_isJWTExpired` 中，原本使用 `jwt.verify` 驗證 token 的簽名和有效性，現在改為 `jwt.decode`。`jwt.decode` 只解碼 payload，不驗證簽名，因此攻擊者可以偽造 token 並通過過期檢查。這可能導致未授權的存取。請改回使用 `jwt.verify`，並處理可能的驗證錯誤。",
+    "existing_code": "const decoded = jwt.decode(token);",
+    "evidence": "diff 中第 164 行：`-            const decoded = jwt.verify(token, this.tinybirdConfig.adminToken);` 改為 `+            const decoded = jwt.decode(token);`"
+  }
+]

@@ -1,0 +1,79 @@
+[
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1502,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "updateMany 未回傳 { count }，與介面不符",
+    "body": "`BookingRepository.updateMany` 的實作呼叫 `this.prismaClient.booking.updateMany` 後沒有回傳結果，但介面 `IBookingRepository` 定義此方法應回傳 `Promise<{ count: number }>`。這會導致呼叫端（例如 `handleCancelBooking` 中的 `await bookingRepository.updateMany(...)`）取得 `undefined`，若後續程式碼依賴回傳值（例如檢查更新筆數）將發生錯誤。\n\n建議：在實作中回傳 `await this.prismaClient.booking.updateMany(...)` 的結果，或調整介面定義。",
+    "existing_code": "async updateMany({ where, data }: { where: BookingWhereInput; data: BookingUpdateData }) {\n    await this.prismaClient.booking.updateMany({\n      where: where,\n      data,\n    });\n  }",
+    "evidence": "diff 中新增的 `updateMany` 方法（行 1502-1508）缺少 return，而 `IBookingRepository` 介面（packages/lib/server/repository/dto/IBookingRepository.ts）定義回傳 `Promise<{ count: number }>`。"
+  },
+  {
+    "path": "packages/features/users/repositories/UserRepository.ts",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "移除 userSelect 中的 locale 欄位可能導致取消流程錯誤",
+    "body": "`UserRepository` 的 `userSelect` 移除了 `locale` 欄位，但在 `handleCancelBooking` 中仍使用 `organizer.locale`（例如 `getTranslation(organizer.locale ?? \"en\", \"common\")`）。若 `findByIdOrThrow` 使用此 `userSelect`，回傳的 organizer 物件將缺少 `locale`，導致 `organizer.locale` 為 `undefined`，可能觸發錯誤或使用錯誤的預設語言。\n\n建議：確認 `findByIdOrThrow` 是否使用此 `userSelect`，若需要 `locale` 則應保留該欄位，或改用其他方式取得。",
+    "existing_code": "createdDate: true,\n  trialEndsAt: true,\n  completedOnboarding: true,\n  timeFormat: true,",
+    "evidence": "diff 中 `packages/features/users/repositories/UserRepository.ts` 的 `userSelect` 移除了 `locale: true`（行 101 附近），而 `handleCancelBooking.ts` 中仍使用 `organizer.locale`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 500,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "updateMany 呼叫未處理回傳值，可能掩蓋錯誤",
+    "body": "在 `handleCancelBooking` 中，`await bookingRepository.updateMany(...)` 的結果未被使用。若 `updateMany` 實作未正確回傳（如前述 blocker），此處不會察覺錯誤。此外，即使回傳 `{ count }`，也應檢查是否更新了預期的筆數，以確保取消操作成功。\n\n建議：檢查回傳的 `count` 是否符合預期，並在不符合時記錄錯誤或拋出例外。",
+    "existing_code": "await bookingRepository.updateMany({\n      where: {\n        recurringEventId,\n        startTime: {\n          gte: cancelSubsequentBookings ? bookingToDelete.startTime : new Date(),\n        },\n      },",
+    "evidence": "diff 中 `handleCancelBooking.ts` 行 497 的 `await bookingRepository.updateMany(...)` 未使用回傳值。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 513,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "findManyIncludeWorkflowRemindersAndReferences 的 where 條件可能遺漏時區處理",
+    "body": "在 `handleCancelBooking` 中，`findManyIncludeWorkflowRemindersAndReferences` 的 `where` 條件使用 `gte: bookingToDelete.startTime`，但 `bookingToDelete.startTime` 是 Date 物件，可能包含時區資訊。若資料庫儲存的是 UTC，而此處傳入的 Date 未正確轉換，可能導致查詢結果不正確。\n\n建議：確認 `bookingToDelete.startTime` 的時區處理，必要時使用 UTC 時間進行比較。",
+    "existing_code": "const allUpdatedBookings = await bookingRepository.findManyIncludeWorkflowRemindersAndReferences({\n      where: {\n        recurringEventId: bookingToDelete.recurringEventId,\n        startTime: {\n          gte: bookingToDelete.startTime,\n        },\n      },\n    });",
+    "evidence": "diff 中 `handleCancelBooking.ts` 行 510 的 `gte: bookingToDelete.startTime` 可能涉及時區問題。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 546,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "updateIncludeWorkflowRemindersAndReferences 的 where 條件改為 uid 可能影響行為",
+    "body": "原本的 `prisma.booking.update` 使用 `where: uid ? { uid } : { id }`，現在改為固定使用 `uid: bookingToDelete.uid`。若 `bookingToDelete.uid` 為空或未定義，將導致查詢失敗。雖然 `bookingToDelete` 應有 uid，但此變更可能影響某些邊界情況。\n\n建議：確認 `bookingToDelete.uid` 一定存在，或保留原本的條件邏輯。",
+    "existing_code": "const updatedBooking = await bookingRepository.updateIncludeWorkflowRemindersAndReferences({\n      where: {\n        uid: bookingToDelete.uid,\n      },",
+    "evidence": "diff 中 `handleCancelBooking.ts` 行 540 的 where 條件從 `uid ? { uid } : { id }` 改為固定 `{ uid: bookingToDelete.uid }`。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1509,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "update 方法未使用 select，可能回傳過多資料",
+    "body": "`BookingRepository.update` 方法直接呼叫 `this.prismaClient.booking.update` 而未指定 `select`，可能回傳完整的 Booking 物件，包含不必要的關聯資料，影響效能。若呼叫端只需要部分欄位，建議加入 `select` 參數。",
+    "existing_code": "async update({ where, data }: { where: BookingWhereUniqueInput; data: BookingUpdateData }) {\n    return await this.prismaClient.booking.update({\n      where,\n      data,\n    });\n  }",
+    "evidence": "diff 中新增的 `update` 方法（行 1510-1515）未指定 select。"
+  },
+  {
+    "path": "packages/features/bookings/repositories/BookingRepository.ts",
+    "line": 1549,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "findManyIncludeWorkflowRemindersAndReferences 未限制回傳筆數",
+    "body": "`findManyIncludeWorkflowRemindersAndReferences` 可能回傳大量資料，若 recurringEventId 對應的 bookings 很多，可能造成記憶體壓力。建議加入分頁或限制筆數，或確認此查詢僅用於取消流程且筆數可控。",
+    "existing_code": "async findManyIncludeWorkflowRemindersAndReferences({ where }: { where: BookingWhereInput }) {\n    return await this.prismaClient.booking.findMany({\n      where,\n      select: {",
+    "evidence": "diff 中新增的 `findManyIncludeWorkflowRemindersAndReferences` 方法（行 1530-1545）未限制回傳筆數。"
+  }
+]

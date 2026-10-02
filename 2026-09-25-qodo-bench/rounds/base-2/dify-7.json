@@ -1,0 +1,46 @@
+[
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "createTFunction 未處理 returnObjects 選項",
+    "body": "舊的全域 mock 在 `options.returnObjects` 為真時會回傳陣列（例如 `[`${key}-feature-1`, `${key}-feature-2`]`），但新的 `createTFunction` 完全沒有處理這個選項，而是將 `returnObjects` 視為一般參數，導致回傳字串（例如 `key:{\"returnObjects\":true}`）。這可能造成依賴此行為的測試失敗。\n\n建議在 `createTFunction` 中加入對 `returnObjects` 的處理，例如：\n```typescript\nif (options?.returnObjects) {\n  return [`${fullKey}-feature-1`, `${fullKey}-feature-2`]\n}\n```",
+    "existing_code": "export function createTFunction(translations: TranslationMap, defaultNs?: string) {\n  return (key: string, options?: Record<string, unknown>) => {\n    const ns = (options?.ns as string | undefined) ?? defaultNs\n    const fullKey = ns ? `${ns}.${key}` : key\n\n    // Check custom translations with namespace first\n    if (translations[fullKey] !== undefined)\n      return translations[fullKey]\n\n    // Check custom translations without namespace\n    if (translations[key] !== undefined)\n      return translations[key]\n\n    // Serialize params (excluding ns) for test assertions\n    const params = { ...options }\n    delete params.ns\n    const suffix = Object.keys(params).length > 0 ? `:${JSON.stringify(params)}` : ''\n    return `${fullKey}${suffix}`\n  }\n}",
+    "evidence": "diff 中 `web/vitest.setup.ts` 的舊實作有 `if (options?.returnObjects) return [`${key}-feature-1`, `${key}-feature-2`]`，但新檔案 `web/test/i18n-mock.ts` 的 `createTFunction` 沒有對應邏輯。"
+  },
+  {
+    "path": "web/vitest.setup.ts",
+    "line": 89,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "全域 mock 行為變更可能影響未修改的測試",
+    "body": "舊的全域 mock 在沒有提供 namespace 時回傳原始 key（例如 `t('key')` 回傳 `'key'`），但新的 `createTFunction` 在沒有 namespace 時回傳 `fullKey`，而 `fullKey` 在沒有 namespace 時就是 key，因此行為相同。然而，當有 namespace 時，舊 mock 回傳 `ns.key`，新 mock 也回傳 `ns.key`，看似一致。但舊 mock 在 `options` 存在但沒有 `ns` 時，會回傳 `key`（因為 `prefix` 為空字串），而新 mock 在 `options` 存在但沒有 `ns` 時，會將 `options` 序列化並附加到 key 後面（例如 `key:{\"foo\":\"bar\"}`）。這可能導致依賴舊行為的測試失敗。\n\n建議檢查所有使用全域 mock 的測試，確認是否有傳入非 `ns` 的選項。",
+    "existing_code": "vi.mock('react-i18next', async () => {\n  const actual = await vi.importActual<typeof import('react-i18next')>('react-i18next')\n  const { createReactI18nextMock } = await import('./test/i18n-mock')\n  return {\n    ...actual,\n    ...createReactI18nextMock(),\n  }\n})",
+    "evidence": "diff 中 `web/vitest.setup.ts` 的舊實作在 `options` 存在但無 `ns` 時回傳 `key`，而新實作 `createTFunction` 會將 `options` 序列化並附加。"
+  },
+  {
+    "path": "web/app/components/plugins/install-plugin/install-from-local-package/steps/install.spec.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "自訂 Trans mock 可能與 createReactI18nextMock 的 Trans 衝突",
+    "body": "此處使用 `createReactI18nextMock()` 並覆寫 `Trans`，但 `createReactI18nextMock` 已經包含一個 `Trans` mock。覆寫是允許的，但需確認覆寫後的 `Trans` 行為符合測試預期。目前覆寫的 `Trans` 只處理 `i18nKey` 和 `components.trustSource`，與 `createTransMock` 的實作不同（後者會渲染 children 或翻譯文字）。若測試依賴 `createTransMock` 的行為，可能會失敗。",
+    "existing_code": "vi.mock('react-i18next', async (importOriginal) => {\n  const actual = await importOriginal<typeof import('react-i18next')>()\n  const { createReactI18nextMock } = await import('@/test/i18n-mock')\n  return {\n    ...actual,\n    ...createReactI18nextMock(),\n    Trans: ({ i18nKey, components }: { i18nKey: string, components?: Record<string, React.ReactNode> }) => (\n      <span data-testid=\"trans\">\n        {i18nKey}\n        {components?.trustSource}\n      </span>\n    ),\n  }\n})",
+    "evidence": "diff 中此檔案新增了自訂的 `Trans` 覆寫，而 `createReactI18nextMock` 本身也提供 `Trans`。"
+  },
+  {
+    "path": "web/app/components/plugins/marketplace/index.spec.tsx",
+    "line": 31,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "i18next-config mock 的 getFixedT 行為與全域 mock 不一致",
+    "body": "此處的 `getFixedT` mock 在沒有 `options.ns` 時回傳原始 key，但全域 mock 的 `createTFunction` 在沒有 namespace 時回傳 key（相同），但在有 namespace 時回傳 `ns.key`（相同）。然而，`getFixedT` 的 mock 沒有處理其他選項（如 `returnObjects`），可能與全域 mock 的行為不一致。若測試依賴 `getFixedT` 的特定行為，可能需要調整。",
+    "existing_code": "vi.mock('@/i18n-config/i18next-config', () => ({\n  default: {\n    getFixedT: (_locale: string) => (key: string, options?: Record<string, unknown>) => {\n      if (options && options.ns) {\n        return `${options.ns}.${key}`\n      }\n      else {\n        return key\n      }\n    },\n  },\n}))",
+    "evidence": "diff 中此 mock 被修改，但未使用 `createTFunction`，可能與全域 mock 行為不一致。"
+  }
+]

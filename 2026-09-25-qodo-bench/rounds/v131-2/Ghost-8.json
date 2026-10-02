@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/i18n/locales/zh/comments.json",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除 comments.json 可能導致翻譯鍵缺失",
+    "body": "此 PR 刪除了整個 comments.json 檔案。若程式碼中仍有引用該檔案中的翻譯鍵（例如 `\"{amount} comments\"`、`\"Add comment\"` 等），在執行時將找不到對應翻譯，可能回退為英文或顯示鍵名。請確認所有引用均已移除或改由其他檔案提供，否則應保留此檔案。",
+    "existing_code": "deleted file mode 100644\nindex 1de6b189e68..00000000000\n--- a/ghost/i18n/locales/zh/comments.json\n+++ /dev/null",
+    "evidence": "diff 顯示整個檔案被刪除，且未見其他檔案新增相同翻譯鍵。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "翻譯遺漏變數 {newsletterName}",
+    "body": "翻譯字串 `\"{memberEmail} will no longer receive {newsletterName} newsletter.\"` 原本包含 `{newsletterName}` 變數，但新翻譯 `\"{memberEmail}将不会再收到新闻信。\"` 遺漏了該變數。這可能導致使用者無法得知具體是哪一份新聞信，影響資訊完整性。建議保留變數，例如 `\"{memberEmail}将不会再收到{newsletterName}新闻信。\"`",
+    "existing_code": "\"{memberEmail} will no longer receive {newsletterName} newsletter.\": \"{memberEmail}将不会再收到新闻信。\"",
+    "evidence": "diff 中此行將原本包含 `{newsletterName}` 的翻譯改為不含該變數。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 117,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "「Name」翻譯從「名字」改為「名稱」可能造成混淆",
+    "body": "在 portal.json 中，`\"Name\"` 的翻譯從「名字」改為「名稱」。在個人資料欄位中，「名稱」可能不如「名字」自然，且與 ghost.json 中的「名字」不一致。建議統一使用「名字」或「姓名」。",
+    "existing_code": "\"Name\": \"名称\"",
+    "evidence": "diff 顯示 `\"Name\"` 的翻譯從「名字」改為「名稱」。"
+  }
+]

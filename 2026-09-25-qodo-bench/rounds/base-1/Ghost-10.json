@@ -1,0 +1,57 @@
+[
+  {
+    "path": "apps/activitypub/tsconfig.json",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "關閉 TypeScript strict 模式",
+    "body": "將 `strict` 從 `true` 改為 `false` 會大幅降低型別安全，可能隱藏潛在的 null/undefined 錯誤。此變更應有充分理由，否則應恢復為 `true` 並修正相關型別錯誤。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.json 的變更：`-    \"strict\": true,` 改為 `+    \"strict\": false,`"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 103,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "輪詢邏輯可能造成競態或重複請求",
+    "body": "在 `useEffect` 中設置 `setInterval` 並在每次觸發時呼叫 `confirmHandle`，但 `confirmHandle` 內部使用 `confirmBlueskyHandleMutation.mutateAsync()`，若前一次請求尚未完成，可能導致重疊請求。此外，`retryCountRef` 在每次 effect 重新執行時重置為 0，若依賴項頻繁變化，可能導致輪詢次數超過預期。建議使用 `setTimeout` 遞迴或確保請求完成後再安排下一次。",
+    "existing_code": "const confirmHandleInterval = setInterval(async () => {\n            if (retryCountRef.current >= MAX_CONFIRMATION_RETRIES) {\n                clearInterval(confirmHandleInterval);\n\n                toast.error('Something went wrong, please try again.');\n\n                await disableBlueskyMutation.mutateAsync();\n                setLoading(false);\n\n                return;\n            }\n\n            retryCountRef.current += 1;\n            confirmHandle();\n        }, CONFIRMATION_INTERVAL);",
+    "evidence": "diff 中新增的輪詢邏輯，使用 setInterval 且未等待前一次請求完成。"
+  },
+  {
+    "path": "apps/activitypub/src/views/Preferences/components/BlueskySharing.tsx",
+    "line": 107,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "輪詢失敗時自動停用 Bluesky 可能非預期",
+    "body": "當輪詢達到最大次數時，程式碼會自動呼叫 `disableBlueskyMutation.mutateAsync()` 停用 Bluesky。這可能導致使用者在未明確同意的情況下被停用，且若停用失敗，錯誤未被處理。建議改為僅顯示錯誤訊息，讓使用者手動決定是否停用。",
+    "existing_code": "toast.error('Something went wrong, please try again.');\n\n                await disableBlueskyMutation.mutateAsync();\n                setLoading(false);",
+    "evidence": "diff 中在輪詢失敗時自動呼叫 disableBlueskyMutation。"
+  },
+  {
+    "path": "apps/activitypub/src/hooks/use-activity-pub-queries.ts",
+    "line": 2833,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "缺少 accountFollows 查詢的失效處理",
+    "body": "在 `useConfirmBlueskyHandleMutationForUser` 的 `onSuccess` 中，註解提到缺少 `accountFollows` 查詢的失效處理。這可能導致相關資料不同步。建議補上對應的 `queryClient.invalidateQueries`。",
+    "existing_code": "// Note: Missing invalidation of accountFollows query that should happen here",
+    "evidence": "diff 中新增的註解明確指出缺少失效處理。"
+  },
+  {
+    "path": "apps/activitypub/src/api/activitypub.ts",
+    "line": 712,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "API 版本升級可能造成相容性問題",
+    "body": "API 路徑從 v1 改為 v2，需確認後端已部署對應版本，否則前端呼叫會失敗。建議在 PR 描述中確認後端相容性，或提供版本協商機制。",
+    "existing_code": "const url = new URL('.ghost/activitypub/v2/actions/bluesky/enable', this.apiUrl);",
+    "evidence": "diff 中 API 路徑從 v1 改為 v2。"
+  }
+]

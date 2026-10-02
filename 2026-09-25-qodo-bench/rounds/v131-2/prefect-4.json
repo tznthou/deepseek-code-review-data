@@ -1,0 +1,90 @@
+[
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "重複的搜尋過濾邏輯可能導致不一致",
+    "body": "`useSuspenseQuery` 的查詢參數中已經使用 `deferredSearch` 進行伺服器端過濾（`name: { like_: deferredSearch }`），但又在 `filteredData` 中對 `data` 進行客戶端過濾。這會造成：\n1. 不必要的客戶端計算。\n2. 如果伺服器端過濾與客戶端過濾的規則不一致（例如大小寫處理），可能導致結果不同。\n建議移除客戶端過濾，完全依賴伺服器端過濾，或反之。",
+    "existing_code": "const filteredData = useMemo(() => {\n    return data.filter((blockDocument) =>\n      blockDocument.name?.toLowerCase().includes(deferredSearch.toLowerCase()),\n    );\n  }, [data, deferredSearch]);",
+    "evidence": "diff 中第 62-66 行顯示客戶端過濾，而第 48-55 行顯示查詢參數中已包含 `deferredSearch` 的 `like_` 條件。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "選取的區塊文件可能不在過濾後的列表中",
+    "body": "`selectedBlockDocument` 是從 `filteredData` 中尋找，如果使用者已選取某個區塊文件，但之後搜尋條件改變，導致該文件不在 `filteredData` 中，則 `selectedBlockDocument` 會是 `undefined`，觸發器會顯示「Select a block...」而非已選取的名稱。這會造成使用者困惑。建議從原始 `data` 中尋找選取的項目，或確保選取的項目永遠包含在列表中。",
+    "existing_code": "const selectedBlockDocument = useMemo(() => {\n\t\treturn filteredData.find(\n\t\t\t(blockDocument) => blockDocument.id === selectedBlockDocumentId,\n\t\t);\n\t}, [filteredData, selectedBlockDocumentId]);",
+    "evidence": "diff 中第 68-72 行顯示從 `filteredData` 中尋找，而 `filteredData` 會因搜尋而改變。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 161,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "表單驗證錯誤處理不完整",
+    "body": "在 `onSave` 中，呼叫 `validateForm` 後檢查 `errors.length > 0`，但 `errors` 是從 `useSchemaForm` 取得的狀態，可能不是最新的。此外，`validateForm` 是非同步的，但沒有等待其完成就檢查 `errors`，可能導致錯誤未顯示。建議使用 `await validateForm` 的回傳值或確保 `errors` 在驗證後更新。",
+    "existing_code": "await validateForm({ schema: values });\n\t\t\tif (errors.length > 0) {\n\t\t\t\treturn;\n\t\t\t}",
+    "evidence": "diff 中第 158-161 行顯示驗證後立即檢查 `errors`，但 `errors` 可能尚未更新。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 179,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "建立區塊文件時缺少錯誤處理",
+    "body": "`createBlockDocument` 的 `onError` 回呼中只顯示通用錯誤訊息並記錄錯誤，但沒有提供具體的錯誤細節給使用者。此外，沒有處理網路錯誤或伺服器回傳的驗證錯誤。建議顯示伺服器回傳的錯誤訊息，並在 UI 中呈現。",
+    "existing_code": "onError: (err) => {\n\t\t\t\t\t\tconst message = \"Unknown error while creating block.\";\n\t\t\t\t\t\ttoast.error(message);\n\t\t\t\t\t\tconsole.error(message, err);\n\t\t\t\t\t},",
+    "evidence": "diff 中第 163-167 行顯示錯誤處理只顯示通用訊息。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-combobox/block-document-combobox.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "缺少載入狀態顯示",
+    "body": "使用 `useSuspenseQuery` 會暫停元件直到資料載入完成，但沒有提供 fallback UI。在 `Suspense` 邊界中沒有指定 fallback，因此載入期間會顯示空白或上一個 Suspense 的 fallback。建議提供明確的載入指示器。",
+    "existing_code": "<Suspense>\n\t\t\t<BlockDocumentComboboxImplementation",
+    "evidence": "diff 中第 29-31 行顯示 `<Suspense>` 沒有 `fallback` prop。"
+  },
+  {
+    "path": "ui-v2/src/components/blocks/block-document-create-dialog/block-document-create-dialog.tsx",
+    "line": 229,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "表單送出按鈕缺少 disabled 狀態",
+    "body": "在表單送出期間，`isPending` 用於顯示載入狀態，但按鈕沒有 `disabled` 屬性，使用者可能重複點擊。建議加上 `disabled={isPending}`。",
+    "existing_code": "<Button loading={isPending} type=\"submit\">\n\t\t\t\t\t\tCreate\n\t\t\t\t\t</Button>",
+    "evidence": "diff 中第 174-176 行顯示按鈕沒有 `disabled`。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input.tsx",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "blockTypeSlug 非字串時未處理",
+    "body": "在 `if (\"blockTypeSlug\" in property)` 區塊中，如果 `blockTypeSlug` 存在但不是字串（例如是陣列或其他型別），則不會渲染任何內容，且沒有錯誤提示。建議加入 else 分支或拋出錯誤。",
+    "existing_code": "if (typeof blockTypeSlug === \"string\") {\n\t\t\treturn (\n\t\t\t\t<SchemaFormInputBlockDocument",
+    "evidence": "diff 中第 78-80 行顯示只有當 `blockTypeSlug` 是字串時才渲染，否則沒有處理。"
+  },
+  {
+    "path": "ui-v2/src/components/schemas/schema-form-input-block-document.tsx",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "onValueChange 型別轉換不安全",
+    "body": "`handleSelect` 中，如果 `blockDocumentId` 是空字串或 falsy，會呼叫 `onValueChange(undefined)`，但 `onValueChange` 的參數型別是 `BlockDocumentReferenceValue`，包含 `undefined`，這是可以的。但 `handleCreated` 中直接傳入 `{ $ref: blockDocumentId }`，沒有檢查 `blockDocumentId` 是否有效。建議加入驗證。",
+    "existing_code": "const handleCreated = (blockDocumentId: string) => {\n\t\tonValueChange({ $ref: blockDocumentId });\n\t};",
+    "evidence": "diff 中第 31-33 行顯示直接使用 `blockDocumentId`。"
+  }
+]

@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/pbac/infrastructure/repositories/PermissionRepository.ts",
+    "line": 280,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "orgId 型別轉換可能導致索引失效與全表掃描",
+    "body": "在 SQL 查詢中使用 `${orgId}::bigint` 進行型別轉換，可能導致資料庫無法使用 Team.id 上的索引，造成全表掃描。當 orgId 為 null 時，條件 `(${orgId}::bigint IS NULL OR ...)` 會使整個條件恆真，但資料庫仍可能對 Team 表進行全表掃描。建議改為在應用程式層處理 null 情況，例如使用條件式查詢或將 orgId 作為參數傳遞，避免在 SQL 中進行型別轉換。",
+    "existing_code": "AND (${orgId}::bigint IS NULL OR t.\"id\" = ${orgId} OR t.\"parentId\" = ${orgId})",
+    "evidence": "diff 中新增的條件 `AND (${orgId}::bigint IS NULL OR t.\"id\" = ${orgId} OR t.\"parentId\" = ${orgId})` 直接將 orgId 轉換為 bigint，可能影響查詢效能。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.ts",
+    "line": 117,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "權限邏輯變更可能導致資料外洩或功能回歸",
+    "body": "原本僅 ADMIN/OWNER 角色可查看的預訂，現在改為任何具有 booking.read 權限的使用者皆可查看。若 PBAC 權限設定不當，可能導致未授權使用者存取他人預訂資料。此外，若 PermissionCheckService 回傳空陣列，則所有查詢分支都會被跳過，可能導致使用者看不到自己的預訂。建議確認 booking.read 權限的預設設定，並確保使用者至少能查看自己的預訂。",
+    "existing_code": "const teamIdsWithBookingPermission = await permissionCheckService.getTeamIdsWithPermission({\n    userId: user.id,\n    permission: \"booking.read\",\n    fallbackRoles,\n    orgId: user.orgId ?? undefined,\n  });",
+    "evidence": "diff 中移除了原本的 membershipIdsWhereUserIsAdminOwner 查詢，改為使用 PermissionCheckService，權限範圍可能擴大。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.ts",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "isCurrentUser 判斷邏輯變更可能導致權限繞過",
+    "body": "原本 `isCurrentUser` 僅在 `filters.userIds.length === 1 && user.id === filters.userIds[0]` 時為 true，現在改為 `filters.userIds.includes(user.id)`。這表示若 userIds 陣列包含目前使用者 ID 及其他使用者 ID，則 `isCurrentUser` 會為 true，可能繞過後續的權限檢查。建議確認此變更是否符合預期，並確保不會造成未授權存取。",
+    "existing_code": "const isCurrentUser = filters.userIds.includes(user.id);",
+    "evidence": "diff 中將 `isCurrentUser` 的判斷從嚴格相等改為 includes，可能影響權限檢查邏輯。"
+  },
+  {
+    "path": "packages/features/pbac/infrastructure/repositories/PermissionRepository.ts",
+    "line": 222,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "getTeamIdsWithPermission 未傳遞 orgId 參數",
+    "body": "在 `getTeamIdsWithPermission` 方法中，呼叫 `this.getTeamIdsWithPermissions` 時未傳遞 `orgId` 參數，導致 orgId 過濾功能在單一權限查詢中失效。建議補上 `orgId` 參數。",
+    "existing_code": "return this.getTeamIdsWithPermissions({ userId, permissions: [permission], fallbackRoles });",
+    "evidence": "diff 中 `getTeamIdsWithPermission` 方法新增了 orgId 參數，但呼叫 `getTeamIdsWithPermissions` 時未傳遞。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.test.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試覆蓋不足，未涵蓋 orgId 過濾與權限邊界案例",
+    "body": "新增的測試僅涵蓋基本成功案例與部分權限檢查，未測試 orgId 過濾功能、空權限陣列、無權限使用者等邊界情況。建議補充相關測試以確保功能正確性。",
+    "existing_code": "import getAllUserBookings from \"@calcom/features/bookings/lib/getAllUserBookings\";",
+    "evidence": "diff 中新增的測試檔案僅包含少數測試案例，未涵蓋所有新增功能。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/EmailServiceWrapper.js",
+    "line": 25,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "可能遺漏的 import 路徑更新：DomainWarmingService",
+    "body": "此 PR 將多數服務檔案改為 kebab-case，但此處的 `require('./DomainWarmingService')` 未同步更新。若 `DomainWarmingService.js` 檔案已改名為 `domain-warming-service.js`，此 require 將在 Linux 環境中因大小寫敏感而失敗。請確認該檔案是否已改名，並更新此路徑。",
+    "existing_code": "const {DomainWarmingService} = require('./DomainWarmingService');",
+    "evidence": "diff 中此檔案僅更新了 MailgunClient 的 require，但未更新 DomainWarmingService，而其他服務檔案皆已改為 kebab-case。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "非預期的格式變更：移除行尾分號",
+    "body": "此檔案在重新命名 import 路徑的同時，移除了多行行尾分號（例如 `const {Router} = require('express')`）。這與 PR 主旨（檔案重新命名）無關，可能違反專案 ESLint 規則（若專案要求分號）。建議還原這些格式變更，以減少 review 雜訊並避免 CI lint 失敗。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 顯示原本有分號的行被移除分號，且此變更與檔案重新命名無關。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "不一致的 import 路徑格式",
+    "body": "部分 import 路徑已更新為 kebab-case，但部分仍保留 PascalCase（例如 `EventRepository`、`ProductRepository`）。若對應檔案已改名，這些 require 將失敗；若未改名，則不一致的命名風格可能造成混淆。請確認所有檔案皆已改名並更新所有路徑。",
+    "existing_code": "const EventRepository = require('./repositories/event-repository');\nconst ProductRepository = require('./repositories/product-repository');",
+    "evidence": "diff 中此處的 require 路徑已改為 kebab-case，但其他行（如 `MemberRepository`）仍為 PascalCase，顯示可能未完全更新。"
+  }
+]

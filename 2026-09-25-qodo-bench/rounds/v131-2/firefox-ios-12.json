@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "測試中 expectation 使用錯誤，可能導致測試永遠通過或逾時",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，`decisionHandler` 閉包內沒有呼叫 `expectation.fulfill()`，而是在 `wait(for:)` 之後才呼叫。這會導致 `wait(for:)` 等待 expectation 直到逾時，測試必定失敗（或花費大量時間）。應將 `expectation.fulfill()` 移回閉包內。",
+    "existing_code": "let decisionHandler = { (decision: WKPermissionDecision) in\n    XCTAssertEqual(decision, .prompt)\n}\n\nlet expectation = expectation(description: \"Wait for the decision handler to be called\")\nsubject.webView(MockWKWebView(),\n                requestMediaCapturePermissionFor: origin,\n                initiatedByFrame: frame,\n                type: .cameraAndMicrophone,\n                decisionHandler: decisionHandler)\nwait(for: [expectation])\nexpectation.fulfill()",
+    "evidence": "diff 中 `decisionHandler` 閉包內沒有 `expectation.fulfill()`，且 `expectation.fulfill()` 被移到 `wait(for:)` 之後。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴真實網路，可能導致不穩定或失敗",
+    "body": "`captureFrameAndOrigin` 使用 `webView.load(URLRequest(url: url))` 載入真實網頁（例如 `https://example.com`）。這使得測試依賴外部網路連線，在無網路或網路不穩的 CI 環境中可能失敗或逾時。建議改用本地 HTML 字串或 mock 網路回應，以確保測試的可靠性。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 `WebKitTestHelpers.swift` 第 30 行。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "未處理逾時情況，可能導致測試失敗但無明確訊息",
+    "body": "`XCTWaiter.wait(for:timeout:)` 的回傳值未被檢查。若逾時，`capturedFrame` 或 `capturedOrigin` 可能為 nil，函式回傳 nil，呼叫端會執行 `XCTFail`。但若 waiter 回傳非 `.completed`（例如 `.timedOut`），應提供更明確的錯誤訊息。建議檢查 waiter 結果並記錄。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)\nif let frame = delegate.capturedFrame, let origin = delegate.capturedOrigin {\n    return (frame, origin)\n}\nreturn nil",
+    "evidence": "diff 中新增的 `WebKitTestHelpers.swift` 第 34-38 行。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 35,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "FakeWKNavigationDelegate 未保留 webView 強參考，可能導致提前釋放",
+    "body": "`captureFrameAndOrigin` 中建立的 `webView` 是區域變數，且 delegate 未持有 webView 的強參考。在非同步載入期間，webView 可能被釋放，導致 delegate 方法不會被呼叫。建議將 webView 儲存在 delegate 中或使用靜態變數延長生命週期。",
+    "existing_code": "let webView = WKWebView(frame: .zero)\nlet expect = XCTestExpectation(description: \"capture frame & origin\")\n\nlet delegate = FakeWKNavigationDelegate(expect: expect)\nwebView.navigationDelegate = delegate",
+    "evidence": "diff 中新增的 `WebKitTestHelpers.swift` 第 15-19 行。"
+  }
+]

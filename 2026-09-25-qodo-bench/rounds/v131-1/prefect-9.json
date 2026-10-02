@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 useSuspenseQuery 但未提供 error boundary",
+    "body": "`useSuspenseQuery` 在查詢失敗時會拋出錯誤，若沒有 error boundary 包覆，錯誤會向上傳播並可能導致整個應用程式崩潰。建議在元件外層或應用程式層級加入 error boundary，或改用 `useQuery` 並自行處理錯誤狀態。",
+    "existing_code": "const { data: flow } = useSuspenseQuery(buildFLowDetailsQuery(flowId));",
+    "evidence": "diff 中新增的 `useSuspenseQuery` 呼叫，且未見任何 error boundary 相關程式碼。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Router context 中的 queryClient 與實際使用的 queryClient 不一致",
+    "body": "在 `createTestRouter` 中，`context` 設定了新的 `QueryClient`，但 decorator 中使用的 `QueryClientProvider` 是外部的 `queryClient`。這可能導致 router 內部使用不同的 queryClient，造成快取不一致或測試問題。建議統一使用同一個 queryClient 實例。",
+    "existing_code": "context: { queryClient: new QueryClient() },",
+    "evidence": "diff 中 `createTestRouter` 的 context 設定與 decorator 中的 `QueryClientProvider` 使用不同的 queryClient。"
+  }
+]

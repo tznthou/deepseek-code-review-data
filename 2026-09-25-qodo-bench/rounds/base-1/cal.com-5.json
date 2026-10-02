@@ -1,0 +1,46 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的顯示前綴",
+    "body": "在解析 bookingUrl 以取得顯示前綴時，程式碼使用 `url.hostname` 而非 `url.host`，這會忽略埠號。若 bookingUrl 包含非標準埠（例如開發環境），顯示的連結將不正確。此外，若 bookingUrl 為相對路徑或格式不符，`new URL` 會拋出例外，但 catch 區塊僅回退到 `cal.com/${props.username}/`，可能與實際網域不符。建議使用 `url.host` 並考慮更完整的錯誤處理。",
+    "existing_code": "const url = new URL(props.bookingUrl);\n// Get path without the last segment (slug)\nconst pathParts = url.pathname.split(\"/\").filter(Boolean);\npathParts.pop(); // Remove slug\n// Compute prefix outside try/catch for React Compiler\nlet prefix = \"/\";\nif (pathParts.length > 0) {\n  prefix = `/${pathParts.join(\"/\")}/`;\n}\nreturn `${url.protocol}//${url.hostname}${prefix}`;",
+    "evidence": "diff 中新增的程式碼片段，使用 `url.hostname` 而非 `url.host`，且 catch 區塊的回退值固定為 `cal.com/${props.username}/`。"
+  },
+  {
+    "path": "companion/app/(tabs)/(event-types)/event-type-detail.tsx",
+    "line": 180,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "bookingUrl 可能永遠為空，導致預覽與複製功能失效",
+    "body": "新增的 `bookingUrl` state 初始值為空字串，但程式碼中未見任何設定該 state 的邏輯（例如從 API 回應或 props 中取得）。因此，`handlePreview` 和 `handleCopyLink` 將永遠顯示錯誤訊息，除非有其他未顯示的程式碼會更新此 state。建議確認是否有遺漏的 state 更新邏輯，或改為直接從 eventTypeData 取得 bookingUrl。",
+    "existing_code": "const [bookingUrl, setBookingUrl] = useState<string>(\"\");",
+    "evidence": "diff 中新增 state 宣告，但未見 setBookingUrl 被呼叫。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1125,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "複製連結功能未使用 bookingUrl，可能導致不一致",
+    "body": "在 copyBtn 的事件處理中，bookingUrl 的建構方式仍為手動拼接 `https://cal.com/${username}/${slug}`，而未使用 `eventType.bookingUrl`。這與其他地方的修改不一致，可能導致使用者複製到舊格式的連結。建議統一使用 `eventType.bookingUrl` 或提供一致的 fallback。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中此處未修改，但其他類似程式碼已改為使用 `eventType.bookingUrl`。"
+  },
+  {
+    "path": "companion/components/event-type-list-item/EventTypeListItemParts.tsx",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "getDisplayUrl 函式可能回傳不一致的格式",
+    "body": "當 bookingUrl 存在且解析成功時，回傳 `url.hostname + url.pathname`，但若 bookingUrl 包含查詢參數或 hash，這些部分不會被包含，可能導致顯示不完整。此外，fallback 邏輯在 username 存在時回傳 `/${username}/${slug}`，但若 slug 為空則會產生 `/${username}/`，可能不是預期的格式。建議明確處理這些邊界情況。",
+    "existing_code": "function getDisplayUrl(bookingUrl?: string, username?: string, slug?: string): string {\n  if (bookingUrl) {\n    try {\n      const url = new URL(bookingUrl);\n      // Return domain + pathname (e.g., \"i.cal.com/keith/30min\")\n      return url.hostname + url.pathname;\n    } catch {\n      // fallback if URL parsing fails\n    }\n  }\n  return username ? `/${username}/${slug}` : `/${slug}`;\n}",
+    "evidence": "diff 中新增的函式，未處理查詢參數、hash 或空 slug 的情況。"
+  }
+]

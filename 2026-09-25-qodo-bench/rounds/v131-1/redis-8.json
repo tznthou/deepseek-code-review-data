@@ -1,0 +1,13 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2309,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "記憶體洩漏：argv[2] 建立的 robj 未釋放",
+    "body": "在 hincrbyfloatCommand 中，當 has_expiration 為真時，程式碼建立 argv[2] = createStringObjectFromLongLong(expireat)，但之後未呼叫 decrRefCount 釋放。這會導致每次執行此路徑時洩漏一個 robj 的記憶體。建議在 alsoPropagate 呼叫後立即釋放 argv[2]，或改用其他方式避免手動管理記憶體。",
+    "existing_code": "argv[2] = createStringObjectFromLongLong(expireat);",
+    "evidence": "diff 中新增的程式碼：\n+        argv[2] = createStringObjectFromLongLong(expireat);\n+        argv[3] = shared.fields;\n+        argv[4] = shared.integers[1];\n+        argv[5] = c->argv[2];\n+        alsoPropagate(c->db->id, argv, 6, PROPAGATE_AOF|PROPAGATE_REPL);\n\n在 alsoPropagate 之後沒有對 argv[2] 呼叫 decrRefCount。"
+  }
+]

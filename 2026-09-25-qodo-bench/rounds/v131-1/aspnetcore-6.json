@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "Redirect() 可能因 InteractiveRequestUrl 為 null 而拋出 NullReferenceException",
+    "body": "在 `Redirect()` 方法中，原本的邏輯是當 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 時呼叫 `NavigateToLogin`，否則使用 `_tokenResult.RedirectUrl`。現在改為只要 `InteractionOptions != null` 就呼叫 `NavigateToLogin`，但若 `InteractiveRequestUrl` 為 null，`NavigateToLogin` 內部可能會拋出 NullReferenceException。此外，else 分支改為使用 `InteractiveRequestUrl`，但該屬性可能為 null，導致 `NavigateTo` 拋出例外。建議保留對 `InteractiveRequestUrl` 的 null 檢查，或確保在建構 `AccessTokenResult` 時該屬性必不為 null。",
+    "existing_code": "if (_tokenResult.InteractionOptions != null)\n{\n    _navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, _tokenResult.InteractionOptions);\n}\nelse\n{\n    _navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);\n}",
+    "evidence": "diff 中刪除了 `_tokenResult.InteractiveRequestUrl != null` 的條件，且 else 分支使用 `_tokenResult.InteractiveRequestUrl!`，但該屬性在 `AccessTokenResult` 中可能為 null（例如使用舊建構函式時）。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增的 Task.Yield() 可能造成登出流程的競態或延遲",
+    "body": "在 `ProcessLogOut` 中，於取得驗證狀態前新增了 `await Task.Yield();`。這可能導致登出流程延遲，且若 `AuthenticationProvider.GetAuthenticationStateAsync()` 依賴某些同步狀態，可能引入競態。建議移除或提供明確理由。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\nawait Task.Yield();\n\nvar state = await AuthenticationProvider.GetAuthenticationStateAsync();",
+    "evidence": "diff 中新增了 `await Task.Yield();`，但未提供足夠的上下文說明其必要性。"
+  }
+]

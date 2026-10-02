@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "favicon 元素可能不存在，導致 setAttribute 拋出錯誤",
+    "body": "在 `useStateFavicon` 中，`favicon16` 和 `favicon32` 是透過 `document.getElementById` 取得，若 DOM 中沒有對應 id 的元素（例如 index.html 未包含這些元素），則會是 `null`。雖然使用了 optional chaining (`?.`)，但 `setAttribute` 是在 `favicon16?.setAttribute(...)` 中，若 `favicon16` 為 `null`，則不會執行，因此不會拋出錯誤。然而，若元素存在但為非 `<link>` 元素（例如 id 被其他元素佔用），則 `setAttribute` 仍會執行，但可能無效。更重要的問題是：若 `stateType` 為非預期值（例如未來新增的狀態），`faviconPath` 會指向不存在的 SVG 檔案，導致 favicon 載入失敗。建議加入狀態白名單驗證，或提供 fallback。",
+    "existing_code": "const favicon16 =\n\t\t\tcolorScheme === \"dark\"\n\t\t\t\t? document.getElementById(\"favicon-16-dark\")\n\t\t\t\t: document.getElementById(\"favicon-16\");\n\t\tconst favicon32 =\n\t\t\tcolorScheme === \"dark\"\n\t\t\t\t? document.getElementById(\"favicon-32-dark\")\n\t\t\t\t: document.getElementById(\"favicon-32\");\n\n\t\tif (stateType) {\n\t\t\tconst faviconPath = `/${stateType.toLowerCase()}.svg`;\n\t\t\tfavicon16?.setAttribute(\"href\", faviconPath);\n\t\t\tfavicon32?.setAttribute(\"href\", faviconPath);\n\t\t}",
+    "evidence": "diff 中新增的 hook 直接使用 `document.getElementById` 取得元素，並假設元素存在且為 link 標籤。若 index.html 未包含這些元素，則 `favicon16` 和 `favicon32` 為 `null`，但 optional chaining 避免了錯誤。然而，若元素不存在，favicon 將不會更新，且沒有 fallback 機制。此外，`stateType` 未經驗證，可能導致無效路徑。"
+  },
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 55,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "cleanup 函式可能使用過時的 colorScheme",
+    "body": "在 `useEffect` 的 cleanup 函式中，使用了 `colorScheme` 變數，但該變數是在 effect 執行時計算的。如果使用者在元件掛載期間改變了系統的顏色偏好（例如從 light 切換到 dark），cleanup 函式仍會使用舊的 `colorScheme`，導致重置 favicon 時使用錯誤的預設圖示。建議在 cleanup 中重新取得 colorScheme，或將 colorScheme 加入 dependency array。",
+    "existing_code": "return () => {\n\t\t\t// Reset to default favicon on unmount\n\t\t\tif (colorScheme === \"dark\") {\n\t\t\t\tfavicon16?.setAttribute(\"href\", \"/favicon-16x16-dark.png\");\n\t\t\t\tfavicon32?.setAttribute(\"href\", \"/favicon-32x32-dark.png\");\n\t\t\t} else {\n\t\t\t\tfavicon16?.setAttribute(\"href\", \"/favicon-16x16.png\");\n\t\t\t\tfavicon32?.setAttribute(\"href\", \"/favicon-32x32.png\");\n\t\t\t}\n\t\t};",
+    "evidence": "cleanup 函式閉包捕獲了 `colorScheme`，但該值在 effect 執行時決定，不會隨系統偏好變化而更新。"
+  },
+  {
+    "path": "ui-v2/src/components/task-runs/task-run-details/task-run-details.tsx",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Run Count 顯示邏輯可能將 0 顯示為 0，但使用 `||` 可能導致其他 falsy 值顯示錯誤",
+    "body": "在 Run Count 欄位中，使用 `taskRun.run_count || 0` 來顯示。若 `run_count` 為 `0`，則會顯示 `0`，這是正確的。但若 `run_count` 為 `null` 或 `undefined`，也會顯示 `0`，這可能掩蓋了資料缺失的情況。建議使用 `??` 運算子來明確處理 null/undefined，並保留 0 的顯示。",
+    "existing_code": "<dd className=\"\">{taskRun.run_count || 0}</dd>",
+    "evidence": "diff 中將原本的條件渲染改為直接顯示 `taskRun.run_count || 0`，若 `run_count` 為 `null` 或 `undefined`，會顯示 `0`，可能誤導使用者。"
+  },
+  {
+    "path": "ui-v2/src/components/task-runs/task-run-details/task-run-details.tsx",
+    "line": 179,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Retry Jitter Factor 使用 truthy 檢查可能將 0 顯示為 None",
+    "body": "在 Retry Jitter Factor 欄位中，使用 `taskRun.empirical_policy?.retry_jitter_factor ? ... : \"None\"`。若 `retry_jitter_factor` 為 `0`（合法值），則會顯示 `None`，但實際上應該顯示 `0`。建議改用 `!== null && !== undefined` 或 `??` 來判斷。",
+    "existing_code": "{taskRun.empirical_policy?.retry_jitter_factor\n\t\t\t\t\t\t? taskRun.empirical_policy.retry_jitter_factor.toString()\n\t\t\t\t\t\t: \"None\"}",
+    "evidence": "diff 中將原本的條件渲染改為 truthy 檢查，但 `0` 是 falsy，會導致顯示錯誤。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試方法改名後可能不再被 XCTest 執行",
+    "body": "將 `testBookmarksShareNormalWebsiteReminders` 改名為 `verifyBookmarksShareNormalWebsiteReminders`。XCTest 只會自動執行以 `test` 開頭的方法，因此改名後此測試將不會被包含在任何測試計劃中，等同於被停用。若此為刻意停用，建議直接刪除或使用 `XCTSkip`；否則應保留 `test` 前綴。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中將 `func testBookmarksShareNormalWebsiteReminders()` 改為 `func verifyBookmarksShareNormalWebsiteReminders()`，且未見其他機制（如 `@Test` 或手動呼叫）使其仍被執行。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "tearDown 提前 return 可能跳過必要的清理",
+    "body": "在 `tearDown` 中，若測試名稱包含 `testSelectBottomPlacement` 或裝置為 iPad，會直接 `return`，跳過 `switchThemeToDarkOrLight` 與 `app.terminate()`。若測試中途失敗，可能殘留應用程式狀態影響後續測試。建議將 `app.terminate()` 移至 `return` 之前，或使用 `defer` 確保清理必定執行。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 新增的 `return` 會跳過後續的 `app.terminate()` 與 `super.tearDown()` 呼叫。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 52,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "generate_github_alternative_url 不再使用替代 URL",
+    "body": "原本函式會產生替代的 GitHub 鏡像 URL（例如處理 GitHub 下載失敗時），但現在直接忽略 `_alt_url` 並回傳原始 `url`。這可能導致原本依賴鏡像 URL 的錯誤處理或效能優化失效。請確認此變更是否為預期行為，並檢查是否有其他程式碼依賴此函式回傳替代 URL。",
+    "existing_code": ".map(|_alt_url| {\n      (\n        ureq::Agent::config_builder()\n          .user_agent(BUNDLER_USER_AGENT)\n          .build()\n          .into(),\n        url.to_owned(),\n      )\n    })",
+    "evidence": "diff 中將 `alt_url` 改為 `_alt_url`，並將回傳的 URL 從 `alt_url` 改為 `url.to_owned()`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 120,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 Sha256 的 Windows 條件編譯限制",
+    "body": "原本 `HashAlgorithm::Sha256` 僅在 Windows 上可用，現在移除 `#[cfg(target_os = \"windows\")]` 後，所有平台皆可使用。這可能是有意為之（例如其他平台也需要 SHA256），但需確認非 Windows 平台是否有對應的依賴與測試。",
+    "existing_code": "Sha256,",
+    "evidence": "diff 中刪除了 `#[cfg(target_os = \"windows\")]` 行。"
+  }
+]

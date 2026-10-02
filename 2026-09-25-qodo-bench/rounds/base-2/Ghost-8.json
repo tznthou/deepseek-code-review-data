@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/i18n/locales/zh/comments.json",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除 comments.json 可能導致引用錯誤",
+    "body": "此 PR 刪除了整個 comments.json 檔案。如果程式碼中有任何地方載入此檔案（例如 i18n 載入器），刪除後會導致執行時期錯誤或缺少翻譯。請確認此檔案確實不再被使用，或提供替代方案。",
+    "existing_code": "{\n    \"{amount} characters left\": \"还剩{amount}字\",",
+    "evidence": "diff 中顯示整個檔案被刪除（deleted file mode 100644），且沒有新增替代檔案。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "翻譯遺漏變數 {newsletterName}",
+    "body": "翻譯中移除了 {newsletterName} 變數，但原文仍包含該變數。這可能導致使用者看不到具體的新聞信名稱，影響理解。建議保留變數。",
+    "existing_code": "\"{memberEmail} will no longer receive {newsletterName} newsletter.\": \"{memberEmail}将不会再收到新闻信。\",",
+    "evidence": "原文包含 {newsletterName}，但翻譯中沒有對應的變數。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 117,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "「Name」翻譯不一致",
+    "body": "在 portal.json 中，「Name」被改為「名稱」，但在 ghost.json 中仍為「名字」。這可能導致不同頁面顯示不一致。建議統一。",
+    "existing_code": "\"Name\": \"名称\",",
+    "evidence": "diff 中 portal.json 的「Name」從「名字」改為「名稱」，但 ghost.json 的「Name」仍為「名字」。"
+  }
+]

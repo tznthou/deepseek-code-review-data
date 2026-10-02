@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 105,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "預設的 addFilter 文字被設為空字串",
+    "body": "DEFAULT_I18N 中的 `addFilter` 從 'Add filter' 改為空字串，這會讓所有未自訂 i18n 的篩選器按鈕顯示為空白，影響可用性。若這是為了讓呼叫端自行提供文字，應確認所有使用處都有覆寫，否則建議保留預設值。",
+    "existing_code": "addFilter: '',",
+    "evidence": "diff 中第 105 行將原本的 'Add filter' 改為空字串。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 122,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "預設的 addFilterTitle 文字被設為空字串",
+    "body": "DEFAULT_I18N 中的 `addFilterTitle` 從 'Add filter' 改為空字串，可能導致 tooltip 或 aria-label 缺失，影響無障礙性。建議保留預設文字或確認所有使用處都有提供替代文字。",
+    "existing_code": "addFilterTitle: '',",
+    "evidence": "diff 中第 122 行將原本的 'Add filter' 改為空字串。"
+  },
+  {
+    "path": "apps/shade/src/components/ui/filters.tsx",
+    "line": 1134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "autoCloseOnSelect 關閉時未清除搜尋輸入",
+    "body": "在 multiselect 的 onSelect 中，當 `autoCloseOnSelect` 為 true 時呼叫 `onClose?.()`，但 `onClose` 的實作（handleClose）會清除搜尋輸入（setSearchInput('')），然而此處直接呼叫 onClose 而非 handleClose，可能導致搜尋輸入未清除。建議統一使用 handleClose 或確保 onClose 有清除邏輯。",
+    "existing_code": "if (field.autoCloseOnSelect) {\n    onClose?.();\n}",
+    "evidence": "diff 中新增的 autoCloseOnSelect 區塊呼叫 onClose，但未呼叫 setSearchInput('')。"
+  },
+  {
+    "path": "apps/stats/src/views/Stats/components/stats-filter.tsx",
+    "line": 498,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "addButtonText 條件判斷無效",
+    "body": "`addButtonText={filters.length ? '' : ''}` 無論 filters.length 為何都傳入空字串，條件判斷沒有作用。若意圖是根據是否有 filters 顯示不同文字，應提供實際文字；若不需要文字，可直接傳入空字串或省略。",
+    "existing_code": "addButtonText={filters.length ? '' : ''}",
+    "evidence": "diff 中將原本的條件文字改為兩個空字串。"
+  }
+]

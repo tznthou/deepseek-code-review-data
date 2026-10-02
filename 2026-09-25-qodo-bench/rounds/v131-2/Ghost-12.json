@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 98,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "JWT token 儲存方式變更可能導致回傳格式不一致",
+    "body": "原本 `this._serverToken` 儲存的是 token 字串，現在改為儲存整個 tokenData 物件。這會影響 `getServerToken` 的回傳值：原本回傳 `{token: this._serverToken, exp: this._serverTokenExp}`，現在 `this._serverToken` 是物件，會變成巢狀結構。請確認所有呼叫端是否預期 token 為字串。",
+    "existing_code": "this._serverToken = tokenData;",
+    "evidence": "diff 中 `-                this._serverToken = tokenData.token;` 改為 `+                this._serverToken = tokenData;`，且下方回傳仍為 `return { token: this._serverToken, exp: this._serverTokenExp };`"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 147,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "移除 noTimestamp 可能導致 Tinybird 拒絕 token",
+    "body": "原本 `jwt.sign` 使用 `{noTimestamp: true}`，現在移除該選項，token 將包含 `iat` claim。若 Tinybird 端驗證時不預期有 `iat`，可能導致 token 無效。請確認 Tinybird 是否接受含 `iat` 的 JWT。",
+    "existing_code": "const token = jwt.sign(payload, this.tinybirdConfig.adminToken);",
+    "evidence": "diff 中 `-        const token = jwt.sign(payload, this.tinybirdConfig.adminToken, {noTimestamp: true});` 改為 `+        const token = jwt.sign(payload, this.tinybirdConfig.adminToken);`"
+  },
+  {
+    "path": "ghost/core/core/server/services/tinybird/TinybirdService.js",
+    "line": 164,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "改用 jwt.decode 可能無法正確驗證 token 有效性",
+    "body": "原本使用 `jwt.verify` 來檢查 token 是否過期，現在改用 `jwt.decode`。`jwt.decode` 不會驗證簽名，且若 token 格式錯誤可能回傳 null，但程式碼未處理 null 情況。此外，若 token 被竄改，`jwt.decode` 仍會回傳 payload，可能導致過期判斷錯誤。建議保留 `jwt.verify` 或加入簽名驗證。",
+    "existing_code": "const decoded = jwt.decode(token);",
+    "evidence": "diff 中 `-            const decoded = jwt.verify(token, this.tinybirdConfig.adminToken);` 改為 `+            const decoded = jwt.decode(token);`"
+  }
+]

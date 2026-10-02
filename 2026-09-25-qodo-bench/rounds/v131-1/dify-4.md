@@ -1,0 +1,49 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 將 conversation variable 的持久化從 VariableAssigner 節點移至新的 GraphEngineLayer，並重構相關依賴。主要風險在於 ConversationVariableUpdaterImpl 的 session 管理不當，可能導致連線洩漏；此外，新 layer 在處理多個變數時會多次 flush，且錯誤處理可能導致部分更新遺失。建議先修正 session 管理與 flush 策略。
+
+### Findings（4 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `api/services/conversation_variable_updater.py:18` | Session 未正確關閉，可能導致連線洩漏 | 0.95 |
+| ⚠️ | Major | `api/core/app/layers/conversation_variable_persist_layer.py:52` | 多個變數更新時多次 flush，可能導致部分更新遺失 | 0.85 |
+| ⚠️ | Major | `api/core/app/layers/conversation_variable_persist_layer.py:40` | selector 長度檢查不足，可能導致 IndexError | 0.80 |
+| 🔸 | Minor | `api/core/app/layers/conversation_variable_persist_layer.py:46` | 變數不存在時僅記錄警告，可能導致資料遺失 | 0.70 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>api/services/conversation_variable_updater.py:18</code> Session 未正確關閉，可能導致連線洩漏</summary>
+
+`ConversationVariableUpdaterImpl.update` 中直接建立 `Session(db.engine)` 但未在方法結束時關閉，也未使用 context manager。若 `session.commit()` 拋出例外，session 不會被關閉，造成連線洩漏。建議使用 `with Session(db.engine) as session:` 確保 session 正確關閉。
+
+**判斷依據**：diff 中新增的 `session = Session(db.engine)` 沒有對應的 `session.close()` 或 context manager。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>api/core/app/layers/conversation_variable_persist_layer.py:52</code> 多個變數更新時多次 flush，可能導致部分更新遺失</summary>
+
+在 `on_event` 中，對每個 updated variable 呼叫 `update` 後立即呼叫 `flush`。若有多個變數需要更新，且其中一個更新失敗，先前已 flush 的變更不會被回滾，導致資料不一致。建議收集所有更新後只 flush 一次，或使用交易包裹所有更新。
+
+**判斷依據**：diff 中 `for item in updated_variables:` 迴圈內呼叫 `update` 和 `flush`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>api/core/app/layers/conversation_variable_persist_layer.py:40</code> selector 長度檢查不足，可能導致 IndexError</summary>
+
+程式碼檢查 `len(selector) < 2` 後才存取 `selector[0]`，但若 selector 長度為 0 或 1，會觸發 IndexError。雖然有檢查，但檢查在存取之後，實際上 `selector[0]` 在 `len(selector) < 2` 時仍會執行，導致錯誤。應先檢查長度再存取。
+
+**判斷依據**：diff 中 `if len(selector) < 2:` 後才 `continue`，但下一行 `selector[0]` 在長度不足時仍會執行。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>api/core/app/layers/conversation_variable_persist_layer.py:46</code> 變數不存在時僅記錄警告，可能導致資料遺失</summary>
+
+當 `variable_pool.get(selector)` 回傳非 `Variable` 時，僅記錄警告並跳過，但該變數可能已從節點輸出中標記為更新，卻未持久化，導致資料不一致。建議考慮拋出例外或採取其他補救措施。
+
+**判斷依據**：diff 中 `if not isinstance(variable, Variable):` 後僅記錄警告並 `continue`。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 10768 (cache hit 1408) ｜ completion tokens 1102 ｜ PR #4</sub>

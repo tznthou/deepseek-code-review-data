@@ -1,0 +1,35 @@
+[
+  {
+    "path": "eng/Versions.props",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ValidateBaseline 設為 false 可能隱藏套件版本不一致",
+    "body": "將 `ValidateBaseline` 從 `true` 改為 `false` 會停用基準驗證，可能導致意外引入不相容的套件版本。建議確認此變更是否為暫時性，並在合併前恢復驗證。",
+    "existing_code": "<ValidateBaseline>false</ValidateBaseline>",
+    "evidence": "diff 中 `eng/Versions.props` 第 12 行將 `ValidateBaseline` 改為 `false`。"
+  },
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "macOS 映像升級至 macOS-15 可能導致建置失敗",
+    "body": "將 macOS 映像從 macOS-13 升級至 macOS-15，同時將 Xcode 版本從 15.2.0 升級至 16.4.0。若專案尚未支援 macOS 15 或 Xcode 16.4，可能導致建置失敗。建議確認 CI 測試通過。",
+    "existing_code": "vmImage: macOS-15",
+    "evidence": "diff 中 `.azure/pipelines/jobs/default-build.yml` 第 106 行將 `vmImage` 改為 `macOS-15`。"
+  },
+  {
+    "path": ".azure/pipelines/jobs/default-build.yml",
+    "line": 167,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Xcode 版本升級至 16.4.0 可能導致建置失敗",
+    "body": "將 Xcode 版本從 15.2.0 升級至 16.4.0。若專案尚未支援 Xcode 16.4，可能導致建置失敗。建議確認 CI 測試通過。",
+    "existing_code": "displayName: Use XCode 16.4.0",
+    "evidence": "diff 中 `.azure/pipelines/jobs/default-build.yml` 第 167 行將 `displayName` 改為 `Use XCode 16.4.0`。"
+  }
+]

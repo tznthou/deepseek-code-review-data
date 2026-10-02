@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 31,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "webView 可能為 null 導致 NPE",
+    "body": "在 `handleOnBackPressed` 中，`this@AppPlugin.webView?.canGoBack()` 使用了安全呼叫，但下一行 `this@AppPlugin.webView!!.goBack()` 使用了非空斷言。如果 `webView` 尚未初始化（例如在 `load` 被呼叫前觸發返回鍵），會拋出 NullPointerException。建議改用安全呼叫或延遲處理。",
+    "existing_code": "if (this@AppPlugin.webView?.canGoBack() == true) {\n  this@AppPlugin.webView!!.goBack()",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 30-31 行，`webView` 為可空屬性，但使用 `!!` 強制解包。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "監聽器移除後返回鍵行為可能失效",
+    "body": "當 `hasListener(BACK_BUTTON_EVENT)` 為 false 時，程式會停用 callback 並呼叫 `activity.onBackPressed()`，然後重新啟用。但如果前端移除了監聽器，且 webview 無法返回，則會呼叫 `activity.onBackPressed()`，可能導致 Activity 意外關閉。建議在移除監聽器時同步更新 callback 狀態。",
+    "existing_code": "this.isEnabled = false\nthis@AppPlugin.activity.onBackPressed()\nthis.isEnabled = true",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 38-40 行，監聽器移除後未處理 callback 狀態。"
+  },
+  {
+    "path": "packages/api/src/app.ts",
+    "line": 267,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "onBackButtonPress 未限制平台",
+    "body": "此 API 僅適用於 Android，但在其他平台呼叫時仍會嘗試註冊監聽器，可能導致錯誤或無效操作。建議在函式內檢查平台或於文件標註。",
+    "existing_code": "async function onBackButtonPress(\n  handler: (payload: OnBackButtonPressPayload) => void\n): Promise<PluginListener> {",
+    "evidence": "diff 中新增的 app.ts 第 264-266 行，未見平台檢查。"
+  }
+]

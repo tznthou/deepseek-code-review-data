@@ -1,0 +1,109 @@
+pair,label,note
+base-1:dify-7:2|dify-7#3,same,同指 createTFunction 未支援 returnObjects
+base-1:dify-8:1|dify-8#0,no,"GT 是載入文字硬編碼未走 i18n，finding 講錯誤處理"
+base-1:dify-8:1|dify-8#4,same,"同指 console.error 該移除，理由雖是洩漏資訊但修法一致"
+base-1:dify-8:2|dify-8#4,no,"finding 反而建議加 console.error，與 GT 相反"
+base-1:dify-9:1|dify-9#2,same,同指移除否定運算子導致搜尋模式判斷反轉
+base-1:dify-9:2|dify-9#1,partial,"同一行 key 改動，但 finding 講舊連結失效非 tab 衝突"
+base-1:dify-9:2|dify-9#2,no,"finding 講 query key 改名，GT 是搜尋模式邏輯反轉"
+base-1:dify-9:3|dify-9#0,same,同指 selector 參數改成 any 失去型別
+base-1:firefox-ios-1:1|firefox-ios-1#2,same,同指 comment 的 %1$@ 與 value 的 %@ 不一致
+base-1:firefox-ios-1:2|firefox-ios-1#0,no,"finding 講類別未被使用，GT 是缺 @MainActor"
+base-1:firefox-ios-1:2|firefox-ios-1#1,no,"finding 講類別未使用，GT 是引用了舊版字串常數"
+base-1:firefox-ios-1:2|firefox-ios-1#4,no,"finding 講類別未使用，GT 是缺 final"
+base-1:firefox-ios-1:2|firefox-ios-1#5,no,"finding 講類別未使用，GT 是缺明確存取控制"
+base-1:firefox-ios-1:2|firefox-ios-1#6,no,"finding 講類別未使用，GT 是應標 final"
+base-1:firefox-ios-10:1|firefox-ios-10#1,same,同指移除 expectation 後測試不等非同步回呼
+base-1:firefox-ios-10:2|firefox-ios-10#3,same,同指移除 expectation 後斷言不會被驗證
+base-1:firefox-ios-10:4|firefox-ios-10#0,no,"GT 是缺 MPL 授權標頭，finding 講 nonisolated"
+base-1:firefox-ios-10:4|firefox-ios-10#4,same,同指非執行緒安全物件標 nonisolated(unsafe)
+base-1:firefox-ios-10:4|firefox-ios-10#5,no,"同一行但 GT 是缺存取修飾字，finding 講執行緒安全"
+base-1:firefox-ios-11:1|firefox-ios-11#2,same,同指 stacks 誤重複 browserActionStack
+base-1:firefox-ios-11:2|firefox-ios-11#3,same,同指 leading 約束誤接右側 skeleton bar
+base-1:firefox-ios-11:3|firefox-ios-11#1,same,同指 divider 判斷誤用 leading stack
+base-1:firefox-ios-11:4|firefox-ios-11#0,partial,"同一行，finding 講 API 已棄用而非缺 protocol 抽象"
+base-1:firefox-ios-11:4|firefox-ios-11#4,no,"同一行但 GT 是變數未使用，finding 講 API 棄用"
+base-1:firefox-ios-12:1|firefox-ios-12#3,same,"同指 fulfill 移出 decisionHandler，修法同為移回"
+base-1:firefox-ios-12:1|firefox-ios-12#4,no,"GT 是 URL 強制解包，finding 講 expectation 用法"
+base-1:firefox-ios-12:1|firefox-ios-12#5,no,"GT 是另一處 URL 強制解包，finding 講 expectation"
+base-1:firefox-ios-12:1|firefox-ios-12#6,no,"GT 是第三處 URL 強制解包，finding 講 expectation"
+base-1:firefox-ios-12:2|firefox-ios-12#1,no,"GT 是 targetFrame 用錯，finding 講外部網路依賴"
+base-1:firefox-ios-12:2|firefox-ios-12#2,no,"GT 是忽略 waiter 結果，finding 講外部網路依賴"
+base-1:firefox-ios-12:2|firefox-ios-12#7,no,"GT 是 waiter 未使用，finding 講外部網路依賴"
+base-1:firefox-ios-12:2|firefox-ios-12#8,no,"GT 是成員缺存取控制，finding 講外部網路依賴"
+base-1:firefox-ios-12:2|firefox-ios-12#9,no,"GT 是方法缺存取控制，finding 講外部網路依賴"
+base-1:firefox-ios-12:3|firefox-ios-12#0,no,"GT 是缺 final，finding 講 waiter 結果未檢查"
+base-1:firefox-ios-12:3|firefox-ios-12#1,no,"GT 是抓錯 frame，finding 講 waiter 結果未檢查"
+base-1:firefox-ios-12:3|firefox-ios-12#2,same,"同指忽略 XCTWaiter 結果，修法同為檢查結果"
+base-1:firefox-ios-12:3|firefox-ios-12#7,same,"waiter 未使用與未檢查結果同根，檢查結果即兩者皆修"
+base-1:firefox-ios-12:3|firefox-ios-12#8,no,"GT 是成員缺存取控制，finding 講 waiter 結果"
+base-1:firefox-ios-12:3|firefox-ios-12#9,no,"GT 是方法缺存取控制，finding 講 waiter 結果"
+base-1:firefox-ios-12:4|firefox-ios-12#0,no,"GT 是缺 final，finding 講 frame 可能為 nil"
+base-1:firefox-ios-12:4|firefox-ios-12#1,partial,"同一行但只講 nil 風險，未指出應改 sourceFrame"
+base-1:firefox-ios-12:4|firefox-ios-12#2,no,"GT 是忽略 waiter 結果，finding 講 frame 為 nil"
+base-1:firefox-ios-12:4|firefox-ios-12#8,no,"GT 是成員缺存取控制，finding 講 frame 為 nil"
+base-1:firefox-ios-12:4|firefox-ios-12#10,no,"GT 是缺 MARK 分段，finding 講 frame 為 nil"
+base-1:firefox-ios-13:1|firefox-ios-13#1,partial,"同一個 if，finding 講提前 return 而非 || 寫錯"
+base-1:firefox-ios-13:2|firefox-ios-13#0,same,同指改名後失去 test 前綴
+base-1:firefox-ios-13:3|firefox-ios-13#2,same,同指 Allow Paste 的 0.5 秒 timeout 太短
+base-1:firefox-ios-2:1|firefox-ios-2#1,same,同指 super.setUp() 缺 try
+base-1:firefox-ios-2:2|firefox-ios-2#2,same,同指 setUpApp 與實驗變數設定順序顛倒
+base-1:firefox-ios-3:1|firefox-ios-3#1,partial,"主講 Task 改變時序與錯誤處理，MainActor 只在建議順帶提"
+base-1:firefox-ios-3:1|firefox-ios-3#6,partial,"GT 要閉包標 @MainActor，finding 只建議 Task 加註"
+base-1:firefox-ios-3:3|firefox-ios-3#0,same,同指按鈕尺寸 40 寫死未放 UX 常數
+base-1:firefox-ios-4:1|firefox-ios-4#2,same,同指選 Light 後誤檢查 darkThemeView
+base-1:firefox-ios-4:2|firefox-ios-4#3,same,同指先點 Done 再 goto 的順序錯誤
+base-1:firefox-ios-5:1|firefox-ios-5#1,same,同指 off-by-one：應為 count - 1
+base-1:firefox-ios-5:2|firefox-ios-5#2,same,同指 section 寫死為 1 應改 0
+base-1:firefox-ios-5:3|firefox-ios-5#3,no,"GT 是缺存取修飾字，finding 講 v147 未被使用"
+base-1:firefox-ios-6:1|firefox-ios-6#0,same,同指 assert 取代 XCTAssertTrue
+base-1:firefox-ios-7:1|firefox-ios-7#2,same,同指非主執行緒時回傳 nil 丟失結果
+base-1:firefox-ios-7:1|firefox-ios-7#4,no,"GT 是缺文件註解，finding 講回傳 nil"
+base-1:firefox-ios-7:2|firefox-ios-7#3,same,"同指時間更新移到 guard 前，描述較粗但修法相同"
+base-1:firefox-ios-7:3|firefox-ios-7#1,same,同指失敗路徑未包 ensureMainThread
+base-1:firefox-ios-8:2|firefox-ios-8#1,same,同指 setUp 呼叫 @MainActor 方法缺 await
+base-1:firefox-ios-8:6|firefox-ios-8#1,no,"同類缺 await 但在 tearDown 另一呼叫，非 GT 那行"
+base-1:firefox-ios-8:10|firefox-ios-8#0,no,"GT 是缺 MARK 註解，finding 講執行緒處理"
+base-1:firefox-ios-9:1|firefox-ios-9#3,same,"同一行同一改動，函式名雖講錯但修法相同"
+base-1:firefox-ios-9:2|firefox-ios-9#1,same,同指 && 改成 || 保留 reader URL
+base-1:firefox-ios-9:3|firefox-ios-9#2,same,同指 isReaderModeEnabled 布林反轉
+base-1:firefox-ios-9:4|firefox-ios-9#0,same,同指 gleanWrapper 拿掉 private
+base-1:prefect-1:1|prefect-1#1,same,同指改用 dep.name 而非 full_name 比對
+base-1:prefect-1:2|prefect-1#3,same,同指 zip 移除 strict=True
+base-1:prefect-1:3|prefect-1#2,same,同指移除 variables 的 dict 型別檢查
+base-1:prefect-1:3|prefect-1#3,no,"GT 是移除 strict，finding 講型別檢查"
+base-1:prefect-10:1|prefect-10#0,same,同指 tsconfig 關閉 strict
+base-1:prefect-10:2|prefect-10#1,same,"同指未濾空行，情境較窄但修法相同"
+base-1:prefect-10:3|prefect-10#3,same,"同指 parseInt 造成 NaN 與截斷，修法可解"
+base-1:prefect-10:4|prefect-10#2,partial,"同處指 trigger.after，但建議補預設值而非移除切換"
+base-1:prefect-10:4|prefect-10#5,no,"GT 是缺測試檔，finding 講 trigger.after"
+base-1:prefect-11:2|prefect-11#1,partial,"同指 semaphore 未初始化會拋錯，但沒抓到初始化順序"
+base-1:prefect-11:3|prefect-11#2,no,"finding 講未初始化拋錯，GT 是 API 呼叫在鎖外"
+base-1:prefect-11:4|prefect-11#2,partial,"都指 semaphore 保護不足，但 finding 講其他事件類型"
+base-1:prefect-12:3|prefect-12#1,same,同指 run_count 用 || 應改 ??
+base-1:prefect-13:1|prefect-13#2,partial,"同欄位負值問題，但建議 zod 驗證而非補回 min"
+base-1:prefect-13:2|prefect-13#1,no,"GT 是描述被 trim，finding 講未檢查 dirty"
+base-1:prefect-2:1|prefect-2#2,same,同指 fail 路徑 related 用錯變數
+base-1:prefect-2:2|prefect-2#0,same,同指跨欄位驗證應改 model_validator
+base-1:prefect-2:2|prefect-2#3,partial,"同一驗證器，finding 講順序依賴而非誤擋 proactive"
+base-1:prefect-3:1|prefect-3#1,partial,"同段拖曳索引，finding 講 prefix 偏移非參數對調"
+base-1:prefect-3:1|prefect-3#2,partial,"都關於 prefix items 未排除，但位置在索引計算"
+base-1:prefect-3:2|prefect-3#1,no,"finding 講 prefix 納入排序，GT 是參數對調"
+base-1:prefect-3:2|prefect-3#2,same,同指 sortableKeys 未排除 prefix items
+base-1:prefect-4:1|prefect-4#0,no,"GT 是縮排規則，finding 講選取項查找"
+base-1:prefect-4:1|prefect-4#1,same,同指選取項從 filteredData 查找
+base-1:prefect-4:3|prefect-4#3,no,"GT 是關閉與回呼順序，finding 講錯誤訊息"
+base-1:prefect-4:4|prefect-4#0,no,"GT 是縮排規則，finding 講重複過濾"
+base-1:prefect-4:4|prefect-4#1,no,"finding 講前後端重複過濾，未提選取項查找錯"
+base-1:prefect-5:1|prefect-5#0,no,"GT 是 field_validator 規則，finding 講路徑比對"
+base-1:prefect-5:1|prefect-5#1,same,同指 in 應改 startswith
+base-1:prefect-5:2|prefect-5#0,same,同指跨欄位驗證誤用 field_validator
+base-1:prefect-5:2|prefect-5#1,no,"GT 是路徑前綴比對，finding 講驗證器"
+base-1:prefect-5:3|prefect-5#2,no,"同一行但 GT 是參數名錯，finding 講移除 fixture"
+base-1:prefect-6:3|prefect-6#1,no,"GT 是缺 await，finding 講 client 建立方式"
+base-1:prefect-6:4|prefect-6#1,same,"同指移除 await，機制講錯但建議保留 await"
+base-1:prefect-6:5|prefect-6#2,partial,"同指改用 deployment_id，但講型別非 None，建議轉型修不好"
+base-1:prefect-6:5|prefect-6#3,no,"GT 是輪詢先 sleep，finding 講 deployment_id"
+base-1:prefect-7:1|prefect-7#1,same,同指 hash() 非決定性致 lock key 不一致
+base-1:prefect-7:2|prefect-7#1,no,"finding 講 SQLite 無鎖，GT 是 hash 非決定性"
+base-1:prefect-7:3|prefect-7#2,same,"同指比長度不比集合，機制不同但建議比集合"

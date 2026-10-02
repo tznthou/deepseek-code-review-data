@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "缺少 error boundary 處理查詢失敗",
+    "body": "`useSuspenseQuery` 在查詢失敗時會拋出錯誤，若沒有 error boundary 包覆，錯誤會向上傳播並可能導致整個應用程式崩潰。建議在元件外層或路由層級加入 error boundary，並提供 fallback UI。",
+    "existing_code": "const { data: flow } = useSuspenseQuery(buildFLowDetailsQuery(flowId));",
+    "evidence": "diff 中第 20 行使用 useSuspenseQuery，且檔案中沒有 error boundary 相關程式碼。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "stories 中 queryClient 設定不一致",
+    "body": "在 `createTestRouter` 中建立了一個新的 `QueryClient` 並放入 router context，但 decorator 中使用的 `QueryClientProvider` 是全域的 `queryClient`。這可能導致測試時 query client 不一致，建議統一使用同一個 instance。",
+    "existing_code": "context: { queryClient: new QueryClient() },",
+    "evidence": "diff 中第 24 行建立新的 QueryClient，而 decorator 使用全域 queryClient。"
+  }
+]

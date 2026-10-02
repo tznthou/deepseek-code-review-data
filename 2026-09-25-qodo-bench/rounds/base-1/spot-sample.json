@@ -1,0 +1,122 @@
+[
+ {
+  "pair": "base-1:firefox-ios-3:3|firefox-ios-3#0",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:cal.com-11:1|cal.com-11#3",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:tauri-11:1|tauri-11#3",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:aspnetcore-8:1|aspnetcore-8#1",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:redis-2:3|redis-2#6",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:dify-4:2|dify-4#3",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:tauri-1:1|tauri-1#1",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:prefect-3:2|prefect-3#2",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:aspnetcore-1:2|aspnetcore-1#6",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:tauri-12:1|tauri-12#2",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:dify-7:2|dify-7#3",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:Ghost-1:2|Ghost-1#3",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:firefox-ios-11:1|firefox-ios-11#2",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:firefox-ios-7:1|firefox-ios-7#2",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:dify-4:4|dify-4#1",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:dify-2:1|dify-2#1",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:redis-5:1|redis-5#1",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:Ghost-1:2|Ghost-1#1",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:aspnetcore-6:1|aspnetcore-6#2",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:cal.com-6:3|cal.com-6#1",
+  "stratum": "loc_hit"
+ },
+ {
+  "pair": "base-1:tauri-10:2|tauri-10#5",
+  "stratum": "ident"
+ },
+ {
+  "pair": "base-1:cal.com-8:2|cal.com-8#1",
+  "stratum": "ident"
+ },
+ {
+  "pair": "base-1:tauri-6:2|tauri-6#1",
+  "stratum": "ident"
+ },
+ {
+  "pair": "base-1:prefect-5:1|prefect-5#0",
+  "stratum": "ident"
+ },
+ {
+  "pair": "base-1:firefox-ios-1:2|firefox-ios-1#1",
+  "stratum": "loc"
+ },
+ {
+  "pair": "base-1:cal.com-16:2|cal.com-16#3",
+  "stratum": "ident"
+ },
+ {
+  "pair": "base-1:cal.com-6:1|cal.com-6#2",
+  "stratum": "loc"
+ },
+ {
+  "pair": "base-1:prefect-6:5|prefect-6#3",
+  "stratum": "ident"
+ },
+ {
+  "pair": "base-1:tauri-10:2|tauri-10#3",
+  "stratum": "ident"
+ },
+ {
+  "pair": "base-1:redis-4:5|redis-4#3",
+  "stratum": "ident"
+ }
+]

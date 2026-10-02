@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 281,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "登出驗證邏輯變更可能削弱 CSRF 防護",
+    "body": "原本的登出流程會先驗證 SignOutSessionStateManager 的狀態（透過 sessionStorage 中的 SignOutState），現在改為只呼叫 ValidateSignOutRequestState()。若 ValidateSignOutRequestState() 的實作未涵蓋原本 SignOutManager 的驗證，可能導致 CSRF 防護失效。請確認 ValidateSignOutRequestState() 是否完整取代原本的驗證邏輯，並確保登出請求仍受到保護。",
+    "existing_code": "if (!ValidateSignOutRequestState())",
+    "evidence": "diff 中移除了對 SignOutManager.ValidateSignOutState() 的呼叫，並將條件簡化為只呼叫 ValidateSignOutRequestState()。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Redirect 方法可能因 InteractiveRequestUrl 為 null 而拋出例外",
+    "body": "原本的程式碼在 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 時才呼叫 NavigateToLogin，否則使用 RedirectUrl。現在改為只要 InteractionOptions 不為 null 就呼叫 NavigateToLogin，但若 InteractiveRequestUrl 為 null，可能導致 NullReferenceException。請確認 InteractiveRequestUrl 在 InteractionOptions 存在時必定有值，或加入 null 檢查。",
+    "existing_code": "if (_tokenResult.InteractionOptions != null)\n        {\n            _navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, _tokenResult.InteractionOptions);\n        }",
+    "evidence": "diff 中移除了對 InteractiveRequestUrl 的 null 檢查，並在 else 分支改用 InteractiveRequestUrl。"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "新增 Task.Yield() 可能影響登出流程時序",
+    "body": "在取得 AuthenticationState 之前新增 `await Task.Yield();`，可能是為了避免同步上下文問題，但可能導致不必要的延遲或行為改變。請確認此變更的必要性，並考慮是否應在特定條件下才執行。",
+    "existing_code": "await Task.Yield();",
+    "evidence": "diff 中新增了 `await Task.Yield();` 於取得 AuthenticationState 之前。"
+  }
+]

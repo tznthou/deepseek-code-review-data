@@ -1,0 +1,13 @@
+[
+  {
+    "path": "src/Components/Web.JS/src/Rendering/JSRootComponents.ts",
+    "line": 139,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "hasInitializedJsComponents 可能導致不同 renderer 類型初始化被跳過",
+    "body": "當同一頁面存在多個不同 renderer 類型（例如 Server 與 WebAssembly）且都嘗試啟用 JS root components 時，第一個 renderer 會設定 hasInitializedJsComponents = true，導致第二個 renderer 的初始化被跳過。這可能造成第二個 renderer 的 JS 元件無法正確初始化。建議將 hasInitializedJsComponents 改為以 rendererId 為鍵的集合，或改為在每次 enableJSRootComponents 呼叫時都執行初始化（若初始化是冪等的）。",
+    "existing_code": "if (!hasInitializedJsComponents) {\n    // Call the registered initializers. This is an arbitrary subset of the JS component types that are registered\n    // on the .NET side - just those of them that require some JS-side initialization (e.g., to register them\n    // as custom elements).\n    for (const [initializerIdentifier, componentIdentifiers] of Object.entries(jsComponentInitializers)) {\n      const initializerFunc = DotNet.findJSFunction(initializerIdentifier, 0) as JSComponentInitializerCallback;\n      for (const componentIdentifier of componentIdentifiers)\n        initializerFunc(componentIdentifier, jsComponentParameters[componentIdentifier]);\n    }\n\n    hasInitializedJsComponents = true;\n  }",
+    "evidence": "diff 中新增了 hasInitializedJsComponents 變數，並在 enableJSRootComponents 中檢查。但此變數是全域的，未區分 rendererId。若不同 renderer 類型呼叫此函式，第二次呼叫會因 hasInitializedJsComponents 為 true 而跳過初始化。"
+  }
+]

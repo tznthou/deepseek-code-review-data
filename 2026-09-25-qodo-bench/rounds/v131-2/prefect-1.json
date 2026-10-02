@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 182,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`base_job_template[\"variables\"]` 可能不是 dict，導致後續型別錯誤",
+    "body": "原程式碼檢查 `variables` 是否為 dict，若不是則設為空 dict。新程式碼直接指派 `job_vars_schema = base_job_template[\"variables\"]`，若該值不是 dict（例如是 list 或 None），後續使用 `job_vars_schema` 的地方（如 `WorkPoolInfo` 的建構或型別提示）可能發生錯誤。建議保留型別檢查，或明確處理非 dict 的情況。",
+    "existing_code": "job_vars_schema = base_job_template[\"variables\"]",
+    "evidence": "diff 中移除了 `if isinstance(variables, dict):` 的檢查，直接指派。"
+  },
+  {
+    "path": "src/prefect/_sdk/fetcher.py",
+    "line": 397,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "部署名稱過濾邏輯變更可能導致錯誤的過濾結果",
+    "body": "原程式碼使用 `full_name`（`flow_name/deployment_name`）與 `deployment_names` 比較，新程式碼改為 `dep.name`。若使用者提供的過濾條件包含 flow 名稱（例如 `my-flow/production`），則 `dep.name` 只會是 `production`，永遠不會匹配，導致過濾失效。建議確認此變更的意圖，或保留原本的 `full_name` 比較。",
+    "existing_code": "if deployment_names and dep.name not in deployment_names:",
+    "evidence": "diff 中將 `full_name not in deployment_names` 改為 `dep.name not in deployment_names`。"
+  }
+]

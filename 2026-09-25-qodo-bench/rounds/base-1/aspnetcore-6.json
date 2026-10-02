@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/Services/AccessTokenNotAvailableException.cs",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Redirect() 可能因 InteractiveRequestUrl 為 null 而拋出 NullReferenceException",
+    "body": "原本的程式碼在 `_tokenResult.InteractionOptions != null && _tokenResult.InteractiveRequestUrl != null` 時才呼叫 NavigateToLogin，否則使用 `_tokenResult.RedirectUrl!`。修改後，當 `InteractionOptions != null` 但 `InteractiveRequestUrl` 為 null 時，會直接傳遞 null 給 NavigateToLogin，可能導致 NullReferenceException。建議保留 null 檢查或提供替代邏輯。",
+    "existing_code": "if (_tokenResult.InteractionOptions != null)\n        {\n            _navigation.NavigateToLogin(_tokenResult.InteractiveRequestUrl, _tokenResult.InteractionOptions);\n        }\n        else\n        {\n            _navigation.NavigateTo(_tokenResult.InteractiveRequestUrl!);\n        }",
+    "evidence": "diff 中刪除了 `_tokenResult.InteractiveRequestUrl != null` 的條件，並在 else 分支改用 `_tokenResult.InteractiveRequestUrl!`"
+  },
+  {
+    "path": "src/Components/WebAssembly/WebAssembly.Authentication/src/RemoteAuthenticatorViewCore.cs",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "新增的 Task.Yield() 可能改變登出流程的時序",
+    "body": "在 ProcessLogOut 中新增 `await Task.Yield();` 會讓出執行緒，可能導致後續的 AuthenticationState 取得延遲，或與其他非同步操作產生競態。若此變更非為了解決特定問題，建議移除；若為必要，請補充說明原因並確保測試涵蓋此情境。",
+    "existing_code": "// Ensure we're authenticated before proceeding with sign-out\n        await Task.Yield();",
+    "evidence": "diff 中新增的兩行：`// Ensure we're authenticated before proceeding with sign-out` 與 `await Task.Yield();`"
+  }
+]

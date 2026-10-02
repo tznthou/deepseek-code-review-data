@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/libs/smtp.py",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "重構後 opportunistic TLS 連線建立方式可能與原本不同",
+    "body": "原本在 opportunistic TLS 模式下，會先建立非 SSL 的 SMTP 連線，然後呼叫 ehlo、starttls、再 ehlo。重構後，連線建立改為根據條件選擇 SMTP_SSL 或 SMTP，但 opportunistic TLS 模式仍使用 SMTP（非 SSL），因此行為看似相同。然而，原本的程式碼在建立 SMTP 連線時沒有傳入 local_hostname，而新程式碼傳入了 local_hostname（可能為空字串或 None）。如果 local_hostname 為空字串，smtplib 可能將其視為有效的主機名稱，導致 HELO/EHLO 命令使用空字串，可能被伺服器拒絕。建議確認 smtplib 對空字串的處理，並考慮在 local_hostname 為空時不傳遞該參數。",
+    "existing_code": "smtp = (smtplib.SMTP_SSL if (self.use_tls and not self.opportunistic_tls) else smtplib.SMTP)(\n    self.server, self.port, timeout=10, local_hostname=local_host or None\n)",
+    "evidence": "diff 中新增的連線建立程式碼，使用 local_hostname=local_host or None，但 local_host 可能為空字串，導致傳入空字串而非 None。"
+  },
+  {
+    "path": "api/libs/smtp.py",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "assert smtp is not None 可能不是必要的",
+    "body": "新增的 assert smtp is not None 在連線建立後立即執行，但 smtp 變數在 try 區塊內被賦值，且型別標註為 smtplib.SMTP | None。由於連線建立函式不會回傳 None，此 assert 可能永遠不會觸發，但若未來修改導致可能為 None，assert 在最佳化模式下會被移除，無法提供保護。建議移除或改為明確的型別檢查。",
+    "existing_code": "assert smtp is not None",
+    "evidence": "diff 中新增的 assert 陳述式。"
+  }
+]

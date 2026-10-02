@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2562,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "HSETEX 指令可能不存在於舊版 Redis，導致複製中斷",
+    "body": "此變更將 HINCRBYFLOAT 的複製指令改為 HSETEX。若 replica 或 AOF 重播環境的 Redis 版本不支援 HSETEX（例如舊版或某些 fork），複製或 AOF 重播將失敗。建議確認 HSETEX 在所有支援的版本中皆可用，或提供 fallback 機制。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中將原本的 rewriteClientCommandArgument(c,0,shared.hset) 改為 rewriteClientCommandVector(... shared.hsetex ...)，若 HSETEX 不存在將導致錯誤。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1987,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中 TTL 範圍斷言可能過於嚴格",
+    "body": "測試使用 assert_range [r httl h1 FIELDS 1 f1] 90 100 來驗證 TTL 未被移除。但 TTL 會隨時間遞減，若測試執行較慢，TTL 可能低於 90，導致 flaky test。建議放寬範圍或使用相對比較。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "在測試中，從設定 TTL 到斷言之間可能有延遲，TTL 可能已減少。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "搜尋過濾功能失效",
+    "body": "原本使用 `filteredMembers` 來顯示經過搜尋過濾的成員列表，現在改為直接使用 `teamMembers`，導致搜尋輸入框的過濾效果消失。若使用者輸入搜尋關鍵字，列表不會更新，可能造成操作錯誤。建議保留 `filteredMembers` 的計算邏輯，或確認此變更為預期行為。",
+    "existing_code": "{teamMembers.map((member) => (",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且未見其他過濾邏輯調整。"
+  },
+  {
+    "path": "apps/web/modules/event-types/hooks/useTeamMembersWithSegment.tsx",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "違反新增的 noRestrictedImports 規則",
+    "body": "此檔案仍匯入 `@calcom/trpc/react`，但 biome.json 新增了針對 atoms 套件的 `noRestrictedImports` 規則，禁止此匯入。這將導致 lint 錯誤，可能阻斷 CI。建議改用其他方式取得 trpc client，或調整規則排除此檔案。",
+    "existing_code": "import { trpc } from \"@calcom/trpc/react\";",
+    "evidence": "diff 中新增的 biome.json 規則明確禁止 `@calcom/trpc/react`，而此檔案未移除該匯入。"
+  },
+  {
+    "path": "packages/platform/atoms/availability/AvailabilitySettings.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "型別變更可能影響相容性",
+    "body": "將 `travelSchedules` 的型別從 `RouterOutputs[\"viewer\"][\"travelSchedules\"][\"get\"]` 改為 `Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>`。若兩者結構不完全一致，可能導致下游元件型別錯誤。建議確認此變更的相容性，並更新相關測試。",
+    "existing_code": "travelSchedules?: Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>;",
+    "evidence": "diff 中兩處型別替換，未見其他調整。"
+  }
+]

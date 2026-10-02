@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "非同步例外未正確處理",
+    "body": "在 `SetParametersAsync` 中，當 `For` 為 null 時直接拋出 `InvalidOperationException`。由於此方法為非同步，例外會被包裝在返回的 `Task` 中，但呼叫端（如 Blazor 渲染器）可能未正確觀察該例外，導致元件狀態不一致或未處理的例外。建議改為在方法開頭同步驗證參數，或使用 `Task.FromException` 返回失敗的任務。",
+    "existing_code": "if (For is null)\n{\n    throw new InvalidOperationException($\"{GetType()} requires a value for the \" +\n        $\"{nameof(For)} parameter.\");\n}",
+    "evidence": "diff 中新增的 `DisplayName.cs` 第 42-45 行顯示在非同步方法中直接拋出例外。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Hot Reload 時未清除顯示名稱快取",
+    "body": "`ClearCache` 方法僅清除 `_memberInfoCache`，未清除 `_displayNameCache`。當 Hot Reload 套用中繼資料變更時，顯示名稱快取可能保留過時的屬性名稱或屬性值，導致 UI 顯示不正確。建議同時清除兩個快取。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中 `ExpressionMemberAccessor.cs` 的 `ClearCache` 方法僅清除 `_memberInfoCache`，未處理 `_displayNameCache`。"
+  },
+  {
+    "path": "src/Components/Web/test/Forms/DisplayNameTest.cs",
+    "line": 188,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試輔助方法假設單一文字框架",
+    "body": "`RenderAndGetOutput` 方法使用 `First(f => f.FrameType == RenderTree.RenderTreeFrameType.Text)` 取得文字框架，但若元件渲染多個文字節點（例如包含空白或註解），可能取到錯誤的文字。建議改用更精確的查詢，例如根據元件 ID 或使用 `FindComponent` 後再取得其內容。",
+    "existing_code": "var textFrame = batch.ReferenceFrames\n    .First(f => f.FrameType == RenderTree.RenderTreeFrameType.Text);",
+    "evidence": "diff 中 `DisplayNameTest.cs` 的 `RenderAndGetOutput` 方法使用 `First` 取得文字框架，未考慮多個文字節點的情況。"
+  },
+  {
+    "path": "src/ProjectTemplates/Web.ProjectTemplates/content/BlazorWeb-CSharp/BlazorWebCSharp.1/Components/Account/Pages/Register.razor",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "標籤缺少 class=\"form-label\"",
+    "body": "在 `Register.razor` 中，`<label for=\"Input.Email\">` 和 `<label for=\"Input.Password\">` 未加上 `class=\"form-label\"`，與其他頁面的標籤不一致，可能影響 Bootstrap 樣式。建議補上該 class。",
+    "existing_code": "<label for=\"Input.Email\">\n    <DisplayName For=\"() => Input.Email\" />\n</label>",
+    "evidence": "diff 中 `Register.razor` 的標籤缺少 `class=\"form-label\"`，而其他頁面（如 `Login.razor`）的標籤均有此 class。"
+  }
+]

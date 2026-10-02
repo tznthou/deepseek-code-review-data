@@ -1,0 +1,24 @@
+[
+  {
+    "path": "packages/features/pbac/infrastructure/repositories/PermissionRepository.ts",
+    "line": 280,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "orgId 型別轉換可能導致索引失效",
+    "body": "在 SQL 查詢中使用 `${orgId}::bigint` 進行比較，若 orgId 為 number 型別，Prisma 會將其參數化為 integer，但資料庫中的 id 欄位可能是 bigint，導致型別不匹配而無法使用索引。建議確認 orgId 的實際型別，並避免不必要的型別轉換，或使用 Prisma 的型別安全參數化方式。",
+    "existing_code": "AND (${orgId}::bigint IS NULL OR t.\"id\" = ${orgId} OR t.\"parentId\" = ${orgId})",
+    "evidence": "diff 中新增的 orgId 過濾條件使用了 `::bigint` 轉型，但未確認 orgId 的原始型別。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/get.handler.test.ts",
+    "line": 128,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中的 mock 可能無法正確模擬實際查詢",
+    "body": "在 `createMockKysely` 中，`select` 方法在收到 callback 時直接回傳 `mockQueryBuilder`，但實際 Kysely 的 callback 會接收一個 query builder 並回傳新的 builder，此 mock 可能導致測試無法涵蓋真實的查詢邏輯。建議使用更貼近實際行為的 mock 或改用整合測試。",
+    "existing_code": "select: vi.fn((arg?: any) => {\n        // Handle select with callback function\n        if (typeof arg === \"function\") {\n          return mockQueryBuilder;\n        }\n        return mockQueryBuilder;\n      }),",
+    "evidence": "測試中 mock 的 select 方法未正確處理 callback，可能導致測試通過但實際行為錯誤。"
+  }
+]

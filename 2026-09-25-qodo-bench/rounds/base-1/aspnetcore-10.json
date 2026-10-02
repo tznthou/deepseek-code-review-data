@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Logging.AzureAppServices/src/AzureFileLoggerOptions.cs",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "RetainedFileCountLimit 驗證條件變更可能允許 0 值",
+    "body": "原本的驗證條件為 `if (value <= 0)`，會拒絕 0 或負數。變更後為 `if (value < 0)`，允許 0 值。但屬性文件說明為「strictly positive value」，且錯誤訊息仍為「must be positive」，因此允許 0 可能違反設計意圖。若設定為 0，可能導致保留檔案數為 0，造成所有日誌檔案被刪除或無法保留任何檔案。建議確認此變更是否為預期，若非預期應改回 `<= 0`。",
+    "existing_code": "if (value < 0)",
+    "evidence": "diff 中此行由 `if (value <= 0)` 改為 `if (value < 0)`，且上方文件仍描述為 strictly positive value。"
+  },
+  {
+    "path": "src/Logging.AzureAppServices/src/BatchingLoggerOptions.cs",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "BackgroundQueueSize 驗證條件變更可能拒絕 0 值",
+    "body": "原本的驗證條件為 `if (value < 0)`，允許 0 值。變更後為 `if (value <= 0)`，拒絕 0 值。但屬性文件說明為「maximum size of the background log message queue or null for no limit」，且錯誤訊息仍為「must be non-negative」，因此拒絕 0 可能違反設計意圖。若設定為 0，可能代表不允許任何佇列，但此處可能導致無法設定為 0。建議確認此變更是否為預期，若非預期應改回 `< 0`。",
+    "existing_code": "if (value <= 0)",
+    "evidence": "diff 中此行由 `if (value < 0)` 改為 `if (value <= 0)`，且上方文件仍描述為 non-negative。"
+  },
+  {
+    "path": "src/Validation/src/ValidationOptions.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "TryGetValidatableTypeInfo 中 out 參數初始化位置移動",
+    "body": "原本在方法最後才設定 `validatableTypeInfo = null`，現在移到方法開頭。這在功能上可能沒有差異，因為 out 參數在方法內必須賦值，但移動位置可能影響可讀性或與其他程式碼的互動。建議確認此變更是否為預期，並確保所有路徑都有正確賦值。",
+    "existing_code": "validatableTypeInfo = null;",
+    "evidence": "diff 中此行從方法結尾移至開頭。"
+  },
+  {
+    "path": "src/Validation/src/ValidationOptions.cs",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "nit",
+    "confidence": 0.5,
+    "title": "TryGetValidatableParameterInfo 方法格式調整",
+    "body": "方法簽名從多行改為單行，且大括號位置改變。這僅為格式調整，不影響功能。",
+    "existing_code": "public bool TryGetValidatableParameterInfo(ParameterInfo parameterInfo, [NotNullWhen(true)] out IValidatableInfo? validatableInfo) {",
+    "evidence": "diff 中此行格式變更。"
+  }
+]

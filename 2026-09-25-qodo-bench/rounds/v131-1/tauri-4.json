@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 289,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "配置合併行為改變可能導致後續使用不一致",
+    "body": "原本的程式碼會將合併後的配置直接指派給 `config_metadata.inner`，現在改為將合併配置存入 `extensions`。這可能導致後續程式碼若仍從 `inner` 讀取配置，將無法取得合併後的結果。請確認所有使用 `config_metadata.inner` 的地方是否已同步更新，或此變更是否為預期行為。",
+    "existing_code": "config_metadata.extensions.insert(MERGE_CONFIG_EXTENSION_NAME.into(), merge_config);",
+    "evidence": "diff 中刪除了 `config_metadata.inner = serde_json::from_value(value).context(\"failed to parse config\")?;`，並新增了 `config_metadata.extensions.insert(MERGE_CONFIG_EXTENSION_NAME.into(), merge_config);`"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 201,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "條件判斷邏輯修正可能改變驗證範圍",
+    "body": "原本的條件是 `extension == json || extension == json5`，現在改為 `extension == json && extension == json5`，這會使得只有副檔名同時為 json 和 json5 的檔案才會進行驗證，實際上不可能發生，因此驗證可能永遠不會執行。請確認此變更是否為預期，或應改回 `||`。",
+    "existing_code": "if config_path.extension() == Some(OsStr::new(\"json\"))\n    && config_path.extension() == Some(OsStr::new(\"json5\"))",
+    "evidence": "diff 中將 `||` 改為 `&&`，且條件中的兩個 extension 比較不可能同時成立。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 73,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Popover 在桌面端 hover 時可能閃爍或無法點擊內容",
+    "body": "在桌面端，Popover 的開啟與關閉依賴於觸發按鈕和 PopoverContent 的 onMouseEnter/onMouseLeave。但 PopoverContent 預設可能渲染在 Portal 中，與觸發按鈕不在同一 DOM 階層，當滑鼠從按鈕移向 PopoverContent 時，可能會先觸發按鈕的 mouseleave 而關閉 Popover，造成閃爍或無法點擊內容。建議改用 Radix Popover 的 hover 模式或加入延遲關閉機制，或使用 CSS 的 hover 搭配 delay。",
+    "existing_code": "onMouseEnter={handleMouseEnter}\n              onMouseLeave={handleMouseLeave}>\n              <Badge variant=\"gray\">+{hiddenItems.length}</Badge>\n            </Button>\n          </PopoverTrigger>\n          <PopoverContent\n            side=\"bottom\"\n            align=\"start\"\n            className=\"w-fit p-2\"\n            onMouseEnter={handleMouseEnter}\n            onMouseLeave={handleMouseLeave}>",
+    "evidence": "diff 中 PopoverTrigger 和 PopoverContent 都設定了 onMouseEnter/onMouseLeave，但未見延遲或 hover intent 處理，可能導致間隙問題。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "Popover 缺乏鍵盤無障礙支援",
+    "body": "觸發按鈕僅有 aria-label，但未提供鍵盤操作方式（如 Enter/Space 開啟、Esc 關閉、焦點管理）。Radix Popover 通常內建鍵盤支援，但此處使用受控 open 搭配 hover 事件，可能覆蓋了預設行為。建議確認鍵盤使用者能否操作，或改用 Popover 的 trigger 屬性。",
+    "existing_code": "aria-label={`Show ${hiddenItems.length} more items`}\n              onMouseEnter={handleMouseEnter}\n              onMouseLeave={handleMouseLeave}>",
+    "evidence": "diff 中僅有 aria-label，未見 onClick 或 onKeyDown 處理。"
+  },
+  {
+    "path": "apps/web/modules/users/components/UserTable/UserListTable.tsx",
+    "line": 251,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "屬性 badge 合併權重與群組標記可能降低可讀性",
+    "body": "原本權重以獨立 badge 顯示，群組以橘色 badge 區分，現在合併為單一 label（例如 \"Value 80% (group)\"），可能讓使用者難以快速區分。建議保留視覺區分，或提供 tooltip 說明。",
+    "existing_code": "let label = attributeValue.value;\n                    label = `${label} ${weight}`;\n                    label = `${label}${groupIndicator}`;",
+    "evidence": "diff 中將原本分開的 Badge 合併為單一 label 字串。"
+  },
+  {
+    "path": "apps/web/components/ui/LimitedBadges.tsx",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "maxVisible 為 0 或負數時行為未定義",
+    "body": "若 maxVisible 傳入 0 或負數，visibleItems 會是空陣列，hiddenItems 會包含所有項目，但 UI 仍會顯示 +N 按鈕，可能造成困惑。建議加上 prop 驗證或限制最小值為 1。",
+    "existing_code": "visibleItems: items.slice(0, maxVisible),\n      hiddenItems: items.slice(maxVisible),",
+    "evidence": "diff 中未對 maxVisible 做任何檢查。"
+  }
+]

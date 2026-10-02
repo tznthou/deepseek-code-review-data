@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/admin-x-framework/src/utils/stats-config.ts",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "版本前綴順序與後端不一致",
+    "body": "前端 `getStatEndpointUrl` 將 `config.version` 放在 endpointName 之前（`${config.version}_${endpointName}`），但後端 `tinybird.js` 是放在之後（`${pipeName}_${version}`）。例如 version='v2'、endpointName='api_kpis' 時，前端會呼叫 `v2_api_kpis`，後端會呼叫 `api_kpis_v2`，導致 404。請統一為後端的 `api_kpis_v2` 格式。",
+    "existing_code": "const finalEndpointName = config.version ? `${config.version}_${endpointName}` : endpointName;",
+    "evidence": "diff 中新增的這一行，與 `ghost/core/core/server/services/stats/utils/tinybird.js` 中的 `const pipeUrl = version ? `/v0/pipes/${pipeName}_${version}.json` : ...` 直接衝突。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/pipes/filtered_sessions_v2.pipe",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "session 屬性過濾條件未套用",
+    "body": "在 `sessions_filtered_by_session_attributes` 節點中，雖然從 `_mv_session_data_v2` 選取了 `source`、`device`、`utm_*` 等欄位，但 WHERE 子句中的過濾條件（例如 `{% if defined(source) %} and source = ...`）是放在子查詢外部，且子查詢沒有別名，導致這些條件無法正確引用子查詢中的欄位。這會使 session 屬性過濾失效，回傳不符合條件的 session。請將這些條件移到子查詢內部，或為子查詢加上別名並在外部引用。",
+    "existing_code": "select session_id\n    from (\n        SELECT\n            site_uuid,\n            session_id,\n            minMerge(first_pageview) as first_pageview,\n            argMinMerge(source) as source,\n            argMinMerge(device) as device,\n            argMinMerge(utm_source) as utm_source,\n            argMinMerge(utm_medium) as utm_medium,\n            argMinMerge(utm_campaign) as utm_campaign,\n            argMinMerge(utm_term) as utm_term,\n            argMinMerge(utm_content) as utm_content\n        FROM _mv_session_data_v2\n        WHERE site_uuid = {{ String(site_uuid, 'mock_site_uuid', description=\"Tenant ID\", required=True) }}\n        GROUP BY site_uuid, session_id\n    ) sd\n    inner join sessions_filtered_by_hit_attributes sfha\n      on sfha.session_id = sd.session_id\n    where\n        1 = 1\n        {% if defined(date_from) %}\n            {# Filter from specified start date #}\n            and first_pageview >= toDateTime({{ Date(date_from) }}, {{ String(timezone, 'Etc/UTC', description=\"Site timezone\", required=True) }})\n        {% else %}\n            {# Default to last 7 days if no start date provided #}\n            and first_pageview >= toDateTime(dateAdd(day, -7, today()), {{ String(timezone, 'Etc/UTC', description=\"Site timezone\", required=True) }})\n        {% end %}\n        {% if defined(date_to) %}\n            {# Filter to specified end date #}\n            and first_pageview < toDateTime({{ Date(date_to) }}, {{ String(timezone, 'Etc/UTC', description=\"Site timezone\", required=True) }}) + interval 1 day\n        {% else %}\n            {# Default to today if no end date provided #}\n            and first_pageview < toDateTime(dateAdd(day, 1, today()), {{ String(timezone, 'Etc/UTC', description=\"Site timezone\", required=True) }})\n        {% end %}\n        {% if defined(source) %} and source = {{ String(source, description=\"Source to filter on\", required=False) }} {% end %}\n        {% if defined(device) %} and device = {{ String(device, description=\"Device type to filter on\", required=False) }} {% end %}\n        {% if defined(utm_source) %} and utm_source = {{ String(utm_source, description=\"UTM source to filter on\", required=False) }} {% end %}\n        {% if defined(utm_medium) %} and utm_medium = {{ String(utm_medium, description=\"UTM medium to filter on\", required=False) }} {% end %}\n        {% if defined(utm_campaign) %} and utm_campaign = {{ String(utm_campaign, description=\"UTM campaign to filter on\", required=False) }} {% end %}\n        {% if defined(utm_term) %} and utm_term = {{ String(utm_term, description=\"UTM term to filter on\", required=False) }} {% end %}\n        {% if defined(utm_content) %} and utm_content = {{ String(utm_content, description=\"UTM content to filter on\", required=False) }} {% end %}",
+    "evidence": "在 WHERE 子句中直接使用 `source`、`device` 等欄位，但這些欄位只存在於子查詢 `sd` 中，外部查詢無法直接引用。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/ContentStatsService.js",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "移除 source 參數傳遞可能影響現有功能",
+    "body": "原本有將 `options.source` 加入 tinybirdOptions 的邏輯（允許空字串代表 Direct traffic），但此 PR 移除了該區塊。若前端仍會傳送 `source` 參數，則後端將不再將其傳遞給 Tinybird，可能導致 source 過濾失效。請確認是否有其他地方處理 source，或是有意移除。",
+    "existing_code": "// Only add source if defined (allow empty string for \"Direct\" traffic)\n        if (options.source !== undefined) {\n            tinybirdOptions.source = options.source;\n        }",
+    "evidence": "diff 中刪除了這段程式碼，但未見其他替代處理。"
+  }
+]

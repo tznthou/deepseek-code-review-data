@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "翻譯中遺漏變數 {newsletterName}",
+    "body": "翻譯字串 `\"{memberEmail} will no longer receive {newsletterName} newsletter.\"` 的譯文從 `\"{memberEmail}将不会再收到{newsletterName}的新闻信。\"` 改為 `\"{memberEmail}将不会再收到新闻信。\"`，遺漏了 `{newsletterName}` 變數。這可能導致顯示時缺少新聞信名稱，或造成變數替換錯誤。",
+    "existing_code": "\"{memberEmail} will no longer receive {newsletterName} newsletter.\": \"{memberEmail}将不会再收到新闻信。\",",
+    "evidence": "diff 中此行將原本包含 `{newsletterName}` 的譯文改為不含該變數的譯文。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/comments.json",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "刪除整個 comments.json 可能導致翻譯缺失",
+    "body": "此 PR 刪除了 `ghost/i18n/locales/zh/comments.json` 檔案。如果程式碼中仍有引用此檔案中的翻譯鍵，將導致翻譯缺失或錯誤。請確認此檔案是否已不再使用，或是否應保留並更新內容。",
+    "existing_code": "{\n    \"{amount} characters left\": \"还剩{amount}字\",\n    \"{amount} comments\": \"{amount}条评论\",\n    \"{amount} hrs ago\": \"{amount}小时前\",\n    \"{amount} mins ago\": \"{amount}分钟前\",\n    \"{amount} more\": \"还剩{amount}则留言\",\n    \"1 comment\": \"一条评论\",\n    \"Add comment\": \"添加评论\",\n    \"Add context to your comment, share your name and expertise to foster a healthy discussion.\": \"为您的评论补充上下文信息、说明您的称呼与专业背景均有助于营造健康的讨论氛围。\",\n    \"Add reply\": \"回复\",\n    \"Add your expertise\": \"添加您的专业背景\",\n    \"Already a member?\": \"已经是会员？\",\n    \"Anonymous\": \"匿名\",\n    \"Are you sure?\": \"确认？\",\n    \"Become a member of {publication} to start commenting.\": \"成为{publication}的会员以开始评论。\",\n    \"Become a paid member of {publication} to start commenting.\": \"成为{publication}的付费会员以开始评论。\",\n    \"Best\": \"最多赞\",\n    \"Cancel\": \"取消\",\n    \"Comment\": \"评论\",\n    \"Complete your profile\": \"完善您的注册信息\",\n    \"Delete\": \"删除\",\n    \"Deleted\": \"已删除\",\n    \"Deleted member\": \"删除会员\",\n    \"Deleting\": \"删除中\",\n    \"Discussion\": \"讨论\",\n    \"Edit\": \"编辑\",\n    \"Edit this comment\": \"编辑此条评论\",\n    \"edited\": \"已编辑\",\n    \"Enter your name\": \"输入您的称呼\",\n    \"Expertise\": \"专业背景\",\n    \"Founder @ Acme Inc\": \"Acme Inc的创建者\",\n    \"Full-time parent\": \"全职父母\",\n    \"Head of Marketing at Acme, Inc\": \"Acme, Inc市场部负责人\",\n    \"Hidden for members\": \"对会员隐藏\",\n    \"Hide\": \"隐藏\",\n    \"Hide comment\": \"隐藏评论\",\n    \"Jamie Larson\": \"阿宇\",\n    \"Join the discussion\": \"加入讨论\",\n    \"Just now\": \"刚刚\",\n    \"Load more ({amount})\": \"载入更多({amount})\",\n    \"Local resident\": \"本地居民\",\n    \"Member discussion\": \"会员讨论\",\n    \"Name\": \"称呼\",\n    \"Neurosurgeon\": \"神经外科医生\",\n    \"Newest\": \"最新\",\n    \"Oldest\": \"最早\",\n    \"Once deleted, this comment can’t be recovered.\": \"此评论一经删除后将无法复原。\",\n    \"One hour ago\": \"一小时前\",\n    \"One min ago\": \"一分钟前\",\n    \"removed\": \"已移除\",\n    \"Replied to\": \"已回复\",\n    \"Reply\": \"回复\",\n    \"Reply to\": \"回复\",\n    \"Reply to comment\": \"回复评论\",\n    \"Report\": \"举报\",\n    \"Report comment\": \"举报评论\",\n    \"Report this comment?\": \"举报此评论？\",\n    \"Save\": \"保存\",\n    \"Sending\": \"正在发送\",\n    \"Sent\": \"已发送\",\n    \"Show\": \"显示\",\n    \"Show {amount} more replies\": \"显示后续{amount}条评论\",\n    \"Show 1 more reply\": \"显示下一条评论\",\n    \"Show comment\": \"显示评论\",\n    \"Sign in\": \"登录\",\n    \"Sign up now\": \"立刻注册\",\n    \"Sort by\": \"排序方式\",\n    \"Start the conversation\": \"开始对话\",\n    \"This comment has been hidden.\": \"该条评论已被隐藏。\",\n    \"This comment has been removed.\": \"该条评论已被移除。\",\n    \"Upgrade now\": \"立刻升级\",\n    \"Yesterday\": \"昨天\",\n    \"Your request will be sent to the owner of this site.\": \"您的请求将被发送给站点所有者。\"\n}",
+    "evidence": "diff 顯示整個檔案被刪除，且沒有新增替代檔案。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 117,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "「Name」翻譯從「名字」改為「名稱」可能造成不一致",
+    "body": "在 portal.json 中，`\"Name\"` 的翻譯從 `\"名字\"` 改為 `\"名稱\"`。但在同檔案的 `\"Jamie Larson\": \"阿宇\"` 和 `\"jamie@example.com\": \"ayu@example.com\"` 等範例中，可能仍使用「名字」的語境。此外，ghost.json 中 `\"Name\"` 的翻譯也改為 `\"名字\"`，可能造成不一致。請確認此變更是否為預期。",
+    "existing_code": "\"Name\": \"名称\",",
+    "evidence": "diff 中此行將 `\"Name\"` 的翻譯從 `\"名字\"` 改為 `\"名稱\"`。"
+  },
+  {
+    "path": "ghost/i18n/locales/zh/portal.json",
+    "line": 192,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "「Unsubscribe from all emails」翻譯可能造成語意偏差",
+    "body": "`\"Unsubscribe from all emails\"` 的翻譯從 `\"取消所有新闻信订阅\"` 改為 `\"取消接收所有邮件\"`。原文指的是取消所有電子郵件（可能包含新聞信），但新翻譯可能被理解為取消所有郵件（包括交易郵件等）。請確認此翻譯是否準確。",
+    "existing_code": "\"Unsubscribe from all emails\": \"取消接收所有邮件\",",
+    "evidence": "diff 中此行將翻譯改為「取消接收所有邮件」。"
+  }
+]

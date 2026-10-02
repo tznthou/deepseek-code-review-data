@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "rewriteClientCommandVector 參數數量與格式可能不正確",
+    "body": "`rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl, shared.fields, shared.integers[1], c->argv[2], newobj)` 中，第一個參數 `6` 表示新 argv 的元素數量，但實際傳入的參數有 7 個（hsetex, key, keepttl, fields, 1, field, value）。這可能導致指令向量建構錯誤，進而影響複寫內容。請確認 `rewriteClientCommandVector` 的實作，並修正參數數量。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "diff 中新增的這一行，第一個參數為 6，但後續有 7 個參數。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2571,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "HSETEX 指令格式可能不正確",
+    "body": "HSETEX 的語法為 `HSETEX key [EX seconds|PX milliseconds|EXAT unix-time|PXAT unix-time|KEEPTTL] [FIELDS numfields field value [field value ...]]`。此處使用 `shared.integers[1]` 作為 FIELDS 的數量，但未確認 `shared.integers[1]` 是否為字串 \"1\"。若該共享整數物件不是 \"1\"，將導致複寫指令格式錯誤。",
+    "existing_code": "rewriteClientCommandVector(c, 6, shared.hsetex, c->argv[1], shared.keepttl,\n                        shared.fields, shared.integers[1], c->argv[2], newobj);",
+    "evidence": "使用 shared.integers[1] 作為 FIELDS 數量，但未驗證其值。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1965,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中對過期時間的斷言可能因時間誤差而不穩定",
+    "body": "在測試中，使用 `assert_range [r httl h1 FIELDS 1 f1] 90 100` 斷言剩餘 TTL 在 90 到 100 秒之間。由於測試執行時間可能超過 10 秒（例如在慢速 CI 環境），TTL 可能低於 90 秒，導致測試偶發性失敗。建議放寬範圍或使用更精確的同步機制。",
+    "existing_code": "assert_range [r httl h1 FIELDS 1 f1] 90 100",
+    "evidence": "測試中新增的斷言，範圍固定為 90-100，未考慮執行時間。"
+  }
+]

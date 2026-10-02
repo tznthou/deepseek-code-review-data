@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/test/i18n-mock.ts",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "createTFunction 未處理 returnObjects 選項",
+    "body": "舊的全域 mock 在 `options.returnObjects` 為真時會回傳陣列，但新的 `createTFunction` 沒有這個邏輯。若任何測試或元件依賴此行為，將導致測試失敗或元件渲染錯誤。建議在 `createTFunction` 中加入對 `returnObjects` 的處理，例如：\n```ts\nif (options?.returnObjects)\n  return [`${fullKey}-feature-1`, `${fullKey}-feature-2`]\n```",
+    "existing_code": "export function createTFunction(translations: TranslationMap, defaultNs?: string) {\n  return (key: string, options?: Record<string, unknown>) => {\n    const ns = (options?.ns as string | undefined) ?? defaultNs\n    const fullKey = ns ? `${ns}.${key}` : key",
+    "evidence": "diff 中舊的 `web/vitest.setup.ts` 有 `if (options?.returnObjects) return [`${key}-feature-1`, `${key}-feature-2`]`，但新的 `createTFunction` 沒有此邏輯。"
+  },
+  {
+    "path": "web/app/components/plugins/install-plugin/install-from-local-package/steps/install.spec.tsx",
+    "line": 67,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "動態 import 可能導致 mock 延遲",
+    "body": "在 `vi.mock` 工廠中使用 `await import('@/test/i18n-mock')` 會使 mock 的建立變成非同步。雖然 Vitest 支援非同步工廠，但若測試在 mock 完成前就執行，可能導致錯誤。建議改為頂層靜態 import，或確認此模式在專案中已普遍使用且無問題。",
+    "existing_code": "vi.mock('react-i18next', async (importOriginal) => {\n  const actual = await importOriginal<typeof import('react-i18next')>()\n  const { createReactI18nextMock } = await import('@/test/i18n-mock')",
+    "evidence": "diff 中該檔案新增了 `await import('@/test/i18n-mock')`，而其他檔案都是靜態 import。"
+  }
+]

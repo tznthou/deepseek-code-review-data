@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "子字串比對可能誤判非前綴路徑",
+    "body": "`if self.bucket_folder and self.bucket_folder in path:` 使用子字串比對，而非檢查路徑是否以 bucket_folder 開頭。若 bucket_folder 為 'data/'，而 path 為 'metadata/file.txt'，則 'data/' 存在於 'metadata/' 中，導致錯誤地跳過前綴添加，產生錯誤路徑。建議改為 `path.startswith(self.bucket_folder)` 或使用 `PurePosixPath` 比較前綴。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中新增的檢查使用 `in` 運算子，而非 `startswith`。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 710,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "跨欄位驗證使用 field_validator 可能無法取得 bucket 值",
+    "body": "在 `_bucket_folder_suffix` 中使用 `info.data.get(\"bucket\")` 進行跨欄位驗證，但 `field_validator` 的 `info.data` 僅包含已驗證的欄位，且欄位驗證順序不保證 bucket 已先驗證。若 bucket 欄位尚未驗證，`info.data.get(\"bucket\")` 可能回傳 None，導致驗證失效。應改用 `model_validator` 進行跨欄位驗證。",
+    "existing_code": "if info.data.get(\"bucket\") and value.strip(\"/\") == info.data.get(\"bucket\"):\n            raise ValueError(\"bucket_folder cannot be the same as bucket name\")",
+    "evidence": "diff 中新增的驗證邏輯位於 `field_validator` 內，但註解也提到應使用 `model_validator`。"
+  },
+  {
+    "path": "src/integrations/prefect-gcp/prefect_gcp/cloud_storage.py",
+    "line": 734,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "路徑比對未考慮正規化",
+    "body": "`self.bucket_folder` 可能包含尾隨斜線，而 `path` 可能未正規化（例如包含多餘斜線或相對路徑）。直接使用 `in` 或 `startswith` 可能無法正確處理。建議先將兩者正規化（例如使用 `PurePosixPath`）再比較。",
+    "existing_code": "if self.bucket_folder and self.bucket_folder in path:\n            return path",
+    "evidence": "diff 中未對路徑進行正規化處理。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "測試改為同步後未等待非同步完成，可能導致測試提前結束或無法驗證結果",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase` 中，移除了 `await fulfillment(of: [exp], timeout: 2.0)`，且未使用 `wait(for:timeout:)`。`downloadImage` 的回呼是非同步的，測試方法現在是同步的，因此測試會在回呼執行前就返回，導致測試永遠通過（即使回呼中有 XCTFail 也不會被執行）。建議保留 expectation 並使用 `wait(for:timeout:)` 等待。",
+    "existing_code": "siteDownloader.downloadImage(with: mockedURL, options: [.processor(SVGImageProcessor())]) { result in",
+    "evidence": "diff 中移除了 `await fulfillment(of: [exp], timeout: 2.0)`，且未加入 `wait(for:timeout:)`。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "測試未等待非同步決策處理器，可能導致測試提前結束",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，移除了 expectation 的建立與 `wait(for:)`，但 `requestMediaCapturePermission` 可能非同步呼叫決策處理器。測試方法現在是同步的，可能在處理器執行前就返回，導致斷言未被執行。建議保留 expectation 並等待。",
+    "existing_code": "subject.requestMediaCapturePermission(decisionHandler: decisionHandler)",
+    "evidence": "diff 中移除了 expectation 與 wait，且未加入其他等待機制。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 208,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 @MainActor 可能導致 GCDWebServer 初始化於背景執行緒而崩潰",
+    "body": "原本 `startMockImageServer` 標註為 `@MainActor`，註解說明 GCDWebServer 必須在主執行緒初始化。移除後，若測試在背景執行緒呼叫此方法，可能導致崩潰。建議保留 @MainActor 或確保呼叫端在主執行緒。",
+    "existing_code": "func startMockImageServer(imageData: Data, forAssetType assetType: AssetType) throws -> URL {",
+    "evidence": "diff 中移除了 `@MainActor` 標註及相關註解。"
+  },
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 nonisolated(unsafe) 可能隱藏執行緒安全問題",
+    "body": "`nonisolated(unsafe)` 標註表示開發者自行保證執行緒安全，但若 `ContentBlockerGenerator` 實例並非執行緒安全，可能導致資料競爭。建議確認其內部狀態或改為隔離。",
+    "existing_code": "nonisolated(unsafe) static let generator = ContentBlockerGenerator.factory()",
+    "evidence": "diff 中新增 `nonisolated(unsafe)`，並有註解說明非執行緒安全。"
+  }
+]

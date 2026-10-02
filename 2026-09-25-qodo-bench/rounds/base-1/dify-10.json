@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/services/billing_service.py",
+    "line": 292,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "型別不一致：`get_plan_bulk` 可能回傳 `None` 值，但型別標註為 `SubscriptionPlan`",
+    "body": "在 `get_plan_bulk` 方法中，當 `subscription_adapter.validate_python(plan)` 拋出例外時，程式碼會將 `results[tenant_id]` 設為 `None`。然而，方法的回傳型別標註為 `dict[str, SubscriptionPlan]`，這表示每個值都應該是 `SubscriptionPlan` 物件，而不是 `None`。這會導致下游呼叫者在未檢查 `None` 的情況下直接存取屬性（例如 `plan['plan']`）時發生 `AttributeError` 或 `TypeError`。\n\n**具體失敗情境**：\n1. 某個 tenant 的 billing API 回傳了格式錯誤的資料（例如缺少 `expiration_date` 欄位）。\n2. `get_plan_bulk` 將該 tenant 對應的值設為 `None`。\n3. 呼叫者（例如 `get_plan_bulk_with_cache` 或其它程式碼）遍歷回傳的字典，並直接使用 `subscription_plan['plan']`，此時會因為 `None` 沒有 `__getitem__` 方法而拋出例外。\n\n**建議修法**：\n- 將回傳型別改為 `dict[str, Optional[SubscriptionPlan]]`，並確保所有呼叫者都處理 `None` 的情況。\n- 或者，在驗證失敗時直接跳過該 tenant（不加入 `results`），而不是設為 `None`。這樣可以保持型別一致性，但需要確認呼叫者是否依賴於鍵的存在性。",
+    "existing_code": "results[tenant_id] = None",
+    "evidence": "diff 中新增的 `except` 區塊內有 `results[tenant_id] = None`，而方法簽章仍為 `def get_plan_bulk(cls, tenant_ids: Sequence[str]) -> dict[str, SubscriptionPlan]`。"
+  },
+  {
+    "path": "api/services/billing_service.py",
+    "line": 370,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Redis 故障時仍嘗試寫入快取，可能造成不必要的延遲",
+    "body": "在 `get_plan_bulk_with_cache` 方法中，當 Redis `mget` 失敗時，程式碼會回退到呼叫 `get_plan_bulk` 取得資料，然後仍然嘗試使用 pipeline 將結果寫入 Redis。如果 Redis 持續故障（例如連線中斷），每次呼叫都會執行這個寫入嘗試，而寫入操作本身可能會因為連線問題而阻塞或拋出例外，增加不必要的延遲。\n\n**具體失敗情境**：\n1. Redis 服務暫時不可用。\n2. 呼叫 `get_plan_bulk_with_cache`，`mget` 拋出例外，進入回退流程。\n3. 從 API 取得資料後，嘗試建立 pipeline 並執行 `setex`，但由於 Redis 仍不可用，pipeline 執行失敗，記錄例外。\n4. 這個流程在每次呼叫時都會重複，即使 Redis 一直不可用，也會不斷嘗試寫入，浪費資源。\n\n**建議修法**：\n- 在 `mget` 失敗時，設定一個標誌（例如 `redis_available = False`），並在後續的寫入步驟中檢查此標誌，若為 `False` 則跳過寫入。\n- 或者，將寫入操作包裹在單獨的 `try-except` 中，但考慮到效能，最好在已知 Redis 不可用時完全跳過。",
+    "existing_code": "if plans_to_cache:\n    try:\n        pipe = redis_client.pipeline()\n        for tenant_id, subscription_plan in bulk_plans.items():\n            redis_key = cls._make_plan_cache_key(tenant_id)\n            # Serialize dict to JSON string\n            json_str = json.dumps(subscription_plan)\n            pipe.setex(redis_key, cls._PLAN_CACHE_TTL, json_str)\n        pipe.execute()",
+    "evidence": "在 `except` 區塊中記錄了 `redis mget failed, falling back to API`，但之後的程式碼沒有檢查 Redis 是否可用，直接進入寫入流程。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "ClientMode 測試使用了錯誤的泛型型別",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，使用 `typeof(GenericComponent<int>)` 進行 prerender，但後續斷言卻使用 `typeof(GenericComponent<string>)` 來取得 Assembly 與 FullName。這會導致斷言失敗，因為 `GenericComponent<int>` 與 `GenericComponent<string>` 的 FullName 不同。\n\n建議將斷言中的型別改為 `typeof(GenericComponent<int>)`。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\n        Assert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 內，prerender 使用 `typeof(GenericComponent<int>)`，但斷言使用 `typeof(GenericComponent<string>)`。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 124,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "參數值型別轉換脆弱",
+    "body": "在 `CanParseSingleMarkerForClosedGenericComponentWithParameters` 測試中，使用 `Convert.ToInt64(parameters[\"Value\"]!, CultureInfo.InvariantCulture)` 將參數值轉換為 Int64。但 `parameters[\"Value\"]` 的實際型別取決於 deserializer 的實作，若其為 `JsonElement` 或 `int`，此轉換可能拋出例外或得到非預期結果。\n\n建議直接斷言參數值的型別與值，例如：\n```csharp\nvar value = Assert.IsType<JsonElement>(parameters[\"Value\"]);\nAssert.Equal(42, value.GetInt32());\n```",
+    "existing_code": "Assert.Equal(42, Convert.ToInt64(parameters[\"Value\"]!, CultureInfo.InvariantCulture));",
+    "evidence": "diff 中新增的測試方法 `CanParseSingleMarkerForClosedGenericComponentWithParameters` 內，使用 `Convert.ToInt64` 轉換參數值。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "命名空間格式變更可能影響其他測試",
+    "body": "此 diff 將 `namespace Microsoft.AspNetCore.Components.Server.Circuits;` 改為 block 形式，並將類別包在 namespace 內。這可能影響檔案中其他測試類別的命名空間解析，但若檔案內只有此類別則無影響。建議確認此變更是否必要，或是否為意外格式變更。",
+    "existing_code": "namespace Microsoft.AspNetCore.Components.Server.Circuits\n{\n    public class ServerComponentDeserializerTest\n    {",
+    "evidence": "diff 中 namespace 宣告從 file-scoped 改為 block-scoped，且類別縮排增加。"
+  }
+]

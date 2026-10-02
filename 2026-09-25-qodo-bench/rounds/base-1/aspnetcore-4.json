@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/Web/src/Forms/DisplayName.cs",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "DisplayName 元件在 For 參數變更時可能不會更新顯示名稱",
+    "body": "在 `SetParametersAsync` 中，只有當 `For` 表達式與 `_previousFieldAccessor` 不同時才會重新計算顯示名稱。然而，如果 `For` 表達式相同但底層模型屬性的顯示名稱因動態變更（例如資源檔更新或屬性變更）而改變，元件不會重新渲染。這可能導致顯示名稱過時。建議在每次 `SetParametersAsync` 時都重新計算，或提供一個方法來強制更新。",
+    "existing_code": "if (For != _previousFieldAccessor)\n{\n    var newDisplayName = ExpressionMemberAccessor.GetDisplayName(For);\n\n    _displayName = newDisplayName;\n    _renderHandle.Render(BuildRenderTree);\n\n    _previousFieldAccessor = For;\n}",
+    "evidence": "diff 中的 DisplayName.cs 第 42-50 行顯示了條件判斷和快取邏輯。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 83,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "Hot Reload 時未清除顯示名稱快取",
+    "body": "在靜態建構函式中，當 Hot Reload 的 MetadataUpdateSupported 為 true 時，訂閱了 OnDeltaApplied 事件並呼叫 ClearCache。但 ClearCache 只清除了 `_memberInfoCache`，沒有清除 `_displayNameCache`。這可能導致在 Hot Reload 後顯示名稱仍然使用舊的快取值。建議在 ClearCache 中同時清除兩個快取。",
+    "existing_code": "private static void ClearCache()\n{\n    _memberInfoCache.Clear();\n}",
+    "evidence": "diff 中的 ExpressionMemberAccessor.cs 第 16 行顯示 ClearCache 方法只清除了 _memberInfoCache。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "GetMemberInfo 方法可能拋出不明確的例外",
+    "body": "當表達式不是 MemberExpression 時，會拋出 ArgumentException，但訊息中使用了 `accessorBody.GetType().Name`，這可能不夠明確。建議提供更具體的錯誤訊息，例如包含表達式的實際內容。",
+    "existing_code": "throw new ArgumentException(\n    $\"The provided expression contains a {accessorBody.GetType().Name} which is not supported. \" +\n    $\"Only simple member accessors (fields, properties) of an object are supported.\");",
+    "evidence": "diff 中的 ExpressionMemberAccessor.cs 第 25-27 行顯示了例外訊息。"
+  },
+  {
+    "path": "src/Components/Web/src/Forms/ExpressionMemberAccessor.cs",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "DisplayName 元件未實作 IDisposable",
+    "body": "元件訂閱了 Hot Reload 事件，但未實作 IDisposable 來取消訂閱。這可能導致記憶體洩漏。建議在元件中實作 IDisposable 並在 Dispose 中取消訂閱。",
+    "existing_code": "if (HotReloadManager.Default.MetadataUpdateSupported)\n{\n    HotReloadManager.Default.OnDeltaApplied += ClearCache;\n}",
+    "evidence": "diff 中的 ExpressionMemberAccessor.cs 第 16-19 行顯示了事件訂閱。"
+  }
+]

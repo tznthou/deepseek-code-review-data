@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "條件判斷錯誤：ext 為空時才加入 CFBundleTypeExtensions",
+    "body": "在 `create_info_plist` 中，原本的程式碼無條件加入 `CFBundleTypeExtensions`，但修改後變成 `if association.ext.is_empty()` 才加入。這會導致當 `ext` 非空時（正常情況），`CFBundleTypeExtensions` 不會被加入 Info.plist，造成檔案關聯失效。\n\n**失敗情境**：使用者設定 `ext: [\"png\"]`，產生的 Info.plist 將缺少 `CFBundleTypeExtensions`，macOS 無法將 .png 檔案與應用程式關聯。\n\n**建議**：移除 `if association.ext.is_empty()` 條件，改回無條件加入，或改為 `if !association.ext.is_empty()`。",
+    "existing_code": "if association.ext.is_empty() {\n  dict.insert(\n    \"CFBundleTypeExtensions\".into(),\n    plist::Value::Array(\n      association\n        .ext\n        .iter()\n        .map(|ext| ext.to_string().into())\n        .collect(),\n    ),\n  );\n}",
+    "evidence": "diff 中新增的 `if association.ext.is_empty()` 條件包住了原本無條件的 `CFBundleTypeExtensions` 插入，邏輯相反。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 353,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "使用 expect 可能導致 panic",
+    "body": "原本使用 `unwrap_or(&association.ext[0].0)` 提供預設值，修改後改為 `expect(\"File association must have a name\")`。若使用者未設定 `name` 且 `ext` 為空，程式會 panic。\n\n**失敗情境**：設定檔中某個 file association 未提供 `name` 且 `ext` 為空陣列，打包時會 panic 並中止。\n\n**建議**：保留原本的 fallback 邏輯，或改用更安全的錯誤處理（例如回傳錯誤而非 panic）。",
+    "existing_code": ".expect(\"File association must have a name\")",
+    "evidence": "diff 中將 `unwrap_or(&association.ext[0].0)` 改為 `expect`，移除了 fallback。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 1184,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "content_types 欄位缺少 serde 別名",
+    "body": "新增的 `content_types` 欄位使用了 `#[serde(alias = \"content-types\")]`，但 JSON schema 中定義的屬性名稱為 `contentTypes`（camelCase）。若使用者依照 schema 使用 `contentTypes`，反序列化時可能無法正確對應。\n\n**失敗情境**：設定檔中使用 `contentTypes` 屬性，但 Rust 結構體期望 `content_types` 或 `content-types`，導致欄位被忽略。\n\n**建議**：確認 serde 的命名策略，或同時支援 `contentTypes` 別名。",
+    "existing_code": "#[serde(alias = \"content-types\")]\npub content_types: Option<Vec<String>>,",
+    "evidence": "diff 中新增的欄位僅有 `content-types` 別名，但 schema 使用 `contentTypes`。"
+  }
+]

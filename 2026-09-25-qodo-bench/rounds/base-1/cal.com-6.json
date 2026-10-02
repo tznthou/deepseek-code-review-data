@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳的 token 不是實際邀請 token",
+    "body": "`createInvite` 回傳的 `token` 改為 `newToken.identifier`，但 `identifier` 的值是 `invite-link-for-teamId-${teamId}`，並非實際的邀請 token。這會導致 API 回傳的 `token` 欄位與 `inviteLink` 中的 token 不一致，且測試中 `expect(response.body.data.inviteLink).toContain(response.body.data.token)` 會失敗。應回傳 `token` 變數（即 `newToken.token`）或直接回傳 `token`。",
+    "existing_code": "token: newToken.identifier,",
+    "evidence": "diff 中將原本的 `token` 改為 `newToken.identifier`，而 `identifier` 在建立時設定為 `invite-link-for-teamId-${teamId}`，並非隨機 token。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "buildInviteLink 條件判斷反轉",
+    "body": "原本的條件是 `if (!isOrgContext)` 回傳 teamInviteLink，現在改為 `if (isOrgContext)`。這會導致在非組織情境下，程式會繼續執行並呼叫 `OnboardingPathService.getGettingStartedPathWhenInvited`，可能產生錯誤的連結或非預期行為。應確認此變更是否為預期，否則應改回 `if (!isOrgContext)`。",
+    "existing_code": "if (isOrgContext) {",
+    "evidence": "diff 中將 `if (!isOrgContext)` 改為 `if (isOrgContext)`，但後續邏輯未變更。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "缺少團隊成員資格驗證",
+    "body": "控制器使用 `@Roles(\"TEAM_MEMBER\")` 來限制角色，但未驗證使用者是否為該團隊的成員。任何具有 TEAM_MEMBER 角色的使用者（可能是其他團隊的成員）都可以對任意 teamId 建立邀請。應在服務層或控制器中加入團隊成員資格檢查，例如確認使用者與 teamId 的關聯。",
+    "existing_code": "@Roles(\"TEAM_MEMBER\")",
+    "evidence": "控制器僅有角色裝飾器，沒有團隊成員資格檢查；且測試中非團隊成員的使用者預期會得到 403，但目前的實作可能無法達成。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.e2e-spec.ts",
+    "line": 68,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試可能因 token 不一致而失敗",
+    "body": "測試中 `expect(response.body.data.inviteLink).toContain(response.body.data.token)` 會因為 token 回傳為 identifier 而失敗。此外，非管理員和非成員的測試預期 403，但若控制器未檢查團隊成員資格，這些測試可能不會通過。",
+    "existing_code": "expect(response.body.data.inviteLink).toContain(response.body.data.token);",
+    "evidence": "測試依賴 token 與 inviteLink 的一致性，但服務層回傳的 token 有誤。"
+  }
+]

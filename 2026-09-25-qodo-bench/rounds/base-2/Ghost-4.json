@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 dangerouslySetInnerHTML 渲染評論內容可能導致 XSS",
+    "body": "此處直接使用 `dangerouslySetInnerHTML` 渲染 `item.html`。若後端在儲存評論時未對 HTML 進行嚴格消毒（例如允許 `<script>` 或事件屬性），攻擊者可在評論中注入惡意腳本，當管理員查看評論列表時觸發 XSS。\n\n**建議**：確認後端已使用如 DOMPurify 等函式庫進行消毒，或在前端渲染前先消毒。若後端已消毒，請在程式碼中註明並確保涵蓋所有可能路徑。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 `CommentContent` 元件使用了 `dangerouslySetInnerHTML`，且 `item.html` 來自 API 回應，屬於使用者可控內容。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "CommentContent 的截斷偵測不會在內容變更時重新計算",
+    "body": "`useEffect` 的依賴陣列為空，僅在掛載時執行一次。若 `item.html` 在元件生命週期內發生變化（例如從 API 取得更新），`isClamped` 不會重新計算，可能導致「Show more」按鈕顯示錯誤。\n\n**建議**：將 `item.html` 加入依賴陣列，或在內容更新時觸發重新檢查。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "diff 中新增的 `CommentContent` 元件，其 `useEffect` 依賴陣列為空，但使用了 `item.html`。"
+  }
+]

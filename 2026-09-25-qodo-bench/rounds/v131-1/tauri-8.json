@@ -1,0 +1,13 @@
+[
+  {
+    "path": "crates/tauri/src/tray/mod.rs",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "MouseButtonState 轉換邏輯反轉",
+    "body": "在 `From<tray_icon::MouseButtonState>` 的實作中，原本 `Up` 對應 `Up`、`Down` 對應 `Down`，但修改後變成 `Up` 對應 `Down`、`Down` 對應 `Up`，導致滑鼠按鈕狀態完全相反。這會造成依賴此轉換的功能（如系統匣事件處理）判斷錯誤。請將 match 分支改回正確對應。",
+    "existing_code": "tray_icon::MouseButtonState::Up => MouseButtonState::Down,\n      tray_icon::MouseButtonState::Down => MouseButtonState::Up,",
+    "evidence": "diff 中原本的 `tray_icon::MouseButtonState::Up => MouseButtonState::Up` 被改為 `tray_icon::MouseButtonState::Up => MouseButtonState::Down`，且 `Down` 分支也對應錯誤。"
+  }
+]

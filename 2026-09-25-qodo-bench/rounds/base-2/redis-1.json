@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/dict.h",
+    "line": 66,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "__stored_key 定義為空巨集，無法提供型別安全",
+    "body": "`__stored_key` 被定義為空巨集（`#define __stored_key`），因此所有標記為 `__stored_key` 的參數在編譯器眼中與一般指標無異。這使得 stored-key 與 lookup key 的區分僅存在於文件，無法在編譯時期防止錯誤傳遞。例如，呼叫 `dictAdd` 時若誤傳 lookup key（如 sds）而非 stored-key（如 Entry*），編譯器不會發出警告，可能導致執行時期錯誤。建議將 `__stored_key` 定義為實際型別（例如 `Entry*` 或特定 struct），或使用其他機制（如 wrapper struct）來強制型別安全。",
+    "existing_code": "#define __stored_key",
+    "evidence": "diff 中新增的巨集定義為空，且所有使用該標記的函式參數仍為 `void *`，無法提供型別檢查。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "validateStoredKeyConversion 函式未被使用",
+    "body": "新增的 `validateStoredKeyConversion` 函式在整個 diff 中沒有被呼叫。這可能是為了除錯或驗證而加入，但若未使用，會造成 dead code，且可能隱藏潛在問題。建議移除或實際使用它來驗證 keyFromStoredKey 回呼的正確性。",
+    "existing_code": "static int validateStoredKeyConversion(dict *d, const void *key __stored_key) {\n    const void *extracted = dictStoredKey2Key(d, key);\n    if (d->type->keyFromStoredKey) {\n        return extracted != NULL;\n    }\n    return extracted == key;\n}",
+    "evidence": "diff 中新增此函式，但未見任何呼叫。"
+  },
+  {
+    "path": "src/dict.c",
+    "line": 913,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "dictSetKeyAtLink 中對 addedKey 的使用可能不一致",
+    "body": "在 `dictSetKeyAtLink` 中，當 `*link == NULL` 時，使用 `addedKey` 來呼叫 `dictFindLink`，但 `addedKey` 是經過 `keyDup` 處理後的 key，可能與原始 `key` 不同。若 `keyDup` 會改變 key 的內容或型別，可能導致查找失敗或錯誤。建議確認此處應使用原始 `key` 還是 `addedKey`，並確保一致性。",
+    "existing_code": "if (*link == NULL) {\n        *link = dictFindLink(d, addedKey, NULL);\n        assert(*link != NULL);\n    }",
+    "evidence": "diff 中將原本的 `key` 改為 `addedKey`，但 `addedKey` 是 `keyDup` 的結果，可能與原始 key 不同。"
+  }
+]

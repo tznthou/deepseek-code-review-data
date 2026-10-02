@@ -1,0 +1,57 @@
+[
+  {
+    "path": "packages/features/di/tokens.ts",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "DI token 合併可能造成 Symbol 重複或型別衝突",
+    "body": "在 `DI_TOKENS` 物件中，原本的 `FEATURES_REPOSITORY` 和 `FEATURES_REPOSITORY_MODULE` 被移除，改為展開 `FLAGS_DI_TOKENS` 和 `FEATURE_OPT_IN_DI_TOKENS`。如果這兩個新 token 物件中的 Symbol 名稱與其他已存在的 token 重複，會導致依賴注入容器中的綁定衝突，可能造成錯誤的實例被注入。建議確認所有 Symbol 名稱在全域是唯一的，或考慮使用命名空間前綴。",
+    "existing_code": "...FLAGS_DI_TOKENS,\n  ...FEATURE_OPT_IN_DI_TOKENS,",
+    "evidence": "diff 中刪除了原本的 FEATURES_REPOSITORY 相關 token，並展開新的 token 物件。"
+  },
+  {
+    "path": "packages/features/di/containers/FeatureOptInService.ts",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "每次呼叫 getFeatureOptInService 都建立新容器，可能造成效能與狀態問題",
+    "body": "`getFeatureOptInService` 每次呼叫都會建立新的容器並載入模組，這可能導致每個請求都建立新的服務實例，增加不必要的開銷。如果服務內部有狀態或依賴共享資源（如資料庫連線），也可能造成資源浪費或狀態不一致。建議考慮使用單例模式或由全域容器管理。",
+    "existing_code": "export function getFeatureOptInService(): IFeatureOptInService {\n  const featureOptInServiceContainer = createContainer();\n  featureOptInServiceModuleLoader.loadModule(featureOptInServiceContainer);\n  return featureOptInServiceContainer.get<IFeatureOptInService>(featureOptInServiceModuleLoader.token);\n}",
+    "evidence": "diff 中新增的容器建立邏輯。"
+  },
+  {
+    "path": "packages/features/di/containers/FeaturesRepository.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "每次呼叫 getFeaturesRepository 都建立新容器，可能造成效能與狀態問題",
+    "body": "`getFeaturesRepository` 每次呼叫都會建立新的容器並載入模組，這可能導致每個請求都建立新的 repository 實例，增加不必要的開銷。如果 repository 內部有狀態或依賴共享資源（如資料庫連線），也可能造成資源浪費或狀態不一致。建議考慮使用單例模式或由全域容器管理。",
+    "existing_code": "export function getFeaturesRepository(): FeaturesRepository {\n  const featuresRepositoryContainer = createContainer();\n  featuresRepositoryModuleLoader.loadModule(featuresRepositoryContainer);\n  return featuresRepositoryContainer.get<FeaturesRepository>(featuresRepositoryModuleLoader.token);\n}",
+    "evidence": "diff 中新增的容器建立邏輯。"
+  },
+  {
+    "path": "packages/features/di/modules/FeaturesRepository.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "moduleLoader 的 token 可能與綁定 token 不一致",
+    "body": "在 `moduleLoader` 中，`token` 被設定為 `moduleToken`，但 `bindModuleToClassOnToken` 的 `token` 參數是 `FLAGS_DI_TOKENS.FEATURES_REPOSITORY`。這可能導致使用 `moduleLoader.token` 來取得實例時，實際上是取得模組 token 而非服務 token，造成型別或實例錯誤。建議確認 `moduleLoader.token` 應該回傳服務 token 還是模組 token，並保持一致性。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token: moduleToken,\n  loadModule,\n};",
+    "evidence": "diff 中 moduleLoader 的 token 設定。"
+  },
+  {
+    "path": "packages/features/di/modules/FeatureOptInService.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "moduleLoader 的 token 可能與綁定 token 不一致",
+    "body": "在 `moduleLoader` 中，`token` 被設定為 `FEATURE_OPT_IN_DI_TOKENS.FEATURE_OPT_IN_SERVICE`，但 `bindModuleToClassOnToken` 的 `token` 參數也是同一個。這可能導致使用 `moduleLoader.token` 來取得實例時，實際上是取得服務 token 而非模組 token，造成型別或實例錯誤。建議確認 `moduleLoader.token` 應該回傳服務 token 還是模組 token，並保持一致性。",
+    "existing_code": "export const moduleLoader: ModuleLoader = {\n  token,\n  loadModule,\n};",
+    "evidence": "diff 中 moduleLoader 的 token 設定。"
+  }
+]

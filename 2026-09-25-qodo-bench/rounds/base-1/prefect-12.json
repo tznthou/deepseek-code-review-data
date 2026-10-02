@@ -1,0 +1,46 @@
+[
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 15,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "SSR 環境中直接使用 window 可能導致錯誤",
+    "body": "`getPreferredColorScheme` 函式直接存取 `window.matchMedia`，但此 hook 可能在伺服器端渲染（SSR）期間被呼叫，此時 `window` 未定義，會拋出 ReferenceError。建議將 `window` 的存取移至 `useEffect` 內，或加入 `typeof window !== 'undefined'` 的檢查。",
+    "existing_code": "if (window.matchMedia(\"(prefers-color-scheme: dark)\").matches) {",
+    "evidence": "diff 中新增的 `use-state-favicon.ts` 第 15 行直接使用 `window`，而此 hook 在元件渲染時即會執行，若在 SSR 環境下會導致錯誤。"
+  },
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 40,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "favicon 元素可能不存在，導致功能失效",
+    "body": "程式碼透過 `document.getElementById` 取得 favicon 元素，但若 HTML 中未定義對應的 id（例如 `favicon-16`、`favicon-32` 等），則 `favicon16` 或 `favicon32` 會是 null，後續的 `setAttribute` 呼叫將拋出 TypeError。建議加入 null 檢查或確保元素存在。",
+    "existing_code": "const favicon16 =\n\t\t\tcolorScheme === \"dark\"\n\t\t\t\t? document.getElementById(\"favicon-16-dark\")\n\t\t\t\t: document.getElementById(\"favicon-16\");",
+    "evidence": "diff 中新增的 `use-state-favicon.ts` 第 31-34 行取得元素後未檢查是否為 null，直接呼叫 `setAttribute`。"
+  },
+  {
+    "path": "ui-v2/src/components/task-runs/task-run-details/task-run-details.tsx",
+    "line": 88,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "使用 `||` 處理數字 0 會錯誤顯示 'None'",
+    "body": "在顯示 `run_count` 時使用 `taskRun.run_count || 0`，若 `run_count` 為 0（合法值），則會顯示 0，但若 `run_count` 為 null 或 undefined，也會顯示 0，可能無法區分。建議使用 `??` 運算子：`taskRun.run_count ?? 0`。",
+    "existing_code": "<dd className=\"\">{taskRun.run_count || 0}</dd>",
+    "evidence": "diff 中第 104 行使用 `||`，而 `run_count` 可能為 0，應使用 `??` 以正確處理。"
+  },
+  {
+    "path": "ui-v2/src/hooks/use-state-favicon.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "缺少對新 hook 的測試",
+    "body": "新增的 `useStateFavicon` hook 沒有對應的測試，建議加入單元測試以驗證 favicon 設定與重置邏輯，特別是在不同 color scheme 下的行為。",
+    "existing_code": "import { useEffect } from \"react\";",
+    "evidence": "diff 中新增了 `use-state-favicon.ts`，但未見任何測試檔案。"
+  }
+]

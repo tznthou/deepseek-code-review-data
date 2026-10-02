@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/CertificateManager.cs",
+    "line": 1320,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "事件方法參數順序不一致導致訊息格式錯誤",
+    "body": "新增的 `UnixSuggestAppendingToEnvironmentVariable` 方法定義為 `WriteEvent(114, certDir, envVarName)`，但事件訊息格式字串為 `\"For OpenSSL trust to take effect, '{0}' must be listed in the {1} environment variable. For example, `export {1}=\\\"{0}:${1}\\\"`.\"`，其中 `{0}` 對應 `certDir`，`{1}` 對應 `envVarName`。然而，在 `UnixCertificateManager.cs` 中呼叫時傳入的參數順序為 `(prettyCertDir, OpenSslCertificateDirectoryVariableName)`，與方法簽章一致，但與事件格式字串的預期順序相反。這會導致實際輸出的訊息中，`{0}` 被替換為 `envVarName`，`{1}` 被替換為 `certDir`，造成訊息內容錯誤。例如，原本應顯示「For OpenSSL trust to take effect, '/home/user/.dotnet/corefx/cryptography/x509stores/my' must be listed in the SSL_CERT_DIR environment variable. For example, `export SSL_CERT_DIR=\"/home/user/.dotnet/corefx/cryptography/x509stores/my:${SSL_CERT_DIR}\"`」，但實際會顯示成「For OpenSSL trust to take effect, 'SSL_CERT_DIR' must be listed in the /home/user/.dotnet/corefx/cryptography/x509stores/my environment variable. For example, `export /home/user/.dotnet/corefx/cryptography/x509stores/my=\"SSL_CERT_DIR:${/home/user/.dotnet/corefx/cryptography/x509stores/my}\"`」。這會誤導使用者，且可能導致使用者設定錯誤的環境變數。",
+    "existing_code": "internal void UnixSuggestAppendingToEnvironmentVariable(string certDir, string envVarName) => WriteEvent(114, certDir, envVarName);",
+    "evidence": "在 diff 中，新增的事件方法 `UnixSuggestAppendingToEnvironmentVariable` 的 `WriteEvent` 呼叫參數順序為 `(certDir, envVarName)`，但事件屬性 `Message` 中的格式字串使用 `{0}` 代表 `certDir`，`{1}` 代表 `envVarName`。然而，在 `UnixCertificateManager.cs` 的呼叫處，傳入的參數順序為 `(prettyCertDir, OpenSslCertificateDirectoryVariableName)`，與方法簽章一致，但與格式字串的預期相反。這會導致 EventSource 在格式化訊息時，將 `certDir` 的值填入 `{1}` 的位置，將 `envVarName` 的值填入 `{0}` 的位置，造成輸出錯誤。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 365,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 Path.GetFullPath 比較路徑可能因相對路徑或符號連結而誤判",
+    "body": "在檢查現有 SSL_CERT_DIR 是否已包含憑證目錄時，程式碼使用 `Path.GetFullPath(dir)` 與 `certDirFullPath` 進行比較。然而，`SSL_CERT_DIR` 中的路徑可能是相對路徑，或是包含符號連結，而 `Path.GetFullPath` 只會將相對路徑轉換為絕對路徑，但不會解析符號連結。這可能導致即使實際指向相同目錄，但因為路徑表示不同而被誤判為未包含，進而重複建議設定環境變數，或誤判為已包含而跳過必要的提示。建議使用 `Path.GetFullPath` 後再透過 `Path.GetRelativePath` 或比較 `FileSystemInfo` 的 `FullName` 來處理符號連結，或使用 `Path.TrimEndingDirectorySeparator` 標準化路徑分隔符號。",
+    "existing_code": "var certDirFullPath = Path.GetFullPath(prettyCertDir);\nvar isCertDirIncluded = existingDirs.Any(dir =>\n{\n    if (string.IsNullOrWhiteSpace(dir))\n    {\n        return false;\n    }\n\n    try\n    {\n        return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);\n    }\n    catch\n    {\n        // Ignore invalid directory entries in SSL_CERT_DIR\n        return false;\n    }\n});",
+    "evidence": "在 diff 中，新增的程式碼使用 `Path.GetFullPath(dir)` 與 `certDirFullPath` 進行字串比較。但 `Path.GetFullPath` 不會解析符號連結，且 `SSL_CERT_DIR` 中的路徑可能是相對路徑或包含符號連結，這可能導致比較結果不準確。例如，若 `SSL_CERT_DIR` 中包含 `/home/user/.dotnet/corefx/cryptography/x509stores/my`，而 `prettyCertDir` 為 `/home/user/.dotnet/corefx/cryptography/x509stores/my/`（多一個尾隨斜線），則 `Path.GetFullPath` 可能不會標準化尾隨斜線，導致比較失敗。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 994,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "NssDb 類別改動與主要功能無關，可能引入不必要的風險",
+    "body": "此 PR 將 `NssDb` 類別從 primary constructor 改為傳統的欄位與建構函式，但此改動與 PR 的主要目的（SSL_CERT_DIR 訊息處理）無關。這可能是不小心包含的變更，或是為了符合某種程式碼風格，但增加了 diff 的複雜度，且可能引入不必要的風險（例如若後續有其他程式碼依賴 primary constructor 的行為）。建議確認此改動是否為必要，若非必要則應移除，以保持 PR 專注於單一目的。",
+    "existing_code": "private sealed class NssDb\n{\n    private readonly string _path;\n    private readonly bool _isFirefox;\n\n    public NssDb(string path, bool isFirefox)\n    {\n        _path = path;\n        _isFirefox = isFirefox;\n    }\n\n    public string Path => _path;\n    public bool IsFirefox => _isFirefox;\n}",
+    "evidence": "在 diff 中，`NssDb` 類別從使用 primary constructor 的簡潔形式改為傳統的欄位與建構函式，但此改動與 PR 的主要功能無關。這可能是開發者誤包含的變更，或是為了符合某種程式碼風格，但增加了審查的負擔，且可能引入不必要的風險。"
+  }
+]

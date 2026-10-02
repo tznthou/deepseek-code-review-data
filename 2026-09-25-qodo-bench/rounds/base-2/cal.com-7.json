@@ -1,0 +1,24 @@
+[
+  {
+    "path": "packages/features/calendar-subscription/adapters/AdaptersFactory.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "office365_calendar 的後綴清單為空，可能導致未來遺漏",
+    "body": "GENERIC_CALENDAR_SUFFIXES 中 office365_calendar 對應的陣列為空。若未來需要為 Office 365 日曆加入通用後綴，開發者可能忘記更新此處，導致過濾失效。建議加入註解說明目前無需過濾，或考慮使用更明確的結構（如 Map）並在取得後綴時檢查是否為空。",
+    "existing_code": "office365_calendar: [],",
+    "evidence": "diff 中 office365_calendar 的後綴陣列為空，且無任何說明。"
+  },
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.ts",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.55,
+    "title": "AND 條件設為 undefined 可能導致 Prisma 查詢問題",
+    "body": "當 genericCalendarSuffixes 為空或未提供時，AND 被設為 undefined。Prisma 通常會忽略 undefined 的條件，但某些版本或嚴格模式下可能拋出型別錯誤。建議改用條件展開（例如 ...(genericCalendarSuffixes?.length ? { AND: [...] } : {})）以避免傳入 undefined。",
+    "existing_code": "AND: genericCalendarSuffixes?.length\n          ? genericCalendarSuffixes?.map((suffix) => ({\n              NOT: { externalId: { endsWith: suffix } },\n            }))\n          : undefined,",
+    "evidence": "diff 中 AND 條件在無後綴時被設為 undefined。"
+  }
+]

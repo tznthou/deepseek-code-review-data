@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "ClientMode 測試中使用了錯誤的泛型型別",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，元件是以 `typeof(GenericComponent<int>)` 進行 prerender，但後續斷言卻使用 `typeof(GenericComponent<string>)` 來取得 Assembly 與 FullName。這會導致斷言失敗，因為 `GenericComponent<int>` 與 `GenericComponent<string>` 的 FullName 不同（例如 `GenericComponent`1[[System.Int32]]` vs `GenericComponent`1[[System.String]]`）。建議將斷言中的型別改為 `typeof(GenericComponent<int>)`。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\nAssert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 內，prerender 使用 `typeof(GenericComponent<int>)`，但斷言使用 `typeof(GenericComponent<string>)`。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 124,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "參數值型別轉換脆弱，可能因文化特性失敗",
+    "body": "在 `CanParseSingleMarkerForClosedGenericComponentWithParameters` 測試中，使用 `Convert.ToInt64(parameters[\"Value\"]!, CultureInfo.InvariantCulture)` 將參數值轉換為 long。然而，`parameters[\"Value\"]` 的實際型別取決於反序列化過程，可能是 `JsonElement` 或其他型別。如果該值不是可直接轉換為 long 的型別（例如是 `JsonElement`），`Convert.ToInt64` 可能拋出例外或產生非預期結果。建議先確認參數值的實際型別，或使用更強健的轉換方式（例如 `Assert.IsType<JsonElement>(parameters[\"Value\"])` 後再取得數值）。",
+    "existing_code": "Assert.Equal(42, Convert.ToInt64(parameters[\"Value\"]!, CultureInfo.InvariantCulture));",
+    "evidence": "diff 中新增的測試方法 `CanParseSingleMarkerForClosedGenericComponentWithParameters` 內，直接使用 `Convert.ToInt64` 轉換參數值。"
+  },
+  {
+    "path": "src/Components/Endpoints/test/EndpointHtmlRendererTest.cs",
+    "line": 837,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "ClientMode 測試中未驗證 Descriptor 內容",
+    "body": "在 `CanPrerender_ClosedGenericComponent_ClientMode` 測試中，僅驗證了 preamble marker 的 Assembly 與 TypeName，但未驗證 descriptor 的內容（例如參數定義與值）。這可能導致測試涵蓋不足，無法確保序列化與反序列化的正確性。建議參考其他測試（如 ServerMode 測試）增加對 descriptor 的驗證。",
+    "existing_code": "Assert.Equal(typeof(GenericComponent<string>).Assembly.GetName().Name, preambleMarker.Assembly);\nAssert.Equal(typeof(GenericComponent<string>).FullName, preambleMarker.TypeName);",
+    "evidence": "diff 中新增的測試方法 `CanPrerender_ClosedGenericComponent_ClientMode` 內，僅有 preamble marker 的型別與名稱斷言，未對 descriptor 進行驗證。"
+  },
+  {
+    "path": "src/Components/Server/test/Circuits/ServerComponentDeserializerTest.cs",
+    "line": 124,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "使用 Convert.ToInt64 可能隱藏型別資訊",
+    "body": "在 `CanParseSingleMarkerForClosedGenericComponentWithParameters` 測試中，使用 `Convert.ToInt64` 將參數值轉換為 long，但未驗證參數值的原始型別。這可能導致測試無法偵測到反序列化過程中型別資訊的遺失或錯誤。建議先斷言參數值的型別（例如 `Assert.IsType<JsonElement>(parameters[\"Value\"])`），再進行數值比較。",
+    "existing_code": "Assert.Equal(42, Convert.ToInt64(parameters[\"Value\"]!, CultureInfo.InvariantCulture));",
+    "evidence": "diff 中新增的測試方法 `CanParseSingleMarkerForClosedGenericComponentWithParameters` 內，直接使用 `Convert.ToInt64` 轉換參數值。"
+  }
+]

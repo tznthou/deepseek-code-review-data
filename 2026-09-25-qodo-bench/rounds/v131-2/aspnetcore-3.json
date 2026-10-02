@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 365,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較未解析符號連結，可能誤判憑證目錄已存在",
+    "body": "在檢查 SSL_CERT_DIR 是否已包含憑證目錄時，使用 `Path.GetFullPath` 進行正規化，但未解析符號連結。若使用者以符號連結路徑加入 SSL_CERT_DIR，而實際憑證目錄路徑不同，則比較會失敗，導致重複提示或誤判為未設定。建議使用 `FileSystemInfo.ResolveLinkTarget` 或 `Path.GetFullPath` 後再解析符號連結，或改用 `Path.GetRelativePath` 比較。",
+    "existing_code": "var certDirFullPath = Path.GetFullPath(prettyCertDir);\nvar isCertDirIncluded = existingDirs.Any(dir =>\n{\n    if (string.IsNullOrWhiteSpace(dir))\n    {\n        return false;\n    }\n\n    try\n    {\n        return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);\n    }\n    catch\n    {\n        // Ignore invalid directory entries in SSL_CERT_DIR\n        return false;\n    }\n});",
+    "evidence": "diff 中新增的程式碼使用 `Path.GetFullPath` 進行比較，但未處理符號連結。Unix 系統上使用者常以符號連結設定環境變數，可能導致誤判。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "路徑比較使用 OrdinalIgnoreCase，在 Linux 上可能誤判",
+    "body": "Linux 檔案系統通常區分大小寫，但此處使用 `StringComparison.OrdinalIgnoreCase` 比較路徑，可能將不同大小寫的目錄視為相同，導致誤判。建議在 Unix 上使用 `StringComparison.Ordinal`，或根據作業系統選擇比較方式。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的程式碼使用 `OrdinalIgnoreCase`，但 Unix 路徑區分大小寫。"
+  },
+  {
+    "path": "src/Tools/dotnet-dev-certs/src/Program.cs",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "非 verbose 模式下啟用 LogAlways 可能導致過多輸出",
+    "body": "在非 verbose 模式下，將事件監聽器設為 `EventLevel.LogAlways`，這會接收所有 LogAlways 層級的事件。若事件來源有大量 LogAlways 事件，可能造成不必要的輸出或效能影響。建議確認 LogAlways 事件的數量與必要性，或考慮使用更精確的過濾。",
+    "existing_code": "else\n{\n    listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);\n}",
+    "evidence": "diff 中新增的 else 區塊將事件層級設為 LogAlways，可能導致非 verbose 模式下輸出過多。"
+  }
+]

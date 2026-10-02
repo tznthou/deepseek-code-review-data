@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "新增 QuarantinedTest 可能掩蓋真實回歸",
+    "body": "在 `CanSendAndReceiveUserMessagesFromMultipleConnectionsWithSameUser` 測試上新增 `[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/59991\")]`，表示該測試已知不穩定而被隔離。隔離測試會降低 CI 對真實回歸的敏感度，若問題根源未解決，可能導致相關功能在未來被破壞而無人察覺。建議確認 issue #59991 的狀態，並在修復後移除隔離屬性。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/59991\")]",
+    "evidence": "diff 中新增的屬性行，位於測試方法上方。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 188,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "新增 QuarantinedTest 可能掩蓋真實回歸",
+    "body": "在 `CanSendAndReceiveUserMessagesUserNameWithPatternIsTreatedAsLiteral` 測試上新增 `[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/63582\")]`，表示該測試已知不穩定而被隔離。隔離測試會降低 CI 對真實回歸的敏感度，若問題根源未解決，可能導致相關功能在未來被破壞而無人察覺。建議確認 issue #63582 的狀態，並在修復後移除隔離屬性。",
+    "existing_code": "[QuarantinedTest(\"https://github.com/dotnet/aspnetcore/issues/63582\")]",
+    "evidence": "diff 中新增的屬性行，位於測試方法上方。"
+  },
+  {
+    "path": "src/SignalR/server/StackExchangeRedis/test/RedisEndToEnd.cs",
+    "line": 409,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "WebSocketWrapper.ReceiveAsync 中 _receiveTcs 重設時機變更可能影響後續讀取",
+    "body": "將 `_receiveTcs = new(...)` 從零位元組讀取處理之後移到之前，確保每次呼叫 `ReceiveAsync` 都會建立新的 TaskCompletionSource。這修正了先前在零位元組讀取時未重設 `_receiveTcs` 的潛在問題，但需確認此變更不會影響連續讀取的語意。建議檢視相關測試是否涵蓋零位元組讀取情境。",
+    "existing_code": "_receiveTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);",
+    "evidence": "diff 中移動的行，從原本在零位元組處理之後移到之前。"
+  },
+  {
+    "path": "eng/common/tools.ps1",
+    "line": 550,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "vswhere 需求處理可能遺漏必要元件",
+    "body": "當 `$GlobalJson.tools` 不存在 `vs` 屬性時，將 `$vsRequirements` 設為 `$null`，後續 `Get-Member` 檢查會跳過版本和元件參數。這可能導致在沒有指定 VS 需求的環境中，無法正確找到 Visual Studio。建議確認此變更符合預期，並考慮提供預設需求。",
+    "existing_code": "if (!$vsRequirements) {\n    if (Get-Member -InputObject $GlobalJson.tools -Name 'vs' -ErrorAction SilentlyContinue) {\n      $vsRequirements = $GlobalJson.tools.vs\n    } else {\n      $vsRequirements = $null\n    }\n  }",
+    "evidence": "diff 中新增的條件判斷區塊。"
+  }
+]

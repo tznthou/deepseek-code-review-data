@@ -1,0 +1,57 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/app_paths.rs",
+    "line": 26,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`Dirs` 持有 `&'static Path` 可能導致生命週期問題",
+    "body": "`Dirs` 結構體中的 `tauri` 和 `frontend` 欄位型別為 `&'static Path`，但其實際指向的 `PathBuf` 儲存在 `OnceLock` 中。雖然 `OnceLock` 的內容在程式結束前不會被釋放，因此生命週期上可行，但這會造成記憶體永遠無法回收，且若未來改為非靜態儲存，將導致 dangling reference。建議改為持有 `PathBuf` 或使用 `Arc<Path>`，以避免潛在的生命週期問題。",
+    "existing_code": "pub struct Dirs {\n  pub tauri: &'static Path,\n  pub frontend: &'static Path,\n}",
+    "evidence": "diff 中新增的 `Dirs` 結構體使用 `&'static Path`，而 `resolve_dirs` 透過 `OnceLock::get_or_init` 初始化 `PathBuf` 並回傳參考。"
+  },
+  {
+    "path": "crates/tauri-cli/src/interface/rust.rs",
+    "line": 595,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "`reload_config` 在 watcher 中直接 unwrap mutex，可能 panic",
+    "body": "在 `run_dev_watcher` 中，呼叫 `reload_config(&mut config.lock().unwrap(), ...)`。如果其他執行緒在持有鎖時 panic，Mutex 會進入 poisoned 狀態，此時 `unwrap()` 會導致 panic，進而使 watcher 執行緒崩潰。建議使用 `lock().map_err(...)` 或 `if let Ok(mut guard) = config.lock()` 來處理中毒情況。",
+    "existing_code": "if is_configuration_file(self.app_settings.target_platform, event_path)\n  && reload_config(&mut config.lock().unwrap(), merge_configs, dirs.tauri).is_ok()",
+    "evidence": "diff 中此處將原本的 `reload_config(merge_configs)` 改為直接對 `config.lock().unwrap()` 進行可變借用。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/config.rs",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "`merge_config_with` 未處理 `serde_json::to_string` 的錯誤",
+    "body": "在 `merge_config_with` 中，`serde_json::to_string(&merge_config).unwrap()` 直接 unwrap。雖然 `merge_config` 是由 JSON Value 組成，序列化失敗的可能性極低，但為了穩健性，建議改為 `?` 或 `context` 處理。",
+    "existing_code": "let merge_config_str = serde_json::to_string(&merge_config).unwrap();",
+    "evidence": "diff 中此行程式碼在重構後仍保留 unwrap。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/mod.rs",
+    "line": 476,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "`get_app` 中參數 `tauri_dir` 被遮蔽",
+    "body": "在 `get_app` 函式中，參數 `tauri_dir: &Path` 被用於建立 `App::from_raw`，但隨後又用 `let tauri_dir = tauri_dir.to_path_buf();` 遮蔽了參數。這可能造成閱讀混淆，建議重新命名變數，例如 `tauri_dir_buf`。",
+    "existing_code": "let tauri_dir = tauri_dir.to_path_buf();\nApp::from_raw(tauri_dir.to_path_buf(), raw)",
+    "evidence": "diff 中此處新增了遮蔽變數的程式碼。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/ios/mod.rs",
+    "line": 129,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "`get_config` 新增的 `tauri_dir` 參數未使用",
+    "body": "在 `mobile/ios/mod.rs` 的 `get_config` 函式中，新增了 `tauri_dir: &Path` 參數，但函式體內並未使用。這可能是為了保持介面一致，但若無實際用途，建議移除或加上 `_` 前綴以避免編譯器警告。",
+    "existing_code": "pub fn get_config(\n  app: &App,\n  tauri_config: &TauriConfig,\n  features: &[String],\n  cli_options: &CliOptions,\n  tauri_dir: &Path,\n) -> Result<(AppleConfig, AppleMetadata)> {",
+    "evidence": "diff 中此函式簽名新增了 `tauri_dir` 參數，但函式內未使用。"
+  }
+]

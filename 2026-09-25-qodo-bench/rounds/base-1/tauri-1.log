@@ -1,0 +1,5 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 14090 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/mod.rs:641 → 645（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/mod.rs:643 → 645（片段唯一命中）
+[info] 重新定位 crates/tauri-cli/src/mobile/android/mod.rs:660 → 630（片段唯一命中）
+[info] 完成於 10.6s ｜ findings=3 ｜ relocated=3 ｜ verdict=comment ｜ usage={"prompt_tokens": 5885, "completion_tokens": 930, "total_tokens": 6815, "prompt_tokens_details": {"cached_tokens": 1536}, "prompt_cache_hit_tokens": 1536, "prompt_cache_miss_tokens": 4349}

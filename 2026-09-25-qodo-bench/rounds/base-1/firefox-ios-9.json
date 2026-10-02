@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/State/BrowserViewControllerState.swift",
+    "line": 566,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "displayView 從 .readerMode 改為 .readerModeLongPressAction 可能造成錯誤畫面顯示",
+    "body": "在 `handleShowReaderModeLongPressAction` 中，原本設定 `displayView: .readerMode`，但此 PR 將其改為 `.readerModeLongPressAction`。這可能導致長按閱讀模式按鈕時顯示錯誤的畫面，或造成狀態不一致。請確認此變更是否為筆誤，若不是，請提供對應的測試與說明。",
+    "existing_code": "displayView: .readerModeLongPressAction,",
+    "evidence": "diff 中該行由 `displayView: .readerMode` 改為 `displayView: .readerModeLongPressAction`，且此變更與 QR code 移除無關。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 485,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "cancelEditMode 中的 URL 判斷邏輯反轉，可能導致編輯模式取消時 URL 遺失",
+    "body": "原本的條件是 `(currentURL.isWebPage() && !currentURL.isReaderModeURL)`，現在改為 `(currentURL.isWebPage() || currentURL.isReaderModeURL)`。這會讓非網頁 URL（例如 about:blank）或閱讀模式 URL 也被保留，可能導致取消編輯時工具列顯示錯誤的 URL。請確認此變更的意圖，並補充測試。",
+    "existing_code": "url = (currentURL.isWebPage() || currentURL.isReaderModeURL) ? url : nil",
+    "evidence": "diff 中該行由 `&& !` 改為 `||`，邏輯完全相反。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/Redux/ToolbarMiddleware.swift",
+    "line": 524,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "isReaderModeEnabled 的布林值反轉，可能導致遙測記錄錯誤",
+    "body": "原本 `case .available: true`、`default: false`，現在改為 `case .available: false`、`default: true`。這會讓閱讀模式按鈕的遙測事件記錄錯誤的啟用狀態。請確認此變更是否為筆誤，若不是，請提供對應的測試與說明。",
+    "existing_code": "case .available: false // will be enabled after action gets executed\ndefault: true",
+    "evidence": "diff 中布林值被反轉，且註解未更新。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/ToolbarTelemetry.swift",
+    "line": 9,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "gleanWrapper 屬性從 private 改為 internal，可能破壞封裝",
+    "body": "將 `private let gleanWrapper` 改為 `let gleanWrapper` 會讓外部可以存取此屬性，可能不是必要的變更。如果只是為了測試，建議使用其他方式（例如依賴注入或測試專用的 init）。",
+    "existing_code": "let gleanWrapper: GleanWrapper",
+    "evidence": "diff 中移除了 `private` 修飾詞。"
+  }
+]

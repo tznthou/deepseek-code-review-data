@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Shared/Strings.swift",
+    "line": 6260,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "Rollouts 訊息字串使用 %@ 但 comment 標示 %1$@，可能導致格式錯誤",
+    "body": "`RolloutsSettingMessage` 的 value 使用 `%@`，但 comment 中說明為 `%1$@`。在 iOS 的 `String(format:)` 中，`%@` 與 `%1$@` 皆可接受，但若其他語言翻譯時依 comment 使用位置參數，可能造成格式不一致。建議統一使用 `%@` 或 `%1$@`，並更新 comment。",
+    "existing_code": "value: \"%@ will improve features, performance, and stability between updates. Changes applied remotely.\",\n        comment: \"A short description that explains that Mozilla may change features remotely. %1$@ is the app name (e.g. Firefox).\")",
+    "evidence": "diff 中新增的 `RolloutsSettingMessage` 定義，value 使用 `%@`，comment 使用 `%1$@`。"
+  },
+  {
+    "path": "focus-ios/Blockzilla/UIComponents/UIConstants.swift",
+    "line": 423,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "SettingsTextFormatter 使用舊版 detailTextStudies 而非 V2",
+    "body": "`formatStudiesText` 方法使用 `strings.detailTextStudies`，但此 PR 新增了 `detailTextStudiesV2`，且新的 Studies 標題與訊息皆已更新。若 UI 應顯示新版文字，此處應改用 `detailTextStudiesV2`，否則使用者會看到舊的說明。",
+    "existing_code": "func formatStudiesText(appName: String) -> String {\n            return String(format: strings.detailTextStudies, appName)\n        }",
+    "evidence": "diff 中新增的 `SettingsTextFormatter` 類別，`formatStudiesText` 使用 `strings.detailTextStudies`，而同一檔案中新增了 `detailTextStudiesV2`。"
+  },
+  {
+    "path": ".github/l10n/linter_config_ios.json",
+    "line": 8,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Linter 排除規則可能過於寬鬆",
+    "body": "新增的排除規則 `\"firefox-ios.xliff:Settings.Studies.Message.v148\"` 僅針對特定 key，但若未來有其他類似格式問題，可能需要逐一排除。建議確認此排除是否必要，或改用更精確的規則。",
+    "existing_code": "\"exclusions\": [\n            \"firefox-ios.xliff:Settings.Studies.Message.v148\"\n        ]",
+    "evidence": "diff 中 linter 設定新增的排除項目。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1317,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "inner_size 呼叫參數格式錯誤，可能導致編譯失敗",
+    "body": "在 `window_features` 方法中，`self.window_builder.inner_size(size.width,    size.height);` 的參數之間有多餘空格，這在 Rust 中可能被解析為兩個獨立的 token，導致編譯錯誤。建議移除多餘空格，改為 `self.window_builder.inner_size(size.width, size.height);`。",
+    "existing_code": "self.window_builder = self.window_builder.inner_size(size.width,    size.height);",
+    "evidence": "diff 中新增行 `self.window_builder = self.window_builder.inner_size(size.width,    size.height);` 顯示參數之間有四個空格，而 Rust 語法要求逗號後只能有一個空格（或無空格），多餘空格可能導致編譯器將其視為兩個參數：`size.width` 和 `size.height`，但實際上 `size.height` 前有額外空格，可能被解析為不同的 token。"
+  },
+  {
+    "path": "examples/api/src-tauri/src/lib.rs",
+    "line": 76,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "on_new_window 移至 cfg(desktop) 區塊可能改變非桌面平台行為",
+    "body": "原本 `on_new_window` 的設定在所有平台都會執行，現在被移至 `#[cfg(all(desktop, not(test)))]` 區塊內，這表示在非桌面平台（如行動裝置）上，新視窗的建立邏輯將不會被註冊。如果這是預期的行為變更，請確認；否則可能導致非桌面平台無法正確處理新視窗請求。",
+    "existing_code": "let app_ = app.handle().clone();\n        let mut created_window_count = std::sync::atomic::AtomicUsize::new(0);\n\n        window_builder = window_builder\n          .title(\"Tauri API Validation\")\n          .inner_size(1000., 800.)\n          .min_inner_size(600., 400.)\n          .menu(tauri::menu::Menu::default(app.handle())?)\n          .on_new_window(move |url, features| {",
+    "evidence": "diff 顯示原本在 `run_app` 函式中的 `on_new_window` 設定被移入 `#[cfg(all(desktop, not(test)))]` 區塊，且原本的 `let app_ = app.handle().clone();` 和 `let mut created_window_count = AtomicUsize::new(0);` 也被移入該區塊。這表示在非桌面平台上，這些變數和回呼將不存在，可能導致編譯錯誤（如果後續程式碼使用它們）或行為變更。"
+  },
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1321,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "position 呼叫參數格式不一致",
+    "body": "在 `window_features` 方法中，`self.window_builder.position(position.x,position.y);` 的參數之間缺少空格，雖然這在 Rust 中不會導致編譯錯誤，但與專案中其他程式碼的風格不一致。建議改為 `self.window_builder.position(position.x, position.y);`。",
+    "existing_code": "self.window_builder = self.window_builder.position(position.x,position.y);",
+    "evidence": "diff 中新增行 `self.window_builder = self.window_builder.position(position.x,position.y);` 顯示參數之間沒有空格，而同一方法中其他呼叫（如 `inner_size`）有空格，風格不一致。"
+  }
+]

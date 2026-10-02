@@ -1,0 +1,2 @@
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 35598 字元、thinking=disabled、max_tokens=8192）
+[info] 完成於 9.1s ｜ findings=3 ｜ relocated=0 ｜ verdict=comment ｜ usage={"prompt_tokens": 13593, "completion_tokens": 840, "total_tokens": 14433, "prompt_tokens_details": {"cached_tokens": 13568}, "prompt_cache_hit_tokens": 13568, "prompt_cache_miss_tokens": 25}

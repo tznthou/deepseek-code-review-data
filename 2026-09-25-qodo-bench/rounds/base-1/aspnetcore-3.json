@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 375,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "路徑比較未正規化尾端分隔符，可能誤判目錄是否已包含",
+    "body": "在比較 `Path.GetFullPath(dir)` 與 `certDirFullPath` 時，若其中一個路徑以目錄分隔符結尾（例如 `/usr/local/share/certs/` 與 `/usr/local/share/certs`），`Path.GetFullPath` 不會移除尾端分隔符，導致 `string.Equals` 回傳 false，即使實際上是同一目錄。這會造成程式誤以為憑證目錄尚未加入 SSL_CERT_DIR，而重複輸出建議訊息。\n\n**建議**：在比較前使用 `Path.TrimEndingDirectorySeparator` 或 `Path.GetFullPath` 後再 `TrimEnd` 目錄分隔符，或使用 `Path.GetRelativePath` 判斷是否為同一路徑。",
+    "existing_code": "return string.Equals(Path.GetFullPath(dir), certDirFullPath, StringComparison.OrdinalIgnoreCase);",
+    "evidence": "diff 中新增的比較邏輯直接使用 `Path.GetFullPath` 的結果進行字串比較，未處理尾端分隔符。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/CertificateManager.cs",
+    "line": 1314,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "事件 113 的訊息格式與參數順序不一致",
+    "body": "事件 113 的 Message 為 \"The certificate directory '{0}' is already included in the {1} environment variable.\"，但 `WriteEvent` 的參數順序是 `(certDir, envVarName)`，這與訊息中的佔位符順序相符。然而，事件 114 的 Message 為 \"For OpenSSL trust to take effect, '{0}' must be listed in the {1} environment variable. For example, `export {1}=\\\"{0}:${1}\\\"`.\"，其 `WriteEvent` 參數順序也是 `(certDir, envVarName)`，但訊息中第二個佔位符 `{1}` 被用於 `export` 指令的變數名稱，這可能造成混淆。此外，事件 110 的訊息已改為使用 `{2}` 作為環境變數名稱，但事件 114 仍使用 `{1}`，不一致。\n\n**建議**：統一事件訊息中的佔位符順序，並確保與 `WriteEvent` 參數順序一致。",
+    "existing_code": "[Event(113, Level = EventLevel.Verbose, Message = \"The certificate directory '{0}' is already included in the {1} environment variable.\")]\ninternal void UnixOpenSslCertificateDirectoryAlreadyConfigured(string certDir, string envVarName) => WriteEvent(113, certDir, envVarName);\n\n[Event(114, Level = EventLevel.LogAlways, Message = \"For OpenSSL trust to take effect, '{0}' must be listed in the {1} environment variable. \" +\n    \"For example, `export {1}=\\\"{0}:${1}\\\"`. \" +\n    \"See https://aka.ms/dev-certs-trust for more information.\")]\ninternal void UnixSuggestAppendingToEnvironmentVariable(string certDir, string envVarName) => WriteEvent(114, certDir, envVarName);",
+    "evidence": "diff 中新增的事件定義，事件 114 的訊息格式與事件 110 不一致，且佔位符使用可能造成混淆。"
+  },
+  {
+    "path": "src/Tools/dotnet-dev-certs/src/Program.cs",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "非 verbose 模式下啟用 LogAlways 可能輸出過多資訊",
+    "body": "原本只有在 verbose 模式才會啟用事件監聽器，現在非 verbose 模式也會啟用並設定為 `EventLevel.LogAlways`。這可能導致原本只在 verbose 下顯示的 LogAlways 事件（如事件 110、114）在一般執行時也輸出，造成資訊過載。需確認這是否為預期行為。",
+    "existing_code": "else\n{\n    listener.EnableEvents(CertificateManager.Log, System.Diagnostics.Tracing.EventLevel.LogAlways);\n}",
+    "evidence": "diff 中新增的 else 區塊，將事件監聽器啟用並設定為 LogAlways。"
+  },
+  {
+    "path": "src/Shared/CertificateGeneration/UnixCertificateManager.cs",
+    "line": 994,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "NssDb 類別改寫為傳統屬性，可能違反專案慣例",
+    "body": "原本的 `NssDb` 使用 primary constructor 與自動實作屬性，現在改為傳統的唯讀屬性與建構子。若專案中普遍使用 primary constructor 或自動實作屬性，此改動可能降低一致性。建議確認專案慣例，若無特殊原因，可保留原本寫法。",
+    "existing_code": "private sealed class NssDb\n{\n    private readonly string _path;\n    private readonly bool _isFirefox;\n\n    public NssDb(string path, bool isFirefox)\n    {\n        _path = path;\n        _isFirefox = isFirefox;\n    }\n\n    public string Path => _path;\n    public bool IsFirefox => _isFirefox;\n}",
+    "evidence": "diff 中將原本使用 primary constructor 的類別改為傳統寫法。"
+  }
+]

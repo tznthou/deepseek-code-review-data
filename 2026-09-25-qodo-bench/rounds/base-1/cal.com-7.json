@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.ts",
+    "line": 41,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 endsWith 過濾可能誤排除合法日曆",
+    "body": "目前使用 `endsWith` 來排除 externalId 結尾為特定後綴的日曆。若使用者擁有一個自訂日曆，其 externalId 恰好以這些後綴結尾（例如 `mygroup@group.calendar.google.com`），則會被錯誤排除。建議改用更精確的比對方式，例如正規表示式或直接比對完整 ID 模式，或至少確認 Google 日曆 ID 的格式保證這些後綴只出現在通用日曆中。",
+    "existing_code": "AND: genericCalendarSuffixes?.length\n          ? genericCalendarSuffixes?.map((suffix) => ({\n              NOT: { externalId: { endsWith: suffix } },\n            }))\n          : undefined,",
+    "evidence": "diff 中新增的 AND 條件使用 `endsWith`，且後綴清單包含 `@group.calendar.google.com` 等，可能與使用者自訂日曆 ID 衝突。"
+  },
+  {
+    "path": "packages/features/calendar-subscription/adapters/AdaptersFactory.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "office365_calendar 的通用日曆後綴清單為空",
+    "body": "目前 `office365_calendar` 的後綴清單為空陣列，這可能導致 Office 365 的通用日曆（如假日、資源）未被過濾。若未來需要支援，應補上對應後綴。若目前無需過濾，建議在註解中說明原因，避免誤解。",
+    "existing_code": "office365_calendar: [],",
+    "evidence": "diff 中 `office365_calendar` 對應的陣列為空。"
+  },
+  {
+    "path": "packages/features/selectedCalendar/repositories/SelectedCalendarRepository.test.ts",
+    "line": 134,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試中斷言 AND: undefined 可能過度耦合實作",
+    "body": "在未提供 `genericCalendarSuffixes` 的測試中，斷言 `AND: undefined` 出現在查詢參數中。這可能使測試與實作細節過度耦合，未來若調整查詢結構（例如改用其他方式處理空陣列）會導致測試失敗。建議移除對 `AND: undefined` 的斷言，或改為驗證查詢結果而非精確參數。",
+    "existing_code": "AND: undefined,",
+    "evidence": "diff 中多個測試案例新增了 `AND: undefined` 的斷言。"
+  }
+]

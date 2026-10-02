@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2306,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "argv 陣列大小不足，寫入 6 個元素導致堆疊緩衝區溢位",
+    "body": "在 hincrbyfloatCommand 中，宣告 `robj *argv[5];` 但隨後寫入 `argv[0]` 到 `argv[5]` 共 6 個元素，造成陣列越界寫入。這會破壞堆疊上的其他變數，可能導致程式崩潰或任意程式碼執行。\n\n建議將陣列大小改為 6：\n```c\nrobj *argv[6];\n```",
+    "existing_code": "robj *argv[5];\n        argv[0] = shared.hpexpireat;\n        argv[1] = c->argv[1];\n        argv[2] = createStringObjectFromLongLong(expireat);\n        argv[3] = shared.fields;\n        argv[4] = shared.integers[1];\n        argv[5] = c->argv[2];",
+    "evidence": "diff 中新增的程式碼片段顯示 `robj *argv[5];` 但後續指派了 6 個元素（索引 0 到 5）。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2309,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "createStringObjectFromLongLong 建立的物件未釋放，造成記憶體洩漏",
+    "body": "`argv[2] = createStringObjectFromLongLong(expireat);` 建立了一個新的 robj，但在 alsoPropagate 之後沒有對其呼叫 decrRefCount。雖然 alsoPropagate 可能會複製參照，但此處建立的物件在函式結束後不再使用，應釋放以避免記憶體洩漏。\n\n建議在 alsoPropagate 呼叫後加入 `decrRefCount(argv[2]);`。",
+    "existing_code": "argv[2] = createStringObjectFromLongLong(expireat);",
+    "evidence": "diff 中新增的程式碼建立物件後未見對應的釋放操作。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 2244,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "變數 unused_flag 宣告後未使用",
+    "body": "在 hincrbyfloatCommand 中宣告了 `int unused_flag = 0;` 但從未使用。這可能是開發過程中的殘留，應移除。",
+    "existing_code": "int unused_flag = 0;",
+    "evidence": "diff 中新增的變數宣告，但後續程式碼未引用。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1288,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試中對複製流的斷言可能過於嚴格",
+    "body": "測試使用 `assert_replication_stream` 檢查複製流的精確內容，包括 `{hset h1 f1 *}` 和 `{hpexpireat h1 * FIELDS 1 f1}`。但 `hset` 的值和 `hpexpireat` 的過期時間是動態的，使用 `*` 萬用字元可能無法匹配所有情況，且未來實作變更可能導致測試脆弱。建議改為驗證關鍵指令的存在而非完整序列。",
+    "existing_code": "{hset h1 f1 *}\n                {hpexpireat h1 * FIELDS 1 f1}",
+    "evidence": "測試中對複製流的精確匹配可能因動態值而失敗。"
+  }
+]

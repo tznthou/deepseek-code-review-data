@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2015,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "驗證失敗時未回覆錯誤給客戶端",
+    "body": "在 `parseSlotRangesOrReply` 中，當 `slotRangeArrayNormalizeAndValidate` 回傳錯誤時，程式碼釋放了 `err` 和 `slots` 並回傳 `NULL`，但沒有呼叫 `addReplyErrorSds` 或類似函式將錯誤訊息回傳給客戶端。這會導致客戶端在輸入無效的 slot range 時收到空回覆（nil），而非明確的錯誤訊息，違反 Redis 命令的錯誤處理慣例。\n\n**失敗情境**：執行 `CLUSTER MIGRATION IMPORT 7000 7001 7000 7001`（重疊範圍），客戶端會收到空回覆，無法得知錯誤原因。\n\n**建議修法**：在釋放 `err` 之前，先呼叫 `addReplyErrorSds(c, err)` 將錯誤訊息回傳給客戶端，再釋放 `slots`。",
+    "existing_code": "if (slotRangeArrayNormalizeAndValidate(slots, &err) != C_OK) {\n        sdsfree(err);\n        slotRangeArrayFree(slots);\n        return NULL;\n    }",
+    "evidence": "diff 中 `parseSlotRangesOrReply` 的修改片段顯示，原本的 `addReplyErrorSds(c, err)` 被移除，改為直接 `sdsfree(err)`，且沒有其他回覆錯誤的程式碼。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 830,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "錯誤路徑可能導致重複釋放記憶體",
+    "body": "在 `asmCreateImportTask` 中，函式現在直接使用傳入的 `slots` 指標（`task->slots = slots;`），並在錯誤路徑中呼叫 `slotRangeArrayFree(slots)`。然而，呼叫端 `clusterMigrationCommandImport` 在呼叫 `asmCreateImportTask` 後已不再釋放 `slots`（原本的 `slotRangeArrayFree(slots)` 被移除），因此所有權已轉移。但若 `asmCreateImportTask` 在錯誤路徑中釋放了 `slots`，而呼叫端在某些情況下仍持有該指標（例如 `clusterAsmProcess` 中先複製了一份再傳入），可能導致重複釋放或使用已釋放的記憶體。\n\n**失敗情境**：在 `clusterAsmProcess` 中，`slots` 是透過 `slotRangeArrayDup(arg)` 複製的，若 `asmCreateImportTask` 失敗並釋放了 `slots`，呼叫端後續若再使用 `arg` 或 `slots` 可能造成問題。\n\n**建議修法**：明確所有權轉移規則，例如在 `asmCreateImportTask` 成功時才接管 `slots`，失敗時由呼叫端負責釋放；或統一由 `asmCreateImportTask` 釋放，但確保呼叫端不再使用。",
+    "existing_code": "task->slots = slots;\n    task->state = ASM_NONE;\n    task->operation = ASM_IMPORT;\n    task->source_node = source;\n    ...\n    return task;\n\nerr:\n    slotRangeArrayFree(slots);\n    return NULL;",
+    "evidence": "diff 中 `asmCreateImportTask` 的修改顯示 `task->slots = slots;` 取代了原本的 `slotRangeArrayDup(slots)`，且錯誤路徑新增了 `slotRangeArrayFree(slots)`。同時 `clusterMigrationCommandImport` 移除了呼叫後的 `slotRangeArrayFree(slots)`。"
+  },
+  {
+    "path": "src/cluster_asm.c",
+    "line": 1012,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 server.db[0] 可能不正確",
+    "body": "`asmCountKeysInSlots` 函式使用 `server.db[0].keys` 來計算 key 數量，但 Redis 支援多個資料庫（預設 16 個），且 slot 與資料庫無關。若 key 存在於非 0 號資料庫，此函式將無法正確計算。\n\n**失敗情境**：在非預設資料庫（例如 `SELECT 1`）中執行 slot migration，日誌中記錄的 key 數量會不正確。\n\n**建議修法**：確認 slot migration 是否僅考慮 db0，或應遍歷所有資料庫。若僅考慮 db0，應在程式碼中明確註明原因。",
+    "existing_code": "unsigned long long asmCountKeysInSlots(slotRangeArray *slots) {\n    if (!slots) return 0;\n\n    unsigned long long key_count = 0;\n    int total_ranges = slots->num_ranges;\n    for (int i = 0; i < slots->num_ranges; i++) {\n        for (int j = slots->ranges[i].start; j <= slots->ranges[i].end; j++) {\n            key_count += kvstoreDictSize(server.db[0].keys, j);\n        }\n    }\n    return key_count;\n}",
+    "evidence": "diff 中新增的 `asmCountKeysInSlots` 函式直接使用 `server.db[0].keys`，未考慮其他資料庫。"
+  },
+  {
+    "path": "tests/unit/cluster/atomic-slot-migration.tcl",
+    "line": 514,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試未涵蓋錯誤情境",
+    "body": "新增的測試僅驗證了成功案例（相鄰和未排序的範圍），但未測試無效輸入（如重疊範圍、超出範圍）的錯誤處理。這使得 `parseSlotRangesOrReply` 中的錯誤回覆缺失問題無法被測試發現。\n\n**建議修法**：增加測試案例，驗證無效輸入時客戶端能收到明確的錯誤訊息。",
+    "existing_code": "test \"Test IMPORT with unsorted and adjacent ranges\" {\n        # Redis should sort and merge adjacent ranges\n        # Adjacent means: prev.end + 1 == next.start\n        # e.g. 7000-7001 7002-7003 7004-7005  =>  7000-7005\n\n        # Test with adjacent ranges\n        set task_id [R 0 CLUSTER MIGRATION IMPORT 7000 7001 7002 7100]",
+    "evidence": "diff 中新增的測試僅包含成功案例，未包含錯誤案例。"
+  }
+]

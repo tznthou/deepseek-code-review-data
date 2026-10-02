@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 17,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "Slot 型別中 userIds 型別從 number[] 改為 string[]，可能造成型別不符",
+    "body": "原本在 @calcom/trpc/server/routers/viewer/slots/types.ts 中，Slot 的 userIds 型別為 number[]，但此處新定義的 Slot 將 userIds 改為 string[]。若實際資料中 userIds 為數字陣列，則使用此型別的程式碼（例如將 userIds 傳給其他函式）會出現型別錯誤。建議確認 userIds 的實際型別，若為 number[] 則應改回，或使用 union 型別。",
+    "existing_code": "export type Slot = {\n  time: string;\n  userIds?: string[];\n  attendees?: number;\n  bookingUid?: string;\n  users?: string[];\n};",
+    "evidence": "diff 中新增的 Slot 型別定義，與被刪除的原始型別（userIds?: number[]）不同。"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "validateCreateScheduleInput 驗證不足，可能接受無效資料",
+    "body": "此函式僅檢查 input 是否為物件且 name 為非空字串，但未驗證 schedule 的結構（應為 { start: Date; end: Date }[][]）或 eventTypeId 的型別（應為 number）。若呼叫端傳入錯誤格式，可能導致後續 API 請求失敗或產生非預期行為。建議使用 zod 或其他 schema 驗證庫完整驗證所有欄位。",
+    "existing_code": "export function validateCreateScheduleInput(input: unknown): CreateScheduleInput {\n  if (!input || typeof input !== 'object') {\n    throw new Error('Invalid input: must be an object');\n  }\n\n  const data = input as Record<string, unknown>;\n\n  if (typeof data.name !== 'string' || data.name.length === 0) {\n    throw new Error('Invalid input: name must be a non-empty string');\n  }\n\n  return data as CreateScheduleInput;\n}",
+    "evidence": "新增的驗證函式僅檢查 name，未檢查其他屬性。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 \"./booker\" export 可能導致下游匯入失敗",
+    "body": "原本 exports 中有 \"./booker\": \"./booker/index.ts\"，此 PR 將其改為 \"./booker/types\": \"./booker/types.ts\"。若其他套件或應用程式使用 `import ... from \"@calcom/atoms/booker\"`，在升級後會因為找不到 export 而導致建置錯誤。建議保留 \"./booker\" 的 export，或確認所有使用方都已更新。",
+    "existing_code": "\"./booker/types\": \"./booker/types.ts\",",
+    "evidence": "diff 中刪除了 \"./booker\": \"./booker/index.ts\"，新增了 \"./booker/types\": \"./booker/types.ts\"。"
+  }
+]

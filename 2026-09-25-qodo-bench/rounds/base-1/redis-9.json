@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/server.h",
+    "line": 1529,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "shared 物件宣告順序不一致可能導致編譯錯誤",
+    "body": "在 `server.h` 的 `sharedObjectsStruct` 中，新增的 `hsetex` 和 `fields` 被插入在既有成員之間，但 `server.c` 中 `createSharedObjects()` 的初始化順序與宣告順序不一致。這會導致 `shared.hsetex` 和 `shared.fields` 在執行時指向錯誤的物件（例如 `shared.hsetex` 可能指向 `shared.hpersist`），造成未定義行為或執行期錯誤。\n\n建議將 `server.h` 中的宣告順序調整為與 `server.c` 中的初始化順序完全一致，或將新增成員放在結構體末端以避免此類問題。",
+    "existing_code": "*hdel, *hpexpireat, *hpersist, *hsetex,\n    *time, *pxat, *absttl, *retrycount, *force, *justid, *entriesread,\n    *lastid, *ping, *setid, *keepttl, *load, *createconsumer, *fields,",
+    "evidence": "diff 中 `server.h` 的修改顯示 `hsetex` 被加在 `hpersist` 之後，而 `fields` 被加在 `createconsumer` 之後；但 `server.c` 中 `hsetex` 的初始化在 `hdel` 之後，`fields` 的初始化在 `redacted` 之後，順序不同。"
+  },
+  {
+    "path": "tests/unit/type/hash-field-expire.tcl",
+    "line": 1996,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中對 f2 的 TTL 斷言與註解不一致",
+    "body": "測試中對 f2 的 TTL 斷言為 `assert_equal {-1} [r httl h1 FIELDS 1 f2]`，但註解寫著「The field f2 should not have any expiration on replica either even though it was set using HSET with KEEPTTL flag.」這可能造成混淆：f2 原本就沒有 TTL，因此預期為 -1 是合理的，但註解暗示它被 HSETEX KEEPTTL 設定過。建議釐清註解或斷言，確保測試意圖明確。",
+    "existing_code": "assert_equal {-1} [r httl h1 FIELDS 1 f2]",
+    "evidence": "diff 中新增的測試區塊包含此行，且上方註解提到 f2 被 HSETEX KEEPTTL 設定，但實際 f2 是透過 HSET 設定且無 TTL。"
+  }
+]

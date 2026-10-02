@@ -1,0 +1,68 @@
+[
+  {
+    "path": "api/core/rag/datasource/vdb/clickzetta/clickzetta_vector.py",
+    "line": 990,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.85,
+    "title": "ClickZetta 的 LIKE 跳脫可能因 Python 字串處理而失效",
+    "body": "程式碼先呼叫 `escape_like_pattern(query)` 得到含反斜線的字串，再 `.replace(\"'\", \"''\")`，最後以 f-string 嵌入 SQL。但 Python 字串中的反斜線在 f-string 中不會被特殊處理，因此產生的 SQL 可能包含未跳脫的反斜線，導致 SQL 語法錯誤或跳脫失效。例如，若 query 為 `a\\b`，escape_like_pattern 會回傳 `a\\\\b`，但 f-string 會直接輸出 `a\\\\b`，而 SQL 中需要 `a\\\\\\\\b` 才能正確表示。建議改用參數化查詢或明確處理反斜線。",
+    "existing_code": "escaped_query = escape_like_pattern(query).replace(\"'\", \"''\")\nfilter_clauses.append(f\"{Field.CONTENT_KEY} LIKE '%{escaped_query}%' ESCAPE '\\\\\\\\'\")",
+    "evidence": "diff 中該行使用 f-string 拼接，且 ESCAPE 子句為 '\\\\\\\\'，但 Python 字串中反斜線的處理可能導致最終 SQL 不正確。"
+  },
+  {
+    "path": "api/core/rag/retrieval/dataset_retrieval.py",
+    "line": 1207,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "notlike 未傳入 escape 參數，跳脫失效",
+    "body": "在 `case \"not contains\"` 分支中，`json_field.notlike(f\"%{escaped_value}%\")` 沒有傳入 `escape=\"\\\\\"`。這會導致跳脫字元被視為一般字元，使用者輸入的 `%` 或 `_` 仍會被當作萬用字元，造成搜尋結果不正確，且可能被用於繞過預期的過濾邏輯。",
+    "existing_code": "filters.append(json_field.notlike(f\"%{escaped_value}%\"))",
+    "evidence": "diff 中該行未包含 escape 參數，而其他 like 呼叫均有。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/iris/iris_vector.py",
+    "line": 298,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "IRIS 的 LIKE 查詢使用 ESCAPE '|' 但跳脫函式使用反斜線",
+    "body": "程式碼使用 `escape_like_pattern` 跳脫，該函式以反斜線作為跳脫字元，但 SQL 中指定 `ESCAPE '|'`，兩者不一致。這會導致跳脫字元不被識別，使用者輸入的 `%` 或 `_` 仍會被當作萬用字元。應將 ESCAPE 子句改為 `ESCAPE '\\\\'` 或修改跳脫函式以使用 `|`。",
+    "existing_code": "WHERE text LIKE ? ESCAPE '|'",
+    "evidence": "diff 中該行指定 ESCAPE '|'，但 escape_like_pattern 使用反斜線。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_annotation_service.py",
+    "line": 475,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中反斜線字串可能因 Python 轉義而失真",
+    "body": "測試資料使用 `\"path\\\\to\\\\file\"`，在 Python 中這代表 `path\\to\\file`（兩個反斜線），但實際資料庫中可能儲存為單一反斜線。這可能導致測試無法正確驗證反斜線的跳脫行為。建議使用 raw string 或明確的雙反斜線來表示單一反斜線。",
+    "existing_code": "\"question\": \"Question with path\\\\to\\\\file\",",
+    "evidence": "diff 中該行使用雙反斜線，但註解與測試目的可能期望單一反斜線。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_app_service.py",
+    "line": 1030,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中反斜線字串可能因 Python 轉義而失真",
+    "body": "測試資料使用 `\"name\": \"path\\\\to\\\\app\"`，在 Python 中這代表 `path\\to\\app`（兩個反斜線），但實際應用中可能儲存為單一反斜線。這可能導致測試無法正確驗證反斜線的跳脫行為。建議使用 raw string 或明確的雙反斜線來表示單一反斜線。",
+    "existing_code": "\"name\": \"path\\\\to\\\\app\",",
+    "evidence": "diff 中該行使用雙反斜線，但測試目的可能期望單一反斜線。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_tag_service.py",
+    "line": 340,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中反斜線字串可能因 Python 轉義而失真",
+    "body": "測試資料使用 `\"name\": \"path\\\\to\\\\tag\"`，在 Python 中這代表 `path\\to\\tag`（兩個反斜線），但實際應用中可能儲存為單一反斜線。這可能導致測試無法正確驗證反斜線的跳脫行為。建議使用 raw string 或明確的雙反斜線來表示單一反斜線。",
+    "existing_code": "\"name\": \"path\\\\to\\\\tag\",",
+    "evidence": "diff 中該行使用雙反斜線，但測試目的可能期望單一反斜線。"
+  }
+]

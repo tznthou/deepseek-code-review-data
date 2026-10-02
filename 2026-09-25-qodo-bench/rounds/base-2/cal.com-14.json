@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.ts",
+    "line": 207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "listFeaturesForUser 過濾條件寫反，導致回傳 globalEnabled 為 false 的功能",
+    "body": "在 `listFeaturesForUser` 中，原本的過濾條件是 `.filter((state) => state.globalEnabled)`，但此 PR 改成了 `.filter((state) => !state.globalEnabled)`。這會讓使用者看不到任何全域啟用的功能，反而看到被停用的功能，完全違反預期行為。\n\n**失敗情境**：當某功能在 flags 中 `enabled: true` 時，使用者呼叫 `listFeaturesForUser` 將不會看到該功能；反之，若 `enabled: false`，反而會出現在列表中。\n\n**建議**：改回 `.filter((state) => state.globalEnabled)`。",
+    "existing_code": "return featureIds.map((featureId) => resolvedStates[featureId]).filter((state) => !state.globalEnabled);",
+    "evidence": "diff 中此行由 `.filter((state) => state.globalEnabled)` 改為 `.filter((state) => !state.globalEnabled)`，且註解仍寫著「Only returns features that are in the allowlist, globally enabled, and scoped to \"user\"」，明顯矛盾。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/services/FeatureOptInService.integration-test.ts",
+    "line": 13,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "整合測試 mock 掉 isFeatureAllowedForScope，可能無法驗證 scope 邏輯",
+    "body": "在整合測試中，`isFeatureAllowedForScope` 被 mock 成永遠回傳 `true`。這使得整合測試無法驗證 service 層的 scope 驗證是否正確運作，可能讓錯誤的 scope 邏輯通過測試。\n\n**失敗情境**：若 `isFeatureAllowedForScope` 的實作有誤（例如判斷條件寫反），整合測試仍會通過，因為 mock 繞過了實際邏輯。\n\n**建議**：考慮在整合測試中使用真實的 `isFeatureAllowedForScope`，或至少加入一個測試案例來驗證 scope 驗證在整合情境下的行為。",
+    "existing_code": "vi.mock(\"../config\", async (importOriginal) => {\n  const actual = await importOriginal<typeof import(\"../config\")>();\n  return {\n    ...actual,\n    isFeatureAllowedForScope: () => true,\n  };\n});",
+    "evidence": "diff 中新增了此 mock，且註解說明「The scope validation logic is tested in unit tests; integration tests focus on database behavior.」但這可能降低整合測試的覆蓋率。"
+  },
+  {
+    "path": "packages/features/feature-opt-in/config.ts",
+    "line": 4,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "未使用的常數 UNUSED_CONSTANT 應移除",
+    "body": "新增的 `UNUSED_CONSTANT` 常數未被使用，且註解也表明這是應該被 lint 抓到的。這會造成程式碼雜訊，並可能讓 CI 的 lint 檢查失敗。\n\n**建議**：移除該常數及其註解。",
+    "existing_code": "// Unused import that should be caught by linting\nconst UNUSED_CONSTANT = \"this-should-be-removed\";",
+    "evidence": "diff 中新增了此常數，且沒有其他程式碼引用它。"
+  }
+]

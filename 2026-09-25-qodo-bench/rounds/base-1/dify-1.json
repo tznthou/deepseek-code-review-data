@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/nodes/variable_assigner/v1/node.py",
+    "line": 36,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "型別提示 `Set[Tuple[str, ...]]` 可能與實際傳入型別不符",
+    "body": "`blocks_variable_output` 的參數 `variable_selectors` 標註為 `Set[Tuple[str, ...]]`，但呼叫端可能傳入其他可迭代型別（如 list）。若型別不符，可能導致執行時期錯誤或型別檢查警告。建議確認呼叫端傳入的型別，或放寬為 `Iterable[Tuple[str, ...]]`。",
+    "existing_code": "def blocks_variable_output(self, variable_selectors: Set[Tuple[str, ...]]) -> bool:",
+    "evidence": "diff 中新增的方法簽名使用了 `Set[Tuple[str, ...]]`，但未提供呼叫端程式碼，無法確認實際傳入型別。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試假設所有 chunk 事件的值都等於輸入值，可能過於嚴格",
+    "body": "測試中 `assert all(event.chunk == input_query for event in conv_var_chunk_events)` 假設每個 chunk 事件的值都完全等於輸入字串。若串流實作將輸入拆分成多個 chunk（例如逐字元），此斷言將失敗。建議改為驗證串接後的值等於輸入值，或放寬為檢查事件存在且值非空。",
+    "existing_code": "assert all(event.chunk == input_query for event in conv_var_chunk_events), (\n        \"Expected streamed conversation variable value to match the input query\"\n    )",
+    "evidence": "diff 中新增的測試斷言要求每個 chunk 事件的值都等於 `input_query`，但未考慮串流可能分段。"
+  }
+]

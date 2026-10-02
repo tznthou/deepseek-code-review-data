@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.ts",
+    "line": 588,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "hasPendingInviteByUserId 的 accepted 條件寫反",
+    "body": "方法名稱是 hasPendingInviteByUserId，但查詢條件為 `accepted: true`，這會回傳「已接受」的邀請，而非「待處理」的邀請。這導致呼叫端（onboarding 頁面與 checkOnboardingRedirect）在用戶有已接受邀請時誤判為有 pending invite，進而錯誤 redirect。應改為 `accepted: false`。",
+    "existing_code": "accepted: true,",
+    "evidence": "diff 中新增的 static 方法內 where 條件為 accepted: true，與方法名稱及預期行為矛盾。"
+  },
+  {
+    "path": "packages/features/auth/lib/onboardingUtils.ts",
+    "line": 69,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "條件由 AND 改為 OR 可能改變既有流程",
+    "body": "原本只有在同時有 pending invite 且 onboarding-v3 啟用時才導向 personal/settings，現在改成任一條件成立即導向。若 onboarding-v3 啟用但用戶沒有 pending invite，原本會繼續其他流程，現在會直接導向 personal/settings。請確認此行為變更是否符合預期。",
+    "existing_code": "if (hasPendingInvite || onboardingV3Enabled) {",
+    "evidence": "diff 中將 `if (pendingInvite && onboardingV3Enabled)` 改為 `if (hasPendingInvite || onboardingV3Enabled)`。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試未涵蓋 accepted: false 的實際查詢條件",
+    "body": "測試案例「should return true when user has a pending invite (accepted: false)」建立了一個 accepted: false 的 membership，但由於實作錯誤（accepted: true），此測試應會失敗。這表示測試並未有效驗證方法行為，且未直接測試查詢條件。建議修正實作後確保測試通過，並考慮增加直接驗證查詢條件的單元測試。",
+    "existing_code": "const membership = await prisma.membership.create({\n        data: {\n          userId: newUser.id,\n          teamId: testTeamId,\n          role: MembershipRole.MEMBER,\n          accepted: false,\n        },\n      });",
+    "evidence": "測試建立 accepted: false 的 membership，但實作查詢 accepted: true，測試應會失敗，顯示測試未有效防護。"
+  },
+  {
+    "path": "packages/features/membership/repositories/MembershipRepository.integration-test.ts",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試資料清理不完整，可能殘留使用者",
+    "body": "在測試中若斷言失敗或發生例外，`prisma.user.delete` 可能不會被執行，導致測試資料殘留。建議使用 try/finally 或 afterEach 統一清理使用者。",
+    "existing_code": "await prisma.user.delete({ where: { id: newUser.id } });",
+    "evidence": "多個測試在最後手動刪除使用者，但缺乏錯誤處理，若測試中途失敗可能殘留。"
+  }
+]

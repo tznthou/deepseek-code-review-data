@@ -1,0 +1,68 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 312,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "權限設定在寫入前執行，導致檔案權限錯誤",
+    "body": "在 `write_and_make_executable` 函式中，先呼叫 `fs::set_permissions` 再呼叫 `fs::write`。若檔案不存在，`set_permissions` 會失敗；若檔案已存在，`write` 會覆蓋內容但保留先前設定的權限，可能導致權限不符合預期。應先寫入檔案再設定權限。",
+    "existing_code": "fs::set_permissions(path, fs::Permissions::from_mode(0o770)).map_err(FileWriteError::Permissions)?;\n  fs::write(path, data).map_err(FileWriteError::Write)?;",
+    "evidence": "diff 中顯示原本的順序是先 `fs::write` 再 `fs::set_permissions`，但修改後順序顛倒。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 238,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "linuxdeploy 下載 URL 使用錯誤的架構變數",
+    "body": "原本使用 `linuxdeploy_arch`（i686 對應 i383），但修改後改為 `arch`。若 `arch` 為 i686，則會下載不存在的 i686 版本，導致下載失敗。應保留 `linuxdeploy_arch`。",
+    "existing_code": "let data = download(&format!(\"https://github.com/tauri-apps/binary-releases/releases/download/linuxdeploy/linuxdeploy-{arch}.AppImage\"))?;",
+    "evidence": "diff 中將 `{linuxdeploy_arch}` 改為 `{arch}`，但 `linuxdeploy_arch` 的定義是為了解決 i686 架構名稱不一致的問題。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gstreamer.sh",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "helpers_target_dir 路徑可能錯誤",
+    "body": "`helpers_target_dir` 設定為 `$APPDIR/usr/lib/gstreamer$GSTREAMER_VERSION/gstreamer-$GSTREAMER_VERSION`，但後續的 AppRun hook 中使用的路徑是 `$APPDIR/usr/lib/gstreamer1.0/gstreamer-1.0`。若 `GSTREAMER_VERSION` 不是 1.0，路徑會不一致。建議確認版本變數的使用。",
+    "existing_code": "helpers_target_dir=\"$APPDIR\"/usr/lib/gstreamer\"$GSTREAMER_VERSION\"/gstreamer-\"$GSTREAMER_VERSION\"",
+    "evidence": "diff 中該行定義了 helpers_target_dir，而後續 hook 中硬編碼了 1.0 路徑。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/mod.rs",
+    "line": 243,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "gtk 外掛腳本存在時仍會覆寫",
+    "body": "原本邏輯是當 `gtk` 檔案不存在時才下載，但修改後變成當檔案存在時才寫入內嵌腳本。這會導致已存在的檔案被覆寫，可能不是預期行為。應改為 `if !gtk.exists()`。",
+    "existing_code": "if gtk.exists() {\n    let data = include_bytes!(\"./linuxdeploy-plugin-gtk.sh\");\n    write_and_make_executable(&gtk, data)?;\n  }",
+    "evidence": "diff 中條件從 `!gtk.exists()` 改為 `gtk.exists()`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 326,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "使用 sed 對二進位檔案進行替換可能損壞檔案",
+    "body": "最後一行使用 `sed -i` 對 `libwebkit*` 檔案進行路徑替換，但這些是二進位檔案，直接使用 sed 可能破壞檔案內容。應使用 `patchelf` 或類似工具處理。",
+    "existing_code": "find \"$APPDIR\"/usr/lib* -name 'libwebkit*' -exec sed -i -e \"s|/usr|././|g\" '{}' \\;",
+    "evidence": "diff 中新增了此行，對二進位檔案使用 sed 是危險的。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/linux/appimage/linuxdeploy-plugin-gtk.sh",
+    "line": 320,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "gio_extras_dir 可能為空導致匯出錯誤",
+    "body": "`gio_extras_dir` 由 `find` 取得，若找不到 `libgiognutls.so`，變數會是空字串，後續的 `export GIO_EXTRA_MODULES` 會設定錯誤路徑。建議加入檢查。",
+    "existing_code": "gio_extras_dir=$(find \"$APPDIR\"/usr/lib* -name libgiognutls.so -exec dirname '{}' \\; 2>/dev/null)",
+    "evidence": "diff 中新增此行，未處理空值情況。"
+  }
+]

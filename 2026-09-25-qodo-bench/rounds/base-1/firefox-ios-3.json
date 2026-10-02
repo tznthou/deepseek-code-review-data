@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Client/Coordinators/Launch/LaunchCoordinator.swift",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "將 onActionTap 閉包內容包在 Task 中可能改變執行順序與錯誤處理",
+    "body": "原本 onActionTap 閉包直接呼叫 onboardingService.handleAction，現在改為在 Task 中執行。這會使得 handleAction 的執行變成非同步，可能導致呼叫端預期的同步行為失效。例如，若 handleAction 內部有需要立即完成的狀態更新，或 completion 需要在特定時序被呼叫，延遲可能造成 UI 不一致。此外，Task 中未處理可能的錯誤（如 handleAction 拋錯），可能導致錯誤被吞掉。建議確認 handleAction 是否為非同步設計，或考慮使用 Task { @MainActor in ... } 並明確處理錯誤。",
+    "existing_code": "Task {\n    onboardingService.handleAction(\n        action,\n        from: cardName,\n        cards: onboardingModel.cards,\n        with: activityEventHelper,\n        completion: completion\n    )\n}",
+    "evidence": "diff 中顯示原本直接呼叫的程式碼被包進 Task { } 區塊，且未見錯誤處理。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/Extensions/BrowserViewController+WebViewDelegates.swift",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "spamCallback 參數新增 @Sendable 可能造成不必要的限制",
+    "body": "spamCallback 被標註為 @Sendable，但此閉包僅在 MainActor 上使用，且未跨執行緒傳遞。加上 @Sendable 可能導致呼叫端必須傳入符合 Sendable 的閉包，增加不必要的限制。建議確認是否有跨執行緒需求，若無則移除 @Sendable。",
+    "existing_code": "spamCallback: @escaping @MainActor @Sendable () -> Void",
+    "evidence": "diff 中將原本的 @escaping () -> Void 改為 @escaping @MainActor @Sendable () -> Void，但此閉包僅在 handleJavaScriptAlert 內部使用，未見跨執行緒傳遞。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift",
+    "line": 192,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "移除 UX.buttonSize 常數改為魔法數字 40",
+    "body": "原本使用 UX.buttonSize 常數，現在直接寫死為 40。這降低了可讀性與可維護性，若未來需要調整按鈕大小，需修改多處。建議保留常數或使用有意義的名稱。",
+    "existing_code": "closeButton.heightAnchor.constraint(equalToConstant: 40),\ncloseButton.widthAnchor.constraint(equalToConstant: 40),",
+    "evidence": "diff 中刪除了 struct UX 中的 buttonSize 常數，並將使用處改為直接寫 40。"
+  }
+]

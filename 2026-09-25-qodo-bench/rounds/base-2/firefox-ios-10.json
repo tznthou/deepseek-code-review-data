@@ -1,0 +1,46 @@
+[
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 27,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 expectation 可能導致測試提前結束",
+    "body": "在 `testDownloadingSVGImage_withKingfisherProcessor_forStandardSVGCase` 中，原本使用 `expectation` 等待非同步下載完成，但現在移除了 `exp.fulfill()` 與 `await fulfillment`，且測試方法改為同步。這可能導致測試在非同步回呼執行前就結束，無法驗證下載結果，甚至可能造成測試通過但實際上未測試到任何內容。建議保留 expectation 或改用 async/await 等待非同步操作完成。",
+    "existing_code": "siteDownloader.downloadImage(with: mockedURL, options: [.processor(SVGImageProcessor())]) { result in\n    switch result {\n    case .success(let result):\n        XCTAssertEqual(result.originalData, imageData)\n        XCTAssertEqual(result.url, mockedURL)\n        XCTAssertEqual(result.image.size, expectedRasterSize)\n    case .failure(let error):\n        XCTFail(\"Should not have an error: \\(error) \\(error.errorDescription ?? \"\")\")\n    }\n}",
+    "evidence": "diff 中移除了 `let exp = expectation(description: \"Image download and parse\")`、`exp.fulfill()` 與 `await fulfillment(of: [exp], timeout: 2.0)`，且方法簽名從 `async` 改為同步。"
+  },
+  {
+    "path": "BrowserKit/Tests/SiteImageViewTests/SVGImageProcessorTests.swift",
+    "line": 208,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 @MainActor 可能導致 GCDWebServer 初始化崩潰",
+    "body": "原本 `startMockImageServer` 標註為 `@MainActor`，並有註解說明 GCDWebServer 必須在主執行緒初始化。移除後，若測試在背景執行緒呼叫此方法，可能導致崩潰或未定義行為。建議保留 @MainActor 或確保呼叫端在主執行緒執行。",
+    "existing_code": "func startMockImageServer(imageData: Data, forAssetType assetType: AssetType) throws -> URL {",
+    "evidence": "diff 中移除了 `@MainActor` 屬性與相關註解。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 expectation 可能導致測試提前結束",
+    "body": "在 `testRequestMediaCaptureSuccess` 中，原本使用 expectation 等待 decision handler 被呼叫，但現在移除了 `expectation.fulfill()` 與 `wait(for:)`。這可能導致測試在 handler 執行前就結束，無法驗證決策結果。建議保留 expectation 或改用 async/await。",
+    "existing_code": "let decisionHandler: @Sendable (WKPermissionDecision) -> Void = { (decision: WKPermissionDecision) in\n    XCTAssertEqual(decision, .prompt)\n}",
+    "evidence": "diff 中移除了 `let expectation = expectation(description: \"Wait for the decision handler to be called\")`、`expectation.fulfill()` 與 `wait(for: [expectation])`。"
+  },
+  {
+    "path": "BrowserKit/Sources/ExecutableContentBlockingGenerator/MainContentBlockerGenerator.swift",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "nonisolated(unsafe) 可能隱藏執行緒安全問題",
+    "body": "使用 `nonisolated(unsafe)` 標註靜態屬性，表示開發者已確認其執行緒安全性，但若 `ContentBlockerGenerator` 並非執行緒安全，可能導致資料競爭。建議確認該類別的執行緒安全性，或改用其他同步機制。",
+    "existing_code": "nonisolated(unsafe) static let generator = ContentBlockerGenerator.factory()",
+    "evidence": "diff 中新增了 `nonisolated(unsafe)` 修飾詞。"
+  }
+]

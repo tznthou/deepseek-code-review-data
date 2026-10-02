@@ -1,0 +1,13 @@
+[
+  {
+    "path": "crates/tauri-utils/src/config/parse.rs",
+    "line": 387,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "TOML 解析錯誤被錯誤地回報為 JSON 格式錯誤",
+    "body": "在 `do_parse_toml` 中，原本將 `toml::from_str` 的錯誤包裝為 `ConfigError::FormatToml`，但升級後改為 `ConfigError::FormatJson`，並將錯誤轉為 `serde_json::Error`。這會導致 TOML 解析失敗時，使用者看到「JSON 格式錯誤」的訊息，造成混淆。此外，若其他程式碼依賴 `ConfigError::FormatToml` 來處理 TOML 錯誤，此變更會破壞其邏輯。建議保留 `FormatToml` 變體，或新增專屬的 TOML 錯誤變體，並正確傳遞原始錯誤。",
+    "existing_code": "::toml::from_str(raw).map_err(|error| ConfigError::FormatJson {\n    path: path.into(),\n    error: serde_json::Error::custom(error.to_string()),\n  })",
+    "evidence": "diff 中顯示原本的 `ConfigError::FormatToml` 被改為 `ConfigError::FormatJson`，且錯誤被轉為 `serde_json::Error`。"
+  }
+]

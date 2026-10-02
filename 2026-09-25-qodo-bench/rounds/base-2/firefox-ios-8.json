@@ -1,0 +1,112 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DependencyInjection/DependencyHelperMock.swift",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "bootstrapDependencies 標記 @MainActor 但未標記 async，呼叫端需 await",
+    "body": "`bootstrapDependencies` 被標記為 `@MainActor`，但未標記為 `async`。在 Swift 中，從非 async 上下文呼叫 @MainActor 方法需要 await，但從 async 上下文呼叫則不需要。然而，此方法內部有同步的 MainActor 隔離操作，若從非 MainActor 執行緒呼叫會導致執行緒不安全。建議將方法標記為 `async`，或確保所有呼叫端都在 MainActor 上。",
+    "existing_code": "@MainActor\n    func bootstrapDependencies(",
+    "evidence": "diff 中新增 @MainActor 屬性，但方法簽名未加 async。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/Launch/LaunchTypeTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "非 @MainActor 類別中呼叫 @MainActor 方法可能導致編譯錯誤",
+    "body": "`LaunchTypeTests` 類別未標記 `@MainActor`，但其 `setUp` 方法中呼叫了 `await DependencyHelperMock().bootstrapDependencies()`，而 `bootstrapDependencies` 已標記為 `@MainActor`。在 Swift 6 嚴格並發檢查下，這可能導致編譯錯誤或執行緒不安全。建議將測試類別標記為 `@MainActor`，或確保呼叫發生在 MainActor 上。",
+    "existing_code": "await DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 LaunchTypeTests.swift 的 setUp 改為 async 並呼叫 await DependencyHelperMock().bootstrapDependencies()，但類別宣告 `final class LaunchTypeTests: XCTestCase` 沒有 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/Launch/LaunchTypeTests.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中呼叫 @MainActor 方法但類別未標記 @MainActor",
+    "body": "`tearDown` 中呼叫 `DependencyHelperMock().reset()`，該方法可能也是 @MainActor（需確認），但類別未標記 @MainActor，可能導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但類別未標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "非 @MainActor 類別中呼叫 @MainActor 方法可能導致編譯錯誤",
+    "body": "`LaunchScreenViewModelTests` 類別未標記 `@MainActor`，但其 `setUp` 方法中呼叫了 `DependencyHelperMock().bootstrapDependencies()`（未加 await，但方法已改為 async @MainActor），可能導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws，但呼叫 bootstrapDependencies 未加 await，且類別未標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/Coordinators/LaunchView/LaunchScreenViewModelTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中呼叫 @MainActor 方法但類別未標記 @MainActor",
+    "body": "`tearDown` 中呼叫 `AppContainer.shared.reset()`，該方法可能也是 @MainActor，但類別未標記 @MainActor，可能導致編譯錯誤。",
+    "existing_code": "AppContainer.shared.reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但類別未標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CreditCard/CreditCardSettingsViewControllerTests.swift",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "非 @MainActor 類別中呼叫 @MainActor 方法可能導致編譯錯誤",
+    "body": "`CreditCardSettingsViewControllerTests` 類別未標記 `@MainActor`，但其 `setUp` 方法中呼叫了 `await DependencyHelperMock().bootstrapDependencies()`，可能導致編譯錯誤。",
+    "existing_code": "await DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws 並呼叫 await bootstrapDependencies，但類別未標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CreditCard/CreditCardSettingsViewControllerTests.swift",
+    "line": 23,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中呼叫 @MainActor 方法但類別未標記 @MainActor",
+    "body": "`tearDown` 中呼叫 `DependencyHelperMock().reset()`，該方法可能也是 @MainActor，但類別未標記 @MainActor，可能導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但類別未標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CustomSearchEnginesTest.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "非 @MainActor 類別中呼叫 @MainActor 方法可能導致編譯錯誤",
+    "body": "`CustomSearchEnginesTest` 類別未標記 `@MainActor`，但其 `setUp` 方法中呼叫了 `await DependencyHelperMock().bootstrapDependencies()`，可能導致編譯錯誤。",
+    "existing_code": "await DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws 並呼叫 await bootstrapDependencies，但類別未標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/CustomSearchEnginesTest.swift",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 中呼叫 @MainActor 方法但類別未標記 @MainActor",
+    "body": "`tearDown` 中呼叫 `AppContainer.shared.reset()`，該方法可能也是 @MainActor，但類別未標記 @MainActor，可能導致編譯錯誤。",
+    "existing_code": "AppContainer.shared.reset()",
+    "evidence": "diff 中 tearDown 改為 async throws，但類別未標記 @MainActor。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/ClientTests/DownloadProgressManagerTests.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "非 @MainActor 類別中呼叫 @MainActor 方法可能導致編譯錯誤",
+    "body": "`DownloadProgressManagerTests` 類別標記為 `@MainActor`，但其 `setUp` 方法中呼叫了 `DependencyHelperMock().bootstrapDependencies()`（未加 await），但方法已改為 async @MainActor，可能導致編譯錯誤。",
+    "existing_code": "DependencyHelperMock().bootstrapDependencies()",
+    "evidence": "diff 中 setUp 改為 async throws，但呼叫 bootstrapDependencies 未加 await，且類別已標記 @MainActor。"
+  }
+]

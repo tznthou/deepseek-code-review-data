@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri/src/webview/webview_window.rs",
+    "line": 1315,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "window_features 方法中 size 與 position 的設定順序對調",
+    "body": "原本的 with_window_features 先設定 position 再設定 size，新的 window_features 則先設定 size 再設定 position。雖然在大多數情況下順序不影響最終結果，但若 window_builder 的 position 或 inner_size 方法有相依性（例如某些平台會根據 size 調整 position），可能導致行為差異。建議確認此順序變更是否為預期，並考慮保持原有順序以降低風險。",
+    "existing_code": "pub fn window_features(mut self, features: NewWindowFeatures) -> Self {\n    if let Some(size) = features.size() {\n      self.window_builder = self.window_builder.inner_size(size.width,    size.height);\n    }\n\n    if let Some(position) = features.position() {\n      self.window_builder = self.window_builder.position(position.x,position.y);\n    }",
+    "evidence": "diff 顯示原本先處理 position 再處理 size，現在順序對調。"
+  },
+  {
+    "path": "examples/api/src-tauri/src/lib.rs",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "on_new_window 僅在桌面平台設定，可能導致其他平台行為不一致",
+    "body": "原本 on_new_window 在所有平台都會設定，現在被移入 #[cfg(all(desktop, not(test)))] 區塊。若此範例在非桌面平台（如行動裝置）執行，將不再攔截新視窗請求，可能導致預設行為（例如在系統瀏覽器中開啟）而非建立新視窗。若此為預期行為則可忽略，否則應考慮保留跨平台設定。",
+    "existing_code": "window_builder = window_builder\n          .title(\"Tauri API Validation\")\n          .inner_size(1000., 800.)\n          .min_inner_size(600., 400.)\n          .menu(tauri::menu::Menu::default(app.handle())?)\n          .on_new_window(move |url, features| {",
+    "evidence": "diff 顯示 on_new_window 的設定被移入 cfg 區塊內。"
+  }
+]

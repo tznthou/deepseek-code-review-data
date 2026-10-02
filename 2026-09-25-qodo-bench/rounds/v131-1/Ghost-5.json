@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/signup-form/src/components/pages/form-view.tsx",
+    "line": 56,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "email.trim() 可能導致驗證邏輯不一致",
+    "body": "在 submitHandler 中將 email 先 trim 再傳給 onSubmit，但上游的驗證（如 isValidEmail）可能是在未 trim 的狀態下進行。若使用者輸入前後有空白，驗證可能通過（例如 isValidEmail 自行 trim）或失敗（若未 trim），但最終送出的 email 已被 trim，可能造成行為不一致。建議確認 isValidEmail 的實作，並在驗證前統一 trim。",
+    "existing_code": "onSubmit({email: email.trim()});",
+    "evidence": "diff 中此行由 onSubmit({email}); 改為 onSubmit({email: email.trim()});，但未見對應的驗證邏輯調整。"
+  },
+  {
+    "path": "apps/signup-form/src/utils/helpers.tsx",
+    "line": 45,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "getUrlHistory 可能回傳 undefined，與宣告型別不符",
+    "body": "函式宣告回傳 URLHistory，但修改後直接回傳 getDefaultUrlHistory() 的結果，而該函式可能回傳 undefined（例如 sessionStorage 中無資料或 JSON 解析失敗）。這可能導致呼叫端在未檢查的情況下存取屬性而拋出錯誤。建議保留原本的條件判斷，或明確處理 undefined 的情況。",
+    "existing_code": "return history;",
+    "evidence": "diff 中移除了 if (history) { return history; } 的條件，直接回傳 history，但 getDefaultUrlHistory 的回傳型別可能包含 undefined。"
+  },
+  {
+    "path": "apps/signup-form/src/components/pages/form-page.tsx",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 minimal 模式下的 setLoading(false) 可能導致 UI 卡在載入狀態",
+    "body": "在 minimal 模式且訂閱成功時，原本會呼叫 setLoading(false) 來結束載入狀態，但此 PR 移除了該行。若後續沒有其他機制將 loading 設為 false，按鈕可能持續顯示載入中。需確認成功狀態是否會自動重置 loading，否則應保留此行。",
+    "existing_code": "setSuccess(true);",
+    "evidence": "diff 中刪除了 setLoading(false); 這一行，但未見其他設定 loading 為 false 的程式碼。"
+  }
+]

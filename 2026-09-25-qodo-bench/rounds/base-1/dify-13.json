@@ -1,0 +1,24 @@
+[
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "不必要的 print 陳述式",
+    "body": "新增的 `print(f\"Starting execution for node: {downstream_node_id}\")` 會將內部執行狀態輸出到 stdout，可能造成日誌污染或效能影響。建議移除或改用正式的 logging 機制。",
+    "existing_code": "print(f\"Starting execution for node: {downstream_node_id}\")",
+    "evidence": "diff 中新增的 print 陳述式，位於 propagate_skip_from_edge 方法內。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/graph_traversal/test_skip_propagator.py",
+    "line": 270,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中 mock 重置後未重新設定 side effect",
+    "body": "在 `test_propagate_skip_from_edge_with_mixed_edge_states_handles_correctly` 中，呼叫 `mock_graph.reset_mock()` 後，`mock_graph.edges` 屬性可能被重置，導致後續測試中 `propagate_skip_from_edge` 無法正確取得 edge 資訊。建議在重置後重新設定必要的屬性或使用獨立的 mock 物件。",
+    "existing_code": "mock_graph.reset_mock()",
+    "evidence": "diff 中測試方法內多次呼叫 reset_mock，但未重新設定 mock_graph.edges。"
+  }
+]

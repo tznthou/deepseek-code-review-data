@@ -1,0 +1,431 @@
+pair,label,note
+base-1:Ghost-1:1|Ghost-1#1,no,講 email 初始化順序，GT 是 slack.listen 被移除
+base-1:Ghost-1:1|Ghost-1#2,no,講 email 初始化順序，GT 是排程缺 apiUrl
+base-1:Ghost-1:1|Ghost-1#3,same,同指 emailAddressService 改並行破壞相依順序
+base-1:Ghost-1:2|Ghost-1#1,no,講排程缺 apiUrl，GT 是 slack.listen 被移除
+base-1:Ghost-1:2|Ghost-1#2,same,同指 scheduling.init 少傳 apiUrl
+base-1:Ghost-1:2|Ghost-1#3,no,講排程缺 apiUrl，GT 是 email 初始化順序
+base-1:Ghost-10:1|Ghost-10#0,same,同指 tsconfig 的 strict 被改成 false
+base-1:Ghost-10:2|Ghost-10#2,partial,同段輪詢，但講請求重疊與 ref 重設，非 off-by-one
+base-1:Ghost-10:3|Ghost-10#2,no,講達上限後自動停用，GT 是重試次數 off-by-one
+base-1:Ghost-10:4|Ghost-10#3,same,同指 confirm 後漏 invalidate accountFollows
+base-1:Ghost-11:3|Ghost-11#0,no,講 autoClose 行為，GT 是 var 宣告規則
+base-1:Ghost-11:3|Ghost-11#4,partial,同一行，但說會意外關閉；GT 是沒 setOpen(false) 關不掉
+base-1:Ghost-11:4|Ghost-11#2,no,講多選分支，GT 是單選路徑漏呼叫 handleClose
+base-1:Ghost-12:1|Ghost-12#2,same,同指 decode 取代 verify 略過簽章驗證
+base-1:Ghost-12:1|Ghost-12#3,no,講 decode 略過驗簽，GT 是移除 noTimestamp
+base-1:Ghost-12:2|Ghost-12#1,same,同指 _serverToken 改存整個物件而非字串
+base-1:Ghost-12:2|Ghost-12#4,same,同一根因：存物件；改存字串即修好 _isJWTExpired 型別錯
+base-1:Ghost-12:3|Ghost-12#2,no,講移除 noTimestamp，GT 是 decode 略過驗簽
+base-1:Ghost-12:3|Ghost-12#3,same,同指移除 noTimestamp 改變 token 格式
+base-1:Ghost-13:1|Ghost-13#1,same,同指版本字尾順序與後端相反
+base-1:Ghost-13:3|Ghost-13#2,same,同指 source 參數沒再傳給 Tinybird
+base-1:Ghost-2:1|Ghost-2#2,same,內文點出改用 expertise 而非 name，建議改回
+base-1:Ghost-2:2|Ghost-2#1,same,同指 openForm 少了 optional chaining
+base-1:Ghost-2:3|Ghost-2#3,same,同指 in_reply_to_id 改成 parent.id
+base-1:Ghost-3:1|Ghost-3#1,same,同指 < 改成 <= 納入今天，後果推論不同
+base-1:Ghost-3:3|Ghost-3#2,partial,同一高流量分支，但講 min 公式，非 400k 邊界 >=
+base-1:Ghost-3:3|Ghost-3#3,no,講高流量分支公式，GT 是門檻迴圈 < 應為 <=
+base-1:Ghost-4:1|Ghost-4#0,no,講 XSS，GT 是缺分號規則
+base-1:Ghost-4:1|Ghost-4#5,no,講 XSS，GT 是缺分號規則
+base-1:Ghost-4:2|Ghost-4#0,no,講 useEffect 依賴，GT 是缺分號規則
+base-1:Ghost-4:2|Ghost-4#1,same,同指 useEffect 依賴陣列缺 item.html
+base-1:Ghost-4:2|Ghost-4#5,no,講 useEffect 依賴，GT 是缺分號規則
+base-1:Ghost-5:1|Ghost-5#2,same,同指 minimal 模式拿掉 setLoading(false)
+base-1:Ghost-5:2|Ghost-5#0,no,講回傳 null，GT 是雙引號規則
+base-1:Ghost-5:2|Ghost-5#1,same,同指拿掉 if (history) 檢查致回傳空值
+base-1:Ghost-5:3|Ghost-5#3,same,同指 trim 只在送出，驗證用未 trim 的值
+base-1:Ghost-6:1|Ghost-6#1,same,同指 hasScheduled 條件反轉，首次不排程
+base-1:Ghost-6:2|Ghost-6#0,no,講 config 值未驗證，GT 是 var 宣告規則
+base-1:Ghost-6:2|Ghost-6#2,partial,同一行條件，但講 config 未驗證，沒抓到 || 應為 &&
+base-1:Ghost-6:3|Ghost-6#1,no,講 config 值未驗證，GT 是 hasScheduled 條件反轉
+base-1:Ghost-7:1|Ghost-7#0,same,finding 明講移除所有行尾分號
+base-1:Ghost-7:1|Ghost-7#1,no,講混入格式變更，GT 是 MagicLink require 路徑錯
+base-1:Ghost-7:2|Ghost-7#0,no,講路徑大小寫部署風險，GT 是缺分號規則
+base-1:Ghost-7:2|Ghost-7#1,no,泛談其他 require 大小寫風險，沒指出 MagicLink 未改名
+base-1:Ghost-8:1|Ghost-8#2,same,同指譯文漏掉 {newsletterName}
+base-1:Ghost-8:1|Ghost-8#6,no,同一行，但 GT 是縮排規則，與漏變數無關
+base-1:Ghost-8:3|Ghost-8#1,same,同指 Name 在 portal 與 ghost 譯法不一致
+base-1:Ghost-9:1|Ghost-9#0,no,講回傳 Infinity，GT 是缺分號規則
+base-1:Ghost-9:1|Ghost-9#1,no,講回傳 Infinity，GT 是 ceil 算天數
+base-1:Ghost-9:1|Ghost-9#2,partial,同一行，但講回傳 Infinity，沒抓到 > 應為 >=
+base-1:Ghost-9:1|Ghost-9#3,no,講回傳 Infinity，GT 是 floor 應為 round
+base-1:Ghost-9:2|Ghost-9#0,no,講 Date.now 測試不穩，GT 是缺分號規則
+base-1:Ghost-9:2|Ghost-9#1,partial,同一行天數計算，但講時鐘注入，非 ceil 應為 floor
+base-1:Ghost-9:2|Ghost-9#2,no,講 Date.now 測試不穩，GT 是完成判斷 off-by-one
+base-1:Ghost-9:2|Ghost-9#3,no,講 Date.now 測試不穩，GT 是 floor 應為 round
+base-1:Ghost-9:3|Ghost-9#0,no,講 NQL 過濾條件，GT 是缺分號規則
+base-1:Ghost-9:3|Ghost-9#1,no,講查詢過濾條件，GT 是 ceil 取整多算一天
+base-1:Ghost-9:3|Ghost-9#2,no,講查詢過濾條件，GT 是 > 應為 >=
+base-1:Ghost-9:4|Ghost-9#0,no,講 created_at 為 null，GT 是缺分號規則
+base-1:Ghost-9:4|Ghost-9#1,partial,同一行天數計算，但講 null 產生 NaN，非 ceil 取整
+base-1:Ghost-9:4|Ghost-9#2,no,講 created_at 為 null，GT 是 > 應為 >=
+base-1:Ghost-9:4|Ghost-9#3,no,講 created_at 為 null，GT 是 floor 應為 round
+base-1:aspnetcore-1:1|aspnetcore-1#2,same,同指 Forward() 應為 Back()
+base-1:aspnetcore-1:2|aspnetcore-1#0,no,講 SetSwitch 值，GT 是 MSTest 屬性規則
+base-1:aspnetcore-1:2|aspnetcore-1#3,same,同指 switch 改 true 使測試失去意義
+base-1:aspnetcore-1:2|aspnetcore-1#6,no,講 SetSwitch 值，GT 是 QuarantinedTest 屬性規則
+base-1:aspnetcore-10:1|aspnetcore-10#2,same,同指 < 0 放行 0，違反 positive 契約
+base-1:aspnetcore-10:2|aspnetcore-10#1,same,同指 <= 0 拒絕 0，與 non-negative 矛盾
+base-1:aspnetcore-10:3|aspnetcore-10#3,same,同指 null 賦值移到開頭，還原即修；finding 把影響講輕
+base-1:aspnetcore-10:4|aspnetcore-10#0,partial,看到大括號位置改變，但判定只是格式、無問題
+base-1:aspnetcore-10:4|aspnetcore-10#3,no,講另一方法的格式，GT 是 out 參數提早賦 null
+base-1:aspnetcore-2:2|aspnetcore-2#3,same,同指 TCS 在零位元組檢查前就重建
+base-1:aspnetcore-2:3|aspnetcore-2#1,partial,同一斷言，但當成可讀性問題，沒指出 && 應為 ||
+base-1:aspnetcore-2:3|aspnetcore-2#4,no,講斷言寫法，GT 是缺 AAA 註解規則
+base-1:aspnetcore-3:1|aspnetcore-3#1,partial,同一行比較，但講尾端分隔符，非大小寫不敏感
+base-1:aspnetcore-3:1|aspnetcore-3#2,no,症狀相同但根因是尾端分隔符，GT 是誤用 prettyCertDir
+base-1:aspnetcore-3:1|aspnetcore-3#4,no,講路徑比較，GT 是 lambda 大括號風格
+base-1:aspnetcore-3:3|aspnetcore-3#3,same,同指非 verbose 設 LogAlways 導致輸出過多
+base-1:aspnetcore-3:4|aspnetcore-3#0,same,同指 NssDb 改回傳統建構子而非 primary
+base-1:aspnetcore-4:1|aspnetcore-4#0,no,講顯示名稱不更新，GT 是 namespace 風格規則
+base-1:aspnetcore-4:1|aspnetcore-4#1,partial,同一段，但說更新不足；GT 說多餘重繪，方向相反
+base-1:aspnetcore-4:2|aspnetcore-4#2,no,講 hot reload 沒清快取，GT 是查詢時不再用快取
+base-1:aspnetcore-4:2|aspnetcore-4#3,same,同指 ClearCache 沒清 _displayNameCache
+base-1:aspnetcore-4:3|aspnetcore-4#2,no,講例外訊息不明確，GT 是拿掉顯示名稱快取
+base-1:aspnetcore-5:1|aspnetcore-5#3,same,同指斷言誤用 GenericComponent<string>
+base-1:aspnetcore-5:1|aspnetcore-5#7,no,講泛型型別不一致，GT 是缺 Async 字尾規則
+base-1:aspnetcore-5:2|aspnetcore-5#0,same,同指改成 block-scoped namespace
+base-1:aspnetcore-6:1|aspnetcore-6#2,same,同指拿掉 InteractiveRequestUrl 的 null 檢查
+base-1:aspnetcore-6:2|aspnetcore-6#0,partial,同行 Task.Yield，講時序；GT 是缺 ConfigureAwait
+base-1:aspnetcore-6:2|aspnetcore-6#1,no,講 Task.Yield 時序，GT 是登出驗證拿掉 null 檢查
+base-1:aspnetcore-7:1|aspnetcore-7#0,no,講全域初始化旗標，GT 是 for 迴圈缺大括號
+base-1:aspnetcore-7:1|aspnetcore-7#1,no,講全域初始化旗標，GT 是 renderer 判斷寫反
+base-1:aspnetcore-7:1|aspnetcore-7#2,no,講全域初始化旗標，GT 是漏更新 parameters
+base-1:aspnetcore-7:2|aspnetcore-7#1,partial,看到不同 renderer 會覆寫 manager，沒指出條件寫反
+base-1:aspnetcore-7:2|aspnetcore-7#2,no,同區塊但講舊 manager 未處理，GT 是漏更新 parameters
+base-1:aspnetcore-8:1|aspnetcore-8#1,same,同指 remarks 寫進 Summary 而非 Description
+base-1:aspnetcore-8:2|aspnetcore-8#2,same,同指用 propertyName 取代 metadata.Name
+base-1:aspnetcore-8:2|aspnetcore-8#3,no,講參數名比對，GT 是 Description 設定順序
+base-1:aspnetcore-8:3|aspnetcore-8#2,no,講 Description 設定順序，GT 是參數名比對
+base-1:aspnetcore-8:3|aspnetcore-8#3,same,同指 Description 移到範例處理後可能漏設
+base-1:aspnetcore-9:1|aspnetcore-9#2,no,講停用基線驗證，GT 是 servicing 缺 branding 標籤
+base-1:cal.com-1:1|cal.com-1#2,no,講 undefined 轉型，GT 是子團隊缺 parentId 條件
+base-1:cal.com-1:2|cal.com-1#2,same,同指子團隊條件漏 child.parentId
+base-1:cal.com-1:3|cal.com-1#2,no,講 null 處理，GT 是子團隊缺 parentId 條件
+base-1:cal.com-1:5|cal.com-1#3,same,同指 isCurrentUser 改 includes 造成權限繞過
+base-1:cal.com-10:1|cal.com-10#1,same,同指單筆接受時 oldStatus 寫死 ACCEPTED
+base-1:cal.com-10:4|cal.com-10#0,no,講 schema 相容性，GT 是行寬超過 110
+base-1:cal.com-10:5|cal.com-10#3,no,講 oldStatus 來源，GT 是事件早於 DB 更新
+base-1:cal.com-11:1|cal.com-11#3,same,同一行 ?? true 預設值錯誤；改 false 即修好
+base-1:cal.com-11:2|cal.com-11#0,partial,同行 process.env；finding 談撞名；GT 要改注入
+base-1:cal.com-11:4|cal.com-11#1,same,同指取消座位時 requestReschedule 硬編 true
+base-1:cal.com-12:1|cal.com-12#2,same,同指渲染 teamMembers 而非 filteredMembers
+base-1:cal.com-12:3|cal.com-12#1,no,finding 談 teamId 為 0；GT 是雙層包裝
+base-1:cal.com-12:4|cal.com-12#5,same,同指檔尾缺換行
+base-1:cal.com-13:2|cal.com-13#3,same,同指每次呼叫都建新容器
+base-1:cal.com-13:2|cal.com-13#4,no,GT 是行長超限；finding 談每次建容器
+base-1:cal.com-13:3|cal.com-13#1,same,同指每次呼叫都建新容器
+base-1:cal.com-13:3|cal.com-13#5,no,GT 是行長超限；finding 談每次建容器
+base-1:cal.com-13:4|cal.com-13#2,same,同指 moduleLoader.token 與綁定 token 不一致
+base-1:cal.com-14:1|cal.com-14#3,same,同指 globalEnabled 過濾條件反轉
+base-1:cal.com-14:2|cal.com-14#0,same,同指未使用的 UNUSED_CONSTANT
+base-1:cal.com-15:1|cal.com-15#1,same,同指 Slot.userIds 改成 string[]
+base-1:cal.com-15:2|cal.com-15#0,partial,同函式；finding 談驗證不足；GT 談放錯檔案
+base-1:cal.com-15:2|cal.com-15#3,no,GT 是 days 型別錯；finding 談驗證不足
+base-1:cal.com-15:2|cal.com-15#4,same,同指手寫驗證不足、應改回 zod
+base-1:cal.com-15:2|cal.com-15#6,no,GT 是單引號格式；finding 談驗證不足
+base-1:cal.com-15:2|cal.com-15#7,no,GT 是泛用 Error；finding 談驗證不足
+base-1:cal.com-15:4|cal.com-15#0,no,finding 談 Schedule 缺欄位；GT 是驗證放錯檔
+base-1:cal.com-15:4|cal.com-15#3,no,finding 談 Schedule 缺欄位；GT 是 days 型別錯
+base-1:cal.com-15:4|cal.com-15#4,no,finding 談 Schedule 缺欄位；GT 是 zod 被取代
+base-1:cal.com-15:4|cal.com-15#6,no,finding 談 Schedule 缺欄位；GT 是單引號
+base-1:cal.com-15:4|cal.com-15#7,no,finding 談 Schedule 缺欄位；GT 是泛用 Error
+base-1:cal.com-16:1|cal.com-16#1,no,finding 談缺 await；GT 是權限用 WRITE
+base-1:cal.com-16:1|cal.com-16#2,same,同指 getRecordings 缺 await
+base-1:cal.com-16:1|cal.com-16#3,no,finding 談缺 await；GT 是 guard 順序錯
+base-1:cal.com-16:2|cal.com-16#1,same,同指錄音端點應用 BOOKING_READ
+base-1:cal.com-16:2|cal.com-16#3,no,finding 談權限等級；GT 是 guard 順序錯
+base-1:cal.com-16:3|cal.com-16#1,no,finding 談 guard 順序；GT 是權限用 WRITE
+base-1:cal.com-16:3|cal.com-16#3,same,同指 guard 順序；移前 ApiAuthGuard 即修；低估嚴重度
+base-1:cal.com-2:1|cal.com-2#1,same,同指 accepted 條件寫反
+base-1:cal.com-2:2|cal.com-2#2,same,同指 && 被改成 ||
+base-1:cal.com-3:1|cal.com-3#2,same,同指 updateMany 未回傳 count
+base-1:cal.com-3:2|cal.com-3#3,same,同指 userSelect 移除 locale
+base-1:cal.com-3:3|cal.com-3#1,no,finding 談回傳值未檢查；GT 是時間門檻不一致
+base-1:cal.com-3:4|cal.com-3#1,partial,指到同一查詢條件但講時區；GT 是門檻不一致
+base-1:cal.com-3:5|cal.com-3#1,no,finding 談 where 改用 uid；GT 是日期門檻
+base-1:cal.com-3:6|cal.com-3#2,no,finding 談 update 未用 select；GT 是未回傳
+base-1:cal.com-4:1|cal.com-4#4,no,GT 是檔名命名違規；finding 談 email 正則
+base-1:cal.com-4:2|cal.com-4#1,same,同指 map 直接傳方法致 this 遺失
+base-1:cal.com-4:2|cal.com-4#5,no,GT 是行長超限；finding 談 this 綁定
+base-1:cal.com-4:3|cal.com-4#2,same,同指排序邏輯被移除
+base-1:cal.com-4:4|cal.com-4#6,same,同指 openapi.json 的 required 縮排被移除
+base-1:cal.com-5:1|cal.com-5#2,partial,同段前綴組字；finding 談埠號；GT 是多了協定
+base-1:cal.com-5:3|cal.com-5#3,same,同指複製連結未用 bookingUrl
+base-1:cal.com-6:1|cal.com-6#2,no,finding 談回傳 identifier；GT 是條件反轉
+base-1:cal.com-6:1|cal.com-6#3,same,同指回傳 identifier 而非真 token
+base-1:cal.com-6:2|cal.com-6#2,same,同指 buildInviteLink 條件反轉
+base-1:cal.com-6:2|cal.com-6#3,no,finding 談條件反轉；GT 是回傳 identifier
+base-1:cal.com-6:3|cal.com-6#1,partial,同一 @Roles 行；finding 談跨團隊；GT 要 admin
+base-1:cal.com-6:4|cal.com-6#6,no,GT 是測試行長超限；finding 談 token 斷言
+base-1:cal.com-7:1|cal.com-7#2,partial,同段過濾條件；finding 談誤排；GT 是 length 判斷
+base-1:cal.com-8:1|cal.com-8#1,no,finding 談 hover 閃爍；GT 是隱藏項目缺 onClick
+base-1:cal.com-8:1|cal.com-8#3,no,GT 是 index 未使用；finding 談 hover 閃爍
+base-1:cal.com-8:1|cal.com-8#4,no,GT 是 index 未使用；finding 談 hover 閃爍
+base-1:cal.com-8:2|cal.com-8#1,partial,同一 span；finding 談鍵盤操作；GT 是缺 onClick
+base-1:cal.com-8:2|cal.com-8#3,no,GT 是 index 未使用；finding 談鍵盤無障礙
+base-1:cal.com-8:2|cal.com-8#4,no,GT 是 index 未使用；finding 談鍵盤無障礙
+base-1:cal.com-8:3|cal.com-8#2,partial,同一行 weight 串接；finding 談可讀性；GT 是尾端空白
+base-1:cal.com-8:4|cal.com-8#1,no,finding 談 key 重複；GT 是隱藏項目缺 onClick
+base-1:cal.com-8:4|cal.com-8#3,partial,finding 建議 index 當 key；GT 是 index 未用
+base-1:cal.com-8:4|cal.com-8#4,partial,涵蓋 hiddenItems 建議用 index；GT 是 index 未用
+base-1:cal.com-8:5|cal.com-8#1,no,finding 談 Badge 的 onClick；GT 是隱藏項目缺
+base-1:cal.com-8:5|cal.com-8#3,no,GT 是 index 未使用；finding 談 Badge onClick
+base-1:cal.com-8:5|cal.com-8#4,no,GT 是 index 未使用；finding 談 Badge onClick
+base-1:cal.com-9:1|cal.com-9#2,same,同指權重相等時 priority 比較反轉
+base-1:dify-1:1|dify-1#0,partial,同行型別提示；finding 要 Iterable；GT 要新語法
+base-1:dify-1:1|dify-1#1,partial,同函式型別；finding 談參數太嚴；GT 是未轉 tuple
+base-1:dify-1:2|dify-1#3,no,finding 談 chunk 斷言太嚴；GT 是 selector 比較
+base-1:dify-10:1|dify-10#2,same,同指驗證失敗塞 None 違反回傳型別
+base-1:dify-10:1|dify-10#4,no,GT 是泛用 Exception；finding 談回傳 None
+base-1:dify-10:2|dify-10#1,no,同段但 finding 談 Redis 故障；GT 是迭代錯字典
+base-1:dify-10:2|dify-10#3,no,GT 是 log 筆數錯；finding 談 Redis 故障
+base-1:dify-11:1|dify-11#3,same,同指 content 誤用 tool_inputs
+base-1:dify-11:1|dify-11#4,no,GT 是 broad except；finding 談誤用 inputs
+base-1:dify-11:1|dify-11#5,no,GT 是 broad except；finding 談誤用 inputs
+base-1:dify-11:3|dify-11#0,partial,抓到 v1 語法但建議 allow；GT 要 forbid
+base-1:dify-12:2|dify-12#1,same,同指 notlike 未帶 escape 參數
+base-1:dify-12:3|dify-12#2,same,同指 ESCAPE 字元與反斜線跳脫不一致
+base-1:dify-13:1|dify-13#0,same,同指正式程式碼留有 print
+base-1:dify-13:1|dify-13#1,no,GT 是執行早於 enqueue；finding 談 print
+base-1:dify-2:1|dify-2#0,same,同指 return True 未定義
+base-1:dify-2:1|dify-2#1,no,GT 是未正規化就存；finding 談 return True
+base-1:dify-2:2|dify-2#3,partial,同一驗證條件；finding 談物件跳過；GT 要驗正規化值
+base-1:dify-3:1|dify-3#1,same,同指 None 可通過檢查被回傳
+base-1:dify-4:1|dify-4#0,same,同指 Session 未用 context manager
+base-1:dify-4:1|dify-4#4,no,GT 是缺 tenant_id；finding 談 Session 未關
+base-1:dify-4:2|dify-4#1,same,同指 flush 在迴圈內；應移到迴圈外
+base-1:dify-4:2|dify-4#3,no,同段但 GT 是例外被吞；finding 談 flush 位置
+base-1:dify-4:4|dify-4#1,no,finding 談 selector 驗證；GT 是 flush 在迴圈內
+base-1:dify-4:4|dify-4#3,no,finding 談 selector 驗證；GT 是例外被吞
+base-1:dify-5:1|dify-5#0,same,同指正式程式碼留有 console.log
+base-1:dify-5:2|dify-5#1,same,同指 max_length 缺 undefined 檢查
+base-1:dify-5:2|dify-5#4,same,同指 max_length 可能 undefined 需先檢查
+base-1:dify-5:3|dify-5#3,same,同指數字輸入框被改成 type=text
+base-1:dify-6:1|dify-6#0,no,GT 是三元選類別可讀性；finding 談 local_hostname
+base-1:dify-6:1|dify-6#1,no,GT 是 ehlo 應用 self.server；finding 談建構子
+base-1:dify-6:1|dify-6#2,partial,同談空字串 vs None；finding 錨在已有 or None 行
+base-1:dify-6:1|dify-6#3,partial,同一行 or None；finding 要轉 None；GT 要移除
+base-1:dify-6:2|dify-6#0,no,GT 是三元選類別可讀性；finding 談 assert
+base-1:dify-6:2|dify-6#1,no,GT 是 ehlo 參數錯；finding 談 assert
+base-1:dify-6:2|dify-6#3,no,GT 是多餘的 or None；finding 談 assert
+base-1:dify-7:1|dify-7#1,partial,finding 順帶提 defaultNs；GT 是未傳 defaultNs
+base-1:dify-7:1|dify-7#2,partial,同一 ns 計算；finding 談預設 ns；GT 是查找順序
+base-1:dify-7:1|dify-7#3,no,GT 是缺 returnObjects；finding 談預設 ns
+base-1:dify-7:2|dify-7#1,no,GT 未傳 defaultNs；finding 談 returnObjects
+base-1:dify-7:2|dify-7#2,no,GT 是查找順序；finding 談 returnObjects
+base-1:dify-7:2|dify-7#3,same,同指 createTFunction 未支援 returnObjects
+base-1:dify-8:1|dify-8#0,no,GT 是載入文字硬編碼未走 i18n，finding 講錯誤處理
+base-1:dify-8:1|dify-8#4,same,同指 console.error 該移除，理由雖是洩漏資訊但修法一致
+base-1:dify-8:2|dify-8#4,no,finding 反而建議加 console.error，與 GT 相反
+base-1:dify-9:1|dify-9#2,same,同指移除否定運算子導致搜尋模式判斷反轉
+base-1:dify-9:2|dify-9#1,partial,同一行 key 改動，但 finding 講舊連結失效非 tab 衝突
+base-1:dify-9:2|dify-9#2,no,finding 講 query key 改名，GT 是搜尋模式邏輯反轉
+base-1:dify-9:3|dify-9#0,same,同指 selector 參數改成 any 失去型別
+base-1:firefox-ios-1:1|firefox-ios-1#2,same,同指 comment 的 %1$@ 與 value 的 %@ 不一致
+base-1:firefox-ios-1:2|firefox-ios-1#0,no,finding 講類別未被使用，GT 是缺 @MainActor
+base-1:firefox-ios-1:2|firefox-ios-1#1,no,finding 講類別未使用，GT 是引用了舊版字串常數
+base-1:firefox-ios-1:2|firefox-ios-1#4,no,finding 講類別未使用，GT 是缺 final
+base-1:firefox-ios-1:2|firefox-ios-1#5,no,finding 講類別未使用，GT 是缺明確存取控制
+base-1:firefox-ios-1:2|firefox-ios-1#6,no,finding 講類別未使用，GT 是應標 final
+base-1:firefox-ios-10:1|firefox-ios-10#1,same,同指移除 expectation 後測試不等非同步回呼
+base-1:firefox-ios-10:2|firefox-ios-10#3,same,同指移除 expectation 後斷言不會被驗證
+base-1:firefox-ios-10:4|firefox-ios-10#0,no,GT 是缺 MPL 授權標頭，finding 講 nonisolated
+base-1:firefox-ios-10:4|firefox-ios-10#4,same,同指非執行緒安全物件標 nonisolated(unsafe)
+base-1:firefox-ios-10:4|firefox-ios-10#5,no,同一行但 GT 是缺存取修飾字，finding 講執行緒安全
+base-1:firefox-ios-11:1|firefox-ios-11#2,same,同指 stacks 誤重複 browserActionStack
+base-1:firefox-ios-11:2|firefox-ios-11#3,same,同指 leading 約束誤接右側 skeleton bar
+base-1:firefox-ios-11:3|firefox-ios-11#1,same,同指 divider 判斷誤用 leading stack
+base-1:firefox-ios-11:4|firefox-ios-11#0,partial,同一行，finding 講 API 已棄用而非缺 protocol 抽象
+base-1:firefox-ios-11:4|firefox-ios-11#4,no,同一行但 GT 是變數未使用，finding 講 API 棄用
+base-1:firefox-ios-12:1|firefox-ios-12#3,same,同指 fulfill 移出 decisionHandler，修法同為移回
+base-1:firefox-ios-12:1|firefox-ios-12#4,no,GT 是 URL 強制解包，finding 講 expectation 用法
+base-1:firefox-ios-12:1|firefox-ios-12#5,no,GT 是另一處 URL 強制解包，finding 講 expectation
+base-1:firefox-ios-12:1|firefox-ios-12#6,no,GT 是第三處 URL 強制解包，finding 講 expectation
+base-1:firefox-ios-12:2|firefox-ios-12#1,no,GT 是 targetFrame 用錯，finding 講外部網路依賴
+base-1:firefox-ios-12:2|firefox-ios-12#2,no,GT 是忽略 waiter 結果，finding 講外部網路依賴
+base-1:firefox-ios-12:2|firefox-ios-12#7,no,GT 是 waiter 未使用，finding 講外部網路依賴
+base-1:firefox-ios-12:2|firefox-ios-12#8,no,GT 是成員缺存取控制，finding 講外部網路依賴
+base-1:firefox-ios-12:2|firefox-ios-12#9,no,GT 是方法缺存取控制，finding 講外部網路依賴
+base-1:firefox-ios-12:3|firefox-ios-12#0,no,GT 是缺 final，finding 講 waiter 結果未檢查
+base-1:firefox-ios-12:3|firefox-ios-12#1,no,GT 是抓錯 frame，finding 講 waiter 結果未檢查
+base-1:firefox-ios-12:3|firefox-ios-12#2,same,同指忽略 XCTWaiter 結果，修法同為檢查結果
+base-1:firefox-ios-12:3|firefox-ios-12#7,same,waiter 未使用與未檢查結果同根，檢查結果即兩者皆修
+base-1:firefox-ios-12:3|firefox-ios-12#8,no,GT 是成員缺存取控制，finding 講 waiter 結果
+base-1:firefox-ios-12:3|firefox-ios-12#9,no,GT 是方法缺存取控制，finding 講 waiter 結果
+base-1:firefox-ios-12:4|firefox-ios-12#0,no,GT 是缺 final，finding 講 frame 可能為 nil
+base-1:firefox-ios-12:4|firefox-ios-12#1,partial,同一行但只講 nil 風險，未指出應改 sourceFrame
+base-1:firefox-ios-12:4|firefox-ios-12#2,no,GT 是忽略 waiter 結果，finding 講 frame 為 nil
+base-1:firefox-ios-12:4|firefox-ios-12#8,no,GT 是成員缺存取控制，finding 講 frame 為 nil
+base-1:firefox-ios-12:4|firefox-ios-12#10,no,GT 是缺 MARK 分段，finding 講 frame 為 nil
+base-1:firefox-ios-13:1|firefox-ios-13#1,partial,同一個 if，finding 講提前 return 而非 || 寫錯
+base-1:firefox-ios-13:2|firefox-ios-13#0,same,同指改名後失去 test 前綴
+base-1:firefox-ios-13:3|firefox-ios-13#2,same,同指 Allow Paste 的 0.5 秒 timeout 太短
+base-1:firefox-ios-2:1|firefox-ios-2#1,same,同指 super.setUp() 缺 try
+base-1:firefox-ios-2:2|firefox-ios-2#2,same,同指 setUpApp 與實驗變數設定順序顛倒
+base-1:firefox-ios-3:1|firefox-ios-3#1,partial,主講 Task 改變時序與錯誤處理，MainActor 只在建議順帶提
+base-1:firefox-ios-3:1|firefox-ios-3#6,partial,GT 要閉包標 @MainActor，finding 只建議 Task 加註
+base-1:firefox-ios-3:3|firefox-ios-3#0,same,同指按鈕尺寸 40 寫死未放 UX 常數
+base-1:firefox-ios-4:1|firefox-ios-4#2,same,同指選 Light 後誤檢查 darkThemeView
+base-1:firefox-ios-4:2|firefox-ios-4#3,same,同指先點 Done 再 goto 的順序錯誤
+base-1:firefox-ios-5:1|firefox-ios-5#1,same,同指 off-by-one：應為 count - 1
+base-1:firefox-ios-5:2|firefox-ios-5#2,same,同指 section 寫死為 1 應改 0
+base-1:firefox-ios-5:3|firefox-ios-5#3,no,GT 是缺存取修飾字，finding 講 v147 未被使用
+base-1:firefox-ios-6:1|firefox-ios-6#0,same,同指 assert 取代 XCTAssertTrue
+base-1:firefox-ios-7:1|firefox-ios-7#2,same,同指非主執行緒時回傳 nil 丟失結果
+base-1:firefox-ios-7:1|firefox-ios-7#4,no,GT 是缺文件註解，finding 講回傳 nil
+base-1:firefox-ios-7:2|firefox-ios-7#3,same,同指時間更新移到 guard 前，描述較粗但修法相同
+base-1:firefox-ios-7:3|firefox-ios-7#1,same,同指失敗路徑未包 ensureMainThread
+base-1:firefox-ios-8:2|firefox-ios-8#1,same,同指 setUp 呼叫 @MainActor 方法缺 await
+base-1:firefox-ios-8:6|firefox-ios-8#1,no,同類缺 await 但在 tearDown 另一呼叫，非 GT 那行
+base-1:firefox-ios-8:10|firefox-ios-8#0,no,GT 是缺 MARK 註解，finding 講執行緒處理
+base-1:firefox-ios-9:1|firefox-ios-9#3,same,同一行同一改動，函式名雖講錯但修法相同
+base-1:firefox-ios-9:2|firefox-ios-9#1,same,同指 && 改成 || 保留 reader URL
+base-1:firefox-ios-9:3|firefox-ios-9#2,same,同指 isReaderModeEnabled 布林反轉
+base-1:firefox-ios-9:4|firefox-ios-9#0,same,同指 gleanWrapper 拿掉 private
+base-1:prefect-1:1|prefect-1#1,same,同指改用 dep.name 而非 full_name 比對
+base-1:prefect-1:2|prefect-1#3,same,同指 zip 移除 strict=True
+base-1:prefect-1:3|prefect-1#2,same,同指移除 variables 的 dict 型別檢查
+base-1:prefect-1:3|prefect-1#3,no,GT 是移除 strict，finding 講型別檢查
+base-1:prefect-10:1|prefect-10#0,same,同指 tsconfig 關閉 strict
+base-1:prefect-10:2|prefect-10#1,same,同指未濾空行，情境較窄但修法相同
+base-1:prefect-10:3|prefect-10#3,same,同指 parseInt 造成 NaN 與截斷，修法可解
+base-1:prefect-10:4|prefect-10#2,partial,同處指 trigger.after，但建議補預設值而非移除切換
+base-1:prefect-10:4|prefect-10#5,no,GT 是缺測試檔，finding 講 trigger.after
+base-1:prefect-11:2|prefect-11#1,partial,同指 semaphore 未初始化會拋錯，但沒抓到初始化順序
+base-1:prefect-11:3|prefect-11#2,no,finding 講未初始化拋錯，GT 是 API 呼叫在鎖外
+base-1:prefect-11:4|prefect-11#2,partial,都指 semaphore 保護不足，但 finding 講其他事件類型
+base-1:prefect-12:3|prefect-12#1,same,同指 run_count 用 || 應改 ??
+base-1:prefect-13:1|prefect-13#2,partial,同欄位負值問題，但建議 zod 驗證而非補回 min
+base-1:prefect-13:2|prefect-13#1,no,GT 是描述被 trim，finding 講未檢查 dirty
+base-1:prefect-2:1|prefect-2#2,same,同指 fail 路徑 related 用錯變數
+base-1:prefect-2:2|prefect-2#0,same,同指跨欄位驗證應改 model_validator
+base-1:prefect-2:2|prefect-2#3,partial,同一驗證器，finding 講順序依賴而非誤擋 proactive
+base-1:prefect-3:1|prefect-3#1,partial,同段拖曳索引，finding 講 prefix 偏移非參數對調
+base-1:prefect-3:1|prefect-3#2,partial,都關於 prefix items 未排除，但位置在索引計算
+base-1:prefect-3:2|prefect-3#1,no,finding 講 prefix 納入排序，GT 是參數對調
+base-1:prefect-3:2|prefect-3#2,same,同指 sortableKeys 未排除 prefix items
+base-1:prefect-4:1|prefect-4#0,no,GT 是縮排規則，finding 講選取項查找
+base-1:prefect-4:1|prefect-4#1,same,同指選取項從 filteredData 查找
+base-1:prefect-4:3|prefect-4#3,no,GT 是關閉與回呼順序，finding 講錯誤訊息
+base-1:prefect-4:4|prefect-4#0,no,GT 是縮排規則，finding 講重複過濾
+base-1:prefect-4:4|prefect-4#1,no,finding 講前後端重複過濾，未提選取項查找錯
+base-1:prefect-5:1|prefect-5#0,no,GT 是 field_validator 規則，finding 講路徑比對
+base-1:prefect-5:1|prefect-5#1,same,同指 in 應改 startswith
+base-1:prefect-5:2|prefect-5#0,same,同指跨欄位驗證誤用 field_validator
+base-1:prefect-5:2|prefect-5#1,no,GT 是路徑前綴比對，finding 講驗證器
+base-1:prefect-5:3|prefect-5#2,no,同一行但 GT 是參數名錯，finding 講移除 fixture
+base-1:prefect-6:3|prefect-6#1,no,GT 是缺 await，finding 講 client 建立方式
+base-1:prefect-6:4|prefect-6#1,same,同指移除 await，機制講錯但建議保留 await
+base-1:prefect-6:5|prefect-6#2,partial,同指改用 deployment_id，但講型別非 None，建議轉型修不好
+base-1:prefect-6:5|prefect-6#3,no,GT 是輪詢先 sleep，finding 講 deployment_id
+base-1:prefect-7:1|prefect-7#1,same,同指 hash() 非決定性致 lock key 不一致
+base-1:prefect-7:2|prefect-7#1,no,finding 講 SQLite 無鎖，GT 是 hash 非決定性
+base-1:prefect-7:3|prefect-7#2,same,同指比長度不比集合，機制不同但建議比集合
+base-1:prefect-8:1|prefect-8#1,same,同指 V2 誤用 V1 的 static_subpath，修法相同
+base-1:prefect-8:3|prefect-8#0,no,GT 是 getLogger 用法規則，finding 講訊息非結構化
+base-1:prefect-9:1|prefect-9#2,partial,同元件；finding 缺錯誤邊界，GT 缺載入 fallback
+base-1:prefect-9:2|prefect-9#1,same,同指 router 與 provider 的 QueryClient 不一致
+base-1:redis-1:1|redis-1#2,same,同指用 keyDup 後的 addedKey 查找，建議用原 key
+base-1:redis-1:2|redis-1#0,partial,同一函式，finding 講未使用，GT 講缺 REDIS_TEST 包覆
+base-1:redis-2:2|redis-2#2,same,同指驗證失敗只 sdsfree 未回覆錯誤
+base-1:redis-2:3|redis-2#0,no,GT 是未使用變數 total_ranges，finding 講迴圈效能
+base-1:redis-2:3|redis-2#6,no,GT 是缺 static，finding 講迴圈效能，同函式但無關
+base-1:redis-2:5|redis-2#1,no,GT 是合併前先比 range 數，finding 講重疊不合併
+base-1:redis-3:1|redis-3#0,no,GT 是 malloc 應改 zmalloc，finding 講迴圈越界
+base-1:redis-3:1|redis-3#1,same,同指 j <= numkeys 越界，建議改 <
+base-1:redis-3:2|redis-3#3,same,同指 num_keys 為 0 時 slot 未設定
+base-1:redis-3:3|redis-3#0,partial,同一個 malloc：finding 查 NULL，GT 要改 zmalloc
+base-1:redis-3:3|redis-3#1,no,GT 是迴圈越界，finding 講 malloc 未檢查 NULL
+base-1:redis-3:4|redis-3#2,same,同指 >= 0 讓無 key 命令進檢查，建議改回 > 0
+base-1:redis-3:5|redis-3#0,partial,同一個 malloc：finding 嫌配置多餘，GT 要改 zmalloc
+base-1:redis-3:5|redis-3#1,no,GT 是迴圈越界，finding 講多餘記憶體配置
+base-1:redis-4:1|redis-4#0,same,同指 malloc 取代 zmalloc，建議改回
+base-1:redis-4:1|redis-4#4,no,GT 是缺 static，finding 講另一函式的 malloc
+base-1:redis-4:2|redis-4#2,same,同指 asmCron 移到 clusterCron 之前
+base-1:redis-4:4|redis-4#3,no,GT 是缺 static，finding 講函式內遷出 slot 判斷
+base-1:redis-4:4|redis-4#4,no,GT 是缺 static，finding 講函式內遷出 slot 判斷
+base-1:redis-4:5|redis-4#1,no,GT 是先刪 key 後認領的順序，finding 講未存設定
+base-1:redis-4:5|redis-4#3,no,GT 是缺 static，finding 講刪 key 後未存設定
+base-1:redis-4:5|redis-4#4,no,GT 是缺 static，finding 講刪 key 後未存設定
+base-1:redis-5:1|redis-5#0,no,GT 是 malloc_usable_size 規則，finding 講分母
+base-1:redis-5:1|redis-5#1,same,同指 quicklist 分母用 samples 而非 elecount
+base-1:redis-5:1|redis-5#4,same,改回 elecount 即消除未使用變數，同根因同修法
+base-1:redis-5:2|redis-5#2,no,GT 是 samples 遮蔽，finding 講 listpack 重複計算
+base-1:redis-5:2|redis-5#3,same,同指 numele 少了 -1，建議恢復
+base-1:redis-6:1|redis-6#1,same,同指 defrag 被設成 1 而非還原原值
+base-1:redis-6:1|redis-6#4,same,改為還原 orig_active_defrag 即消除未使用變數
+base-1:redis-6:2|redis-6#2,same,同指 cgroups_ref 為 NULL 時應回傳 0
+base-1:redis-6:3|redis-6#3,no,GT 是條件寫反，finding 只講參數命名且認為邏輯正確
+base-1:redis-7:1|redis-7#1,no,GT 是 size_t 相減溢位，finding 講非最後檔案處理
+base-1:redis-7:3|redis-7#1,no,GT 是 size_t 相減溢位，finding 講截斷會丟資料
+base-1:redis-7:4|redis-7#1,no,GT 是 size_t 相減溢位，finding 講截斷後狀態未更新
+base-1:redis-8:1|redis-8#1,same,同指 argv[5] 陣列越界，建議改大小 6
+base-1:redis-8:1|redis-8#3,no,GT 是 argv[2] 未釋放，finding 講陣列大小
+base-1:redis-8:1|redis-8#4,same,同指宣告 argv[5] 卻寫入 argv[5]
+base-1:redis-8:2|redis-8#1,no,GT 是陣列越界，finding 講 argv[2] 記憶體洩漏
+base-1:redis-8:2|redis-8#3,same,同指 argv[2] 未 decrRefCount
+base-1:redis-8:2|redis-8#4,no,GT 是陣列越界，finding 講 argv[2] 記憶體洩漏
+base-1:redis-8:3|redis-8#0,same,同指 unused_flag 宣告未使用
+base-1:tauri-1:1|tauri-1#0,no,GT 是缺 target_os 條件編譯，finding 講版本碼上限
+base-1:tauri-1:1|tauri-1#1,no,GT 是 dev 模式也遞增，finding 講上限與倒退
+base-1:tauri-1:1|tauri-1#2,no,GT 是 semver 路徑驗證順序，finding 講自動遞增上限
+base-1:tauri-1:1|tauri-1#3,no,GT 是檔案比較運算元順序，finding 講版本碼上限
+base-1:tauri-1:1|tauri-1#4,same,同指自動遞增未檢查 2100000000 上限
+base-1:tauri-1:2|tauri-1#0,no,GT 是缺 target_os 條件編譯，finding 講舊值為 0
+base-1:tauri-1:2|tauri-1#1,no,GT 是 dev 模式也遞增，finding 講舊值為 0
+base-1:tauri-1:2|tauri-1#2,no,GT 是 semver 路徑驗證順序，finding 講舊值為 0
+base-1:tauri-1:2|tauri-1#3,no,GT 是檔案比較運算元順序，finding 講舊值為 0
+base-1:tauri-1:2|tauri-1#4,partial,同一行缺驗證，finding 講下限 0，GT 講上限
+base-1:tauri-1:3|tauri-1#0,no,GT 是缺 target_os，finding 講 .gitignore
+base-1:tauri-1:3|tauri-1#1,no,GT 是 dev 模式也遞增，finding 講 CI 版本碼重置
+base-1:tauri-1:3|tauri-1#2,no,GT 是 semver 驗證順序，finding 講 CI 版本碼重置
+base-1:tauri-1:3|tauri-1#4,no,GT 是缺上限檢查，finding 講 CI 版本碼重置
+base-1:tauri-1:3|tauri-1#5,no,GT 是公開函式缺文件，finding 講 CI 版本碼重置
+base-1:tauri-10:1|tauri-10#0,same,同為參數空白不一致，機制誇大但修法相同
+base-1:tauri-10:1|tauri-10#2,no,GT 是 size/position 套用順序，finding 講空白格式
+base-1:tauri-10:2|tauri-10#3,no,GT 是 label 改名，finding 講 cfg(desktop) 搬移
+base-1:tauri-10:2|tauri-10#5,no,GT 是 unwrap 規則，finding 講 cfg(desktop) 搬移
+base-1:tauri-10:3|tauri-10#0,same,同指 position 參數逗號後缺空白
+base-1:tauri-10:3|tauri-10#2,no,GT 是 size/position 套用順序，finding 講空白格式
+base-1:tauri-11:1|tauri-11#3,same,同指 is_empty 條件被反轉
+base-1:tauri-11:2|tauri-11#1,same,同指鏡像 URL 少了 set_path 路徑
+base-1:tauri-11:3|tauri-11#2,same,同指直接用 ureq::get 繞過平台憑證
+base-1:tauri-12:1|tauri-12#0,no,GT 是 name 用 expect，finding 講副檔名條件反轉
+base-1:tauri-12:1|tauri-12#2,same,同指 ext.is_empty() 條件反轉
+base-1:tauri-12:1|tauri-12#3,no,GT 是多餘 to_string，finding 講副檔名條件反轉
+base-1:tauri-12:1|tauri-12#4,no,GT 是多餘 to_string，finding 講副檔名條件反轉
+base-1:tauri-12:2|tauri-12#0,same,同指 name 用 expect 會 panic，建議回傳錯誤
+base-1:tauri-12:2|tauri-12#2,no,GT 是副檔名條件反轉，finding 講 expect panic
+base-1:tauri-12:2|tauri-12#3,no,GT 是另一處多餘 to_string，finding 講 expect
+base-1:tauri-12:2|tauri-12#4,no,同一敘述但 GT 是多餘 to_string，finding 講 expect
+base-1:tauri-13:1|tauri-13#3,same,同指 map_or(wait) 應為 !wait
+base-1:tauri-13:2|tauri-13#2,same,同指 ditto 來源與目的參數顛倒
+base-1:tauri-13:2|tauri-13#7,no,同段參數但 finding 講順序，GT 講 expect panic
+base-1:tauri-13:3|tauri-13#0,partial,finding 順帶提到改手動實作，主張的是 source 缺漏
+base-1:tauri-13:3|tauri-13#1,same,明列 FailedToEncodeDER 未回傳 source
+base-1:tauri-13:3|tauri-13#5,same,明列 Plist 未回傳 source
+base-1:tauri-2:1|tauri-2#0,no,GT 是未用 thiserror，finding 講權限設定順序
+base-1:tauri-2:1|tauri-2#2,same,同指先設權限再寫入，機制不同但修法相同
+base-1:tauri-2:1|tauri-2#4,no,GT 是缺 From 實作，finding 講權限設定順序
+base-1:tauri-2:2|tauri-2#1,no,GT 是 gtk.exists 條件反轉，finding 講下載 URL
+base-1:tauri-2:2|tauri-2#3,same,同指 URL 用 arch 而非 linuxdeploy_arch
+base-1:tauri-3:1|tauri-3#1,same,同指 TOML 錯誤被包成 FormatJson
+base-1:tauri-3:2|tauri-3#0,no,GT 是 schema 未重新產生，finding 講 Display 大小寫
+base-1:tauri-3:2|tauri-3#2,same,同指 Flatpak Display 大寫，建議改小寫
+base-1:tauri-3:2|tauri-3#3,no,GT 是缺 .changes 檔，finding 講 Display 大小寫
+base-1:tauri-4:1|tauri-4#0,no,GT 是行寬超過 100，finding 講讀錯設定欄位
+base-1:tauri-4:1|tauri-4#1,same,同指讀 bundle 而非 identifier
+base-1:tauri-4:1|tauri-4#4,no,GT 是 schema 解析用 expect，finding 講讀錯欄位
+base-1:tauri-4:2|tauri-4#2,same,同指 OR 改 AND 使驗證永不執行
+base-1:tauri-4:3|tauri-4#3,same,同指合併結果未套回 config_metadata.inner
+base-1:tauri-5:1|tauri-5#4,no,GT 是缺 rustdoc，finding 講欄位生命週期
+base-1:tauri-5:3|tauri-5#2,no,GT 是空 merge 提早 return，finding 講 unwrap
+base-1:tauri-5:3|tauri-5#5,no,GT 是公開函式缺 rustdoc，finding 講 unwrap
+base-1:tauri-6:1|tauri-6#1,no,GT 是 exit 呼叫順序，finding 講返回鍵行為
+base-1:tauri-6:2|tauri-6#1,no,GT 是 exit 呼叫順序，finding 講 isEnabled 狀態
+base-1:tauri-7:1|tauri-7#1,same,同指回傳原始 URL 而非 alt_url
+base-1:tauri-7:2|tauri-7#0,same,同指 Sha256 缺 windows cfg 條件
+base-1:tauri-8:1|tauri-8#1,same,同指 Up/Down 對應反轉
+base-1:tauri-9:1|tauri-9#1,partial,同檔版本不一致，但 finding 講 cli.js 對 tauri-cli

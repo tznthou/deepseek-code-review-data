@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/admin-x-framework/src/utils/stats-config.ts",
+    "line": 18,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "版本前綴組合方式與後端不一致",
+    "body": "前端將 `config.version` 直接加在 `endpointName` 前面（`${config.version}_${endpointName}`），但後端 `tinybird.js` 是加在後面（`${pipeName}_${version}`）。若同時使用前端與後端，會產生不同的端點名稱（例如前端 `v2_api_kpis` vs 後端 `api_kpis_v2`），導致請求失敗。\n\n建議統一命名規則，例如都使用後綴方式。",
+    "existing_code": "const finalEndpointName = config.version ? `${config.version}_${endpointName}` : endpointName;",
+    "evidence": "diff 中新增的這一行與 `ghost/core/core/server/services/stats/utils/tinybird.js` 中的 `const pipeUrl = version ? `/v0/pipes/${pipeName}_${version}.json` : ...` 不一致。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/ContentStatsService.js",
+    "line": 105,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "移除 source 參數傳遞可能造成功能回歸",
+    "body": "原本會將 `options.source` 加入 Tinybird 查詢參數，但此 PR 移除了該邏輯。若前端或其他呼叫端仍會傳入 `source` 參數，將無法過濾來源，導致統計資料不正確。\n\n請確認是否刻意移除，或應保留此功能。",
+    "existing_code": "// Only add source if defined (allow empty string for \"Direct\" traffic)\n        if (options.source !== undefined) {\n            tinybirdOptions.source = options.source;\n        }",
+    "evidence": "diff 中刪除了這幾行，且沒有在其他地方補上對應的處理。"
+  },
+  {
+    "path": "ghost/core/core/server/data/tinybird/endpoints/api_kpis_v2.pipe",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "v2 端點缺少 TOKEN 定義",
+    "body": "新建立的 v2 端點檔案（如 `api_kpis_v2.pipe`）開頭沒有 `TOKEN` 宣告，但其他端點（如 `api_active_visitors_v2.pipe`）有。若 Tinybird 要求每個 pipe 都需定義 token，這些端點可能無法部署或存取。\n\n請確認是否為刻意省略，或需補上。",
+    "existing_code": "TOKEN \"stats_page\" READ\nTOKEN \"axis\" READ",
+    "evidence": "diff 中 `api_kpis_v2.pipe` 的開頭直接是 `NODE timeseries`，沒有 TOKEN 行，而其他 v2 端點檔案有。"
+  }
+]

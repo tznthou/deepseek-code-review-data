@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/cluster.c",
+    "line": 2138,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 malloc 而非 zmalloc 配置 cluster_slot_stats",
+    "body": "在 clusterCommonInit() 中，`server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));` 使用標準 malloc，而原本在 server.c 中使用 zmalloc。zmalloc 是 Redis 的記憶體配置封裝，提供記憶體統計與 OOM 處理。若改用 malloc，可能導致記憶體統計不正確，且在記憶體不足時行為不一致。建議改回 zmalloc。",
+    "existing_code": "server.cluster_slot_stats = malloc(CLUSTER_SLOTS*sizeof(clusterSlotStat));",
+    "evidence": "diff 中新增的 clusterCommonInit() 使用 malloc，而刪除的 server.c 程式碼原本使用 zmalloc。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 1658,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "asmCron() 呼叫順序變更可能影響行為",
+    "body": "原本 asmCron() 在 clusterCron() 內部呼叫，現在移至 serverCron() 中 clusterCron() 之前。若 asmCron() 依賴 clusterCron() 的某些狀態更新，順序變更可能導致問題。需確認 asmCron() 的相依性。",
+    "existing_code": "asmCron();\n            clusterCron();",
+    "evidence": "diff 顯示 asmCron() 從 clusterCron() 中移除，並在 serverCron() 中新增於 clusterCron() 之前。"
+  },
+  {
+    "path": "src/server.c",
+    "line": 1842,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "asmBeforeSleep() 呼叫順序變更可能影響行為",
+    "body": "原本 asmBeforeSleep() 在 clusterBeforeSleep() 內部呼叫，現在移至 server.c 中 clusterBeforeSleep() 之後。若 asmBeforeSleep() 依賴 clusterBeforeSleep() 的某些狀態，順序變更可能導致問題。需確認相依性。",
+    "existing_code": "clusterBeforeSleep();\n        asmBeforeSleep();",
+    "evidence": "diff 顯示 asmBeforeSleep() 從 clusterBeforeSleep() 中移除，並在 server.c 中新增於 clusterBeforeSleep() 之後。"
+  },
+  {
+    "path": "src/cluster.c",
+    "line": 2139,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "clusterCommonInit() 中 resetClusterStats() 可能重複初始化",
+    "body": "clusterCommonInit() 呼叫 resetClusterStats()，但原本 clusterInit() 中也呼叫 resetClusterStats()。現在 clusterInit() 中已移除該呼叫，但需確認沒有其他路徑重複初始化。",
+    "existing_code": "resetClusterStats();",
+    "evidence": "diff 顯示 clusterInit() 中移除 resetClusterStats()，並在 clusterCommonInit() 中新增。"
+  }
+]

@@ -1,0 +1,107 @@
+pair,label,note
+base-1:prefect-8:1|prefect-8#1,same,"同指 V2 誤用 V1 的 static_subpath，修法相同"
+base-1:prefect-8:3|prefect-8#0,no,"GT 是 getLogger 用法規則，finding 講訊息非結構化"
+base-1:prefect-9:1|prefect-9#2,partial,"同元件；finding 缺錯誤邊界，GT 缺載入 fallback"
+base-1:prefect-9:2|prefect-9#1,same,同指 router 與 provider 的 QueryClient 不一致
+base-1:redis-1:1|redis-1#2,same,"同指用 keyDup 後的 addedKey 查找，建議用原 key"
+base-1:redis-1:2|redis-1#0,partial,"同一函式，finding 講未使用，GT 講缺 REDIS_TEST 包覆"
+base-1:redis-2:2|redis-2#2,same,同指驗證失敗只 sdsfree 未回覆錯誤
+base-1:redis-2:3|redis-2#0,no,"GT 是未使用變數 total_ranges，finding 講迴圈效能"
+base-1:redis-2:3|redis-2#6,no,"GT 是缺 static，finding 講迴圈效能，同函式但無關"
+base-1:redis-2:5|redis-2#1,no,"GT 是合併前先比 range 數，finding 講重疊不合併"
+base-1:redis-3:1|redis-3#0,no,"GT 是 malloc 應改 zmalloc，finding 講迴圈越界"
+base-1:redis-3:1|redis-3#1,same,"同指 j <= numkeys 越界，建議改 <"
+base-1:redis-3:2|redis-3#3,same,同指 num_keys 為 0 時 slot 未設定
+base-1:redis-3:3|redis-3#0,partial,"同一個 malloc：finding 查 NULL，GT 要改 zmalloc"
+base-1:redis-3:3|redis-3#1,no,"GT 是迴圈越界，finding 講 malloc 未檢查 NULL"
+base-1:redis-3:4|redis-3#2,same,"同指 >= 0 讓無 key 命令進檢查，建議改回 > 0"
+base-1:redis-3:5|redis-3#0,partial,"同一個 malloc：finding 嫌配置多餘，GT 要改 zmalloc"
+base-1:redis-3:5|redis-3#1,no,"GT 是迴圈越界，finding 講多餘記憶體配置"
+base-1:redis-4:1|redis-4#0,same,"同指 malloc 取代 zmalloc，建議改回"
+base-1:redis-4:1|redis-4#4,no,"GT 是缺 static，finding 講另一函式的 malloc"
+base-1:redis-4:2|redis-4#2,same,同指 asmCron 移到 clusterCron 之前
+base-1:redis-4:4|redis-4#3,no,"GT 是缺 static，finding 講函式內遷出 slot 判斷"
+base-1:redis-4:4|redis-4#4,no,"GT 是缺 static，finding 講函式內遷出 slot 判斷"
+base-1:redis-4:5|redis-4#1,no,"GT 是先刪 key 後認領的順序，finding 講未存設定"
+base-1:redis-4:5|redis-4#3,no,"GT 是缺 static，finding 講刪 key 後未存設定"
+base-1:redis-4:5|redis-4#4,no,"GT 是缺 static，finding 講刪 key 後未存設定"
+base-1:redis-5:1|redis-5#0,no,"GT 是 malloc_usable_size 規則，finding 講分母"
+base-1:redis-5:1|redis-5#1,same,同指 quicklist 分母用 samples 而非 elecount
+base-1:redis-5:1|redis-5#4,same,"改回 elecount 即消除未使用變數，同根因同修法"
+base-1:redis-5:2|redis-5#2,no,"GT 是 samples 遮蔽，finding 講 listpack 重複計算"
+base-1:redis-5:2|redis-5#3,same,"同指 numele 少了 -1，建議恢復"
+base-1:redis-6:1|redis-6#1,same,同指 defrag 被設成 1 而非還原原值
+base-1:redis-6:1|redis-6#4,same,改為還原 orig_active_defrag 即消除未使用變數
+base-1:redis-6:2|redis-6#2,same,同指 cgroups_ref 為 NULL 時應回傳 0
+base-1:redis-6:3|redis-6#3,no,"GT 是條件寫反，finding 只講參數命名且認為邏輯正確"
+base-1:redis-7:1|redis-7#1,no,"GT 是 size_t 相減溢位，finding 講非最後檔案處理"
+base-1:redis-7:3|redis-7#1,no,"GT 是 size_t 相減溢位，finding 講截斷會丟資料"
+base-1:redis-7:4|redis-7#1,no,"GT 是 size_t 相減溢位，finding 講截斷後狀態未更新"
+base-1:redis-8:1|redis-8#1,same,"同指 argv[5] 陣列越界，建議改大小 6"
+base-1:redis-8:1|redis-8#3,no,"GT 是 argv[2] 未釋放，finding 講陣列大小"
+base-1:redis-8:1|redis-8#4,same,同指宣告 argv[5] 卻寫入 argv[5]
+base-1:redis-8:2|redis-8#1,no,"GT 是陣列越界，finding 講 argv[2] 記憶體洩漏"
+base-1:redis-8:2|redis-8#3,same,同指 argv[2] 未 decrRefCount
+base-1:redis-8:2|redis-8#4,no,"GT 是陣列越界，finding 講 argv[2] 記憶體洩漏"
+base-1:redis-8:3|redis-8#0,same,同指 unused_flag 宣告未使用
+base-1:tauri-1:1|tauri-1#0,no,"GT 是缺 target_os 條件編譯，finding 講版本碼上限"
+base-1:tauri-1:1|tauri-1#1,no,"GT 是 dev 模式也遞增，finding 講上限與倒退"
+base-1:tauri-1:1|tauri-1#2,no,"GT 是 semver 路徑驗證順序，finding 講自動遞增上限"
+base-1:tauri-1:1|tauri-1#3,no,"GT 是檔案比較運算元順序，finding 講版本碼上限"
+base-1:tauri-1:1|tauri-1#4,same,同指自動遞增未檢查 2100000000 上限
+base-1:tauri-1:2|tauri-1#0,no,"GT 是缺 target_os 條件編譯，finding 講舊值為 0"
+base-1:tauri-1:2|tauri-1#1,no,"GT 是 dev 模式也遞增，finding 講舊值為 0"
+base-1:tauri-1:2|tauri-1#2,no,"GT 是 semver 路徑驗證順序，finding 講舊值為 0"
+base-1:tauri-1:2|tauri-1#3,no,"GT 是檔案比較運算元順序，finding 講舊值為 0"
+base-1:tauri-1:2|tauri-1#4,partial,"同一行缺驗證，finding 講下限 0，GT 講上限"
+base-1:tauri-1:3|tauri-1#0,no,"GT 是缺 target_os，finding 講 .gitignore"
+base-1:tauri-1:3|tauri-1#1,no,"GT 是 dev 模式也遞增，finding 講 CI 版本碼重置"
+base-1:tauri-1:3|tauri-1#2,no,"GT 是 semver 驗證順序，finding 講 CI 版本碼重置"
+base-1:tauri-1:3|tauri-1#4,no,"GT 是缺上限檢查，finding 講 CI 版本碼重置"
+base-1:tauri-1:3|tauri-1#5,no,"GT 是公開函式缺文件，finding 講 CI 版本碼重置"
+base-1:tauri-10:1|tauri-10#0,same,"同為參數空白不一致，機制誇大但修法相同"
+base-1:tauri-10:1|tauri-10#2,no,"GT 是 size/position 套用順序，finding 講空白格式"
+base-1:tauri-10:2|tauri-10#3,no,"GT 是 label 改名，finding 講 cfg(desktop) 搬移"
+base-1:tauri-10:2|tauri-10#5,no,"GT 是 unwrap 規則，finding 講 cfg(desktop) 搬移"
+base-1:tauri-10:3|tauri-10#0,same,同指 position 參數逗號後缺空白
+base-1:tauri-10:3|tauri-10#2,no,"GT 是 size/position 套用順序，finding 講空白格式"
+base-1:tauri-11:1|tauri-11#3,same,同指 is_empty 條件被反轉
+base-1:tauri-11:2|tauri-11#1,same,同指鏡像 URL 少了 set_path 路徑
+base-1:tauri-11:3|tauri-11#2,same,同指直接用 ureq::get 繞過平台憑證
+base-1:tauri-12:1|tauri-12#0,no,"GT 是 name 用 expect，finding 講副檔名條件反轉"
+base-1:tauri-12:1|tauri-12#2,same,同指 ext.is_empty() 條件反轉
+base-1:tauri-12:1|tauri-12#3,no,"GT 是多餘 to_string，finding 講副檔名條件反轉"
+base-1:tauri-12:1|tauri-12#4,no,"GT 是多餘 to_string，finding 講副檔名條件反轉"
+base-1:tauri-12:2|tauri-12#0,same,"同指 name 用 expect 會 panic，建議回傳錯誤"
+base-1:tauri-12:2|tauri-12#2,no,"GT 是副檔名條件反轉，finding 講 expect panic"
+base-1:tauri-12:2|tauri-12#3,no,"GT 是另一處多餘 to_string，finding 講 expect"
+base-1:tauri-12:2|tauri-12#4,no,"同一敘述但 GT 是多餘 to_string，finding 講 expect"
+base-1:tauri-13:1|tauri-13#3,same,同指 map_or(wait) 應為 !wait
+base-1:tauri-13:2|tauri-13#2,same,同指 ditto 來源與目的參數顛倒
+base-1:tauri-13:2|tauri-13#7,no,"同段參數但 finding 講順序，GT 講 expect panic"
+base-1:tauri-13:3|tauri-13#0,partial,"finding 順帶提到改手動實作，主張的是 source 缺漏"
+base-1:tauri-13:3|tauri-13#1,same,明列 FailedToEncodeDER 未回傳 source
+base-1:tauri-13:3|tauri-13#5,same,明列 Plist 未回傳 source
+base-1:tauri-2:1|tauri-2#0,no,"GT 是未用 thiserror，finding 講權限設定順序"
+base-1:tauri-2:1|tauri-2#2,same,"同指先設權限再寫入，機制不同但修法相同"
+base-1:tauri-2:1|tauri-2#4,no,"GT 是缺 From 實作，finding 講權限設定順序"
+base-1:tauri-2:2|tauri-2#1,no,"GT 是 gtk.exists 條件反轉，finding 講下載 URL"
+base-1:tauri-2:2|tauri-2#3,same,同指 URL 用 arch 而非 linuxdeploy_arch
+base-1:tauri-3:1|tauri-3#1,same,同指 TOML 錯誤被包成 FormatJson
+base-1:tauri-3:2|tauri-3#0,no,"GT 是 schema 未重新產生，finding 講 Display 大小寫"
+base-1:tauri-3:2|tauri-3#2,same,"同指 Flatpak Display 大寫，建議改小寫"
+base-1:tauri-3:2|tauri-3#3,no,"GT 是缺 .changes 檔，finding 講 Display 大小寫"
+base-1:tauri-4:1|tauri-4#0,no,"GT 是行寬超過 100，finding 講讀錯設定欄位"
+base-1:tauri-4:1|tauri-4#1,same,同指讀 bundle 而非 identifier
+base-1:tauri-4:1|tauri-4#4,no,"GT 是 schema 解析用 expect，finding 講讀錯欄位"
+base-1:tauri-4:2|tauri-4#2,same,同指 OR 改 AND 使驗證永不執行
+base-1:tauri-4:3|tauri-4#3,same,同指合併結果未套回 config_metadata.inner
+base-1:tauri-5:1|tauri-5#4,no,"GT 是缺 rustdoc，finding 講欄位生命週期"
+base-1:tauri-5:3|tauri-5#2,no,"GT 是空 merge 提早 return，finding 講 unwrap"
+base-1:tauri-5:3|tauri-5#5,no,"GT 是公開函式缺 rustdoc，finding 講 unwrap"
+base-1:tauri-6:1|tauri-6#1,no,"GT 是 exit 呼叫順序，finding 講返回鍵行為"
+base-1:tauri-6:2|tauri-6#1,no,"GT 是 exit 呼叫順序，finding 講 isEnabled 狀態"
+base-1:tauri-7:1|tauri-7#1,same,同指回傳原始 URL 而非 alt_url
+base-1:tauri-7:2|tauri-7#0,same,同指 Sha256 缺 windows cfg 條件
+base-1:tauri-8:1|tauri-8#1,same,同指 Up/Down 對應反轉
+base-1:tauri-9:1|tauri-9#1,partial,"同檔版本不一致，但 finding 講 cli.js 對 tauri-cli"

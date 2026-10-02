@@ -1,0 +1,68 @@
+[
+  {
+    "path": "api/core/rag/retrieval/dataset_retrieval.py",
+    "line": 1207,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "not contains 條件未指定 escape 參數，導致跳脫失效",
+    "body": "在 `case \"not contains\"` 分支中，`json_field.notlike(f\"%{escaped_value}%\")` 未傳入 `escape=\"\\\\\"`。這會使資料庫將跳脫後的反斜線視為一般字元，而非跳脫字元，導致 `%` 和 `_` 仍被當作萬用字元。例如，若 `value` 為 `50%`，`escaped_value` 為 `50\\%`，但查詢會匹配到任何以 `50` 開頭且後面接任意字元的字串，而非僅匹配字面 `50%`。這會造成搜尋結果不正確，且可能被利用來繞過預期的過濾邏輯。",
+    "existing_code": "filters.append(json_field.notlike(f\"%{escaped_value}%\"))",
+    "evidence": "diff 中該行未包含 escape 參數，與其他分支（如 contains）形成對比。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/clickzetta/clickzetta_vector.py",
+    "line": 991,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "ESCAPE 子句可能因雙重跳脫而產生語法錯誤",
+    "body": "程式碼使用 `escape_like_pattern(query).replace(\"'\", \"''\")` 後，再將結果放入 SQL 字串，並加上 `ESCAPE '\\\\\\\\'`。但 `escape_like_pattern` 已將反斜線跳脫為 `\\\\`，而 `ESCAPE '\\\\\\\\'` 在 SQL 中代表跳脫字元為單一反斜線。這可能導致查詢中的跳脫序列被錯誤解析，甚至產生語法錯誤。例如，若 query 為 `path\\to\\file`，escaped_query 會是 `path\\\\to\\\\file`，而 SQL 中的 `ESCAPE '\\\\\\\\'` 可能使資料庫將 `\\\\` 視為跳脫後的反斜線，造成模式匹配錯誤。",
+    "existing_code": "filter_clauses.append(f\"{Field.CONTENT_KEY} LIKE '%{escaped_query}%' ESCAPE '\\\\\\\\'\")",
+    "evidence": "diff 中該行明確加入 ESCAPE 子句，但與 escape_like_pattern 的跳脫方式可能衝突。"
+  },
+  {
+    "path": "api/core/rag/datasource/vdb/iris/iris_vector.py",
+    "line": 298,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "ESCAPE 子句使用 '|' 但跳脫函式使用反斜線，可能導致跳脫不一致",
+    "body": "在 Iris 向量資料庫的 LIKE 查詢中，程式碼使用 `ESCAPE '|'`，但 `escape_like_pattern` 函式使用反斜線作為跳脫字元。這會導致跳脫後的反斜線被資料庫視為一般字元，而 `|` 被當作跳脫字元，但跳脫後的字串中並未使用 `|`，因此 `%` 和 `_` 仍會被當作萬用字元。例如，若 query 為 `50%`，escaped_query 為 `50\\%`，但資料庫會將 `\\` 視為兩個字元，而 `%` 仍為萬用字元，導致匹配到所有以 `50` 開頭的字串。",
+    "existing_code": "WHERE text LIKE ? ESCAPE '|'",
+    "evidence": "diff 中該行加入 ESCAPE '|'，但 escape_like_pattern 使用反斜線，兩者不一致。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_annotation_service.py",
+    "line": 474,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試中對 backslash 的處理可能因 Python 字串轉義而與實際不符",
+    "body": "在測試 `test_get_annotation_list_by_app_id_with_special_characters_in_keyword` 中，建立 annotation 時使用 `\"path\\\\to\\\\file\"`，這在 Python 中代表字串 `path\\to\\file`（單一反斜線）。但測試搜尋時使用 `keyword=\"path\\\\to\\\\file\"`，同樣代表單一反斜線。然而，`escape_like_pattern` 會將單一反斜線跳脫為雙反斜線，而資料庫在 `ESCAPE '\\\\'` 下會將雙反斜線解讀為單一反斜線，因此匹配應該正確。但若測試環境的資料庫驅動或設定不同，可能導致跳脫行為不一致，使測試不穩定。",
+    "existing_code": "annotation_with_backslash = {\n            \"question\": \"Question with path\\\\to\\\\file\",\n            \"answer\": \"Answer about path\\\\to\\\\file location\",\n        }",
+    "evidence": "diff 中該測試使用雙反斜線字串，但實際儲存和搜尋時可能因轉義而產生差異。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_app_service.py",
+    "line": 1071,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中對 backslash 的處理可能因 Python 字串轉義而與實際不符",
+    "body": "在測試 `test_get_apps_with_special_characters_in_name` 中，建立 app 時使用 `\"path\\\\to\\\\app\"`，代表字串 `path\\to\\app`。但搜尋時使用 `args = {\"name\": \"path\\\\to\\\\app\", ...}`，同樣代表單一反斜線。這可能導致測試在實際環境中因跳脫不一致而失敗。",
+    "existing_code": "app_with_backslash = app_service.create_app(\n            tenant.id,\n            {\n                \"name\": \"path\\\\to\\\\app\",",
+    "evidence": "diff 中該測試使用雙反斜線字串，但實際儲存和搜尋時可能因轉義而產生差異。"
+  },
+  {
+    "path": "api/tests/test_containers_integration_tests/services/test_tag_service.py",
+    "line": 354,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中對 backslash 的處理可能因 Python 字串轉義而與實際不符",
+    "body": "在測試 `test_get_tags_with_special_characters_in_keyword` 中，建立 tag 時使用 `\"path\\\\to\\\\tag\"`，代表字串 `path\\to\\tag`。但搜尋時使用 `keyword=\"path\\\\to\\\\tag\"`，同樣代表單一反斜線。這可能導致測試在實際環境中因跳脫不一致而失敗。",
+    "existing_code": "tag_with_backslash = Tag(\n            name=\"path\\\\to\\\\tag\",",
+    "evidence": "diff 中該測試使用雙反斜線字串，但實際儲存和搜尋時可能因轉義而產生差異。"
+  }
+]

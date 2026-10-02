@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.tsx",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "concurrency_limit 允許負數與非整數輸入",
+    "body": "在 `onChange` 中直接將輸入值轉為 `Number(value)`，未檢查是否為正整數。若使用者輸入 `-5` 或 `2.5`，表單會接受並提交，可能導致後端驗證失敗或產生非預期行為。建議在 zod schema 中加入 `.int().positive()` 驗證，或在 `onChange` 中阻擋無效值。",
+    "existing_code": "onChange={(e) => {\n\tconst value = e.target.value;\n\tfield.onChange(value === \"\" ? null : Number(value));\n}}",
+    "evidence": "diff 中新增的 `onChange` 處理直接將字串轉為數字，沒有驗證範圍或整數性。"
+  },
+  {
+    "path": "ui-v2/src/components/work-pools/edit/work-pool-edit-form.test.tsx",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "mockUpdateWorkPool 型別與實際 hook 回傳不一致",
+    "body": "`mockUpdateWorkPool` 被定義為 `vi.fn<(data: unknown, options: UpdateWorkPoolOptions) => void>()`，但實際 `useUpdateWorkPool` 回傳的 `updateWorkPool` 函式簽章可能不同（例如參數型別更具體）。這可能導致測試中對參數的斷言不準確，或隱藏型別錯誤。建議使用 `Parameters<ReturnType<typeof useUpdateWorkPool>['updateWorkPool']>` 來取得正確型別。",
+    "existing_code": "const mockUpdateWorkPool =\n\tvi.fn<(data: unknown, options: UpdateWorkPoolOptions) => void>();",
+    "evidence": "測試中手動定義了 `UpdateWorkPoolOptions` 型別，但未與實際 API 型別連結。"
+  }
+]

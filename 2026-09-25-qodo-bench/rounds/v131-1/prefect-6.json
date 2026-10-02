@@ -1,0 +1,57 @@
+[
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 133,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "`get_or_create_client` 可能回傳 `None`，導致後續 `client` 為 `None` 而拋出例外",
+    "body": "`get_or_create_client` 在無法建立 client 時可能回傳 `None`，但程式碼未檢查回傳值，直接使用 `client` 呼叫方法，可能導致 `AttributeError`。建議檢查回傳值，若為 `None` 則拋出明確的例外。",
+    "existing_code": "client, _ = get_or_create_client(client)",
+    "evidence": "diff 中新增的這一行，未檢查回傳值。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 241,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "`run_deployment` 別名失去同步包裝，同步呼叫會失敗",
+    "body": "原本 `run_deployment` 有 `@sync_compatible` 裝飾器，可在同步上下文中呼叫。現在 `run_deployment = arun_deployment` 只是 async 函式的別名，同步呼叫會回傳 coroutine 而非執行結果，導致既有同步程式碼失效。建議保留同步包裝或提供明確的同步版本。",
+    "existing_code": "run_deployment = arun_deployment",
+    "evidence": "diff 中新增的別名指派，移除了原本的裝飾器。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 149,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "在非同步上下文中，`collect_task_run_inputs` 未使用 `await`，可能導致未預期的行為",
+    "body": "原本的程式碼使用 `await collect_task_run_inputs(v)`，但修改後移除了 `await`。若 `collect_task_run_inputs` 是 async 函式，這會導致回傳 coroutine 而非實際值，造成後續錯誤。請確認該函式是否為同步函式，若不是，應保留 `await`。",
+    "existing_code": "k: collect_task_run_inputs(v) for k, v in parameters.items()",
+    "evidence": "diff 中將 `await collect_task_run_inputs(v)` 改為 `collect_task_run_inputs(v)`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 212,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 `deployment_id` 而非 `deployment.id` 可能導致型別錯誤",
+    "body": "原本使用 `deployment.id`，修改後改為 `deployment_id`。若 `deployment_id` 是字串而 API 預期 UUID，可能導致型別錯誤。請確認 `deployment_id` 的型別與 API 要求一致。",
+    "existing_code": "deployment_id,",
+    "evidence": "diff 中將 `deployment.id` 改為 `deployment_id`。"
+  },
+  {
+    "path": "src/prefect/deployments/flow_runs.py",
+    "line": 231,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "輪詢迴圈中先 sleep 再檢查狀態，可能延遲回傳",
+    "body": "原本先檢查狀態再 sleep，修改後先 sleep 再檢查。這會導致即使 flow run 已完成，仍會等待一個 `poll_interval` 才回傳。若 `poll_interval` 較大，可能造成不必要的延遲。建議先檢查狀態再 sleep。",
+    "existing_code": "await anyio.sleep(poll_interval)",
+    "evidence": "diff 中將 `await anyio.sleep(poll_interval)` 移到迴圈開頭。"
+  }
+]

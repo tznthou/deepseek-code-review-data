@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 99,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳的 token 錯誤：使用 identifier 而非實際 token",
+    "body": "在 `createInvite` 中，原本回傳 `token`（隨機產生的 token），但變更後回傳 `newToken.identifier`。`identifier` 的值是 `invite-link-for-teamId-${teamId}`，並非實際的邀請 token。這會導致 API 回傳的 `token` 欄位不正確，且與 `inviteLink` 中的 token 不一致。\n\n**失敗情境**：當客戶端呼叫此端點取得邀請連結後，若使用回傳的 `token` 進行驗證，會因為 token 不正確而失敗。\n\n**建議修法**：改回傳 `token`（即 `newToken.token`），或確認 `identifier` 的設計意圖，但根據目前程式碼，應回傳實際的 token。",
+    "existing_code": "token: newToken.identifier,",
+    "evidence": "diff 中將 `token` 改為 `newToken.identifier`，而 `identifier` 在建立時設定為 `invite-link-for-teamId-${teamId}`，與隨機產生的 `token` 不同。"
+  },
+  {
+    "path": "packages/features/ee/teams/services/teamService.ts",
+    "line": 106,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "buildInviteLink 條件判斷反轉，導致非組織團隊連結錯誤",
+    "body": "原本的條件是 `if (!isOrgContext)` 時直接回傳 `teamInviteLink`，否則加入 onboarding 路徑。變更後改為 `if (isOrgContext)` 直接回傳，這會讓非組織團隊（`isOrgContext` 為 false）的邀請連結錯誤地包含 onboarding 路徑，而組織團隊反而沒有。\n\n**失敗情境**：非組織團隊的邀請連結會導向錯誤的 onboarding 流程，可能造成使用者體驗問題或功能異常。\n\n**建議修法**：將條件改回 `if (!isOrgContext)`，或確認 `isOrgContext` 的語意是否已變更。",
+    "existing_code": "if (isOrgContext) {",
+    "evidence": "diff 中將 `if (!isOrgContext)` 改為 `if (isOrgContext)`，但後續邏輯未同步調整。"
+  },
+  {
+    "path": "apps/api/v2/src/modules/teams/invite/controllers/teams-invite.controller.ts",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "缺少使用者與團隊關係的授權檢查",
+    "body": "控制器使用 `@Roles(\"TEAM_MEMBER\")` 來限制角色，但未驗證目前使用者是否為該團隊的成員。`RolesGuard` 可能只檢查全域角色，而非針對特定團隊的成員資格。這可能允許任何具有 `TEAM_MEMBER` 角色的使用者為任意團隊建立邀請連結。\n\n**失敗情境**：攻擊者若擁有 `TEAM_MEMBER` 角色（例如在其他團隊中），可以對任意 `teamId` 呼叫此端點，取得該團隊的邀請連結，進而加入未經授權的團隊。\n\n**建議修法**：在服務層或控制器中加入團隊成員資格檢查，確認目前使用者是該團隊的成員（且可能需為管理員）。",
+    "existing_code": "@Roles(\"TEAM_MEMBER\")",
+    "evidence": "控制器僅使用 `@Roles` 裝飾器，未見任何團隊成員資格驗證邏輯。"
+  }
+]

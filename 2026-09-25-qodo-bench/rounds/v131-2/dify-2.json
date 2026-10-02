@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "回傳值 `True` 未定義，可能導致執行時錯誤",
+    "body": "在 `handleJSONSchemaChange` 中，成功解析 JSON 後回傳了 `True`（Python 風格），但 TypeScript 中應為 `true`。若此函數的回傳值被使用，將導致 ReferenceError。建議改為 `return true` 或直接不回傳。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的 `return True` 行，TypeScript 中無 `True` 識別字。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "`jsonSchemaStr` 變更可能導致既有資料顯示錯誤",
+    "body": "原本 `jsonSchemaStr` 只顯示 schema 的 `properties` 部分，現在改為顯示整個 schema。若既有資料的 `json_schema` 是舊格式（包裝在 `{type:'object', properties: ...}`），則編輯時會顯示整個包裝物件，而非原本的 properties，可能造成使用者混淆或誤改。建議檢查資料格式並做相容處理。",
+    "existing_code": "return JSON.stringify(JSON.parse(tempPayload.json_schema), null, 2)",
+    "evidence": "diff 中將 `JSON.parse(tempPayload.json_schema).properties` 改為 `JSON.parse(tempPayload.json_schema)`。"
+  }
+]

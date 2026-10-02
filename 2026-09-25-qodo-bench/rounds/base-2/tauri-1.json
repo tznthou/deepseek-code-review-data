@@ -1,0 +1,79 @@
+[
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 636,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "自動遞增 versionCode 存在競態條件",
+    "body": "在 `generate_tauri_properties` 中，讀取 `tauri.properties` 取得 `last_version_code` 後直接加 1 寫回，但讀取與寫入之間沒有鎖定或原子操作。若同時執行多個 build（例如 CI 平行建置），可能導致多個 build 讀到相同的 `last_version_code`，產生相同的 `versionCode`，造成 Android 套件衝突。建議使用檔案鎖（例如 `flock`）或將遞增邏輯移至單一進程中處理。",
+    "existing_code": "let last_version_code = std::fs::read_to_string(&app_tauri_properties_path)\n        .ok()\n        .and_then(|content| {\n          content\n            .lines()\n            .find(|line| line.starts_with(\"tauri.android.versionCode=\"))\n            .and_then(|line| line.split('=').nth(1))\n            .and_then(|s| s.trim().parse::<u32>().ok())\n        });\n      let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "diff 中新增的 `generate_tauri_properties` 函式直接讀取檔案並計算新值，沒有鎖定機制。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 636,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "讀取 tauri.properties 失敗時靜默回退為 1",
+    "body": "當 `std::fs::read_to_string` 失敗（例如檔案不存在或權限不足）時，程式會靜默地將 `new_version_code` 設為 1。這可能導致在檔案暫時無法讀取時意外重置版本碼，造成版本碼倒退。建議區分檔案不存在與其他錯誤：若檔案不存在，可視為首次建置；若為其他錯誤，應回報錯誤。",
+    "existing_code": "let last_version_code = std::fs::read_to_string(&app_tauri_properties_path)\n        .ok()\n        .and_then(|content| {",
+    "evidence": "使用 `.ok()` 將所有讀取錯誤轉為 `None`，無法區分錯誤類型。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 643,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "解析 versionCode 失敗時靜默回退為 1",
+    "body": "若 `tauri.properties` 中的 `tauri.android.versionCode` 值不是有效的 `u32`（例如被手動修改或損壞），解析會失敗並回退為 1。這可能導致版本碼意外重置。建議在解析失敗時回報錯誤，或至少記錄警告。",
+    "existing_code": ".and_then(|s| s.trim().parse::<u32>().ok())",
+    "evidence": "使用 `.ok()` 忽略解析錯誤。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 645,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "saturating_add 可能導致版本碼停在最大值",
+    "body": "使用 `saturating_add(1)` 在 `last_version_code` 已達 `u32::MAX` 時會停留在最大值，但 Android 的 `versionCode` 上限為 2100000000。若 `tauri.properties` 中的值已達上限，遞增後會超過限制，但此處未檢查。建議在遞增後檢查是否超過 2100000000，若超過則回報錯誤。",
+    "existing_code": "let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "未對 `new_version_code` 進行上限檢查。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 652,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "dev 模式下的 versionCode 計算順序可能導致非預期結果",
+    "body": "在 `dev` 模式下，程式先檢查 `version_code` 是否為 0 或超過上限，然後才進行 `clamp(1, 2100000000)`。若原始 `version_code` 超過上限，會先觸發錯誤，但若原始值為 0，則會通過檢查後被 clamp 為 1。這與先前在 `tauri-build` 中的行為一致，但建議確認此順序是否符合預期。",
+    "existing_code": "if version_code == 0 {\n        crate::error::bail!(\n          \"You must change the `version` in `tauri.conf.json`. The default value `0.0.0` is not allowed for Android package and must be at least `0.0.1`.\"\n        );\n      } else if version_code > 2100000000 {\n        crate::error::bail!(\n          \"Invalid version code {}. Version code must be between 1 and 2100000000. You must change the `version` in `tauri.conf.json`.\",\n          version_code\n        );\n      }\n\n      if dev {\n        version_code = version_code.clamp(1, 2100000000);\n      }",
+    "evidence": "diff 中顯示檢查與 clamp 的順序。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 680,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "寫入 tauri.properties 時未處理檔案不存在以外的錯誤",
+    "body": "寫入 `tauri.properties` 時使用 `write`，若目錄不存在或權限不足會回傳錯誤，但錯誤訊息僅為「failed to write tauri.properties」，未包含路徑或更詳細的上下文。建議使用 `with_context` 加入路徑資訊。",
+    "existing_code": "write(&app_tauri_properties_path, app_tauri_properties_content)\n        .context(\"failed to write tauri.properties\")?;",
+    "evidence": "錯誤訊息未包含路徑。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 633,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "generate_tauri_properties 未處理 version 為 None 的情況",
+    "body": "若 `tauri_config.version` 為 `None`，函式不會產生任何內容，但也不會回報錯誤。這可能導致 `tauri.properties` 缺少必要的 `versionName` 和 `versionCode`，進而影響 Android 建置。建議確認 `version` 是否為必要欄位，若為必要則應在缺失時回報錯誤。",
+    "existing_code": "if let Some(version) = tauri_config.version.as_ref() {",
+    "evidence": "diff 中僅在 `version` 存在時才處理。"
+  }
+]

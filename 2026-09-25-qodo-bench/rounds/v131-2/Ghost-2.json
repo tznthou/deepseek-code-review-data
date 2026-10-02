@@ -1,0 +1,35 @@
+[
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 264,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "編輯器可編輯性改為依賴 expertise，可能導致部分使用者無法編輯",
+    "body": "原本編輯器可編輯性取決於 memberName 是否存在，現在改為 member?.expertise。若使用者有姓名但沒有 expertise（例如一般使用者），編輯器將無法編輯，可能造成功能回歸。建議確認此變更是否符合產品需求，或改回以 memberName 判斷。",
+    "existing_code": "editor.setEditable(!!member?.expertise && progress !== 'sending');",
+    "evidence": "diff 中此行由 `editor.setEditable(!!memberName && progress !== 'sending');` 改為 `editor.setEditable(!!member?.expertise && progress !== 'sending');`，且依賴陣列由 `[editor, memberName, progress]` 改為 `[editor, member, progress]`。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/reply-form.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "回覆目標 ID 改為 parent.id，可能影響巢狀回覆",
+    "body": "原本使用 openForm.in_reply_to_id 作為回覆目標，現在改為 parent.id。若 parent 是回覆的回覆（即巢狀回覆），parent.id 可能不是正確的頂層回覆 ID，導致回覆鏈結錯誤。需確認 parent 的定義及後端處理邏輯。",
+    "existing_code": "in_reply_to_id: parent.id,",
+    "evidence": "diff 中此行由 `in_reply_to_id: openForm.in_reply_to_id,` 改為 `in_reply_to_id: parent.id,`，且依賴陣列移除 openForm。"
+  },
+  {
+    "path": "apps/comments-ui/src/components/content/forms/form.tsx",
+    "line": 291,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "移除 comment prop 可能影響未來功能擴充",
+    "body": "FormWrapper 原本可接收 comment prop 以顯示父評論資訊，現在完全移除。若未來需要顯示父評論作者資訊或引用內容，將需要重新加入。目前無直接影響，但需注意擴充性。",
+    "existing_code": "type FormWrapperProps = {\n    editor: Editor | null;\n    isOpen: boolean;\n    reduced: boolean;",
+    "evidence": "diff 中移除了 `comment?: Comment;` 及對應的解構與使用。"
+  }
+]

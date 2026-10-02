@@ -1,0 +1,65 @@
+<!-- deepseek-review -->
+## 🤖 DeepSeek Code Review — 🛑 建議修改後再合併
+
+此 PR 主要重構了 BrowserAddressToolbar 中的 pageActionStack 命名，並為多個 UI 容器加入 accessibilityIdentifier，同時修正了拼字錯誤與骨架畫面的約束條件。整體風險中等，最需要注意的是 BrowserAddressToolbar.swift 第 332 行將 trailingPageActionStack 誤改為 browserActionStack，可能導致動畫或更新邏輯錯誤；另外 AddressToolbarContainer.swift 第 448 行將 toolbar 的 leadingAnchor 連接到 rightSkeletonAddressBar 而非 leftSkeletonAddressBar，可能造成骨架畫面佈局錯誤。建議修正後再合併。
+
+### Findings（4 筆）
+
+| | Severity | 位置 | 問題 | 信心 |
+|---|---|---|---|---|
+| 🛑 | Blocker | `BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift:332` | 錯誤的 stack view 引用：應為 trailingPageActionStack 而非 browserActionStack | 0.95 |
+| 🛑 | Blocker | `firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift:448` | 骨架畫面約束錯誤：toolbar leadingAnchor 連接到 rightSkeletonAddressBar | 0.90 |
+| ⚠️ | Major | `BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift:419` | 判斷 page actions 是否存在的 stack view 可能錯誤 | 0.80 |
+| 🔸 | Minor | `firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift:465` | 使用已棄用的 API：UIApplication.shared.statusBarOrientation | 0.70 |
+
+<details><summary>🛑 <b>Blocker</b> — <code>BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift:332</code> 錯誤的 stack view 引用：應為 trailingPageActionStack 而非 browserActionStack</summary>
+
+在 `updateActionStack` 的呼叫中，原本應該更新 `trailingPageActionStack`（原 `pageActionStack`），但 diff 中卻改成了 `browserActionStack`。這會導致 trailing page actions 不會被更新，而 browser actions 會被重複更新，造成 UI 顯示錯誤。
+
+**失敗情境**：當使用者變更工具列設定（例如新增或移除 page action）時，trailing page actions 不會反映變更，而 browser actions 可能被錯誤地覆蓋。
+
+**建議修法**：將該行改回 `trailingPageActionStack`。
+
+**判斷依據**：diff 中第 332 行：`- pageActionStack.arrangedSubviews` 改為 `+ browserActionStack.arrangedSubviews`，但根據上下文，此處應為 `trailingPageActionStack`。
+
+</details>
+
+<details><summary>🛑 <b>Blocker</b> — <code>firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift:448</code> 骨架畫面約束錯誤：toolbar leadingAnchor 連接到 rightSkeletonAddressBar</summary>
+
+在 `setupSkeletonAddressBarsLayout` 中，原本 `toolbar.leadingAnchor` 應該連接到 `leftSkeletonAddressBar.trailingAnchor`，但 diff 中改成了 `rightSkeletonAddressBar.trailingAnchor`。這會導致 toolbar 的左側被固定在右側骨架條的尾端，造成佈局完全錯誤。
+
+**失敗情境**：當啟用分頁滑動且顯示骨架畫面時，toolbar 會出現在錯誤的位置，可能與其他 UI 重疊或超出螢幕。
+
+**建議修法**：將該行改回 `leftSkeletonAddressBar.trailingAnchor`。
+
+**判斷依據**：diff 中第 448 行：`- toolbar.leadingAnchor.constraint(equalTo: leftSkeletonAddressBar.trailingAnchor).isActive = true` 改為 `+ toolbar.leadingAnchor.constraint(equalTo: rightSkeletonAddressBar.trailingAnchor).isActive = true`。
+
+</details>
+
+<details><summary>⚠️ <b>Major</b> — <code>BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift:419</code> 判斷 page actions 是否存在的 stack view 可能錯誤</summary>
+
+在 `updateToolbarLayout` 中，原本使用 `pageActionStack.arrangedSubviews.isEmpty` 來判斷是否有 page actions，但重構後改成了 `leadingPageActionStack.arrangedSubviews.isEmpty`。這可能導致判斷錯誤，因為 trailing page actions 才是決定 divider 是否顯示的關鍵。
+
+**失敗情境**：如果只有 trailing page actions 而沒有 leading page actions，divider 寬度會被設為 0，導致 UI 顯示不正確。
+
+**建議修法**：確認此處應使用 `trailingPageActionStack` 還是 `leadingPageActionStack`，並修正。
+
+**判斷依據**：diff 中第 419 行：`- let hasPageActions = !pageActionStack.arrangedSubviews.isEmpty` 改為 `+ let hasPageActions = !leadingPageActionStack.arrangedSubviews.isEmpty`。
+
+</details>
+
+<details><summary>🔸 <b>Minor</b> — <code>firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift:465</code> 使用已棄用的 API：UIApplication.shared.statusBarOrientation</summary>
+
+在 `setupSkeletonAddressBarsLayout` 中新增了 `let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape`，但此 API 在 iOS 13 已棄用，且在多場景（multi-scene）環境下可能無法正確反映當前視窗的方向。
+
+**失敗情境**：在 iPad 多視窗或使用 `UIWindowScene` 的環境中，此屬性可能回傳錯誤的方向，導致佈局判斷失誤。
+
+**建議修法**：改用 `view.window?.windowScene?.interfaceOrientation` 或使用 trait collection 來判斷方向。
+
+**判斷依據**：diff 中新增行：`+ let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape`。
+
+</details>
+
+---
+
+<sub>model `deepseek-v4-pro` ｜ prompt tokens 4911 (cache hit 4864) ｜ completion tokens 1379 ｜ PR #11</sub>

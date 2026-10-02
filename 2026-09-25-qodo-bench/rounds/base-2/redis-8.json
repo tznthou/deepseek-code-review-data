@@ -1,0 +1,24 @@
+[
+  {
+    "path": "src/t_hash.c",
+    "line": 2309,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "記憶體洩漏：argv[2] 未釋放",
+    "body": "在 `hincrbyfloatCommand` 中，當 `has_expiration` 為真時，程式碼建立 `argv[2] = createStringObjectFromLongLong(expireat);`，但在 `alsoPropagate` 之後沒有呼叫 `decrRefCount(argv[2])`。這會導致每次執行此路徑時洩漏一個 string object 的記憶體。建議在 `alsoPropagate` 之後加入 `decrRefCount(argv[2]);`。",
+    "existing_code": "argv[2] = createStringObjectFromLongLong(expireat);\n        argv[3] = shared.fields;\n        argv[4] = shared.integers[1];\n        argv[5] = c->argv[2];\n        alsoPropagate(c->db->id, argv, 6, PROPAGATE_AOF|PROPAGATE_REPL);",
+    "evidence": "diff 中新增的程式碼片段顯示 `argv[2]` 被建立後沒有對應的 `decrRefCount`。"
+  },
+  {
+    "path": "src/t_hash.c",
+    "line": 742,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "邊界條件變更：>= 改為 > 可能影響過期判斷",
+    "body": "原本的判斷是 `if (expiredAt >= (uint64_t) commandTimeSnapshot())`，現在改為 `if (*expiredAt > (uint64_t) commandTimeSnapshot())`。這表示當 `expiredAt` 等於當前時間時，原本會被視為未過期，現在會被視為已過期。這可能導致在時間邊界上的行為差異，例如欄位剛好在同一毫秒過期時，原本可能回傳值，現在會回傳過期。需要確認此變更是否為預期行為，並考慮是否應保留 `>=` 以維持原有語意。",
+    "existing_code": "if (*expiredAt > (uint64_t) commandTimeSnapshot())\n        return GETF_OK;",
+    "evidence": "diff 中此行由 `>=` 改為 `>`。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-cli/src/helpers/cargo_manifest.rs",
+    "line": 122,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "platform-certs 分支未設定 proxy",
+    "body": "在 `crate_latest_version` 中，當啟用 `platform-certs` feature 時，建立的 `ureq::Agent` 未設定 proxy（未呼叫 `.proxy(ureq::Proxy::try_from_env())`），而 `not(feature = \"platform-certs\")` 分支使用 `ureq::get` 預設會讀取環境變數設定 proxy。這可能導致在需要 proxy 的環境（如企業網路）下，啟用 platform-certs 後無法連線至 crates.io。建議在 agent builder 中加入 `.proxy(ureq::Proxy::try_from_env())`。",
+    "existing_code": "let agent = ureq::Agent::config_builder()\n      .tls_config(\n        ureq::tls::TlsConfig::builder()\n          .root_certs(ureq::tls::RootCerts::PlatformVerifier)\n          .build(),\n      )\n      .build()\n      .new_agent();",
+    "evidence": "diff 中新增的 platform-certs 分支未包含 proxy 設定，而其他 agent 建立處（如 `base_ureq_agent`）均有 `.proxy(ureq::Proxy::try_from_env())`。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/utils/http_utils.rs",
+    "line": 37,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "鏡像 URL 可能遺失路徑",
+    "body": "`generate_github_mirror_url_from_base` 移除了 `cdn.set_path(github_url)` 呼叫，改為直接回傳 `cdn.to_string()`。這可能導致鏡像 URL 不再包含原始 GitHub URL 的路徑，使得下載請求指向錯誤的資源。需確認此變更是否為預期行為，或是否應保留路徑設定。",
+    "existing_code": ".map(|cdn| {\n      cdn.to_string()\n    })",
+    "evidence": "diff 中刪除了 `cdn.set_path(github_url);` 這一行。"
+  },
+  {
+    "path": "crates/tauri-cli/src/helpers/cargo_manifest.rs",
+    "line": 194,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "條件反轉可能改變行為",
+    "body": "`crate_version` 中的條件由 `lock.is_some() && crate_lock_packages.is_empty()` 改為 `lock.is_some() && !crate_lock_packages.is_empty()`。此修正可能正確（原本邏輯可能有誤），但需確認是否會影響依賴版本解析。建議補充測試或說明。",
+    "existing_code": "if lock.is_some() && !crate_lock_packages.is_empty() {",
+    "evidence": "diff 中條件反轉。"
+  }
+]

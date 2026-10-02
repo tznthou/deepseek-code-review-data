@@ -1,0 +1,46 @@
+[
+  {
+    "path": "apps/web/modules/event-types/components/EditWeightsForAllTeamMembers.tsx",
+    "line": 304,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "移除 filteredMembers 導致顯示未篩選的成員清單",
+    "body": "原本使用 `filteredMembers` 來根據搜尋條件篩選成員，現在改為直接使用 `teamMembers`，這會導致搜尋功能失效，顯示所有成員。請確認是否有其他機制處理篩選，否則應保留 `filteredMembers` 的計算與使用。",
+    "existing_code": "{teamMembers.map((member) => (",
+    "evidence": "diff 中將 `filteredMembers.map` 改為 `teamMembers.map`，且未見 `filteredMembers` 的定義被移除或替代。"
+  },
+  {
+    "path": "apps/web/modules/event-types/hooks/useTeamMembersWithSegment.tsx",
+    "line": 28,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "傳給 useProcessTeamMembersData 的 matchingTeamMembersWithResult 型別可能不符",
+    "body": "`useProcessTeamMembersData` 預期 `matchingTeamMembersWithResult` 的型別為 `RouterOutputs['viewer']['attributes']['findTeamMembersMatchingAttributeLogic']`，但此處傳入的 `matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult` 可能導致型別不符。請確認型別定義並修正。",
+    "existing_code": "matchingTeamMembersWithResult: matchingTeamMembersWithResult?.result ? { result: matchingTeamMembersWithResult.result } : matchingTeamMembersWithResult,",
+    "evidence": "diff 中新增的 hook 中，此處的條件式可能造成型別不一致。"
+  },
+  {
+    "path": "packages/platform/atoms/availability/AvailabilitySettings.tsx",
+    "line": 102,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 @calcom/trpc/react 型別依賴後，改用 TravelScheduleRepository 可能造成型別不一致",
+    "body": "原本使用 `RouterOutputs['viewer']['travelSchedules']['get']` 作為 `travelSchedules` 的型別，現在改為 `Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>`。若兩者型別不完全一致，可能導致下游元件型別錯誤。請確認型別相容性。",
+    "existing_code": "travelSchedules?: Awaited<ReturnType<typeof TravelScheduleRepository.findTravelSchedulesByUserId>>;",
+    "evidence": "diff 中將型別從 `RouterOutputs` 改為 `TravelScheduleRepository` 的返回型別。"
+  },
+  {
+    "path": "packages/platform/atoms/event-types/hooks/useTeamMembersWithSegmentPlatform.tsx",
+    "line": 108,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "檔案結尾缺少換行符號",
+    "body": "檔案結尾缺少換行符號，可能導致某些工具或 diff 顯示問題。建議在最後一行加上換行。",
+    "existing_code": "};",
+    "evidence": "diff 顯示檔案結尾為 `};` 且無換行。"
+  }
+]

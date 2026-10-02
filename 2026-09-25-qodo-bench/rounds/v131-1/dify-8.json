@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 11,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "React Scan 載入失敗時回傳的元件可能導致渲染錯誤",
+    "body": "在 `lazy` 的 `catch` 中回傳 `{ default: () => null }`，但 `ReactScan` 元件本身可能接受 props 或依賴 context。若 `ReactScan` 在渲染時需要特定 props 或 context，這個 fallback 元件可能無法滿足，導致錯誤。此外，`lazy` 的 factory 必須回傳一個 Promise，其 resolve 值必須是 `{ default: Component }`，此處符合，但 fallback 元件若被渲染且內部有 hook 或依賴，可能造成問題。建議改為回傳一個明確的 fallback 元件，或直接讓錯誤拋出並由 error boundary 處理。",
+    "existing_code": "return { default: () => null }",
+    "evidence": "diff 中第 10 行：`return { default: () => null }`"
+  },
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "IS_DEV 判斷可能在 client bundle 中失效",
+    "body": "`IS_DEV` 從 `@/config` 匯入，若該值在建置時被替換為 `false`，則在 production 環境中 devtools 不會載入，符合預期。但若 `IS_DEV` 是 runtime 判斷（例如依賴 `process.env.NODE_ENV`），在 client bundle 中可能無法正確反映環境，導致 devtools 在 production 中意外載入，或反之在 development 中未載入。建議確認 `IS_DEV` 的實作方式，並考慮在建置時使用 `process.env.NODE_ENV` 進行靜態替換。",
+    "existing_code": "if (!IS_DEV)\n    return null",
+    "evidence": "diff 中第 16-17 行：`if (!IS_DEV) return null`"
+  }
+]

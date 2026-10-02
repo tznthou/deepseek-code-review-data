@@ -1,0 +1,57 @@
+[
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 502,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "tool_call_response 的 content 誤用 tool_inputs 而非 tool_responses",
+    "body": "在 organize_agent_history 中，原本 tool_call_response 的 content 使用 `tool_responses.get(tool, agent_thought.observation)`，但修改後改為 `str(tool_inputs.get(tool, agent_thought.observation))`。這會導致回傳給模型的工具回應內容變成工具的輸入參數，而非實際的觀察結果，造成語意完全錯誤，可能嚴重影響 agent 的決策。\n\n失敗情境：當 agent 呼叫工具並獲得觀察結果後，歷史訊息中的工具回應會顯示輸入參數，模型將無法得知工具執行的實際結果，導致後續推理錯誤。\n\n建議：改回使用 `tool_responses.get(tool, agent_thought.observation)`，並確保型別正確。",
+    "existing_code": "content=str(tool_inputs.get(tool, agent_thought.observation)),",
+    "evidence": "diff 中此行由 `content=tool_responses.get(tool, agent_thought.observation)` 改為 `content=str(tool_inputs.get(tool, agent_thought.observation))`，明顯誤植變數。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1865,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "message_price_unit 與 answer_price_unit 的 Python 端預設值與資料庫 server_default 不一致",
+    "body": "在 MessageAgentThought 模型中，`message_price_unit` 的 Python 端預設值設為 `Decimal(\"0.001\")`，但資料庫的 `server_default` 仍為 `sa.text(\"0.001\")`；`answer_price_unit` 的 Python 端預設值設為 `Decimal(\"0.001\")`，但 `server_default` 為 `sa.text(\"0.001\")`。雖然目前兩者相同，但若未來調整任一側，可能導致新建立的物件在未 flush 前與資料庫實際值不一致。此外，`message_unit_price` 和 `answer_unit_price` 的 Python 端預設值為 `None`，但資料庫欄位允許 NULL，這可能造成型別不一致。\n\n失敗情境：若程式碼依賴 Python 端預設值進行計算，但資料庫實際值不同，可能導致計算錯誤。\n\n建議：確認 Python 端預設值與資料庫 server_default 應保持一致，或移除其中一側的預設值，避免混淆。",
+    "existing_code": "message_price_unit: Mapped[Decimal] = mapped_column(\n        sa.Numeric(10, 7), nullable=False, default=Decimal(\"0.001\"), server_default=sa.text(\"0.001\")\n    )",
+    "evidence": "diff 中新增了 `default=Decimal(\"0.001\")`，但原本已有 `server_default=sa.text(\"0.001\")`，兩者重複且可能不一致。"
+  },
+  {
+    "path": "api/models/model.py",
+    "line": 1846,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "MessageAgentThought 的 id 欄位同時使用 insert_default 和 default_factory，可能導致衝突",
+    "body": "在 `id` 欄位的定義中，同時指定了 `insert_default=lambda: str(uuid4())` 和 `default_factory=lambda: str(uuid4())`。這兩個參數的功能重疊，可能導致 SQLAlchemy 在插入時產生非預期的行為，或造成混淆。\n\n失敗情境：在某些 SQLAlchemy 版本中，同時提供這兩個參數可能導致其中一個被忽略，或產生重複的 UUID 生成邏輯，增加維護困難。\n\n建議：僅保留一個預設值生成方式，例如只使用 `default_factory` 或 `insert_default`，並確認其行為符合預期。",
+    "existing_code": "id: Mapped[str] = mapped_column(\n        StringUUID, insert_default=lambda: str(uuid4()), default_factory=lambda: str(uuid4()), init=False\n    )",
+    "evidence": "diff 中新增了 `insert_default` 和 `default_factory`，兩者皆用於生成 UUID，功能重複。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 365,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "save_agent_thought 中 thought 的串接方式可能引入不必要的空白或格式問題",
+    "body": "原本 `agent_thought.thought += thought` 直接串接，修改後改為 `existing_thought = agent_thought.thought or \"\"` 再使用 f-string 串接。雖然功能上等價，但若 `thought` 本身包含前導或後綴空白，可能導致最終內容格式不一致。此外，此修改並未解決任何實質問題，可能只是為了型別安全。\n\n失敗情境：若 `thought` 開頭有換行或空格，串接後可能影響顯示。\n\n建議：若無特殊需求，可保留原本的 `+=` 寫法，或明確處理空白。",
+    "existing_code": "existing_thought = agent_thought.thought or \"\"\n            agent_thought.thought = f\"{existing_thought}{thought}\"",
+    "evidence": "diff 中將 `agent_thought.thought += thought` 改為上述兩行，功能相同但可能引入格式問題。"
+  },
+  {
+    "path": "api/core/agent/base_agent_runner.py",
+    "line": 319,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "create_agent_thought 中 message_unit_price 和 answer_unit_price 的預設值可能不合理",
+    "body": "在 `create_agent_thought` 中，`message_unit_price` 設為 `Decimal(0)`，`answer_unit_price` 設為 `Decimal(\"0.001\")`，而 `message_price_unit` 設為 `Decimal(\"0.001\")`，`answer_price_unit` 設為 `Decimal(0)`。這些值可能與實際計費邏輯不符，且與模型定義的預設值不一致。\n\n失敗情境：若後續計算總價時使用這些值，可能導致金額錯誤。\n\n建議：確認這些預設值是否符合業務邏輯，並與模型定義保持一致。",
+    "existing_code": "message_unit_price=Decimal(0),\n            message_price_unit=Decimal(\"0.001\"),\n            message_files=json.dumps(messages_ids) if messages_ids else \"\",\n            answer=\"\",\n            observation=\"\",\n            answer_token=0,\n            answer_unit_price=Decimal(\"0.001\"),\n            answer_price_unit=Decimal(0),",
+    "evidence": "diff 中將原本的整數 0 改為 Decimal，但值本身可能不合理。"
+  }
+]

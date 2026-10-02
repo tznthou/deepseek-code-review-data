@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/DisplaySettingsTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試斷言可能使用錯誤的輔助功能識別碼",
+    "body": "在 testCheckSystemThemeChanges 中，原本檢查 lightThemeView 的選取狀態，但變更後改為檢查 darkThemeView。這可能導致測試在選取 Light mode 時，錯誤地驗證 Dark mode 的狀態，造成測試失敗或誤判。建議確認此變更是否為預期行為，或改回 lightThemeView。",
+    "existing_code": "let lightIsSelected = app.buttons[AccessibilityIdentifiers.Settings.Appearance.darkThemeView].value",
+    "evidence": "diff 中將原本的 lightThemeView 改為 darkThemeView，但變數名稱仍為 lightIsSelected，且後續斷言為 XCTAssertEqual(lightIsSelected as? String, \"1\")，邏輯上不一致。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/HomePageSettingsUITest.swift",
+    "line": 155,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "操作順序變更可能影響測試穩定性",
+    "body": "在 testDisableTopSitesSettingsRemovesSection 中，原本先執行 navigator.goto(NewTabScreen) 再點擊 Done 按鈕，變更後順序相反。這可能導致測試在錯誤的畫面狀態下點擊 Done，進而影響後續驗證。建議確認此順序變更是否為必要，或恢復原順序。",
+    "existing_code": "app.buttons[\"Done\"].waitAndTap()\n        navigator.goto(NewTabScreen)",
+    "evidence": "diff 顯示兩行順序對調，可能改變測試執行流程。"
+  }
+]

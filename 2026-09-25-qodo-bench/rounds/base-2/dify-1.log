@@ -1,0 +1,4 @@
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 7807 字元、thinking=disabled、max_tokens=8192）
+[info] 重新定位 api/tests/unit_tests/core/workflow/graph_engine/test_streaming_conversation_variables.py:73 → 75（片段唯一命中）
+[info] 完成於 7.1s ｜ findings=2 ｜ relocated=1 ｜ verdict=comment ｜ usage={"prompt_tokens": 4689, "completion_tokens": 625, "total_tokens": 5314, "prompt_tokens_details": {"cached_tokens": 4608}, "prompt_cache_hit_tokens": 4608, "prompt_cache_miss_tokens": 81}

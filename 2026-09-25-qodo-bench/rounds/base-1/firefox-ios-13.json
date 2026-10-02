@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/OnboardingTests.swift",
+    "line": 29,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "tearDown 提前 return 可能略過 app.terminate() 與 super.tearDown()",
+    "body": "在 `tearDown()` 中，當 `self.name.contains(\"testSelectBottomPlacement\") || iPad()` 成立時直接 `return`，導致後續的 `app.terminate()` 與 `try await super.tearDown()` 不會被執行。這可能造成測試狀態殘留，影響後續測試的隔離性。建議改為使用 `if` 條件包住主題切換，而不是直接 return，確保清理邏輯總會執行。",
+    "existing_code": "if self.name.contains(\"testSelectBottomPlacement\") || iPad() {\n    // Toolbar option not available for iPad, so the theme is not changed there.\n    return\n} else {\n    switchThemeToDarkOrLight(theme: \"Light\")\n}",
+    "evidence": "diff 中新增的 `return` 位於 `app.terminate()` 與 `try await super.tearDown()` 之前，若條件成立則直接跳過。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/ShareLongPressTests.swift",
+    "line": 47,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "測試方法改名後失去 test 前綴，可能不再被 XCTest 執行",
+    "body": "方法 `testBookmarksShareNormalWebsiteReminders` 被改名為 `verifyBookmarksShareNormalWebsiteReminders`，但 XCTest 只會自動執行以 `test` 開頭的方法。若此方法原本是測試案例，改名後將不再被執行，導致測試覆蓋率下降。建議保留 `test` 前綴，或確認此方法已改為輔助方法並有對應的測試呼叫。",
+    "existing_code": "func verifyBookmarksShareNormalWebsiteReminders() {",
+    "evidence": "diff 中將 `func testBookmarksShareNormalWebsiteReminders()` 改為 `func verifyBookmarksShareNormalWebsiteReminders()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 471,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "tapIfExists 使用固定 timeout 可能不穩定",
+    "body": "新增的 `springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)` 使用固定 0.5 秒等待系統提示出現。在慢速 CI 或裝置上，提示可能延遲出現，導致 tapIfExists 找不到按鈕而失敗。建議使用較長的 timeout 或改用 `mozWaitForElementToExist` 搭配條件點擊。",
+    "existing_code": "springboard.buttons[\"Allow Paste\"].tapIfExists(timeout: 0.5)",
+    "evidence": "diff 中新增的這一行使用固定 timeout 0.5。"
+  }
+]

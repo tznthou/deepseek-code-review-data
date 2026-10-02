@@ -1,0 +1,57 @@
+[
+  {
+    "path": "ui-v2/tsconfig.app.json",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "關閉 TypeScript 嚴格模式降低型別安全",
+    "body": "將 `strict` 從 `true` 改為 `false` 會停用多項重要的型別檢查（如 `strictNullChecks`、`strictFunctionTypes` 等），可能導致未處理的 null/undefined 錯誤在編譯期無法被發現。此變更似乎與新增 UI 元件無直接關聯，若無充分理由，建議恢復為 `true`。",
+    "existing_code": "\"strict\": false,",
+    "evidence": "diff 中 tsconfig.app.json 的變更：`- \"strict\": true,` 改為 `+ \"strict\": false,`"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/work-pool-status-trigger-fields.tsx",
+    "line": 78,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用 parseInt 而非 Number 可能導致非預期結果",
+    "body": "在 threshold 欄位的 onChange 中使用 `parseInt(e.target.value)`，若輸入為空字串或非數字字串（如 \"abc\"），`parseInt` 會回傳 `NaN`，而 `Number` 會回傳 `NaN` 或 0。但 `parseInt` 會解析前綴數字（如 \"10abc\" 回傳 10），可能造成非預期行為。建議與其他元件一致使用 `Number(e.target.value)`，並考慮處理 NaN 的情況。",
+    "existing_code": "onChange={(e) => field.onChange(parseInt(e.target.value))}",
+    "evidence": "work-pool-status-trigger-fields.tsx 第 76 行，其他元件（如 custom-trigger-fields.tsx）使用 `Number(e.target.value)`"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/deployment-status-trigger-fields.tsx",
+    "line": 30,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.65,
+    "title": "切換模板時可能殘留舊的 trigger 欄位值",
+    "body": "當使用者從一個模板切換到另一個模板時，例如從 deployment-status 切換到 work-pool-status，`trigger.expect` 或 `trigger.after` 的值可能不會被重置，導致表單提交時包含不屬於當前模板的欄位。建議在模板變更時清除相關欄位，或確保 schema 驗證能忽略不相關的欄位。",
+    "existing_code": "const statusFieldName =\n\t\tposture === \"Proactive\" ? \"trigger.after\" : \"trigger.expect\";",
+    "evidence": "deployment-status-trigger-fields.tsx 第 31-32 行，根據 posture 動態決定欄位名稱，但未清除另一個欄位的值"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/custom-trigger-fields.tsx",
+    "line": 39,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "Expected Events 欄位在空輸入時可能提交 undefined",
+    "body": "當使用者清空 Expected Events 文字框時，`onChange` 會將 `field.onChange(undefined)` 傳入，這可能導致表單值變成 `undefined`，而 schema 可能預期為陣列。建議改為傳入空陣列 `[]` 或確保 schema 能處理 `undefined`。",
+    "existing_code": "field.onChange(lines.length > 0 ? lines : undefined);",
+    "evidence": "custom-trigger-fields.tsx 第 33 行，當 lines 為空時傳入 undefined"
+  },
+  {
+    "path": "ui-v2/src/components/automations/automations-wizard/trigger-step/trigger-step.test.tsx",
+    "line": 45,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試僅檢查元件可見性，未驗證互動行為",
+    "body": "新增的測試僅確認元件渲染（如 `getByLabelText`），未測試使用者互動（如選擇狀態、輸入數值）後表單值的正確性。建議增加測試覆蓋這些互動，以確保功能正常。",
+    "existing_code": "expect(screen.getByLabelText(\"select posture\")).toBeVisible();\n\t\texpect(screen.getByLabelText(\"Threshold\")).toBeVisible();",
+    "evidence": "trigger-step.test.tsx 中多個測試僅檢查可見性，未模擬使用者操作"
+  }
+]

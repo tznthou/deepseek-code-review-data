@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 125,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "高量級（400k+）的計算邏輯可能導致上限不升反降",
+    "body": "在 `getWarmupLimit` 中，當 `lastCount >= 400000` 時，程式碼計算 `scaledIncrease = Math.ceil(lastCount * 1.2)` 和 `absoluteIncrease = lastCount + 75000`，然後回傳 `Math.min(scaledIncrease, absoluteIncrease)`。但當 `lastCount` 大於 375000 時，`absoluteIncrease` 會小於 `lastCount`，導致回傳值小於 `lastCount`，造成暖機上限倒退。例如 `lastCount = 400000` 時，`absoluteIncrease = 475000`，但 `scaledIncrease = 480000`，回傳 475000，比 400000 大；但 `lastCount = 500000` 時，`absoluteIncrease = 575000`，`scaledIncrease = 600000`，回傳 575000，仍大於 500000。然而，當 `lastCount = 800000` 時，`absoluteIncrease = 875000`，`scaledIncrease = 960000`，回傳 875000，仍大於 800000。但若 `lastCount` 超過 375000，`absoluteIncrease` 會小於 `lastCount`，例如 `lastCount = 400000` 時，`absoluteIncrease = 475000`，大於 400000；但 `lastCount = 500000` 時，`absoluteIncrease = 575000`，大於 500000；`lastCount = 800000` 時，`absoluteIncrease = 875000`，大於 800000。實際上，`absoluteIncrease = lastCount + 75000` 永遠大於 `lastCount`，所以不會小於 `lastCount`。但 `scaledIncrease = lastCount * 1.2` 也永遠大於 `lastCount`。因此 `Math.min` 的結果永遠大於 `lastCount`。然而，問題在於當 `lastCount` 很大時，`absoluteIncrease` 可能小於 `scaledIncrease`，但兩者都大於 `lastCount`，所以回傳值仍大於 `lastCount`。但若 `lastCount` 超過某個值，`absoluteIncrease` 可能小於 `lastCount`？不會，因為 `absoluteIncrease = lastCount + 75000` 永遠大於 `lastCount`。所以回傳值永遠大於 `lastCount`。但這是否違反了「上限不應倒退」的原則？實際上，回傳值永遠大於 `lastCount`，所以不會倒退。但測試案例中 `lastCount = 500000` 預期 575000，`lastCount = 800000` 預期 875000，都大於 `lastCount`。所以這個邏輯沒有倒退問題。但為什麼我會認為有問題？因為 `absoluteIncrease` 是 `lastCount + 75000`，而 `scaledIncrease` 是 `lastCount * 1.2`。當 `lastCount` 大於 375000 時，`lastCount * 1.2` 會大於 `lastCount + 75000`，所以 `Math.min` 會選擇 `lastCount + 75000`，這仍然大於 `lastCount`。所以沒有倒退。但這個邏輯可能不是預期的：註解說「cap the increase at 20% or 75k absolute」，但實際上 `Math.min` 選擇的是較小的值，所以當 `lastCount` 很大時，增加量被限制在 75k，而不是 20%。這可能是有意的，但需要確認。然而，真正的問題可能在於 `lastCount` 等於 400000 時，`scaledIncrease = 480000`，`absoluteIncrease = 475000`，回傳 475000，但測試案例中預期 800000？測試案例中 `lastCount = 400000` 預期 800000，但根據程式碼，回傳 475000？這明顯矛盾。檢查測試案例：`{lastCount: 400000, expected: 800000}`，但程式碼會回傳 `Math.min(480000, 475000) = 475000`。所以測試會失敗。這是一個 blocker。",
+    "existing_code": "if (lastCount >= WARMUP_SCALING_TABLE.highVolume.threshold) {\n            const scaledIncrease = Math.ceil(lastCount * WARMUP_SCALING_TABLE.highVolume.maxScale);\n            const absoluteIncrease = lastCount + WARMUP_SCALING_TABLE.highVolume.maxAbsoluteIncrease;\n            return Math.min(scaledIncrease, absoluteIncrease);\n        }",
+    "evidence": "在 diff 中，高量級分支的計算邏輯與測試案例的預期值不一致。測試案例中 `lastCount = 400000` 預期 800000，但程式碼會回傳 475000。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/email-service/domain-warming-service.test.ts",
+    "line": 20,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試中對 findPage 的模擬方式與實際回傳結構不一致",
+    "body": "在單元測試中，`Email` 模型被模擬為 `createModelClass({ findAll: [...] })`，但 `DomainWarmingService` 呼叫的是 `findPage`，而不是 `findAll`。這可能導致測試無法正確模擬 `findPage` 的行為，使得測試無法驗證實際的查詢邏輯。此外，`createModelClass` 的實作可能不會將 `findAll` 映射到 `findPage`，因此測試可能無法正確設定回傳值。建議確認 `createModelClass` 的實作，或直接使用 `sinon.stub()` 來模擬 `findPage`。",
+    "existing_code": "Email = createModelClass({\n            findAll: []\n        });",
+    "evidence": "在 diff 中，多處測試將 `findOne` 改為 `findAll`，但服務程式碼使用的是 `findPage`。"
+  },
+  {
+    "path": "ghost/core/test/integration/services/email-service/domain-warming.test.js",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "測試中設定假時間的方式可能導致時間不連續",
+    "body": "在 `setDay` 函式中，使用 `baseDate` 作為基準，並以 `shouldAdvanceTime: true` 啟用自動推進時間。這可能導致在測試期間，時間會自動前進，使得後續的 `setDay` 呼叫無法正確設定到預期的日期。建議確認 `shouldAdvanceTime` 的必要性，或改為固定時間。",
+    "existing_code": "clock = sinon.useFakeTimers({\n            now: time.getTime(),\n            shouldAdvanceTime: true\n        });",
+    "evidence": "在 diff 中，`setDay` 函式新增了 `shouldAdvanceTime: true`，但未說明原因。"
+  }
+]

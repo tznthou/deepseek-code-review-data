@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 508,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "IpadOnlyTestCase 中呼叫 super.setUp() 缺少 try await",
+    "body": "在 IpadOnlyTestCase 的 setUp() 中，呼叫 `super.setUp()` 時未加上 `try await`，但父類別的 setUp() 已改為 async throws。這會導致編譯錯誤，或若編譯器允許，則可能造成非同步呼叫未正確等待。建議改為 `try await super.setUp()`。",
+    "existing_code": "await super.setUp()",
+    "evidence": "diff 中 IpadOnlyTestCase 的 setUp() 內 `await super.setUp()` 沒有 `try`，而其他類似類別如 IphoneOnlyTestCase 使用 `try await super.setUp()`。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/BaseTestCase.swift",
+    "line": 12,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "全域變數加上 @MainActor 可能影響其他未標註的程式碼",
+    "body": "將 `urlBarAddress` 和 `homepageSearchBar` 加上 @MainActor 後，任何在非 main actor 環境中存取這些變數的程式碼都需要 await 或標註 @MainActor。需確認所有使用這些變數的地方都已正確處理，否則可能導致編譯錯誤。",
+    "existing_code": "@MainActor\nlet urlBarAddress = XCUIApplication().textFields[AccessibilityIdentifiers.Browser.AddressToolbar.searchTextField]",
+    "evidence": "diff 中新增 @MainActor 於全域變數，但未檢查所有使用點。"
+  }
+]

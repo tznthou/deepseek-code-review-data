@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "CFBundleTypeExtensions 條件判斷邏輯錯誤",
+    "body": "在 `create_info_plist` 中，原本無條件插入 `CFBundleTypeExtensions`，現在改為 `if association.ext.is_empty()` 才插入。這會導致當 `ext` 非空時（最常見的情況），`CFBundleTypeExtensions` 不會被加入 Info.plist，使得 macOS 無法將檔案副檔名與應用程式關聯。\n\n**失敗情境**：使用者設定 `fileAssociations` 且 `ext` 不為空（例如 `[\"png\"]`），產生的 app bundle 將缺少 `CFBundleTypeExtensions`，導致雙擊該副檔名的檔案時無法開啟應用程式。\n\n**建議修法**：將條件改為 `if !association.ext.is_empty()`。",
+    "existing_code": "if association.ext.is_empty() {\n              dict.insert(\n                \"CFBundleTypeExtensions\".into(),\n                plist::Value::Array(\n                  association\n                    .ext\n                    .iter()\n                    .map(|ext| ext.to_string().into())\n                    .collect(),\n                ),\n              );\n            }",
+    "evidence": "diff 中顯示原本的程式碼是無條件插入，新程式碼加入了 `if association.ext.is_empty()` 條件，但邏輯明顯相反。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 353,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "CFBundleTypeName 使用 expect 可能導致 panic",
+    "body": "原本使用 `unwrap_or(&association.ext[0].0)` 提供預設值，現在改為 `expect(\"File association must have a name\")`。若使用者未提供 `name` 且 `ext` 為空，程式會 panic。\n\n**失敗情境**：設定 `fileAssociations` 時未提供 `name` 且 `ext` 為空陣列，打包時會 panic。\n\n**建議修法**：保留原本的 fallback 邏輯，或改用更安全的處理方式（例如回傳錯誤而非 panic）。",
+    "existing_code": ".expect(\"File association must have a name\")",
+    "evidence": "diff 中將 `unwrap_or(&association.ext[0].0)` 改為 `expect`，且 `ext` 可能為空。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 1202,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "exported_type 缺少 serde alias",
+    "body": "`FileAssociation` 中的 `exported_type` 欄位沒有加上 `#[serde(alias = \"exported-type\")]`，而其他欄位如 `content_types` 有 `content-types` 的 alias。這可能導致使用 kebab-case 的設定檔無法正確反序列化。\n\n**建議修法**：加上 `#[serde(alias = \"exported-type\")]`。",
+    "existing_code": "pub exported_type: Option<ExportedFileAssociation>,",
+    "evidence": "diff 中新增的 `exported_type` 欄位沒有 alias，但同結構中的 `content_types` 有 `#[serde(alias = \"content-types\")]`。"
+  }
+]

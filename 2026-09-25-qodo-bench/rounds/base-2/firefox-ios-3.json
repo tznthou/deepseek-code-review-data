@@ -1,0 +1,46 @@
+[
+  {
+    "path": "firefox-ios/Client/Coordinators/Launch/LaunchCoordinator.swift",
+    "line": 271,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "onActionTap 閉包內使用 Task 可能造成執行順序不確定",
+    "body": "原本 onActionTap 閉包直接呼叫 onboardingService.handleAction，現在改為在 Task 中執行。這會讓 handleAction 的執行延後到非同步佇列，可能改變原本的同步執行順序。若 handleAction 內部有依賴呼叫順序的邏輯（例如更新 UI 或狀態），可能導致行為不一致。建議確認 handleAction 是否必須在原本的同步上下文中執行，或改用 MainActor.assumeIsolated 等方式保留同步性。",
+    "existing_code": "Task {\n    onboardingService.handleAction(\n        action,\n        from: cardName,\n        cards: onboardingModel.cards,\n        with: activityEventHelper,\n        completion: completion\n    )\n}",
+    "evidence": "diff 中 onActionTap 閉包從直接呼叫改為包在 Task { } 內，且閉包本身已標註 @MainActor，但 Task 會在新的非結構化任務中執行，可能脫離原本的同步執行流。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/BrowserViewController/Extensions/BrowserViewController+WebViewDelegates.swift",
+    "line": 79,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "spamCallback 加上 @Sendable 可能限制閉包捕獲非 Sendable 值",
+    "body": "spamCallback 參數新增 @Sendable 標註，但此閉包僅在 MainActor 上執行，且呼叫端可能捕獲非 Sendable 的物件（如 self）。若捕獲的物件未遵循 Sendable，編譯器會發出警告或錯誤，可能迫使呼叫端進行不必要的修改。建議確認此閉包是否真的需要跨 actor 傳遞，若無必要可移除 @Sendable。",
+    "existing_code": "spamCallback: @escaping @MainActor @Sendable () -> Void",
+    "evidence": "diff 中 spamCallback 型別從 @escaping () -> Void 改為 @escaping @MainActor @Sendable () -> Void，但此閉包僅在 MainActor 上使用，@Sendable 可能過度限制。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/DownloadHelper/DownloadToast.swift",
+    "line": 112,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "completion 閉包加上 @MainActor 可能造成呼叫端需調整",
+    "body": "DownloadToast 的 init 中 completion 參數新增 @MainActor 標註，但此閉包可能從非 MainActor 的 context 呼叫。若呼叫端未在 MainActor 上，編譯器會要求使用 await 或標註，可能造成不必要的改動。建議確認所有呼叫端是否皆在 MainActor 上，或考慮使用 @escaping (Bool) -> Void 並在內部處理 actor 切換。",
+    "existing_code": "completion: @MainActor @escaping (Bool) -> Void",
+    "evidence": "diff 中 completion 型別從 @escaping (Bool) -> Void 改為 @MainActor @escaping (Bool) -> Void，但未提供呼叫端上下文，可能導致編譯錯誤。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/TabScrollController/TabProviderAdapter.swift",
+    "line": 14,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "onLoadingStateChanged 加上 @Sendable 可能限制賦值",
+    "body": "onLoadingStateChanged 屬性型別新增 @Sendable，但此屬性可能被賦予捕獲非 Sendable 值的閉包。若賦值的閉包捕獲了非 Sendable 物件，編譯器會報錯，迫使呼叫端修改。建議確認此閉包是否真的需要跨 actor 傳遞，若無必要可移除 @Sendable。",
+    "existing_code": "var onLoadingStateChanged: (@MainActor @Sendable () -> Void)?",
+    "evidence": "diff 中 onLoadingStateChanged 型別從 (() -> Void)? 改為 (@MainActor @Sendable () -> Void)?，但未提供賦值端上下文。"
+  }
+]

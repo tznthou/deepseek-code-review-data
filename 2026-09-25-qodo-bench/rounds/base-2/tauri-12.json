@@ -1,0 +1,35 @@
+[
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 328,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "CFBundleTypeExtensions 條件判斷邏輯相反",
+    "body": "在 `create_info_plist` 中，原本無條件插入 `CFBundleTypeExtensions`，現在改為 `if association.ext.is_empty()` 才插入。這會導致當 `ext` 非空時（即一般情況），該 key 不會被加入，使得 macOS 無法正確關聯副檔名。應改為 `if !association.ext.is_empty()`。",
+    "existing_code": "if association.ext.is_empty() {\n  dict.insert(\n    \"CFBundleTypeExtensions\".into(),\n    plist::Value::Array(\n      association\n        .ext\n        .iter()\n        .map(|ext| ext.to_string().into())\n        .collect(),\n    ),\n  );\n}",
+    "evidence": "diff 中原本的 `dict.insert(\"CFBundleTypeExtensions\", ...)` 被包在 `if association.ext.is_empty()` 內，但邏輯上應該只在 ext 非空時才需要此 key。"
+  },
+  {
+    "path": "crates/tauri-bundler/src/bundle/macos/app.rs",
+    "line": 353,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "使用 expect 可能導致 panic",
+    "body": "原本 `name` 為 None 時會 fallback 到 `ext[0]`，現在改用 `expect(\"File association must have a name\")`。若使用者未提供 `name` 且 `ext` 為空（例如僅使用 content types 的關聯），程式會 panic。建議保留原本的 fallback 邏輯或提供更安全的處理。",
+    "existing_code": ".expect(\"File association must have a name\")",
+    "evidence": "diff 中將 `unwrap_or(&association.ext[0].0)` 改為 `expect`，但未考慮 `ext` 可能為空的情境。"
+  },
+  {
+    "path": "crates/tauri-utils/src/config.rs",
+    "line": 1184,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "content_types 欄位缺少 serde default",
+    "body": "新增的 `content_types` 欄位型別為 `Option<Vec<String>>`，但未加上 `#[serde(default)]`。若使用者的設定檔中未提供此欄位，反序列化時會失敗。建議加上 `#[serde(default)]` 以維持向後相容。",
+    "existing_code": "#[serde(alias = \"content-types\")]\npub content_types: Option<Vec<String>>,",
+    "evidence": "其他選用欄位如 `name` 有 `Option` 且未加 default 也能運作，但此處為新增欄位，舊設定檔可能未包含，需確認 serde 對 Option 的預設行為。"
+  }
+]

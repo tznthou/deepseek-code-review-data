@@ -1,0 +1,35 @@
+[
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift",
+    "line": 448,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "骨架視圖約束可能錯誤：toolbar.leadingAnchor 應約束到 leftSkeletonAddressBar.trailingAnchor",
+    "body": "在 `setupSkeletonAddressBarsLayout` 中，原本 `toolbar.leadingAnchor` 約束到 `leftSkeletonAddressBar.trailingAnchor`，但此 PR 將其改為 `rightSkeletonAddressBar.trailingAnchor`。這可能導致 toolbar 的左側與右側骨架視圖的右側對齊，造成佈局錯亂。請確認此變更是否為預期行為，若非預期，應改回 `leftSkeletonAddressBar.trailingAnchor`。",
+    "existing_code": "toolbar.leadingAnchor.constraint(equalTo: rightSkeletonAddressBar.trailingAnchor).isActive = true",
+    "evidence": "diff 中此行由 `leftSkeletonAddressBar.trailingAnchor` 改為 `rightSkeletonAddressBar.trailingAnchor`，但上下文顯示 leftSkeletonAddressBar 位於左側，rightSkeletonAddressBar 位於右側，因此 toolbar 的 leading 應對齊 leftSkeletonAddressBar 的 trailing。"
+  },
+  {
+    "path": "BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift",
+    "line": 329,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "updateActionStack 的 stacks 陣列重複包含 browserActionStack，可能導致動畫或佈局錯誤",
+    "body": "在 `updateActionStack` 方法中，原本的 stacks 陣列包含 `browserActionStack`、`navigationActionStack`、`leadingPageActionStack` 和 `pageActionStack`。此 PR 將最後一個元素改為 `browserActionStack`，導致 `browserActionStack` 出現兩次，而 `trailingPageActionStack` 未被包含。這可能導致動畫或佈局更新時遺漏 trailing page actions，或對 browser actions 進行重複操作。請確認是否應改為 `trailingPageActionStack`。",
+    "existing_code": "let stacks = browserActionStack.arrangedSubviews +\n                     navigationActionStack.arrangedSubviews +\n                     leadingPageActionStack.arrangedSubviews +\n                     browserActionStack.arrangedSubviews",
+    "evidence": "diff 中最後一行由 `pageActionStack.arrangedSubviews` 改為 `browserActionStack.arrangedSubviews`，但前一行已有 `browserActionStack.arrangedSubviews`，且變數已更名為 `trailingPageActionStack`，因此此處應為筆誤。"
+  },
+  {
+    "path": "BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift",
+    "line": 419,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "hasPageActions 判斷使用 leadingPageActionStack 而非 trailingPageActionStack，可能影響分隔線顯示",
+    "body": "在 `updateToolbarLayout` 中，原本使用 `pageActionStack.arrangedSubviews.isEmpty` 來判斷是否有 page actions，此 PR 改為 `leadingPageActionStack.arrangedSubviews.isEmpty`。但此處的 page actions 可能指的是 trailing page actions（因為分隔線位於 trailing page actions 之前），若 leading page actions 為空但 trailing page actions 非空，分隔線可能錯誤隱藏。請確認此處應使用哪個 stack。",
+    "existing_code": "let hasPageActions = !leadingPageActionStack.arrangedSubviews.isEmpty",
+    "evidence": "diff 中此行由 `pageActionStack` 改為 `leadingPageActionStack`，但上下文顯示分隔線約束與 `trailingPageActionStack` 相關，因此此處可能應使用 `trailingPageActionStack`。"
+  }
+]

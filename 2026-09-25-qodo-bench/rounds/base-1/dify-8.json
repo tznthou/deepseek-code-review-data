@@ -1,0 +1,24 @@
+[
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "React Scan 載入失敗時錯誤被吞掉且可能洩漏資訊",
+    "body": "當動態 import 失敗時，catch 區塊會回傳一個靜默的 fallback 元件，導致錯誤被隱藏。此外，`console.error` 輸出的錯誤物件可能包含敏感的內部路徑或堆疊資訊，在生產環境中可能造成資訊洩漏。建議：1) 考慮使用更安全的錯誤記錄方式（例如 Sentry），避免直接輸出到 console；2) 在開發模式下保留錯誤顯示，但在生產環境中提供更安全的 fallback。",
+    "existing_code": "console.error('Failed to load React Scan devtools:', error)\n    return { default: () => null }",
+    "evidence": "diff 中新增的 loader.tsx 第 9-11 行顯示 catch 區塊直接 console.error 並回傳空元件，未將錯誤向上傳遞或提供可觀測的 fallback。"
+  },
+  {
+    "path": "web/app/components/devtools/react-scan/loader.tsx",
+    "line": 10,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "TanStack Devtools 載入失敗時完全靜默",
+    "body": "catch 區塊僅回傳空元件，沒有任何錯誤記錄。這使得在開發環境中若動態 import 失敗，開發者將無法得知原因，增加除錯困難。建議至少加入 `console.error` 或使用 Sentry 記錄錯誤。",
+    "existing_code": "}).catch(() => {\n      return { default: () => null }\n    }),",
+    "evidence": "diff 中新增的 loader.tsx 第 9-11 行顯示 catch 區塊為空，未記錄任何錯誤。"
+  }
+]

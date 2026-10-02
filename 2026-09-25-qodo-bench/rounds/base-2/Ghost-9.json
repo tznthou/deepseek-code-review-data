@@ -1,0 +1,35 @@
+[
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "暖機完成後回傳 Infinity 可能導致呼叫端錯誤",
+    "body": "`getWarmupLimit` 在 `day > totalDays` 時回傳 `Infinity`。呼叫端若直接將此值用於計算或比較，可能產生非預期結果（例如 `Math.min(emailCount, Infinity)` 會回傳 `emailCount`，但若後續有算術運算或序列化，`Infinity` 可能造成問題）。建議改為回傳 `emailCount`（表示無限制），或明確回傳一個可辨識的常數，並在文件與型別上說明。",
+    "existing_code": "if (day > this.#warmupConfig.totalDays) {\n    return Infinity\n}",
+    "evidence": "diff 中新增的 `getWarmupLimit` 方法內，當 `day > totalDays` 時回傳 `Infinity`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 75,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "使用 Date.now() 而非可注入時鐘，導致測試與實際行為不一致",
+    "body": "`#getDaysSinceFirstEmail` 使用 `Date.now()` 計算天數，但測試中使用了 `sinon.useFakeTimers` 固定時間。在測試環境中，`Date.now()` 會被 fake timers 影響，但實際執行時使用真實時間。這使得測試無法完全模擬真實情境，且若未來需要測試不同時間點的行為，會受到限制。建議將時間來源注入（例如在建構子接收 `now` 函式），或使用 `this.#config` 中的時間服務。",
+    "existing_code": "return Math.ceil((Date.now() - new Date(res.data[0].get('created_at') as string).getTime()) / (1000 * 60 * 60 * 24));",
+    "evidence": "diff 中 `#getDaysSinceFirstEmail` 方法使用 `Date.now()`，而測試檔案中使用了 `sinon.useFakeTimers`。"
+  },
+  {
+    "path": "ghost/core/core/server/services/email-service/DomainWarmingService.ts",
+    "line": 24,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "DefaultWarmupOptions 未凍結且型別可變，可能被意外修改",
+    "body": "`DefaultWarmupOptions` 是一個模組層級的 `const` 物件，但內容未被凍結。任何取得參考的程式碼都可以修改其屬性，影響所有後續的服務實例。建議使用 `Object.freeze` 或將型別改為 `Readonly<WarmupVolumeOptions>`，並在建構子中複製一份。",
+    "existing_code": "const DefaultWarmupOptions: WarmupVolumeOptions = {\n    start: 200,\n    end: 200000,\n    totalDays: 42\n};",
+    "evidence": "diff 中新增的 `DefaultWarmupOptions` 常數，未使用 `Object.freeze` 或 `Readonly`。"
+  }
+]

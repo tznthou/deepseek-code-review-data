@@ -1,0 +1,46 @@
+[
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 63,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "start_execution 與 enqueue_node 的呼叫順序可能導致狀態不一致",
+    "body": "在 has_taken 分支中，先呼叫 `start_execution(downstream_node_id)` 再呼叫 `enqueue_node(downstream_node_id)`。若 start_execution 會將節點狀態改為執行中，而 enqueue_node 預期節點尚未開始執行，可能造成狀態機內部不一致。需確認 GraphStateManager 的實作是否允許此順序，或應先 enqueue 再 start。",
+    "existing_code": "self._state_manager.start_execution(downstream_node_id)\nself._state_manager.enqueue_node(downstream_node_id)",
+    "evidence": "diff 中新增的兩行，位於 skip_propagator.py 第 63-64 行。"
+  },
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 62,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.9,
+    "title": "使用 print 輸出日誌，應改用 logging",
+    "body": "在 propagate_skip_from_edge 中新增的 `print(f\"Starting execution for node: {downstream_node_id}\")` 會直接輸出到 stdout，可能污染正式環境的日誌，且無法透過 logging 設定控制輸出等級或格式。建議改用 `logging.getLogger(__name__).debug(...)` 或移除。",
+    "existing_code": "print(f\"Starting execution for node: {downstream_node_id}\")",
+    "evidence": "diff 中新增的 print 陳述式，位於 skip_propagator.py 第 62 行。"
+  },
+  {
+    "path": "api/core/workflow/graph_engine/graph_traversal/skip_propagator.py",
+    "line": 85,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "mark_edge_skipped 呼叫順序變更可能影響遞迴邏輯",
+    "body": "在 _propagate_skip_to_node 中，原本先 mark_edge_skipped 再 propagate_skip_from_edge，現在順序對調。若 propagate_skip_from_edge 內部依賴邊的 skipped 狀態（例如 analyze_edge_states 會檢查），則可能導致行為不同。需確認此變更是否為修正所需，並驗證遞迴邏輯仍正確。",
+    "existing_code": "self.propagate_skip_from_edge(edge.id)\nself._state_manager.mark_edge_skipped(edge.id)",
+    "evidence": "diff 中順序對調的兩行，位於 skip_propagator.py 第 84-85 行。"
+  },
+  {
+    "path": "api/tests/unit_tests/core/workflow/graph_engine/graph_traversal/test_skip_propagator.py",
+    "line": 307,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "測試中 mock 重置後未重新設定必要屬性",
+    "body": "在 test_propagate_skip_from_edge_with_mixed_edge_states_handles_correctly 中，呼叫 `mock_graph.reset_mock()` 後，原本設定的 `mock_graph.edges` 和 `get_incoming_edges` 的 side_effect 都會被清除，但後續測試仍依賴這些設定。這可能導致測試失敗或測試到錯誤的行為。建議在 reset 後重新設定必要的 mock 屬性。",
+    "existing_code": "mock_state_manager.reset_mock()\nmock_graph.reset_mock()",
+    "evidence": "diff 中第 307 行附近的 reset_mock 呼叫。"
+  }
+]

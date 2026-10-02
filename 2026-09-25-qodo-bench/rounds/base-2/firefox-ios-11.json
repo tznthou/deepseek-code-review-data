@@ -1,0 +1,35 @@
+[
+  {
+    "path": "BrowserKit/Sources/ToolbarKit/AddressToolbar/BrowserAddressToolbar.swift",
+    "line": 329,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "updateActionSpacing 中堆疊陣列重複加入 browserActionStack",
+    "body": "在 `updateActionSpacing` 方法中，原本應包含 `trailingPageActionStack` 的陣列，卻重複加入了 `browserActionStack`，導致 `trailingPageActionStack` 未被納入動畫與間距更新。這可能造成頁面動作按鈕的動畫失效或間距不正確。\n\n建議將第二個 `browserActionStack` 改為 `trailingPageActionStack`。",
+    "existing_code": "let stacks = browserActionStack.arrangedSubviews +\n             navigationActionStack.arrangedSubviews +\n             leadingPageActionStack.arrangedSubviews +\n             browserActionStack.arrangedSubviews",
+    "evidence": "diff 中第 329-332 行顯示陣列最後一項為 `browserActionStack.arrangedSubviews`，但根據上下文應為 `trailingPageActionStack.arrangedSubviews`。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift",
+    "line": 448,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "骨架位址列約束可能誤用 rightSkeletonAddressBar",
+    "body": "在 `setupSkeletonAddressBars` 中，`toolbar.leadingAnchor` 被約束到 `rightSkeletonAddressBar.trailingAnchor`，但根據前後文，此處應為 `leftSkeletonAddressBar.trailingAnchor`。這可能導致工具列在滑動分頁時位置錯誤。\n\n建議改為 `leftSkeletonAddressBar.trailingAnchor`。",
+    "existing_code": "toolbar.leadingAnchor.constraint(equalTo: rightSkeletonAddressBar.trailingAnchor).isActive = true",
+    "evidence": "diff 中此行將 leadingAnchor 連接到 rightSkeletonAddressBar，但邏輯上應連接 leftSkeletonAddressBar。"
+  },
+  {
+    "path": "firefox-ios/Client/Frontend/Browser/Toolbars/AddressToolbarContainer.swift",
+    "line": 465,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "使用已棄用的 statusBarOrientation API",
+    "body": "`UIApplication.shared.statusBarOrientation` 在 iOS 13 已棄用，建議改用 `view.window?.windowScene?.interfaceOrientation` 或 `traitCollection.verticalSizeClass` 來判斷方向。",
+    "existing_code": "let isLandscape = UIApplication.shared.statusBarOrientation.isLandscape",
+    "evidence": "diff 中新增此行，但該 API 已棄用，可能導致未來版本無法正確判斷方向。"
+  }
+]

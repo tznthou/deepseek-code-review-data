@@ -1,0 +1,24 @@
+[
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.tsx",
+    "line": 21,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "useSuspenseQuery 缺少錯誤處理",
+    "body": "`useSuspenseQuery` 在查詢失敗時會拋出錯誤，若沒有 ErrorBoundary 包覆，整個應用程式可能因此崩潰。建議在元件外層加上 ErrorBoundary，或在查詢選項中設定 `retry` 與 `onError` 來處理錯誤。",
+    "existing_code": "const { data: flow } = useSuspenseQuery(buildFLowDetailsQuery(flowId));",
+    "evidence": "diff 中新增的 `useSuspenseQuery` 呼叫沒有搭配 ErrorBoundary，且 `buildFLowDetailsQuery` 的實作未提供，無法確認是否已處理錯誤。"
+  },
+  {
+    "path": "ui-v2/src/components/flows/flow-icon-text/flow-icon-text.stories.tsx",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "Storybook 中 QueryClient 建立方式可能導致快取共用",
+    "body": "`createTestRouter` 每次呼叫都會建立新的 `QueryClient`，但 decorator 中使用的 `queryClient` 是模組層級的單例，可能導致不同 story 之間共用快取，影響測試隔離。建議在 decorator 內建立新的 QueryClient 並傳入 Router 的 context。",
+    "existing_code": "context: { queryClient: new QueryClient() },",
+    "evidence": "diff 中 `createTestRouter` 內建立新的 QueryClient，但 decorator 使用模組層級的 `queryClient`，兩者不一致。"
+  }
+]

@@ -1,0 +1,35 @@
+[
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 138,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.99,
+    "title": "回傳值 True 未定義，將導致 ReferenceError",
+    "body": "在 handleJSONSchemaChange 中，成功解析 JSON 後回傳了 `True`（Python 風格），但 JavaScript 中應為 `true`。由於 `True` 未定義，執行到此處會拋出 ReferenceError，導致整個函式失敗，且可能影響後續邏輯。\n\n建議改為 `return true` 或直接省略回傳值。",
+    "existing_code": "handlePayloadChange('json_schema')(value)\n      return True",
+    "evidence": "diff 中新增的 `return True` 行，JavaScript 中無 `True` 識別字。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 311,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "jsonSchemaValue 型別檢查不完整，可能跳過驗證",
+    "body": "在 handleConfirm 中，驗證 JSON Schema 的條件為 `typeof jsonSchemaValue === 'string'`。但 tempPayload.json_schema 的型別可能是物件（例如從 API 載入時），此時若為物件，則不會進行 JSON.parse 和 type 檢查，直接通過驗證。這可能導致非 object 型別的 schema 被儲存。\n\n建議改為：若 jsonSchemaValue 不是字串，先將其轉為字串（例如 JSON.stringify）再進行解析與驗證，或明確處理物件型別。",
+    "existing_code": "if (!isSchemaEmpty && typeof jsonSchemaValue === 'string') {\n        try {\n          const schema = JSON.parse(jsonSchemaValue)",
+    "evidence": "diff 中新增的條件判斷，僅處理字串型別，未涵蓋其他可能型別。"
+  },
+  {
+    "path": "web/app/components/app/configuration/config-var/config-modal/index.tsx",
+    "line": 86,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "jsonSchemaStr 直接顯示完整 schema，可能包含非 properties 內容",
+    "body": "原本 jsonSchemaStr 僅顯示 schema 的 properties，現在改為顯示完整 schema。若 schema 包含其他頂層關鍵字（如 $schema、title 等），編輯器會顯示這些內容，可能造成混淆。但此為 UI 呈現問題，影響有限。",
+    "existing_code": "return JSON.stringify(JSON.parse(tempPayload.json_schema), null, 2)",
+    "evidence": "diff 中將原本的 `.properties` 移除，改為完整物件。"
+  }
+]

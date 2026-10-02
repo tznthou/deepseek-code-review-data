@@ -1,0 +1,46 @@
+[
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 19,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "Slot 型別中 userIds 型別可能不正確",
+    "body": "新增的 Slot 型別將 userIds 定義為 string[]，但原本在 @calcom/trpc/server/routers/viewer/slots/types 中的定義為 number[]。若實際 API 回應的 userIds 為數字陣列，此型別會造成下游使用者的型別錯誤，甚至可能影響執行階段行為（例如將數字當字串處理）。建議確認 API 回應的實際型別，若為 number[] 則應修正為 number[]，或保留原定義。",
+    "existing_code": "userIds?: string[];",
+    "evidence": "diff 中新增的 Slot 型別：`userIds?: string[];`，而刪除的舊型別為 `userIds?: number[];`"
+  },
+  {
+    "path": "packages/platform/atoms/hooks/schedules/types.ts",
+    "line": 38,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "validateCreateScheduleInput 驗證不足",
+    "body": "此函式僅驗證 name 為非空字串，但未驗證 schedule 與 eventTypeId 的型別。若呼叫端傳入錯誤型別（例如 schedule 不是陣列、eventTypeId 不是數字），可能導致後續 API 呼叫失敗或產生難以追蹤的錯誤。建議使用 zod 或其他驗證方式完整驗證輸入，或至少對 schedule 與 eventTypeId 進行型別檢查。",
+    "existing_code": "export function validateCreateScheduleInput(input: unknown): CreateScheduleInput {\n  if (!input || typeof input !== 'object') {\n    throw new Error('Invalid input: must be an object');\n  }\n\n  const data = input as Record<string, unknown>;\n\n  if (typeof data.name !== 'string' || data.name.length === 0) {\n    throw new Error('Invalid input: name must be a non-empty string');\n  }\n\n  return data as CreateScheduleInput;\n}",
+    "evidence": "diff 中新增的 validateCreateScheduleInput 函式，僅檢查 name，未檢查其他屬性。"
+  },
+  {
+    "path": "packages/platform/atoms/package.json",
+    "line": 58,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "移除 \"./booker\" 匯出可能造成 breaking change",
+    "body": "原本 package.json 中有 `\"./booker\": \"./booker/index.ts\"` 的匯出，此 PR 將其移除，改為 `\"./booker/types\": \"./booker/types.ts\"`。若下游使用者依賴 `@calcom/atoms/booker` 的匯入，升級後會出現模組找不到的錯誤。建議保留 `\"./booker\"` 匯出，或確認沒有下游使用該路徑。",
+    "existing_code": "\"./booker/types\": \"./booker/types.ts\",",
+    "evidence": "diff 中刪除了 `\"./booker\": \"./booker/index.ts\"`，新增了 `\"./booker/types\": \"./booker/types.ts\"`"
+  },
+  {
+    "path": "packages/platform/atoms/booker/types.ts",
+    "line": 115,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "SlotInfo 型別可能與實際 API 回應不符",
+    "body": "新增的 SlotInfo 型別包含 fromUser 與 toUser 等欄位，但未確認實際 API 回應是否包含這些欄位。若 API 回應的結構不同，可能導致型別錯誤。建議確認 API 回應的實際結構，並調整型別定義。",
+    "existing_code": "type SlotInfo = {\n  time: string;\n  attendees?: number;\n  bookingUid?: string;\n  away?: boolean;\n  fromUser?: {\n    id: string;\n    displayName: string | null;\n  };\n  toUser?: {\n    id: number;\n    username: string | null;\n    displayName: string | null;\n  };\n  reason?: string;\n  emoji?: string;\n  showNotePublicly?: boolean;\n};",
+    "evidence": "diff 中新增的 SlotInfo 型別，包含多個可選欄位，但未提供來源。"
+  }
+]

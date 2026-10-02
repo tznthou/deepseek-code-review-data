@@ -1,0 +1,35 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 462,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "V2 啟用時 static_subpath 指派錯誤",
+    "body": "在 `create_ui_app` 中，當 `v2_enabled` 為 True 時，`static_subpath` 被指派為 `prefect.__ui_static_subpath__`（V1 的子路徑），而 `source_static_path` 為 `prefect.__ui_v2_static_path__`。這導致後續 `create_ui_static_subpath` 會將 V2 的靜態檔案複製到 V1 的子路徑，可能覆蓋 V1 檔案或造成路徑衝突。應將 `static_subpath` 指派為 `prefect.__ui_v2_static_subpath__`。",
+    "existing_code": "static_subpath = prefect.__ui_static_subpath__",
+    "evidence": "diff 中第 462 行（新增側）顯示 `static_subpath = prefect.__ui_static_subpath__`，而 `source_static_path` 為 `prefect.__ui_v2_static_path__`，兩者不一致。"
+  },
+  {
+    "path": "Dockerfile",
+    "line": 72,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "安裝 Chromium 可能大幅增加映像檔大小",
+    "body": "在 `ui-v2-builder` 階段安裝 Chromium 是為了 arm64 建置，但 Chromium 及其相依套件體積龐大，會顯著增加最終映像檔大小。若僅為建置時需要，應考慮使用多階段建置並僅複製必要產物，或改用更輕量的 headless 瀏覽器。",
+    "existing_code": "chromium \\",
+    "evidence": "diff 中新增的 `apt-get install` 包含 `chromium`，且未在後續清理，可能導致映像檔膨脹。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 532,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "日誌訊息未使用結構化格式",
+    "body": "新增的日誌訊息 `Serving experimental V2 UI` 使用 f-string 或直接字串，未包含結構化欄位（如 UI 版本），不利於日誌分析。建議使用結構化日誌或至少包含版本資訊。",
+    "existing_code": "ui_logger.info(\"Serving experimental V2 UI\")",
+    "evidence": "diff 中新增的日誌語句為固定字串，未包含動態資訊。"
+  }
+]

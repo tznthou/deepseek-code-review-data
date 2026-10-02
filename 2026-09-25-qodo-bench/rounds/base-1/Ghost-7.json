@@ -1,0 +1,90 @@
+[
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 1,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.8,
+    "title": "重新命名檔案時混入非預期的格式變更",
+    "body": "此檔案除了更新 require 路徑外，還移除了所有行尾分號，並將部分 require 陳述式的引號從單引號改為雙引號。這與專案中其他檔案的風格不一致，且可能違反 ESLint 規則。建議只保留必要的路徑變更，避免混入格式調整。",
+    "existing_code": "const {Router} = require('express')\nconst body = require('body-parser')\nconst errors = require('@tryghost/errors')\nconst logging = require('@tryghost/logging')",
+    "evidence": "diff 顯示原本有分號的程式碼被移除分號，且引號風格改變。"
+  },
+  {
+    "path": "ghost/core/core/server/services/members/members-api/members-api.js",
+    "line": 6,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "require 路徑大小寫變更可能導致部署問題",
+    "body": "檔案從 `MembersAPI.js` 重新命名為 `members-api.js`，但此處的 require 路徑也改為小寫。在大小寫敏感的檔案系統（如 Linux）上，如果部署時未正確處理檔案名稱大小寫，可能導致模組找不到。建議確認 CI/CD 流程能正確處理大小寫變更。",
+    "existing_code": "const PaymentsService = require('./services/payments-service')\nconst TokenService = require('./services/token-service')\nconst GeolocationService = require('./services/geolocation-service')\nconst MemberBREADService = require('./services/member-bread-service')\nconst MemberRepository = require('./repositories/member-repository')",
+    "evidence": "diff 顯示多個 require 路徑從 PascalCase 改為 kebab-case。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/posts-stats-service.js",
+    "line": 151,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "重新命名檔案時混入非預期的空白變更",
+    "body": "此檔案除了更新 require 路徑外，還移除了多處行尾空白，並調整了部分程式碼的縮排。這可能導致不必要的 diff 雜訊，建議只保留必要的路徑變更。",
+    "existing_code": "subquery1.union(function () {\n                                const subquery2 = this.select('attribution_url', 'attribution_type', 'attribution_id')\n                                    .from('members_subscription_created_events')",
+    "evidence": "diff 顯示多處行尾空白被移除，且縮排有調整。"
+  },
+  {
+    "path": "ghost/core/core/server/services/stats/posts-stats-service.js",
+    "line": 1571,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾原本沒有換行符，此 PR 加入了換行符。這通常是好的，但需確認是否符合專案的風格指南。",
+    "existing_code": "module.exports = PostsStatsService;",
+    "evidence": "diff 顯示檔案結尾從沒有換行符改為有換行符。"
+  },
+  {
+    "path": "ghost/core/core/server/services/outbox/index.js",
+    "line": 43,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾原本沒有換行符，此 PR 加入了換行符。這通常是好的，但需確認是否符合專案的風格指南。",
+    "existing_code": "module.exports = new OutboxServiceWrapper();",
+    "evidence": "diff 顯示檔案結尾從沒有換行符改為有換行符。"
+  },
+  {
+    "path": "ghost/core/core/server/services/outbox/jobs/outbox-job.js",
+    "line": 33,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾原本沒有換行符，此 PR 加入了換行符。這通常是好的，但需確認是否符合專案的風格指南。",
+    "existing_code": "})();",
+    "evidence": "diff 顯示檔案結尾從沒有換行符改為有換行符。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/outbox/index.test.js",
+    "line": 49,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾原本沒有換行符，此 PR 加入了換行符。這通常是好的，但需確認是否符合專案的風格指南。",
+    "existing_code": "});",
+    "evidence": "diff 顯示檔案結尾從沒有換行符改為有換行符。"
+  },
+  {
+    "path": "ghost/core/test/unit/server/services/stats/mrr.test.js",
+    "line": 362,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "檔案結尾缺少換行符",
+    "body": "檔案結尾原本沒有換行符，此 PR 加入了換行符。這通常是好的，但需確認是否符合專案的風格指南。",
+    "existing_code": "});",
+    "evidence": "diff 顯示檔案結尾從沒有換行符改為有換行符。"
+  }
+]

@@ -1,0 +1,24 @@
+[
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 110,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.9,
+    "title": "使用 dangerouslySetInnerHTML 渲染評論內容可能導致 XSS",
+    "body": "`CommentContent` 元件使用 `dangerouslySetInnerHTML` 直接渲染 `item.html`。若評論內容未在伺服器端或客戶端進行消毒，攻擊者可注入惡意腳本，導致儲存型 XSS。請確認 `item.html` 的來源是否已經過消毒（例如使用 DOMPurify），或改用安全的渲染方式（如 `react-html-parser` 或將 HTML 轉為純文字）。",
+    "existing_code": "dangerouslySetInnerHTML={{__html: item.html || ''}}",
+    "evidence": "diff 中新增的 `CommentContent` 元件內，直接使用 `dangerouslySetInnerHTML` 渲染 `item.html`，且未見任何消毒處理。"
+  },
+  {
+    "path": "apps/posts/src/views/comments/components/comments-list.tsx",
+    "line": 92,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "useEffect 相依陣列為空可能導致截斷偵測失效",
+    "body": "`CommentContent` 中的 `useEffect` 僅在掛載時執行一次，但 `item.html` 可能在之後更新（例如從 API 載入或狀態變更）。若內容更新後高度改變，`isClamped` 不會重新計算，導致「Show more」按鈕顯示不正確。建議將 `item.html` 加入相依陣列，或使用 ResizeObserver 監聽內容變化。",
+    "existing_code": "useEffect(() => {\n        const checkIfClamped = () => {\n            if (contentRef.current) {\n                // Check if the content is clamped by comparing scrollHeight with clientHeight\n                setIsClamped(contentRef.current.scrollHeight > contentRef.current.clientHeight);\n            }\n        };\n\n        checkIfClamped();\n        // Recheck on window resize\n        window.addEventListener('resize', checkIfClamped);\n        return () => window.removeEventListener('resize', checkIfClamped);\n    }, []);",
+    "evidence": "diff 中 `useEffect` 的相依陣列為空，但依賴 `item.html` 的內容。"
+  }
+]

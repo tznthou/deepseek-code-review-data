@@ -1,0 +1,24 @@
+[
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/DisplaySettingsTests.swift",
+    "line": 53,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試斷言可能指向錯誤的 UI 元素",
+    "body": "在 `testCheckSystemThemeChanges` 中，原本檢查 `lightThemeView` 的 value，現在改為檢查 `darkThemeView`。但變數名稱仍為 `lightIsSelected`，且後續的 XCTAssertEqual 預期值為 \"1\"。如果 `darkThemeView` 的 value 在選取 Light mode 後不是 \"1\"，測試將失敗。需要確認此變更是否為刻意修正（例如原本的 identifier 有誤），否則可能造成測試不穩定或誤報。",
+    "existing_code": "let lightIsSelected = app.buttons[AccessibilityIdentifiers.Settings.Appearance.darkThemeView].value",
+    "evidence": "diff 中將 `lightThemeView` 改為 `darkThemeView`，但變數名稱與後續斷言未同步更新。"
+  },
+  {
+    "path": "firefox-ios/firefox-ios-tests/Tests/XCUITests/HomePageSettingsUITest.swift",
+    "line": 155,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "測試步驟順序調整可能影響穩定性",
+    "body": "在 `testDisableTopSitesSettingsRemovesSection` 中，原本先 `navigator.goto(NewTabScreen)` 再點擊 \"Done\"，現在改為先點擊 \"Done\" 再 `navigator.goto(NewTabScreen)`。如果 \"Done\" 按鈕在當前畫面不存在或不可點擊，可能導致測試失敗。需要確認此調整是否為了解決特定問題，並驗證在各種裝置與狀態下仍能穩定執行。",
+    "existing_code": "app.buttons[\"Done\"].waitAndTap()\n        navigator.goto(NewTabScreen)",
+    "evidence": "diff 中移動了 `navigator.goto(NewTabScreen)` 的位置。"
+  }
+]

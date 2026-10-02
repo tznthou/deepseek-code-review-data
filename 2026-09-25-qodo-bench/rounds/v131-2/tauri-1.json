@@ -1,0 +1,24 @@
+[
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 645,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "自動遞增版本碼可能回退或超過上限",
+    "body": "在 `auto_increment_version_code` 為 true 時，程式會從 `tauri.properties` 讀取最後的 `versionCode` 並加 1。若檔案不存在或內容無法解析，`last_version_code` 會是 `None`，導致 `new_version_code` 從 1 開始，可能造成版本碼回退（例如原本已發布版本碼為 100，但檔案遺失後重新建置會產生 1）。此外，遞增後未檢查是否超過 Android 上限 2100000000，可能產生無效的版本碼。建議：若無法讀取既有版本碼，應回退到 `version_code` 或 semver 邏輯，或至少發出警告；並在遞增後檢查上限。",
+    "existing_code": "let new_version_code = last_version_code.map(|v| v.saturating_add(1)).unwrap_or(1);",
+    "evidence": "diff 中新增的 `generate_tauri_properties` 函式內，該行直接以 `unwrap_or(1)` 處理 `None` 情況，且後續未檢查 `new_version_code` 是否超過 2100000000。"
+  },
+  {
+    "path": "crates/tauri-cli/src/mobile/android/mod.rs",
+    "line": 663,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "dev 模式下版本碼計算與原先邏輯不一致",
+    "body": "原先在 `tauri-build` 中，當 `is_dev()` 為 true 時，會將 semver 計算出的版本碼 clamp 到 [1, 2100000000]。新程式碼中，`dev` 參數傳入 true 時，僅在 semver 分支中執行 clamp，但在 `auto_increment_version_code` 或 `version_code` 分支中並未做相同處理。這可能導致 dev 模式下版本碼行為不一致。建議確認 dev 模式下的預期行為，並在所有分支中一致處理。",
+    "existing_code": "if dev {\n        version_code = version_code.clamp(1, 2100000000);\n      }",
+    "evidence": "diff 中新增的 `generate_tauri_properties` 函式內，`dev` 參數僅在 semver 分支中使用，其他分支未使用。"
+  }
+]

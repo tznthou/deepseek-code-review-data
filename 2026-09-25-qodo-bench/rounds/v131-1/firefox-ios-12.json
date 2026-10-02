@@ -1,0 +1,35 @@
+[
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/WKUIHandlerTests.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "expectation 在 decisionHandler 外被 fulfill，可能導致測試永遠等待",
+    "body": "在 testRequestMediaCaptureSuccess 中，原本的 expectation 是在 decisionHandler 內 fulfill，但修改後 decisionHandler 不再 fulfill，而是在呼叫 subject.webView 後直接呼叫 expectation.fulfill()。這會導致 expectation 在 decisionHandler 被呼叫前就 fulfill，使得 wait(for:) 立即返回，無法驗證 decisionHandler 是否真的被呼叫。若 decisionHandler 未被呼叫，測試仍會通過，失去測試意義。建議將 expectation.fulfill() 移回 decisionHandler 內。",
+    "existing_code": "subject.webView(MockWKWebView(),\n                        requestMediaCapturePermissionFor: origin,\n                        initiatedByFrame: frame,\n                        type: .cameraAndMicrophone,\n                        decisionHandler: decisionHandler)\n        wait(for: [expectation])\n        expectation.fulfill()",
+    "evidence": "diff 中 testRequestMediaCaptureSuccess 的 decisionHandler 已移除 expectation.fulfill()，並在 wait 後直接呼叫 expectation.fulfill()。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 42,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "測試依賴真實網路與 WebKit 行為，可能導致不穩定或逾時",
+    "body": "captureFrameAndOrigin 會建立真實的 WKWebView 並載入 https://example.com。這使得測試依賴外部網路連線與 WebKit 的實際行為，可能因網路延遲、離線環境或 WebKit 內部變更而失敗或逾時。建議改用 local test server 或注入 mock 的 navigation delegate 來提供所需的 WKFrameInfo 與 WKSecurityOrigin，以提升測試穩定性。",
+    "existing_code": "webView.load(URLRequest(url: url))",
+    "evidence": "diff 中新增的 WebKitTestHelpers 使用真實 URL 載入。"
+  },
+  {
+    "path": "BrowserKit/Tests/WebEngineTests/Utilities/WebKitTestHelpers.swift",
+    "line": 44,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "XCTWaiter.wait 的結果未檢查，可能隱藏逾時錯誤",
+    "body": "XCTWaiter.wait 的回傳值未被檢查，若等待逾時，函式會回傳 nil，但呼叫端僅以 XCTFail 處理，無法區分是逾時還是其他錯誤。建議檢查 waiter 結果，並在逾時時提供更明確的錯誤訊息。",
+    "existing_code": "let waiter = XCTWaiter.wait(for: [expect], timeout: timeout)",
+    "evidence": "diff 中新增的程式碼未使用 waiter 結果。"
+  }
+]

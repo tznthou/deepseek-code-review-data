@@ -1,0 +1,35 @@
+[
+  {
+    "path": "packages/features/webhooks/lib/factory/versioned/v2021-10-20/BookingPayloadBuilder.ts",
+    "line": 48,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "requestReschedule 預設值不一致可能導致下游誤判",
+    "body": "在 v2021-10-20 的 builder 中，`requestReschedule` 使用 `dto.requestReschedule ?? true` 作為預設值，但在 `BookingWebhookFactory` 中則使用 `params.requestReschedule ?? false`。這表示當呼叫端未明確傳入此欄位時，不同版本的 webhook payload 會得到相反的布林值。若下游系統依賴此欄位判斷是否為 reschedule 流程，可能造成行為不一致。建議統一預設值（例如皆為 false），或在所有呼叫點明確傳入。",
+    "existing_code": "requestReschedule: dto.requestReschedule ?? true,",
+    "evidence": "diff 中新增行 `requestReschedule: dto.requestReschedule ?? true,`，而另一檔案 `BookingWebhookFactory.ts` 新增行 `requestReschedule: params.requestReschedule ?? false,`。"
+  },
+  {
+    "path": "packages/features/bookings/lib/handleCancelBooking.ts",
+    "line": 414,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "新增 ENABLE_WEBHOOKS 環境變數可能意外停用所有 webhook",
+    "body": "此處新增 `const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";` 來決定是否發送 webhook。若部署環境未設定此變數，則 `webhooksEnabled` 為 true，行為不變；但若設定為 \"false\"，則所有取消相關的 webhook 都會被靜默停用，且沒有 log 記錄。這可能導致生產環境中 webhook 意外失效。建議確認此環境變數的用途與部署設定，並考慮在停用時輸出警告 log。",
+    "existing_code": "const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";",
+    "evidence": "diff 中新增行 `const webhooksEnabled = process.env.ENABLE_WEBHOOKS !== \"false\";`，且後續 `promises` 改為條件式產生。"
+  },
+  {
+    "path": "packages/trpc/server/routers/viewer/bookings/requestReschedule.handler.ts",
+    "line": 276,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "iCalSequence 計算可能不正確",
+    "body": "在 requestReschedule 流程中，`iCalSequence` 被設為 `(bookingToReschedule.iCalSequence ?? 0) + 1`。若原始 booking 的 iCalSequence 為 null，則會得到 1；但若原始值為 0，也會得到 1。這可能導致序列號重複或跳號，影響行事曆同步。建議確認 iCalSequence 的起始值慣例，或考慮使用 `(bookingToReschedule.iCalSequence ?? -1) + 1` 等方式。",
+    "existing_code": "iCalSequence: (bookingToReschedule.iCalSequence ?? 0) + 1,",
+    "evidence": "diff 中新增行 `iCalSequence: (bookingToReschedule.iCalSequence ?? 0) + 1,`"
+  }
+]

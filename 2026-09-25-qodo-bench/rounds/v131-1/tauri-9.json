@@ -1,0 +1,13 @@
+[
+  {
+    "path": "crates/tauri-cli/metadata-v2.json",
+    "line": 3,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "cli.js 版本與 tauri-cli 版本不一致",
+    "body": "metadata-v2.json 中 cli.js 的版本從 2.8.1 更新為 2.8.2，但 tauri-cli 的 Cargo.toml 版本僅從 2.8.0 更新為 2.8.1。這可能導致發布的 CLI 二進制檔案版本與 npm 套件版本不一致，造成使用者混淆或依賴解析問題。建議確認正確的版本號並統一。",
+    "existing_code": "\"version\": \"2.8.2\",",
+    "evidence": "diff 顯示 metadata-v2.json 中 cli.js 版本改為 2.8.2，而 tauri-cli/Cargo.toml 版本改為 2.8.1。"
+  }
+]

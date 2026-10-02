@@ -1,0 +1,46 @@
+[
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 32,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "WebView 可能為 null 時使用 !! 導致 NPE",
+    "body": "在 `handleOnBackPressed` 中，`this@AppPlugin.webView!!.goBack()` 使用了非空斷言。雖然 `load` 方法通常會在 WebView 建立後被呼叫，但若返回鍵在 `load` 之前觸發，或 WebView 因某種原因被設為 null，則會拋出 NullPointerException。建議改用安全呼叫或檢查 null。",
+    "existing_code": "this@AppPlugin.webView!!.goBack()",
+    "evidence": "diff 中新增的 AppPlugin.kt 第 29 行使用了 `!!`，而 `webView` 屬性宣告為 `private var webView: WebView? = null`，可能尚未初始化。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 34,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.75,
+    "title": "當有監聽器時，返回鍵行為完全由前端控制，可能導致應用無法退出",
+    "body": "當 `hasListener(BACK_BUTTON_EVENT)` 為 true 時，程式只觸發事件給前端，不執行任何預設行為（如返回上一頁或退出）。如果前端註冊了監聽器但未在處理函式中呼叫退出或導航，使用者按下返回鍵將沒有任何反應，可能造成應用卡死。建議提供一個方法讓前端可以明確要求執行預設行為，或在文件中清楚說明。",
+    "existing_code": "} else {\n          val data = JSObject().apply {\n            put(\"canGoBack\", this@AppPlugin.webView?.canGoBack() ?: false)\n          }\n          trigger(BACK_BUTTON_EVENT, data)\n        }",
+    "evidence": "diff 中 AppPlugin.kt 第 34-38 行，當有 listener 時只 trigger 事件，沒有 fallback 行為。"
+  },
+  {
+    "path": "crates/tauri/mobile/android/src/main/java/app/tauri/AppPlugin.kt",
+    "line": 46,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "強制轉型為 AppCompatActivity 可能導致 ClassCastException",
+    "body": "在建構子中 `(activity as AppCompatActivity)` 直接轉型，如果傳入的 Activity 不是 AppCompatActivity（例如使用非 AppCompat 主題），會拋出 ClassCastException。雖然 Tauri 通常使用 AppCompatActivity，但建議使用更安全的方式取得 OnBackPressedDispatcher，例如使用 `activity.onBackPressedDispatcher`（需要 androidx.activity 擴展）。",
+    "existing_code": "(activity as AppCompatActivity).onBackPressedDispatcher.addCallback(activity, callback)",
+    "evidence": "diff 中 AppPlugin.kt 第 42 行直接轉型。"
+  },
+  {
+    "path": "crates/tauri/src/app/plugin.rs",
+    "line": 148,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.5,
+    "title": "AppPlugin 結構體未使用可能導致 dead_code 警告",
+    "body": "新增的 `AppPlugin` 結構體僅在 Android 上使用，但未看到實際使用的地方（可能在其他檔案中）。如果未使用，Rust 編譯器會發出 dead_code 警告。建議確認是否有使用，或加上 `#[allow(dead_code)]`。",
+    "existing_code": "pub(crate) struct AppPlugin<R: Runtime>(pub crate::plugin::PluginHandle<R>);",
+    "evidence": "diff 中新增的結構體，但未見使用。"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 462,
+    "side": "RIGHT",
+    "severity": "blocker",
+    "confidence": 0.95,
+    "title": "V2 啟用時 static_subpath 指派錯誤",
+    "body": "在 `create_ui_app` 中，當 `v2_enabled` 為 True 時，`static_subpath` 被指派為 `prefect.__ui_static_subpath__`（V1 路徑），而 `source_static_path` 為 `prefect.__ui_v2_static_path__`。這導致後續 `create_ui_static_subpath` 將 V2 靜態檔案複製到 V1 的子路徑，可能覆蓋 V1 檔案或造成路徑混亂。建議將 `static_subpath` 改為 `prefect.__ui_v2_static_subpath__`。",
+    "existing_code": "static_subpath = prefect.__ui_static_subpath__",
+    "evidence": "diff 中 `if v2_enabled:` 區塊內 `static_subpath` 指派為 `prefect.__ui_static_subpath__`，而 `else` 區塊指派為 `prefect.__ui_v2_static_subpath__`，兩者相反。"
+  },
+  {
+    "path": "src/prefect/settings/models/server/ui.py",
+    "line": 22,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.9,
+    "title": "v2_enabled 預設為 True 可能造成非預期行為變更",
+    "body": "新增的 `v2_enabled` 設定預設值為 `True`，這會讓所有現有使用者在升級後立即切換到實驗性 V2 UI，可能導致功能不穩定或破壞性變更。建議預設為 `False`，並在文件或升級指南中說明如何啟用。",
+    "existing_code": "v2_enabled: bool = Field(\n        default=True,\n        description=\"Whether to serve the experimental V2 UI instead of the default V1 UI.\",\n    )",
+    "evidence": "diff 中 `default=True` 直接啟用 V2 UI，且描述標明為 experimental。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 462,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.85,
+    "title": "變數指派邏輯不一致可能導致路徑錯誤",
+    "body": "`static_subpath` 的指派在兩個分支中與 `source_static_path` 不對稱：V2 分支使用 V1 的 subpath，V1 分支使用 V2 的 subpath。這顯示可能是複製貼上錯誤，應修正為各自對應的路徑。",
+    "existing_code": "static_subpath = prefect.__ui_static_subpath__\n    else:\n        source_static_path = prefect.__ui_static_path__\n        static_subpath = prefect.__ui_v2_static_subpath__",
+    "evidence": "diff 中兩個分支的 `static_subpath` 指派明顯相反。"
+  },
+  {
+    "path": "src/prefect/server/api/server.py",
+    "line": 527,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "日誌訊息可能造成混淆",
+    "body": "在 `v2_enabled` 為 True 時記錄 \"Serving experimental V2 UI\"，但此訊息僅在 `os.path.exists(source_static_path)` 且 UI 啟用時輸出，若靜態檔案不存在則不會記錄，可能讓使用者誤以為 V2 未啟用。建議在設定讀取後立即記錄，或調整條件。",
+    "existing_code": "if v2_enabled:\n            ui_logger = logging.getLogger(\"ui_server\")\n            ui_logger.info(\"Serving experimental V2 UI\")",
+    "evidence": "diff 中此日誌位於 `if (os.path.exists(source_static_path) and ...)` 區塊內。"
+  }
+]

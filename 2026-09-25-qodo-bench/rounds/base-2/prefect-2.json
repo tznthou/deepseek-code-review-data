@@ -1,0 +1,68 @@
+[
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 202,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "action.triggered 事件使用了錯誤的 related 參數",
+    "body": "在 `fail` 方法中，`action.triggered` 事件的 `related` 參數被指派為 `self._resulting_related_resources`，而非建構好的 `related_resources`。這會導致該事件缺少 `automation-triggered-event` 和 `triggering-event` 關聯資源，違反此 PR 的目標。\n\n失敗情境：當 action 失敗時，`action.triggered` 事件將無法連結回 automation.triggered 事件，使用者無法追蹤觸發來源。\n\n建議：將 `related` 改為 `related_resources`。",
+    "existing_code": "related=self._resulting_related_resources,",
+    "evidence": "diff 中第 202 行（新增側）顯示 `related=self._resulting_related_resources`，而上方已建構 `related_resources` 並加入 automation-triggered-event 與 triggering-event。"
+  },
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 213,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "action.failed 事件使用了錯誤的 related 參數",
+    "body": "在 `fail` 方法中，`action.failed` 事件的 `related` 參數被指派為 `related_resources`，但此變數是從 `self._resulting_related_resources` 複製後再加入 automation-triggered-event 與 triggering-event。然而，`self._resulting_related_resources` 可能已包含 triggering-event（若先前已加入），導致重複。\n\n失敗情境：當 action 失敗時，`action.failed` 事件可能包含重複的 triggering-event 關聯資源，造成資料不一致。\n\n建議：確認 `self._resulting_related_resources` 的內容，避免重複加入 triggering-event。",
+    "existing_code": "related=related_resources,",
+    "evidence": "diff 中第 213 行（新增側）顯示 `related=related_resources`，而 `related_resources` 是基於 `self._resulting_related_resources` 建構，可能已包含 triggering-event。"
+  },
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 290,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "action.triggered 事件使用了錯誤的 related 參數",
+    "body": "在 `succeed` 方法中，`action.triggered` 事件的 `related` 參數被指派為 `related_resources`，但此變數是從 `self._resulting_related_resources` 複製後再加入 automation-triggered-event 與 triggering-event。然而，`self._resulting_related_resources` 可能已包含 triggering-event（若先前已加入），導致重複。\n\n失敗情境：當 action 成功時，`action.triggered` 事件可能包含重複的 triggering-event 關聯資源。\n\n建議：確認 `self._resulting_related_resources` 的內容，避免重複加入 triggering-event。",
+    "existing_code": "related=related_resources,",
+    "evidence": "diff 中第 290 行（新增側）顯示 `related=related_resources`，而 `related_resources` 是基於 `self._resulting_related_resources` 建構，可能已包含 triggering-event。"
+  },
+  {
+    "path": "src/prefect/server/events/actions.py",
+    "line": 301,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "action.executed 事件使用了錯誤的 related 參數",
+    "body": "在 `succeed` 方法中，`action.executed` 事件的 `related` 參數被指派為 `related_resources`，但此變數是從 `self._resulting_related_resources` 複製後再加入 automation-triggered-event 與 triggering-event。然而，`self._resulting_related_resources` 可能已包含 triggering-event（若先前已加入），導致重複。\n\n失敗情境：當 action 成功時，`action.executed` 事件可能包含重複的 triggering-event 關聯資源。\n\n建議：確認 `self._resulting_related_resources` 的內容，避免重複加入 triggering-event。",
+    "existing_code": "related=related_resources,",
+    "evidence": "diff 中第 301 行（新增側）顯示 `related=related_resources`，而 `related_resources` 是基於 `self._resulting_related_resources` 建構，可能已包含 triggering-event。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 442,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.7,
+    "title": "primary_state_change_event 選擇邏輯可能選錯事件",
+    "body": "當 automation 同時觸發 Triggered 和 Resolved 狀態時，`primary_state_change_event` 會優先選擇 Triggered 事件。但若 Triggered 事件不存在（例如僅 Resolved），則會選擇 Resolved 事件。然而，若兩者皆存在，但實際觸發 action 的是 Resolved 事件（例如 `actions_on_resolve`），則 action 事件會錯誤地連結到 Triggered 事件。\n\n失敗情境：當 automation 同時觸發 Triggered 和 Resolved，且 action 是定義在 `actions_on_resolve` 中時，action 事件會連結到錯誤的 automation.triggered 事件。\n\n建議：根據 action 的來源（`actions`、`actions_on_trigger`、`actions_on_resolve`）選擇對應的 state change event，而非統一使用 primary。",
+    "existing_code": "primary_state_change_event = state_change_events.get(\n        TriggerState.Triggered\n    ) or state_change_events.get(TriggerState.Resolved)",
+    "evidence": "diff 中第 441-443 行（新增側）顯示優先選擇 Triggered，但未考慮 action 的來源。"
+  },
+  {
+    "path": "src/prefect/server/events/triggers.py",
+    "line": 442,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.6,
+    "title": "state_change_events 可能缺少對應鍵",
+    "body": "在 `act` 函式中，`state_change_events` 是根據 `firing.trigger_states` 建立的字典。若 `firing.trigger_states` 不包含 `TriggerState.Triggered` 或 `TriggerState.Resolved`，則 `state_change_events.get(TriggerState.Triggered)` 或 `state_change_events.get(TriggerState.Resolved)` 可能回傳 `None`。雖然程式碼使用 `or` 來處理，但若兩者皆為 `None`，則 `primary_state_change_event_id` 會是 `None`，這可能導致後續 action 事件缺少 automation-triggered-event 關聯。\n\n失敗情境：當 automation 觸發條件不包含 Triggered 或 Resolved 狀態時，action 事件將無法連結到 automation.triggered 事件。\n\n建議：確認 `firing.trigger_states` 是否保證包含至少一個狀態，或明確處理兩者皆無的情況。",
+    "existing_code": "primary_state_change_event = state_change_events.get(\n        TriggerState.Triggered\n    ) or state_change_events.get(TriggerState.Resolved)",
+    "evidence": "diff 中第 441-443 行（新增側）顯示使用 `or` 處理，但未檢查兩者皆為 None 的情況。"
+  }
+]

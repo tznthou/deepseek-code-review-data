@@ -1,0 +1,46 @@
+[
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 261,
+    "side": "RIGHT",
+    "severity": "major",
+    "confidence": 0.8,
+    "title": "bookingUrl 解析邏輯可能產生錯誤的 URL 前綴",
+    "body": "在解析 bookingUrl 以取得前綴時，程式碼直接使用 `url.hostname` 而忽略了 port，且未處理 pathname 為空或僅有 slug 的情況。若 bookingUrl 為 `https://example.com:8080/user/slug`，前綴會變成 `https://example.com/user/`，遺失 port；若 bookingUrl 為 `https://example.com/slug`，則前綴會是 `https://example.com/`，可能不符合預期。建議使用 `url.origin` 並更嚴謹地處理路徑分段。",
+    "existing_code": "const url = new URL(props.bookingUrl);\nconst pathParts = url.pathname.split(\"/\").filter(Boolean);\npathParts.pop(); // Remove slug\nlet prefix = \"/\";\nif (pathParts.length > 0) {\n  prefix = `/${pathParts.join(\"/\")}/`;\n}\nreturn `${url.protocol}//${url.hostname}${prefix}`;",
+    "evidence": "diff 中新增的程式碼片段，使用 `url.hostname` 而非 `url.host`，且未考慮 port。"
+  },
+  {
+    "path": "companion/components/event-type-detail/tabs/BasicsTab.tsx",
+    "line": 275,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "bookingUrl 為空時顯示 fallback 但可能與實際不符",
+    "body": "當 `props.bookingUrl` 為空時，回傳 `cal.com/${props.username}/`，但若 username 也為空，則會顯示 `cal.com/undefined/`。建議在 username 缺失時提供更合理的 fallback，或隱藏前綴。",
+    "existing_code": "return `cal.com/${props.username}/`;",
+    "evidence": "diff 中新增的 fallback 程式碼。"
+  },
+  {
+    "path": "companion/components/event-type-list-item/EventTypeListItemParts.tsx",
+    "line": 16,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "getDisplayUrl 未處理 bookingUrl 含 port 或非標準路徑",
+    "body": "`getDisplayUrl` 直接回傳 `url.hostname + url.pathname`，若 bookingUrl 包含 port（如 `https://example.com:8080/user/slug`），顯示會遺失 port；若 pathname 為空，則僅顯示 hostname。建議使用 `url.host` 並處理空 pathname。",
+    "existing_code": "return url.hostname + url.pathname;",
+    "evidence": "diff 中新增的函式。"
+  },
+  {
+    "path": "companion/extension/entrypoints/content.ts",
+    "line": 1122,
+    "side": "RIGHT",
+    "severity": "minor",
+    "confidence": 0.7,
+    "title": "copyBtn 的 bookingUrl 未使用 eventType.bookingUrl",
+    "body": "在 copyBtn 的事件處理中，bookingUrl 仍使用硬編碼的 `https://cal.com/...`，未像 previewBtn 一樣使用 `eventType.bookingUrl`。這可能導致複製的連結與實際 bookingUrl 不一致。建議改為 `eventType.bookingUrl || ...`。",
+    "existing_code": "const bookingUrl =\n  `https://cal.com/${\n    eventType.users?.[0]?.username || \"user\"\n  }/${eventType.slug}`;",
+    "evidence": "diff 中 copyBtn 的程式碼未使用 eventType.bookingUrl。"
+  }
+]
