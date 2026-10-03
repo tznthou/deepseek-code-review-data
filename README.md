@@ -28,9 +28,9 @@
 
 | 目錄 | 問了什麼 | 結論 |
 |---|---|---|
-| `2026-09-21-flash-3x` | 「不要用 flash」換一種語言還成不成立 | [實測紀錄索引](https://github.com/tznthou/deepseek-code-review/tree/main/experiments) |
-| `2026-09-21-three-way-review` | 三個 reviewer（`deepseek-v4-pro`、`deepseek-flash`、Codex）看同一份標的，召回與定位差多少 | 同上 |
-| `2026-09-23-dogfood-recount` | 本 repo 自己的 PR 上，AI review 報的 finding 重數一次 | 同上 |
+| `2026-09-21-flash-3x` | 「不要用 flash」換一種語言還成不成立 | [頁面](https://github.com/tznthou/deepseek-code-review/blob/main/experiments/2026-09-21-flash-3x.md) |
+| `2026-09-21-three-way-review` | 三個 reviewer（`deepseek-v4-pro`、`deepseek-flash`、Codex）看同一份標的，召回與定位差多少 | [頁面](https://github.com/tznthou/deepseek-code-review/blob/main/experiments/2026-09-21-three-way-review.md) |
+| `2026-09-23-dogfood-recount` | 本 repo 自己的 PR 上，AI review 報的 finding 重數一次 | [實測紀錄索引](https://github.com/tznthou/deepseek-code-review/tree/main/experiments) |
 | `2026-09-23-path-ssrf-triage` | CodeQL 的 path／SSRF 告警怎麼分流（沒有呼叫模型） | 同上 |
 | `2026-09-23-redos-triage` | CodeQL 的 ReDoS 告警哪些是真的（沒有呼叫模型） | 同上 |
 | `2026-09-24-actions-policy` | caller 的 Actions 政策會不會擋掉 kit | 同上 |
@@ -38,7 +38,7 @@
 | `2026-09-24-v1.4.0-regression` | v1.4.0 發版後的回歸 | 同上 |
 | `2026-09-25-line-refs` | 文件裡寫死的行號還準不準 | 同上 |
 | `2026-09-25-qodo-bench` | 修改型 PR 上抓得到幾成 | [頁面](https://github.com/tznthou/deepseek-code-review/blob/main/experiments/2026-09-25-qodo-bench.md) |
-| `2026-09-25-self-consistency-sim` | 同一份 diff 跑幾次再投票，划不划算（重算既有輸出，沒有呼叫 API） | [實測紀錄索引](https://github.com/tznthou/deepseek-code-review/tree/main/experiments) |
+| `2026-09-25-self-consistency-sim` | 同一份 diff 跑幾次再投票，划不划算（重算既有輸出，沒有呼叫 API） | [頁面](https://github.com/tznthou/deepseek-code-review/blob/main/experiments/2026-09-25-self-consistency-sim.md) |
 | `2026-09-26-rules-loop` | 把 repo 規範給它，規則類抓得多嗎、代價是什麼 | [頁面](https://github.com/tznthou/deepseek-code-review/blob/main/experiments/2026-09-26-rules-loop.md) |
 | `2026-09-26-v1.4.1` | 強制第三方 action 釘 SHA 的 caller 能不能用 | [實測紀錄索引](https://github.com/tznthou/deepseek-code-review/tree/main/experiments) |
 | `2026-09-28-cache-probe` | 規範那次呼叫為什麼吃不到快取 | 同上 |
@@ -46,8 +46,8 @@
 | `2026-09-28-v150-repo-rules` | v1.5.0 `repo-rules-path` 的驗證與回歸 | [實測紀錄索引](https://github.com/tznthou/deepseek-code-review/tree/main/experiments) |
 | `2026-09-28-v160-inline` | v1.6.0「預設只貼摘要」的回歸 | 同上 |
 | `2026-09-30-function-context` | 把改動所在的整個函式一起送，抓得比較多嗎 | [頁面](https://github.com/tznthou/deepseek-code-review/blob/main/experiments/2026-09-30-function-context.md) |
-| `2026-10-01-claim-reach` | 用確定性的 grep 反駁 finding 的說法，射程有多大（沒有呼叫 API） | [實測紀錄索引](https://github.com/tznthou/deepseek-code-review/tree/main/experiments) |
-| `2026-10-01-prompt-hygiene` | rubric 的兩個已知問題，改了會不會比較好 | 同上 |
+| `2026-10-01-claim-reach` | 用 grep 反駁 finding 的說法，能刷掉多少誤報（沒有呼叫 DeepSeek） | [頁面](https://github.com/tznthou/deepseek-code-review/blob/main/experiments/2026-10-01-claim-reach.md) |
+| `2026-10-01-prompt-hygiene` | rubric 的兩個已知問題，該不該改 | [頁面](https://github.com/tznthou/deepseek-code-review/blob/main/experiments/2026-10-01-prompt-hygiene.md) |
 
 ## 沒放的東西
 
