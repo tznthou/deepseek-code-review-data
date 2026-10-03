@@ -91,3 +91,29 @@ smoke 那次 8 筆 finding **全部 8 筆都被重新定位**（模型自報行�
 - **shell v4-pro 的「B1 2/3」是行號比對的產物**。那兩筆（S33、S46）位在第 37 行，但講的是「git 指令沒檢查 exit code」（成立的 bonus），不是 B1 的「沒加引號」。按內容判斷，B1 是 0/3，B2 1/3 不變。python v4-pro 的 A 類「14」也可以用同一個原因解釋：S25 被定位在第 22 行。當時的分析腳本沒有留下來，所以無法直接確認。
 - **B2 探針的前提有洞**：`grep -c . "$LOG" 2>/dev/null || echo 0` 在 log 存在、但沒有非空白行時，會得到兩行 `0`（grep 印出 0 且 exit 1，接著又 echo 0），`[` 報 integer expected（bash 5.3 實測）。修正版是 `|| total=0`，見 `../2026-09-24-confidence-loop/targets/shell-v2.diff`。
 - 逐筆標記與複核過程見 `../2026-09-24-confidence-loop/`（`labels-S.csv`、`PREREG.md` 的追加段）。
+
+## 追加（2026-10-03 按內容重看 flash 的誤報探針；寫公開頁時）
+
+09-24 只按內容重標了 v4-pro，flash 的探針命中仍是 09-21 用行號比對算的。寫公開頁前逐筆讀了 flash 在探針位置的 finding（`runs/python--deepseek-flash--2.json`、`--3.json` 第 40、51 行；`runs/shell--deepseek-flash--1.json` 第 68 行）：
+
+- **python B1（第 40 行）：0/2。** 兩次都讀到第 38 行的守衛（第 2 次明說「`events` 為空時回傳 `0`」），改報事件順序與 `created_at` 缺欄位——跟三方實驗那次、以及 09-24 標成「有爭議」的 S04 同一種。跟 v4-pro 的 S33、S46 是同一個原因：行號比對把同位置的別件事算成探針命中
+- **python B2（第 51 行）：2/2。** 兩次都報「預設 dict 跨呼叫共用」，同一筆裡還帶著 A5（`int(raw)` 的 `ValueError`）。說法本身不算錯——第 55 行 `return default` 把預設物件直接交出去，呼叫端改了就會污染下一次——但 `python.md` 明寫函式沒有修改那個參數時不要報，照跑前的預期表算誤報。v4-pro 0/3
+- **shell B2（第 68 行）：flash 那筆講對了。** 它寫出「log 存在但為空時 `grep -c` 印 `0` 又 exit 1，`|| echo 0` 再補一個 `0`，`total` 變成 `0\n0`」——就是 09-24 才發現的探針前提漏洞。v4-pro 那筆（S37）說會得到空字串，機制錯
+- ⇒ 結論一第 2 點「flash 每次都同時中兩個誤報探針、全中代表在做模式比對」**按內容不成立**。按內容：python B2 flash 2/2、v4-pro 0/3；shell B2 兩個模型都報了，flash 對、v4-pro 錯；B1 兩個標的、兩個模型都是 0
+- 附帶：shell flash 第 41 行那筆標題是「在函式外使用 local 會產生錯誤」，內文自己說那行在函式內、合法，接著改講 S3
+- 結論一第 1 點（輸出可用率）與第 3 點（S3 說「並使該次同步中斷」）不受影響 ← **同日被下一段推翻第 1 點**
+
+## 追加（2026-10-03 第二段：公開頁的獨立查核）
+
+- **結論二（API 回了沒收完的內容）不成立。** 用 `git show v1.2.2:` 的 `extract_json` 重跑 3 份失敗 log 的原始輸出（`content[:2000]`），錯誤訊息逐字重現（`scripts/replay_extract.py`：ast 抽出函式、餵 `--- 原始輸出 ---` 之後的文字）：
+  - `shell--deepseek-flash--2`、`--3`：summary 的 `cd "$dir"` 雙引號沒跳脫，`json.loads` 停在 char 177、184 → **flash 的 JSON 本身不合法**
+  - `python--deepseek-flash--1`、`shell--deepseek-flash--2`：內文有 code fence（```python／```sh），v1.2.2 先剝第一段 fence → 切出錯的片段（column 2／找不到 JSON 物件）= **v1.3.0 #22 修掉的 fence bug**，當時誤以為 09-22 才第一次踩到
+  - Python 那次的完整輸出合不合法：log 只留前 2,000 字元，無從判斷
+  - 「半個中文字」：「明確的注」只在 shell 2 出現一次，後面是完整的「入面」；原始輸出沒有支持「沒收完」的證據
+  - 解析得了的 13 份輸出內文都沒有 fence
+  - ⇒ 第 1 點改寫：flash 10 次至少 2 次吐出不合法 JSON，v4-pro 0/6
+- **召回按內容逐點算**：Python 兩個模型每次都是同一組 {A1,A2,A3,A5,A6,A7}，都漏 A4；v4-pro 合計 18（PREREG 的 15 是「有命中的 finding 筆數」，一筆 A1+A3 只算一次）。Shell v4-pro 14（5、4、5）
+- **v4-pro python B1 是 1/3**：S30（py-r3）引用了第 38 行守衛又說空列表仍會觸發，正是 B1 要誘出的說法；當時歸類為「報已經做了的事」，PREREG 的 B 類計數沒算它
+- **試跑與追加（flash、Shell）**：`_smoke` 與 `extra-6` 第 37 行報了沒加引號（承認有 regex 卻說有風險，`_smoke` 舉的 `*` 正是 regex 擋掉的）；`extra-5` 第 68 行又講對 `0\n0`
+- **v4-pro 也有斷言錯**：S43 同樣的「local 用在函式外」錯標題、S48 把語法錯誤講成型別錯誤、S50 迴圈行為講錯
+- **兩條 bash 事實**（bash 5.3.20 實測，`scripts/bash_facts.sh`）：`set -e; if [ "" -gt 0 ]` 照樣繼續——S3 會繼續跑的理由是 `[` 在 `if` 條件裡，不是「沒有 `set -e`」（`expected-shell.md` 的理由錯、判準對）；`grep -c .` 在空檔或只有換行的檔得到 `0\n0`，只有空白字元的行會被計數（所以「沒有非空白行」不精確）

@@ -60,6 +60,24 @@ diff 保留在 `pr.diff`。
 | `findings-flash.json` / `review-flash.md` | deepseek-flash 的結果 |
 | `codex-full.txt` | 送給 Codex 的完整 prompt（回應只有 1 筆 Critical + 3/10 評分，見上表） |
 
+## 追加（2026-10-03，寫公開頁時從當時的工具輸出重查）
+
+當時的執行 log 沒有存進這個目錄，2026-10-03 從工具輸出摘出來放在 `run-log.txt`：
+
+- **兩份 DeepSeek 輸出都有套用 `python.md`**：第一次用 `review-local.sh` 跑（12:40 UTC）沒有套到規則、而且解析失敗，那次作廢；
+  `findings.json`（12:42）與 `findings-flash.json`（12:47）是改成直接呼叫、帶 `--rules-dir` 之後跑的，log 都有「套用補充規則：python.md」。
+  `max_tokens` 兩次都是 32768
+- **自報行號 0/9、0/7 成立，但偏移是 1～29 行，不是 2～29**（偏移＝模型報的行號與它引用的 code 所在行的差）：
+  v4-pro 有 1 筆（裸 except）沒被重新定位，沿用模型報的第 24 行，引用的 `except:` 在第 25 行，差 1 行。上面寫的 2～29 只算了被重新定位的 8 筆
+  - ⚠️ 同日第一版寫成「片段 `except:`／`pass` 在檔案裡出現 2 次」，**原因寫錯**（公開頁查核抓到，現行 `locate.py` 重跑確認）：`except:` 只有 7 字元、
+    低於 `MIN_SNIPPET_LEN = 8` 被跳過，改用內文的 `collect_authors` → 第 29、83 行兩處命中 → 不猜。flash 那筆同樣跳過 `except:`，改用 `json.loads`
+    唯一命中第 24 行（比 `except:` 早 1 行）→ 兩筆裸 except 重新定位後都停在第 24 行。現行 `locate.py` 行為相同
+  - flash 7 筆全部被重新定位；以「引用的 code 所在行」算，偏移 3～22（log 的 22 → 24 是定到 `json.loads`，引用的 `except:` 在 25）
+- 標的 104 行（77 行非空白＋27 行空行）；`expected.md` 寫的 105 行多算了 1 行
+- **v4-pro 的 7/7 與 3 次重跑的差別只在 A4**：S08 講 `collect_authors` 與 `main` 各抓一次同一批 PR，09-21／09-24 都判 A4；flash-3x 的 3 次重跑按內容每次 6 個，都沒有 A4
+- **Codex 的原始回應沒有存檔**，表裡 Codex 那欄（1/7、0、1 筆、31s、1/1）只出自當時這份筆記；「照指示收斂」是推論，只跑一次分不出沒看到還是看到不報
+- 「標的對 DeepSeek 最有利」裡的缺陷密度，跑前預期表寫的是「方向不確定」
+
 ## 順帶撈到的兩個真 bug
 
 比埋的那些缺陷更有價值，已在 v1.2.2 修掉：

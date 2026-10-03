@@ -1,0 +1,37 @@
+# 三方對照的執行 log（DeepSeek 兩次）
+
+2026-10-03 從 09-21 當時的工具輸出摘出 `[info]`／`[warn]`／`[error]` 行（時間為 UTC）。
+當時 log 沒有存進這個目錄；`重新定位 A → B` 的 A 是模型自報的行號，B 是程式用片段比對算出的行號。
+
+## 2026-09-21T12:40:48Z 第一次（本機入口 review-local.sh，沒有套用 python.md；作廢）
+
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 2680 字元、thinking=disabled、max_tokens=8192）
+[error] 無法解析模型輸出：回應中找不到 JSON 物件
+
+## 2026-09-21T12:42:37Z deepseek-v4-pro（直接呼叫，帶 --rules-dir）→ findings.json
+
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-v4-pro（diff 2680 字元、thinking=disabled、max_tokens=32768）
+[info] 定位不到 sandbox/pr_stats.py:24（片段多重命中（2 處），不猜）
+[info] 重新定位 sandbox/pr_stats.py:55 → 77（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:27 → 29（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:31 → 40（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:38 → 54（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:48 → 69（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:42 → 59（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:60 → 83（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:68 → 97（片段唯一命中）
+[info] 完成於 24.5s ｜ findings=9 ｜ relocated=8 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 3255, "completion_tokens": 1988, "total_tokens": 5243, "prompt_tokens_details": {"cached_tokens": 2432}, "prompt_cache_hit_tokens": 2432, "prompt_cache_miss_tokens": 823}
+
+## 2026-09-21T12:47:13Z deepseek-flash（直接呼叫，帶 --rules-dir）→ findings-flash.json
+
+[info] 套用補充規則：python.md
+[info] 呼叫 https://api.deepseek.com / deepseek-flash（diff 2680 字元、thinking=disabled、max_tokens=32768）
+[info] 重新定位 sandbox/pr_stats.py:22 → 24（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:96 → 77（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:26 → 29（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:87 → 69（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:51 → 54（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:34 → 40（片段唯一命中）
+[info] 重新定位 sandbox/pr_stats.py:103 → 81（片段唯一命中）
+[info] 完成於 9.1s ｜ findings=7 ｜ relocated=7 ｜ verdict=request_changes ｜ usage={"prompt_tokens": 3258, "completion_tokens": 1987, "total_tokens": 5245, "prompt_tokens_details": {"cached_tokens": 896}, "prompt_cache_hit_tokens": 896, "prompt_cache_miss_tokens": 2362}
